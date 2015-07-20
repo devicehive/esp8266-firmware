@@ -1,0 +1,6 @@
+firmware-src/firmware
+firmware-src/build
+firmware-src/.settings
+esp-utils/build
+esp-utils/.settings
+sdk/lib/libc.a

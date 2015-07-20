@@ -1,0 +1,144 @@
+/*
+ * serialport_posix.cpp
+ *
+ * Cross-platform serial port implementation
+ *
+ *  Created on: 2014
+ *      Author: Nikolay Khabarov
+ *  License: You can do whatever you want. Author doesn't provide warranty of any kind.
+ *
+ */
+
+#include "serialport.h"
+#include <stdio.h>
+#ifdef COMPOSIX
+
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <termios.h>
+#include <pthread.h>
+#include <dirent.h>
+
+void * SerialPort::thread_start(void *arg) {
+    SerialPort *port =  (SerialPort *)arg;
+    int hCOM = port->get_com();
+
+    const int buffSize = 1024;
+    char buff[buffSize];
+    while (true) {
+        int rb = read(hCOM, buff, buffSize);
+        if(!port->mTreadFlag)
+        	break;
+        if(rb>0) {
+            port->mReadError = false;
+            buff[rb]='\0';
+            SerialPortRecieved(port, buff, rb);
+            port->mBytesRecivedSinceLastSend += rb;
+        } else if(rb==0) {
+            if(port->mReadError==false)
+                SerialPortError(port, ERROR_READ_STRING);
+            port->mReadError = true;
+            port->sleep(100);
+        } else {
+            port->mReadError = false;
+            port->sleep(100);
+        }
+    }
+    return 0;
+}
+
+SerialPort *SerialPort::open(const char *port) {
+    COM comp = ::open ( port, O_RDWR| O_NONBLOCK | O_NDELAY );
+    if(comp>=0)
+    {
+       struct termios tio;
+       memset(&tio,0,sizeof(tio));
+       if ( tcgetattr ( comp, &tio ) != 0 ) {
+           close(comp);
+           return 0;
+       }
+       tio.c_iflag=0;
+       tio.c_oflag=0;
+       tio.c_cflag=CS8|CREAD|CLOCAL;
+       tio.c_lflag=0;
+       tio.c_cc[VMIN]=1;
+       tio.c_cc[VTIME]=5;
+
+       cfsetospeed(&tio,B115200);
+       cfsetispeed(&tio,B115200);
+
+       if ( tcsetattr ( comp, TCSANOW, &tio ) != 0) {
+           close(comp);
+           return 0;
+       }
+
+       SerialPort *port = new SerialPort(comp);
+       pthread_t  thr;
+       if(pthread_create(&thr, 0, thread_start, (void *)port)!=0) {
+           delete port;
+           return 0;
+       }
+       port->mThread = (void *)thr;
+
+       return port;
+    }
+    return 0;
+}
+
+SerialPort::~SerialPort() {
+    mTreadFlag = false;
+    close(mCom);
+    pthread_join((pthread_t)mThread, 0);
+}
+
+unsigned int SerialPort::write_native(const void *data, unsigned int len) {
+	ssize_t bw = write(mCom, data, len);
+	#if ( defined(__APPLE__) || defined(__MACH__) )
+	// do nothing
+	#else
+	if(bw)
+		tcflush( mCom, TCOFLUSH );
+	#endif
+	return bw;
+}
+
+void SerialPort::sleep(unsigned int ms) {
+	usleep(ms*1000);
+}
+
+#if ( defined(__APPLE__) || defined(__MACH__) )
+const static char TTYUSB_PATTERN[] = "tty.";
+#else
+const static char TTYUSB_PATTERN[] = "ttyUSB";
+#endif
+
+const char *SerialPort::findNextPort(bool finish) {
+	static char buf[512];
+	static DIR *dp = 0;
+	struct dirent *entry;
+	buf[0] = 0;
+	if(!dp) {
+		dp = opendir("/dev");
+		if(!dp)
+			return buf;
+	}
+	if(dp) {
+		while((entry = readdir(dp)) != NULL) {
+			if(strncmp(entry->d_name, TTYUSB_PATTERN, sizeof(TTYUSB_PATTERN) - 1) == 0) {
+				snprintf(buf, sizeof(buf), "%s/%s", "/dev", entry->d_name);
+				break;
+			}
+		}
+	}
+	if(finish) {
+		if(dp) {
+			closedir(dp);
+			dp = 0;
+		}
+	}
+	return buf;
+}
+
+#endif

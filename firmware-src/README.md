@@ -1,0 +1,35 @@
+# DeviceHive ESP8266 Firmware
+Special firmware for usage ESP8266 in DeviceHive clouds.
+
+# Building
+Project can be opened in Eclipse. For compiling you would need to install
+toolchain. See instructions here: 
+https://github.com/esp8266/esp8266-wiki/wiki/Toolchain
+Actually we need just: 'Xtensa crosstool-NG' (https://github.com/jcmvbkbc/crosstool-NG) 
+SDK is already in this repo.
+
+# Firmware usage
+Flash firmware( 0x00000.bin and 0x40000 from firmware directory) to the device with
+esp-flasher util (see esp-util project on top of the repo). You can also use any other
+flasher for esp8266 (esptool - https://github.com/themadinventor/esptool for example).
+Connect to device terminal via serial port with esp-terminal (see esp-util project).
+You can also use any other serial port terminal with escape sequences support. PuTTY
+for Windows OS ( http://www.putty.org/ ) or 'screen' util under Linux for example.
+This firmware has quite regular unix like terminal via UART. Autocomplete and command
+history are supported.
+Type' 'help' in terminal to see all aviable commands. At first you need to configure
+device. Type 'configure' in terminal to run configuration util on it. Enter network
+and server parameters, device will be rebooted. Now you can send command via
+DeviceHive cloud to device. Please refer to ESP8266 firmware commands documentation
+to find which commands are supported(see the top of this repo).
+
+#genbin.sh
+Small util to extract binary images for flashing for compiled file. Might be useful
+for other projects. Usage:
+genbin.sh <path to elf file> [<output directory>]
+
+# License
+MIT. See LICENSE file.
+
+# Authors
+Nikolay Khabarov

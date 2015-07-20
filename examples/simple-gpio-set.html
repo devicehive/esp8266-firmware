@@ -1,0 +1,37 @@
+<html>
+<style type="text/css"> html {display: table;margin: auto;height: 100%;}  body {display: table-cell;vertical-align: middle;height: 100%;}</style>
+  <head>
+    <meta charset="utf-8">
+    <title>DeviceHive - Esp8266 test</title>
+    <script>
+     function send(command, beep, r, g, b) {
+      var xmlhttp = new XMLHttpRequest();  
+      xmlhttp.open('POST', 'http://nn7482.pg.devicehive.com/api/device/deviceId/command', true);
+      xmlhttp.setRequestHeader("Authorization", "Basic " + btoa("user:password"));
+      xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+      var myjson = {};
+      myjson["command"] = command;
+      myjson["parameters"] = {};
+      myjson["parameters"][4] = beep;
+      myjson["parameters"][12] = r;
+      myjson["parameters"][13] = b;
+      myjson["parameters"][14] = g;
+      xmlhttp.send(JSON.stringify(myjson));
+     }
+    </script>
+  </head> 
+  <body>
+    <br><br>Beeper: 
+    <input type=button value=On onclick="send('gpio/write', 1, 'x', 'x', 'x')">
+    <input type=button value=Off onclick="send('gpio/write', 0, 'x', 'x', 'x')">
+    <br><br><br>LED: 
+    <input type=button value=Off onclick="send('gpio/write', 'x', 0, 0, 0)"> 
+    <input type=button value=Red style="background-color:red" onclick="send('gpio/write', 'x', 1, 0, 0)"> 
+    <input type=button value=Green style="background-color:green" onclick="send('gpio/write', 'x', 0, 1, 0)">
+    <input type=button value=Blue style="background-color:blue" onclick="send('gpio/write', 'x', 0, 0, 1)"> 
+    <input type=button value=Yellow style="background-color:yellow" onclick="send('gpio/write', 'x', 1, 1, 0)"> 
+    <input type=button value=Cyan style="background-color:cyan" onclick="send('gpio/write', 'x', 0, 1, 1)">
+    <input type=button value=Magenta style="background-color:magenta" onclick="send('gpio/write', 'x', 1, 0, 1)"> 
+    <input type=button value=White style="background-color:white" onclick="send('gpio/write', 'x', 1, 1, 1)"> 
+  </body>
+</html>
