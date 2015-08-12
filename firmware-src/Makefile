@@ -1,3 +1,5 @@
+# Makefile for DeviceHive ESP8266 firmware
+# Author Nikolay Khabarov
 ifeq ($(OS),Windows_NT)
 	CROSS_COMPILE	?= c:/Espressif/xtensa-lx106-elf/bin/xtensa-lx106-elf-
 	SINCLUDE		=
@@ -12,12 +14,12 @@ FIRMWAREDIR		= firmware
 OBJDIR			= build
 TARGETAR		= $(OBJDIR)/$(TARGET).a
 TARGETELF		= $(OBJDIR)/$(TARGET).elf
-INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include user $(CURDIR) $(SINCLUDE))
+INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include sources $(CURDIR) $(SINCLUDE))
 LIBDIR			= $(addprefix -L,$(SDKPATH)/lib)
 LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json)
-SOURCES			= $(wildcard user/*.c) $(wildcard drivers/*.c)
+SOURCES			= $(wildcard sources/*.c) $(wildcard drivers/*.c)
 OBJECTS			= $(addprefix $(OBJDIR)/, $(SOURCES:%.c=%.o))
-CFLAGS			= -O2 -Wpointer-arith -Wundef -Werror -mlongcalls -mtext-section-literals -D__ets__ -DICACHE_FLASH -nostdlib
+CFLAGS			= -O2 -Wpointer-arith -Wundef -Werror -Wunused -mlongcalls -mtext-section-literals -D__ets__ -DICACHE_FLASH -nostdlib
 LDFLAGS			= -u call_user_start -Wl,-static -nostdlib
 CC				= $(CROSS_COMPILE)gcc
 AR				= $(CROSS_COMPILE)ar

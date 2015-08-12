@@ -1,0 +1,79 @@
+<html>
+<style type="text/css"> html {display: table;margin: auto;height: 100%;}  body {display: table-cell;vertical-align: middle;height: 100%;}</style>
+  <head>
+    <meta charset="utf-8">
+    <title>DeviceHive - Esp8266 test</title>
+    <script>
+     function createXmlHttp(method, path) {
+       var xmlhttp = new XMLHttpRequest();  
+       xmlhttp.open(method, 'http://nn7482.pg.devicehive.com/api/device/deviceId/' + path, true);
+       xmlhttp.setRequestHeader("Authorization", "Basic " + btoa("user:password"));
+       xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+       return xmlhttp;
+     }
+     function send(command, parameters) {
+       var xmlhttp = createXmlHttp('POST', 'command')
+       var myjson = {};
+       myjson["command"] = command;
+       myjson["parameters"] = parameters;
+       xmlhttp.send(JSON.stringify(myjson));
+     }
+     function initInPin() {
+         send('gpio/read', {5:'pullup'})
+         send('gpio/int', {5:'both'})
+     }   
+     var lastTimestamp = '';
+     function poll() {
+       var path = 'notification/poll'; 
+       if(lastTimestamp != '')
+         path = path + '?timestamp=' + lastTimestamp;
+       var xmlhttp = createXmlHttp('GET', path)
+       xmlhttp.onreadystatechange = function() {
+         if(xmlhttp.readyState != 4)
+           return;
+         if(xmlhttp.status == 0)
+           return;
+         if(xmlhttp.status != 200)
+           alert('Last poll request return ' + xmlhttp.status);
+         var result = JSON.parse(xmlhttp.responseText);
+         result.forEach(function(myjson) {
+           if(myjson['notification'] != 'gpio/int')
+             return;  
+           if(myjson['parameters']['state']['5'] == '0') {
+             document.getElementById("text").textContent = 'Low level on GPIO5';
+             document.getElementById("text").style.background = 'Cyan';
+           } else {
+             document.getElementById("text").textContent = 'High level on GPIO5';
+             document.getElementById("text").style.background = 'Magenta';
+           }
+           lastTimestamp = myjson['timestamp'];
+         });
+         poll();
+       };
+       xmlhttp.send();
+     }
+     function rgb(r, g, b) {
+       send('gpio/write', {12:r, 13:b, 14:g});
+     }
+    </script>
+  </head> 
+  <body onload="initInPin();poll();" bgcolor=white>
+    Beeper: 
+    <input type=button value=On onclick="send('gpio/write', {4:1});">
+    <input type=button value=Off onclick="send('gpio/write', {4:0});">
+    <br><br>LED: 
+    <input type=button value=Off onclick="rgb(0, 0, 0)"> 
+    <input type=button value=Red style="background-color:red" onclick="rgb(1, 0, 0)"> 
+    <input type=button value=Green style="background-color:green" onclick="rgb(0, 1, 0)">
+    <input type=button value=Blue style="background-color:blue" onclick="rgb(0, 0, 1)"> 
+    <input type=button value=Yellow style="background-color:yellow" onclick="rgb(1, 1, 0)"> 
+    <input type=button value=Cyan style="background-color:cyan" onclick="rgb(0, 1, 1)">
+    <input type=button value=Magenta style="background-color:magenta" onclick="rgb(1, 0, 1)"> 
+    <input type=button value=White style="background-color:white" onclick="rgb(1, 1, 1)">
+    <br><br>GPIO5:
+    <input type=button value=Input onclick="initInPin()">
+    <input type=button value='Set High' onclick="send('gpio/write', {5:1})">
+    <input type=button value='Set Low' onclick="send('gpio/write', {5:0})">
+    <br><br><div id="text" style="font-size:24pt;"></div> 
+  </body>
+</html>

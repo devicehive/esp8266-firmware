@@ -1,0 +1,106 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    label[id=lastnotification] {
+      width: 100%;
+      color: blue;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+    }
+  </style>
+  <script type="text/javascript">
+  function print(text, color) {
+    document.getElementById("status").innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function send_command(command, parameters) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Error while sending command " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              // on success
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify({"command":command, "parameters":parameters}));
+  }
+  
+  var lastTimestamp = ""; 
+  function poll() {
+    var path = '/notification/poll'; 
+    if(lastTimestamp != "")
+      path = path + '?timestamp=' + lastTimestamp;
+    var xmlhttp = createxmlhttp('GET', path)
+    xmlhttp.onreadystatechange = function() {
+     if(xmlhttp.readyState != 4)
+       return;
+     if(xmlhttp.status == 0)
+       return;
+     if(xmlhttp.status != 200)
+       print('Last poll request return ' + xmlhttp.status);
+     var result = JSON.parse(xmlhttp.responseText);
+     result.forEach(function(myjson) {
+       document.getElementById("lastnotification").innerHTML = myjson['notification'] + " id=" + myjson['id'] + " timestamp=" + myjson['timestamp'];
+       lastTimestamp = myjson['timestamp'];
+     });
+     poll();
+    };
+    xmlhttp.send();
+  }
+  
+  function run(form, rs){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    if(rs) {
+      send_command("pwm/control", {"4":"50", "frequency":4000});
+      send_command("gpio/int", {"4":"both", "timeout":50});
+      send_command("adc/int", {"0":250});
+      print("Running...", "green");
+    } else {
+      send_command("pwm/control", {"4":"disable"});
+      send_command("gpio/int", {"4":"disable"});
+      send_command("adc/int", {"0":"disable"});
+      print("Stoped", "black");
+    }
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+    poll();
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <br><input type="button" value="Run" onClick="run(this.form, true);"> <input type="button" value="Stop" onClick="run(this.form, false);"><br>
+    </form>
+    <label id="status"> </label><br>
+    <label id="lastnotification" width=100%> </label><br>  
+  </body>
+</html> 

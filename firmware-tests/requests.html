@@ -1,0 +1,231 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=checkbox] {
+      position: absolute;
+      left: 7;
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  function print(text) {
+    document.getElementById('con').innerHTML += text;
+    window.scrollTo(0,document.body.scrollHeight);
+  }
+  function println(text) {
+    print(text);
+    print('<br>');
+  }
+  var currentId = 0;
+  var commands = []
+  var statuses = []
+  var results = []
+  var isErrorOccurried = false;
+  var generate = false;
+  var isrun = 0;
+  function addtest(command, parameters, status, result) {
+    commands[currentId] = {"command":command, "parameters":parameters};
+    statuses[currentId] = status;
+    results[currentId] = result;
+    currentId++;
+  }
+  // search for i2c device
+  //for(i = 0; i < 128; i++)
+  //  addtest("i2c/master/read", {"address":i}, false, "ACK response not detected");  
+  addtest("abracadabra", null, false, "Unknown command");
+  addtest("gpio/write", null, false, "No parameters specified");
+  addtest("gpio/write", {"4":0}, true, "");
+  addtest("gpio/write", {"4":1}, true, "");
+  addtest("gpio/write", {"4":"x"}, true, "Dummy request");
+  addtest("gpio/write", {"16":0}, false, "Wrong pin");
+  addtest("gpio/write", {"4":22}, false, "Unsupported action");
+  addtest("gpio/read", null, true, null);
+  addtest("gpio/read", {"4":"pullup"}, true, null);
+  addtest("gpio/read", {"4":"nopull"}, true, null);
+  addtest("gpio/read", {"4":"abracadabra"}, false, "Unsupported action");
+  addtest("gpio/read", {"4":"init"}, true, null);
+  addtest("gpio/read", {"4":"disable"}, false, "Unexpected parameter");
+  addtest("gpio/read", {"24":"init"}, false, "Wrong pin");
+  addtest("gpio/int", {"4":"both", "timeout":500}, true, "");
+  addtest("gpio/int", {"timeout":500}, true, "");
+  addtest("gpio/int", {"timeout":5}, false, "Timeout is wrong");
+  addtest("gpio/int", {"timeout":"-500"}, false, "Non integer value");
+  addtest("gpio/int", {"4":"rising"}, true, "");
+  addtest("gpio/int", {"4":"falling"}, true, "");
+  addtest("gpio/int", {"4":"abracadabra"}, false, "Unsupported action");
+  addtest("gpio/int", {"4":"both"}, true, "");
+  addtest("gpio/int", {"4":"disable"}, true, "");
+  addtest("gpio/int", {"4":"disa"}, false, "Unsupported action");
+  addtest("gpio/int", {"4":0}, false, "Unexpected parameter");
+  addtest("adc/read", null, true, null);
+  addtest("adc/read", {"0":"read"}, true, null);
+  addtest("adc/read", {"1":"read"}, false, "Unknown ADC channel");
+  addtest("adc/read", {"a":"read"}, false, "Wrong pin");
+  addtest("adc/read", {"al":"read"}, false, "Wrong pin");
+  addtest("adc/read", {"all":"read"}, true, null);
+  addtest("adc/read", {"12":"read"}, false, "Unknown ADC channel");
+  addtest("adc/read", {"b":"read"}, false, "Wrong pin");
+  addtest("adc/int", {"0":1000}, true, "");
+  addtest("adc/int", {"0":8388608}, false, "Wrong period");
+  addtest("adc/int", {"0":"disable"}, true, "");
+  addtest("adc/int", {"0":"disabled"}, false, "Non integer value");
+  addtest("adc/int", {"0":0}, true, "");
+  addtest("pwm/control", null, false, "No parameters specified");
+  addtest("pwm/control", {"frequency":1000}, true, "");
+  addtest("pwm/control", {"frequency":0.0005}, true, "");
+  addtest("pwm/control", {"frequency":0.00049}, false, "Wrong parameters");
+  addtest("pwm/control", {"4":50}, true, "");
+  addtest("pwm/control", {"4":101}, false, "Wrong parameters");
+  addtest("pwm/control", {"4":50,"count":100}, true, "");
+  addtest("pwm/control", {"4":50,"frequency":1000,"count":4294967295}, true, "");
+  addtest("pwm/control", {"4":50,"frequency":4001}, false, "Wrong parameters");
+  addtest("pwm/control", {"4":"disable"}, true, "");
+  addtest("uart/int", {"timeout":1000}, true, "");
+  addtest("uart/int", null, true, "");
+  addtest("uart/int", {"mode":9600}, true, "");
+  addtest("uart/int", {"mode":"19200 8E1"}, true, "");
+  addtest("uart/int", {"mode":"57600 9E1", "timeout":2000}, false, "Wrong UART mode");
+  addtest("uart/int", {"mode":"57600 G3F", "timeout":2000}, false, "Wrong mode framing");
+  addtest("uart/int", {"mode":"57600 8E3"}, false, "Wrong UART mode");
+  addtest("uart/int", {"mode":"9600 7O2", "timeout":2000}, true, "");
+  addtest("uart/int", {"mode":"115200 8N1"}, true, "");
+  addtest("uart/int", {"mode":"disable"}, true, "");
+  addtest("uart/int", {"mode":"0"}, true, "");
+  addtest("uart/write", {"data":"SGVsbG8sIHdvcmxkIQ=="}, true, "");
+  addtest("uart/write", {"data":"SGVsbG8sIHdvcmxkIQ==", "timeout":300}, false, "Unexpected parameter");
+  addtest("uart/write", {"data":"SGVsbG8sIHdvcmxkIQ="}, false, "Data is broken");
+  addtest("uart/write", {"data":"SGVsbG8sIHdv^mxkIQ=="}, false, "Data is broken");
+  addtest("uart/terminal", {"4":"disable"}, false, "Command does not have parameters");
+  addtest("uart/terminal", null, true, "");
+  addtest("i2c/master/read", null, false, "No parameters specified");
+  addtest("i2c/master/read", {"address":"EE"}, false, "ACK response not detected");
+  addtest("i2c/master/read", {"address":"ggg"}, false, "Address is wrong");
+  addtest("i2c/master/read", {"address":"EE"}, false, "ACK response not detected");
+  addtest("i2c/master/read", {"address":"EE","data":"AA=="}, false, "ACK response not detected");
+  addtest("i2c/master/read", {"address":"EE","data":"AA==","count":0}, false, "Can not read 0 bytes");
+  addtest("i2c/master/read", {"address":"0xED","data":"AA==","count":3}, false, "ACK response not detected");
+  addtest("i2c/master/write", {"address":"EE","data":""}, false, "Data is broken");
+  addtest("i2c/master/write", {"address":"EE","data":"AA==","SDA":0}, false, "Only one pin specified");
+  addtest("i2c/master/write", {"address":"EE","data":"AA==","SDA":0,"SCL":0}, false, "Wrong I2C parameters");
+  addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":2}, false, "ACK response not detected");
+  addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":22}, false, "Wrong I2C parameters");
+ 
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["url"] + "/device/" + localStorage["deviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["password"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            println("<font color=red>ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText + "</font>");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            var status = json["status"];
+            var result = JSON.stringify(json['result']);
+            if(status == null) {
+              getres(JSON.parse(xmlhttp.responseText)["id"]);
+            } else {
+              if((status == "OK" && statuses[currentId]) || (status != "OK" && !statuses[currentId])) {
+                if(generate == true){
+                  println('addtest("' + commands[currentId]['command'] + '", ' + JSON.stringify(commands[currentId]['parameters']) + ', ' + statuses[currentId] + ', ' + result + ');');
+                } else {
+                  if(results[currentId] == null || JSON.stringify(results[currentId]) == result) {
+                    println("<font color=green>OK</font>");
+                  } else {
+                    println("<font color=red>ERROR: Wrong result " + xmlhttp.responseText + "</font>");
+                    isErrorOccurried = true;
+                  }
+                }
+              } else {
+                println("<font color=red>ERROR: Wrong status " + xmlhttp.responseText + "</font>");
+                isErrorOccurried = true;
+              }
+              currentId++;
+              if(currentId < commands.length) {
+                if(isrun == 2) {
+                  println("<font color=red>Canceled.</font>");
+                  isrun = 0;
+                } else { 
+                  sendnext();
+                }  
+              } else {
+                isrun = 0;
+                if(isErrorOccurried)
+                  println("<font color=red>Test done. Error occurried. See above for deatails.</font>");
+                else
+                  println("<font color=green>Test done. No errors.</font>");
+              }
+            }
+          }
+        }
+      }
+    xmlhttp.send("");
+  }
+  function sendnext() {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              println("<font color=red>ERROR: Command request returned " + xmlhttp.status + " " + xmlhttp.responseText + "</font>");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"]);
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify(commands[currentId]));
+    if(generate == false)
+      print("Command sent: " + JSON.stringify(commands[currentId]) + " ");
+  }
+  
+  function perform(form){ 
+    if(isrun != 0) {
+      isrun = 2;
+    } else {
+      localStorage["dhurl"] = form.url.value;
+      localStorage["dhdeviceid"] = form.deviceid.value;
+      localStorage["dhpassword"] = form.password.value;
+      currentId = 0;
+      isErrorOccurried = false;
+      generate = form.debug.checked;
+      isrun = 1;
+      sendnext();
+    }
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  
+  </script>
+  </head>
+  <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <label>Generate tests: </label><input type="checkbox" name="debug"><br>
+      <input type="button" value="Run/Stop" onClick="perform(this.form);"><br>
+    </form>  
+    <div id="con"> </div>
+  </body>
+</html> 

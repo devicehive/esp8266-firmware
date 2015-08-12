@@ -50,7 +50,7 @@ void * SerialPort::thread_start(void *arg) {
 }
 
 SerialPort *SerialPort::open(const char *port) {
-    COM comp = ::open ( port, O_RDWR| O_NONBLOCK | O_NDELAY );
+    COM comp = ::open ( port, O_RDWR | O_NONBLOCK | O_NDELAY );
     if(comp>=0)
     {
        struct termios tio;
@@ -94,14 +94,15 @@ SerialPort::~SerialPort() {
 }
 
 unsigned int SerialPort::write_native(const void *data, unsigned int len) {
-	ssize_t bw = write(mCom, data, len);
-	#if ( defined(__APPLE__) || defined(__MACH__) )
-	// do nothing
-	#else
-	if(bw)
-		tcflush( mCom, TCOFLUSH );
-	#endif
-	return bw;
+	ssize_t bw;
+	ssize_t total = 0;
+	do {
+		bw = write(mCom, (char *)data + total, len - total);
+		total += bw;
+		if(bw)
+			tcdrain(mCom);
+	} while(bw > 0 && total < len);
+	return total;
 }
 
 void SerialPort::sleep(unsigned int ms) {

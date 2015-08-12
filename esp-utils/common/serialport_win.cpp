@@ -100,11 +100,16 @@ SerialPort::~SerialPort() {
 }
 
 unsigned int SerialPort::write_native(const void *data, unsigned int len) {
-	DWORD nb = 0;
-	WriteFile(mCom,data,len,&nb,0);
-	if(nb)
-		FlushFileBuffers(mCom);
-	return nb;
+	DWORD nb;
+	DWORD total = 0;
+	do {
+		nb = 0;
+		WriteFile(mCom, (char*)data + total, len - total, &nb, 0);
+		total += nb;
+		if(nb)
+			FlushFileBuffers(mCom);
+	} while(nb > 0 && total < len);
+	return total;
 }
 
 void SerialPort::sleep(unsigned int ms) {

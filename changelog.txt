@@ -1,0 +1,11 @@
+v0.1 Initial version
+
+v0.2
+- Minor terminal improvment
+- PWM added
+- UART added
+- I2C added
+- DeviceName sends to server as the same string as DeviceId
+- Online status showing now works on server
+- timeout added for GPIO interruption
+- OS X flasher fix

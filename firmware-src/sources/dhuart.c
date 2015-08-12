@@ -1,0 +1,149 @@
+/*
+ * dhuart.c
+ *
+ * Copyright 2015 DeviceHive
+ *
+ * Author: Nikolay Khabarov
+ *
+ * Description: uart hal for esp8266
+ *
+ */
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <gpio.h>
+#include "dhuart.h"
+#include "user_config.h"
+
+#define UART_BASE 0x60000000
+#define UART_INTERUPTION_STATE_REGISTER (UART_BASE + 0x08)
+#define UART_INTERUPTION_ENABLE_REGISTER (UART_BASE + 0x0C)
+#define UART_INTERUPTION_REGISTER (UART_BASE + 0x10)
+#define UART_STATUS_REGISTER (UART_BASE + 0x1C)
+#define UART_DIV_REGISTER (UART_BASE + 0x14)
+#define UART_CONFIGURATION_REGISTER0 (UART_BASE + 0x20)
+#define UART_CONFIGURATION_REGISTER1 (UART_BASE + 0x24)
+
+#define DHUART_BUFFER_OVERFLOW_RESERVE INTERFACES_BUF_SIZE
+DHUART_DATA_MODE mDataMode = DUM_PER_BYTE;
+char mUartBuf[INTERFACES_BUF_SIZE + DHUART_BUFFER_OVERFLOW_RESERVE];
+unsigned int mUartBufPos = 0;
+os_timer_t mUartTimer;
+unsigned int mUartTimerTimeout = 250;
+unsigned char mBufInterrupt = 0;
+
+LOCAL ICACHE_FLASH_ATTR void arm_buf_timer();
+
+LOCAL void ICACHE_FLASH_ATTR buf_timeout(void *arg) {
+	unsigned int sz = mUartBufPos;
+	if(sz > INTERFACES_BUF_SIZE)
+		sz = INTERFACES_BUF_SIZE;
+	dhuart_buf_rcv(mUartBuf, sz);
+	ETS_UART_INTR_DISABLE();
+	if(sz != mUartBufPos) {
+		os_memmove(mUartBuf, &mUartBuf[sz], mUartBufPos - sz);
+		mUartBufPos -= sz;
+	} else {
+		mUartBufPos = 0;
+	}
+	ETS_UART_INTR_ENABLE();
+	if(mUartBufPos)
+		arm_buf_timer();
+}
+
+LOCAL ICACHE_FLASH_ATTR void arm_buf_timer() {
+	os_timer_disarm(&mUartTimer);
+	os_timer_setfn(&mUartTimer, (os_timer_func_t *)buf_timeout, NULL);
+	os_timer_arm(&mUartTimer, (mUartTimerTimeout == 0 | mUartBufPos >= INTERFACES_BUF_SIZE) ? 1 :mUartTimerTimeout, 0);
+}
+
+LOCAL ICACHE_FLASH_ATTR void dhuart_intr_handler(void *arg) {
+	if (READ_PERI_REG(UART_INTERUPTION_STATE_REGISTER) & BIT(0)) {
+		const char rcvChar = READ_PERI_REG(UART_BASE) & 0xFF;
+		WRITE_PERI_REG(UART_INTERUPTION_REGISTER, BIT(0));
+		switch(mDataMode) {
+		case DUM_PER_BYTE:
+			dhuart_char_rcv(rcvChar);
+			break;
+		case DUM_PER_BUF:
+			if(mBufInterrupt) {
+				if(mUartBufPos >= sizeof(mUartBuf)) {
+					dhdebug("ERROR: UART buffer overflow");
+					return;
+				}
+				mUartBuf[mUartBufPos++] = rcvChar;
+				if(mUartBufPos <= INTERFACES_BUF_SIZE) {
+					arm_buf_timer();
+				}
+			}
+			break;
+		}
+	}
+}
+
+int ICACHE_FLASH_ATTR dhuart_init(unsigned int speed, unsigned int databits, char parity, unsigned int stopbits) {
+	if(speed < 300 || speed > 230400 || databits < 5 || databits > 8 || !(parity == 'N' || parity == 'O' || parity == 'E') || stopbits > 2 ||  stopbits < 1)
+		return 0;
+
+	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
+	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0RXD_U);
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_U0TXD);
+	gpio_output_set(0, 0, 0, BIT(1) | BIT(3));
+
+	WRITE_PERI_REG(UART_DIV_REGISTER, UART_CLK_FREQ / speed);
+	WRITE_PERI_REG(UART_CONFIGURATION_REGISTER0, 0);
+	SET_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, ((parity == 'E') ? 0 : 1)  <<  0);
+	SET_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, ((parity == 'N') ? 0 : 1)  <<  1);
+	SET_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, (databits - 5)  <<  2);
+	SET_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, ((stopbits == 2) ? 3 : 1)  <<  4);
+	SET_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, BIT(17) | BIT(18));
+	CLEAR_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, BIT(17) | BIT(18));
+	WRITE_PERI_REG(UART_CONFIGURATION_REGISTER1, BIT(0) | BIT(16) | BIT(23));
+	WRITE_PERI_REG(UART_INTERUPTION_REGISTER, 0xffff);
+	SET_PERI_REG_MASK(UART_INTERUPTION_ENABLE_REGISTER, BIT(0));
+	ETS_UART_INTR_ATTACH(dhuart_intr_handler,  0);
+	ETS_UART_INTR_ENABLE();
+	return 1;
+}
+
+LOCAL void ICACHE_FLASH_ATTR dhuart_send_char(char c) {
+	while((READ_PERI_REG(UART_STATUS_REGISTER) >> 16) & 0xFF);
+	WRITE_PERI_REG(UART_BASE , c);
+}
+
+void ICACHE_FLASH_ATTR dhuart_send_str(const char *str) {
+	if(mDataMode != DUM_PER_BYTE)
+		return;
+	while(*str)
+		dhuart_send_char(*str++);
+}
+
+void ICACHE_FLASH_ATTR dhuart_send_line(const char *str) {
+	dhuart_send_str(str);
+	dhuart_send_str("\r\n");
+}
+
+void ICACHE_FLASH_ATTR dhuart_send_buf(const char *buf, unsigned int len) {
+	if(mDataMode != DUM_PER_BUF)
+		return;
+	while(len--)
+		dhuart_send_char(*buf++);
+}
+
+void ICACHE_FLASH_ATTR dhuart_set_mode(DHUART_DATA_MODE mode, unsigned int timeout) {
+	mDataMode = mode;
+	if(mode == DUM_PER_BUF)
+		mUartTimerTimeout = timeout;
+	else if(mode == DUM_PER_BYTE)
+		mBufInterrupt = 0;
+}
+
+unsigned int ICACHE_FLASH_ATTR dhuart_get_timeout() {
+	return mUartTimerTimeout;
+}
+
+void ICACHE_FLASH_ATTR dhuart_enable_buf_interrupt(int enable) {
+	mBufInterrupt = enable ? 1 : 0;
+}

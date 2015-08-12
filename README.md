@@ -17,6 +17,12 @@ Sources of DeviceHive ESP8266 firmware.
 Small utils which is written on bash and can be used on any OS. This util
 creates binary firmware files files from crosstool-NG binary file output.
 
+# firmware-tests
+Tests for firmware. Youcan find sample of command in file requests.html. Each
+addtest() instance have boolean third parameter. If this parameters is true it
+means that command and parameters is written correctly and you can use it as
+a sample.
+
 # release
 Pre built binaries of utils and released firmwares.
 

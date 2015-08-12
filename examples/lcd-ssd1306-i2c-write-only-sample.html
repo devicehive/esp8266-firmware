@@ -1,0 +1,169 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  function print(text, color) {
+    document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  var commandList = []
+  var commandInProgress = false;
+  function send_command_now(jsonstring) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+    if(xmlhttp.readyState == 4){
+        if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+          print("ERROR: Error while sending command " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+        } else {
+          if(commandList.length > 0)
+            send_command_now(commandList.shift());
+          else
+            commandInProgress = false;
+        }
+      }
+    } 
+    xmlhttp.send(jsonstring);
+  }
+  
+  function send_command(command, parameters) {
+    var jsonstring = JSON.stringify({"command":command, "parameters":parameters});
+    if(commandInProgress == true) {
+      commandList.push(jsonstring);
+      return;  
+    } 
+    commandInProgress = true;
+    send_command_now(jsonstring);    
+  }
+  
+  function write_ssd1306_command(command) {
+    send_command("i2c/master/write", {"address":"78", "data":btoa(String.fromCharCode(0) + String.fromCharCode(command))});
+  }
+  
+  function write_ssd1306_data(data) {
+    send_command("i2c/master/write", {"address":"78", "data":btoa(String.fromCharCode(0x40) + data)});
+  }
+  
+  function wait_finish() {
+    if(commandInProgress == true) {
+      setTimeout(wait_finish, 100);
+    } else {
+      print("<h1>Done. Check your LCD.</h1><br>Refresh page to repeat.", "green");
+    }
+  }
+  
+  var imageData;
+  var imageWidth;
+  var imageHeight;
+  function getBWPix(x, y) {
+    p = (y * imageWidth + x)*4;
+    r = imageData.data[p];
+    g = imageData.data[p + 1];
+    b = imageData.data[p + 2];
+    v = 0.2126*r + 0.7152*g + 0.0722*b;
+    if(v > 127)
+      return true;
+    return false;
+  }
+  
+  function example() {
+    write_ssd1306_command(0x8D);  
+  	write_ssd1306_command(0x14);  
+  	write_ssd1306_command(0xAF);
+    for (i = 0; i < 8; i++) { // 8 - number of pages, 1 bit is pixel, 1 page is 8 horizontal pixels by one byte. So total resolutuion of LCD is 128x64
+    	write_ssd1306_command(0xB0 + i);
+    	write_ssd1306_command(0x00);
+    	write_ssd1306_command(0x10);
+      data = ""
+    	for (x = 0; x < 128; x++) {
+        var tb = 0;
+        for (j = 0; j < 8; j++) {
+          y = i * 8 + j;
+          if(getBWPix(x,y)) // if we have bright pixel
+            tb |= (1 << j);
+        }
+        data += String.fromCharCode(tb)
+      }
+      write_ssd1306_data(data);
+    }
+    wait_finish(); 
+  }
+  
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    example();
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+    form.image.addEventListener("change", draw, false);
+  }
+  
+  function draw(event) {
+    var canvas = document.getElementById("canvas");
+    var cnvctx = canvas.getContext("2d"); 
+    var image = new Image(); 
+    var URL = window.webkitURL || window.URL;
+    var url = URL.createObjectURL(document.getElementById("image").files[0]); 
+    image.onload = function() {
+      cnvctx.drawImage(image, 0, 0);
+      imageData = cnvctx.getImageData(0,0,canvas.width,canvas.height);
+      imageWidth = canvas.width;
+      imageHeight = canvas.height;
+    };
+    image.onerror = function() {
+      cnvctx.rect(0,0, canvas.width, canvas.height);
+      cnvctx.fillStyle="white";
+      cnvctx.fill();
+      cnvctx.beginPath();
+      cnvctx.moveTo(0,0);
+      cnvctx.lineTo(canvas.width, canvas.height);
+      cnvctx.moveTo(0,canvas.height);
+      cnvctx.lineTo(canvas.width,0);
+      cnvctx.strokeStyle="red";
+      cnvctx.stroke(); 
+      imageData = cnvctx.getImageData(0,0,canvas.width,canvas.height);
+      imageWidth = canvas.width;
+      imageHeight = canvas.height;
+    };
+    image.src = url; 
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <label>Image: </label><input type="file" id="image"><br>
+      <canvas id="canvas" width="128" height="64"></canvas>
+      <br><input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 

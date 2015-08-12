@@ -1,0 +1,200 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  function print(text, color) {
+    document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id, callback) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            print("ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            if(json['result'] == null || json['status'] == null) {
+              getres(id, callback);
+              return;
+            }
+            if(json['status'] != "OK") {
+              print("Error - " + xmlhttp.responseText, "red");
+              return;
+            }
+            callback(json['result']['data']);
+          }
+      }
+    }
+    xmlhttp.send("");
+  }
+  
+  function get_data(register, size, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not read data " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/read", "parameters":{"address":"0xEE", "count":size, "data":btoa(String.fromCharCode(register))}}));
+  }
+  
+  function write_register(register, value, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not write register " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    data = btoa(String.fromCharCode(register) + String.fromCharCode(value));
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/write", "parameters":{"address":"0xEE", "data":data}}));
+  }
+  
+  var oss = 0;
+  var ac1;
+  var ac2; 
+  var ac3; 
+  var ac4;
+  var ac5;
+  var ac6;
+  var b1; 
+  var b2;
+  var mb;
+  var mc;
+  var md;
+  var ut;
+  var up;
+  
+  function unsignedInt16(data, pos) {
+    return data.charCodeAt(pos) * 256 + data.charCodeAt(pos + 1);
+  }
+  function signedInt16(data, pos) {
+    i =  unsignedInt16(data, pos);
+    if( i <= 0x7FFF)
+      return i;
+    return i - 0x10000;
+  }
+  
+  function calibration_data_recevied(base64) {
+    var data = atob(base64);
+    ac1 = signedInt16(data, 0);
+    ac2 = signedInt16(data, 2);
+    ac3 = signedInt16(data, 4);
+    ac4 = unsignedInt16(data, 6);
+    ac5 = unsignedInt16(data, 8);
+    ac6 = unsignedInt16(data, 10);
+    b1 = signedInt16(data, 12);
+    b2 = signedInt16(data, 14);
+    mb = signedInt16(data, 16);
+    mc = signedInt16(data, 18);
+    md = signedInt16(data, 20);
+    
+    print("ac1=" + ac1 + " ac2=" + ac2 + " ac3=" + ac3 + " ac4=" + ac4 + " ac5=" + ac5 + " ac6=" + ac6 + " b1=" + b1 + " b2=" + b2 + " mb=" + mb + " mc=" + mc + " md=" + md, "black");
+    
+    write_register(0xF4, 0x2E, temperature_enable_cb)
+  }
+  
+  function temperature_enable_cb(base64) {
+    setTimeout(function() { // we need to wait while sensor measure data, http request takes more time, but just in case
+        get_data(0xF6, 2, temerature_data_recevied);
+    }, 50);  
+  }
+  
+  function temerature_data_recevied(base64) {
+    var data = atob(base64);
+    ut = unsignedInt16(data, 0);
+    write_register(0xF4, 0x34, pressure_enable_cb)
+  }
+  
+  function pressure_enable_cb(base64) {
+    setTimeout(function() { // we need to wait while sensor measure data, http request takes more time, but just in case
+        get_data(0xF6, 2, pressure_data_recevied);
+    }, 50);  
+  }
+  
+  function pressure_data_recevied(base64) {
+    var data = atob(base64);
+    up = unsignedInt16(data, 0);
+    // now we have temperature, pressure and calibration data
+    // let's calculate real values using formulas from manufactor
+    x1 = (ut - ac6) * ac5 >> 15;
+    x2 = (mc << 11) / (x1 + md);
+    b5 = x1 + x2;
+    t  = (b5 + 8) >> 4;
+    temperature = t / 10.0;
+    
+   	b6 = b5 - 4000;
+    x1 = (b2 * ((b6 * b6) >> 12)) >> 11;
+    x2 = (ac2 * b6) >> 11;
+    x3 = x1 + x2;
+    b3 = (((ac1 * 4 + x3) << oss) + 2) >> 2;
+    x1 = (ac3 * b6) >> 13;
+    x2 = (b1 * ((b6 * b6) >> 12)) >> 16;
+    x3 = ((x1 + x2) + 2) >> 2;
+    b4 = (ac4 * (x3 + 32768)) >> 15;
+    b7 = ((up - b3) * (50000 >> oss));
+    p = b7 < 0x80000000 ? (b7 * 2) / b4 : (b7 / b4) * 2;
+    x1 = (p >> 8) * (p >> 8);
+    x1 = (x1 * 3038) >> 16;
+    x2 = (-7357 * p) >> 16;
+    p = p + ((x1 + x2 + 3791) >> 4);
+    pressure = p / 100.0; 
+ 
+    print("<h1>Temperature: " + temperature.toFixed(1) + " C<br>Pressure: " + pressure.toFixed(2) + " mBar</h1>", "green");
+    // loop
+    write_register(0xF4, 0x2E, temperature_enable_cb);
+  }
+  
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    get_data(0xAA, 22, calibration_data_recevied);
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 
