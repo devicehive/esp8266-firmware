@@ -36,6 +36,7 @@ public:
     void send(char c);
     void send(const void *data, unsigned int len);
     bool waitAnswer(unsigned int len, unsigned int timeOutMs);
+    void waitTransmitionEnd(unsigned int timeOutMs);
     bool isReadError();
     static const char *findNextPort(bool finish);
 private:
@@ -48,12 +49,14 @@ private:
     unsigned int write_native(const void *data, unsigned int len);
     bool read_native(const void *data, unsigned int len, unsigned int *rb);
     void sleep(unsigned int ms);
+    static unsigned int getTick();
     COM get_com();
     COM mCom;
     bool mTreadFlag;
     void *mThread;
     unsigned int mBytesRecivedSinceLastSend;
     bool mReadError;
+    unsigned int mLastReceived;
 };
 
 extern void SerialPortRecieved(SerialPort *port, const char *text, unsigned int len);

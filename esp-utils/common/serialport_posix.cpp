@@ -20,6 +20,7 @@
 #include <termios.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <sys/time.h>
 
 void * SerialPort::thread_start(void *arg) {
     SerialPort *port =  (SerialPort *)arg;
@@ -32,6 +33,7 @@ void * SerialPort::thread_start(void *arg) {
         if(!port->mTreadFlag)
         	break;
         if(rb>0) {
+        	port->mLastReceived = port->getTick();
             port->mReadError = false;
             buff[rb]='\0';
             SerialPortRecieved(port, buff, rb);
@@ -140,6 +142,12 @@ const char *SerialPort::findNextPort(bool finish) {
 		}
 	}
 	return buf;
+}
+
+unsigned int SerialPort::getTick() {
+	struct timeval tv;
+	gettimeofday(&tv,NULL);
+	return tv.tv_usec / 1000UL + (tv.tv_sec % 3600000UL) * 1000UL;
 }
 
 #endif

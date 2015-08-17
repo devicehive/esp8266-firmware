@@ -35,6 +35,15 @@ typedef struct {
 	uint32_t cs;
 } ESP_REQUEST_HEADER;
 
+uint8_t ESP_INIT_DATA_DEAFULT[] = {	0x05, 0x00, 0x04, 0x02, 0x05, 0x05, 0x05, 0x02, 0x05, 0x00, 0x04, 0x05, 0x05, 0x04, 0x05, 0x05,
+									0x04, 0xfe, 0xfd, 0xff, 0xf0, 0xf0, 0xf0, 0xe0, 0xe0, 0xe0, 0xe1, 0x0a, 0xff, 0xff, 0xf8, 0x00,
+									0xf8, 0xf8, 0x52, 0x4e, 0x4a, 0x44, 0x40, 0x38, 0x00, 0x00, 0x01, 0x01, 0x02, 0x03, 0x04, 0x05,
+									0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+									0xe1, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x93, 0x43, 0x00, 0x00, 0x00,
+									0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+									0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+									0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+
 
 void SerialPortError(SerialPort */*port*/,const char *text) {
 	printf("\r\n%s\r\n", text);
@@ -129,7 +138,7 @@ bool flash_send(SerialPort *port, ESP_REQUEST_HEADER *hdr, void *body, bool prin
 //	printf("\r\n");
 
 	port->send(oBuf, oBufPos);
-	if (!port->waitAnswer(9, TIMEOUT)) {
+	if (!port->waitAnswer(5, TIMEOUT)) {
 		if(printErrors)
 			printf("\r\nNo answer from device\r\n");
 		return false;
@@ -141,11 +150,12 @@ bool flash_send(SerialPort *port, ESP_REQUEST_HEADER *hdr, void *body, bool prin
 		return false;
 	}
 	uint32_t asize = (uint32_t) recivedBuf[3] | (uint32_t) (recivedBuf[4] << 8);
-	if (!port->waitAnswer(asize + 3, TIMEOUT)) {
+	if (!port->waitAnswer(asize + 10, TIMEOUT)) {
 		if(printErrors)
 			printf("\r\nAnswer not completed\r\n");
 		return false;
 	}
+	port->waitTransmitionEnd(100);
 	if (asize != 2 || recivedBuf[asize + 9] != 0xc0) {
 		if(printErrors)
 			printf("\r\nWrong body length\r\n");
@@ -160,16 +170,7 @@ bool flash_send(SerialPort *port, ESP_REQUEST_HEADER *hdr, void *body, bool prin
 	return true;
 }
 
-bool flash_file(SerialPort *port, char *file, uint32_t address) {
-	FILE* fd = fopen(file, "rb");
-	if (!fd) {
-		printf("\r\nFailed to open file %s\r\n", file);
-		return false;
-	}
-	fseek(fd, 0, SEEK_END);
-	uint32_t size = ftell(fd);
-	fseek(fd, 0, SEEK_SET);
-	printf("Flashing %s at 0x%08X\r\n", file, address);
+bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address) {
 	uint32_t blocks_count = ceil((double) size / (double) ESP_BLOCK_SIZE);
 	ESP_REQUEST_HEADER rh;
 	uint32_t pbody[4];
@@ -187,12 +188,10 @@ bool flash_file(SerialPort *port, char *file, uint32_t address) {
 		printf("\r\nFailed to enter flash mode\r\n");
 		return false;
 	}
-	printf("Total block count %d, block size %d\r\n", blocks_count,
-			ESP_BLOCK_SIZE);
+	printf("Total block count %d, block size %d\r\n", blocks_count, ESP_BLOCK_SIZE);
 
 	for (unsigned int seq = 0; seq < blocks_count; seq++) {
-		printf("\rWriting block %d/%d at 0x%08X        ", seq, blocks_count,
-				address + ESP_BLOCK_SIZE * seq);
+		printf("\rWriting block %d/%d at 0x%08X        ", seq, blocks_count, address + ESP_BLOCK_SIZE * seq);
 		uint8_t buffer[ESP_BLOCK_SIZE + 16];
 		uint8_t *data = (uint8_t *) &buffer[16];
 		uint32_t *data32 = (uint32_t *) buffer;
@@ -200,29 +199,49 @@ bool flash_file(SerialPort *port, char *file, uint32_t address) {
 		data32[1] = htole32(seq);
 		data32[2] = 0;
 		data32[3] = 0;
-		unsigned int rb = fread(data, 1, ESP_BLOCK_SIZE, fd);
-		if(rb == 0) {
-			fclose(fd);
-			printf("\r\nFailed to read image file\r\n");
-			return false;
-		} else if (rb < ESP_BLOCK_SIZE) {
-			memset(&data[rb], 0xff, ESP_BLOCK_SIZE - rb);
+		uint32_t bl = size - seq * ESP_BLOCK_SIZE;
+		if (bl < ESP_BLOCK_SIZE) {
+			memcpy(data, &buf[seq * ESP_BLOCK_SIZE], bl);
+			memset(&data[bl], 0xff, ESP_BLOCK_SIZE - bl);
+		} else {
+			memcpy(data, &buf[seq * ESP_BLOCK_SIZE], ESP_BLOCK_SIZE);
 		}
 		rh.magic = 0x00;
 		rh.command = 0x03; // flash data
 		rh.size = htole16(sizeof(buffer));
 		rh.cs = esp_checksum(data, ESP_BLOCK_SIZE);
 		if (!flash_send(port, &rh, buffer, true)) {
-			fclose(fd);
 			printf("\r\nFailed to flash\r\n");
 			return false;
 		}
 	}
-	printf("\rBlocks wrote %d/%d at 0x%08X\r\n", blocks_count, blocks_count,
-			address);
-
-	fclose(fd);
+	printf("\rBlocks wrote %d/%d at 0x%08X\r\n", blocks_count, blocks_count, address);
 	return true;
+}
+
+bool flash_file(SerialPort *port, char *file, uint32_t address) {
+	FILE* fd = fopen(file, "rb");
+	if (!fd) {
+		printf("\r\nFailed to open file %s\r\n", file);
+		return false;
+	}
+	fseek(fd, 0, SEEK_END);
+	uint32_t size = ftell(fd);
+	fseek(fd, 0, SEEK_SET);
+	printf("Flashing %s at 0x%08X\r\n", file, address);
+	uint8_t *data = new uint8_t[size];
+
+	unsigned int rb = fread(data, 1, size, fd);
+	fclose (fd);
+	if (rb != size) {
+		delete [] data;
+		printf("\r\nFailed to read image file\r\n");
+		return false;
+	}
+	bool res = flash_mem(port, data, size, address);
+
+	delete [] data;
+	return res;
 }
 
 bool flash_done(SerialPort *port) {
@@ -336,10 +355,24 @@ int main(int argc, char* argv[]) {
 				"esp-flasher 0x00000 image1.bin 0x40000 image2.bin\r\n"
 				"Trying to flash with defaults:\r\n" \
 				"0x00000 <- 0x00000.bin\r\n" \
-				"0x40000 <- 0x40000.bin\r\n");
+				"0x40000 <- 0x40000.bin\r\n" \
+				"0x7C000 <- default configuration\r\n" \
+				"0x7E000 <- 4K of 0xFF\r\n"
+				);
 				isSuccess = flash_file(port, (char*)"0x00000.bin", 0x00000);
-				if(isSuccess)
+				if(isSuccess) {
 					isSuccess = flash_file(port, (char*)"0x40000.bin", 0x40000);
+					if(isSuccess) {
+						printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
+						isSuccess = flash_mem(port, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT), 0x7C000);
+						if(isSuccess) {
+							uint8_t data[4*1024];
+							memset(data, 0xFF, sizeof(data));
+							printf("Flashing 4K of 0xFF at 0x%08X\r\n", 0x7E000);
+							isSuccess = flash_mem(port, data, sizeof(data), 0x7E000);
+						}
+					}
+				}
 	} else {
 		if((argc - currentArg) % 2) {
 			delete port;

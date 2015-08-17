@@ -27,6 +27,7 @@ DWORD SerialPort::ThreadProc (LPVOID lpdwThreadParam ) {
         	break;
         if(res) {
             if(read > 0) {
+            	port->mLastReceived = port->getTick();
                 port->mReadError = false;
                 buff[read]='\0';
                 SerialPortRecieved(port, buff, read);
@@ -123,6 +124,10 @@ const char *SerialPort::findNextPort(bool finish) {
 	if(finish)
 		num = 0;
 	return buf;
+}
+
+unsigned int SerialPort::getTick() {
+	return GetTickCount();
 }
 
 #endif

@@ -18,6 +18,7 @@ SerialPort::SerialPort(COM comport) {
     mReadError = false;
     mBytesRecivedSinceLastSend = 0;
     mThread = 0;
+    mLastReceived = 0;
 }
 
 COM SerialPort::get_com() {
@@ -35,6 +36,11 @@ bool SerialPort::waitAnswer(unsigned int len, unsigned int timeOutMs) {
 		sleep(10);
 	}
 	return false;
+}
+
+void SerialPort::waitTransmitionEnd(unsigned int timeOutMs) {
+	while(getTick() - mLastReceived < timeOutMs)
+		sleep(10);
 }
 
 void SerialPort::send(const char *text) {
