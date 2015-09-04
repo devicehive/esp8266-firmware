@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef DHADC_H_
-#define DHADC_H_
+#ifndef _DHADC_H_
+#define _DHADC_H_
 
 /** ADC suitable channels. */
 #define DHADC_SUITABLE_PINS 0b01 // ADC0
@@ -30,4 +30,4 @@ void dhadc_loop(unsigned int period);
  */
 extern void dhadc_loop_value(float value);
 
-#endif /* DHADC_H_ */
+#endif /* _DHADC_H_ */

@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef SOURCES_DHUTILS_H_
-#define SOURCES_DHUTILS_H_
+#ifndef _DHUTILS_H_
+#define _DHUTILS_H_
 
 /**
  *	\brief				Convert string to float.
@@ -52,4 +52,12 @@ int byteToHex(unsigned char byte, char *hexout);
  */
 int hexToByte(const char *hex, unsigned char *byteout);
 
-#endif /* SOURCES_DHUTILS_H_ */
+/**
+ *	\brief					Util function to find out response code in HTTP response.
+ *	\param[in]	data		Pointer to HTTP response data.
+ *	\param[in]	len			HTTP response data length.
+ *	\return					Pointer to HTTP response code
+ */
+const char *find_http_responce_code(const char *data, unsigned short len);
+
+#endif /* _DHUTILS_H_ */

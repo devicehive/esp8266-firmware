@@ -8,7 +8,11 @@ Simple utils for flashing and connecting to ESP8266.
 
 # examples
 Simple web pages with JavaScript sample of sendind recieving command
-from device via cloud.
+from device via cloud. Onewire DS18B20 examples use 0x33[SKIP ROM] command
+which means that examples work only with one currently connected device. Some
+browsers(for example Firefox) block cross domen requests even for local file.
+Allow temporary cross domain requests in setting or use another browser to run
+examples.
 
 # firmware-src
 Sources of DeviceHive ESP8266 firmware.

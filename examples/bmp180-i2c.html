@@ -16,6 +16,8 @@
     }
   </style>
   <script type="text/javascript">
+  var SDA = 0;
+  var SCL = 2;
   function print(text, color) {
     document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
   }
@@ -61,7 +63,7 @@
             }
           }
         } 
-    xmlhttp.send(JSON.stringify({"command":"i2c/master/read", "parameters":{"address":"0xEE", "count":size, "data":btoa(String.fromCharCode(register))}}));
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/read", "parameters":{"SDA":SDA, "SCL":SCL, "address":"0xEE", "count":size, "data":btoa(String.fromCharCode(register))}}));
   }
   
   function write_register(register, value, callback) {
@@ -76,7 +78,7 @@
           }
         } 
     data = btoa(String.fromCharCode(register) + String.fromCharCode(value));
-    xmlhttp.send(JSON.stringify({"command":"i2c/master/write", "parameters":{"address":"0xEE", "data":data}}));
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/write", "parameters":{"SDA":SDA, "SCL":SCL, "address":"0xEE", "data":data}}));
   }
   
   var oss = 0;

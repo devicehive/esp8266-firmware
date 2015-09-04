@@ -12,7 +12,7 @@
 #include <os_type.h>
 #include "dhadc.h"
 
-os_timer_t mADCTimer;
+LOCAL os_timer_t mADCTimer;
 
 float ICACHE_FLASH_ATTR dhadc_get_value(){
 	return system_adc_read()/1024.0f;

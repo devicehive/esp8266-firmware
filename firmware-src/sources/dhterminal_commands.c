@@ -23,6 +23,8 @@
 #include "dhterminal_configure.h"
 #include "dhutils.h"
 #include "user_config.h"
+#include "dhstatistic.h"
+#include "dhsender_queue.h"
 
 int mIsCommandWorking = 0;
 char mHostBuffer[80];
@@ -34,6 +36,19 @@ int ICACHE_FLASH_ATTR dhterminal_commands_is_busy() {
 LOCAL void ICACHE_FLASH_ATTR sprintIp(char *buff, const struct ip_addr *ip) {
 	unsigned char *bip = (unsigned char *)ip;
 	snprintf(buff, 16, "%d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
+}
+
+LOCAL void ICACHE_FLASH_ATTR printBytes(char *buff, unsigned long long bytes) {
+	if(bytes > 1099511627776LL)
+		snprintf(buff, 16, "%f TiB", bytes/1099511627776.0);
+	else if(bytes > 1073741824)
+		snprintf(buff, 16, "%f GiB", bytes/1073741824.0);
+	else if (bytes > 1048576)
+		snprintf(buff, 16, "%f MiB", bytes/1048576.0);
+	else if (bytes > 1024)
+		snprintf(buff, 16, "%f KiB", bytes/1024.0);
+	else
+		snprintf(buff, 16, "%u B", (unsigned long)bytes);
 }
 
 LOCAL void ICACHE_FLASH_ATTR sprintMac(char *buff, const uint8 *mac) {
@@ -60,85 +75,118 @@ void ICACHE_FLASH_ATTR dhterminal_commands_uname(const char *args) {
 void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	uint8 mac[6];
 	char digitBuff[32];
+	struct station_config stationConfig;
+
+	dhuart_send_str("Network adapter ");
 	if(!wifi_get_macaddr(STATION_IF, mac)) {
-		dhuart_send_line("Failed to get mac address");
+		dhuart_send_str("[Failed to get mac address]");
 	} else {
-		struct station_config stationConfig;
-		system_print_meminfo();
-		if(!wifi_station_get_config(&stationConfig)) {
-			dhuart_send_line("Could not get station config");
-			os_memset(&stationConfig, 0, sizeof(stationConfig));
-		}
-		dhuart_send_str("Network adapter ");
 		sprintMac(digitBuff, mac);
 		dhuart_send_str(digitBuff);
-		switch(wifi_station_get_connect_status()) {
-		case STATION_IDLE:
-			dhuart_send_line(" is in idle");
-			break;
-		case STATION_CONNECTING:
-			dhuart_send_str(" is connecting to ");
-			dhuart_send_line(stationConfig.ssid);
-			break;
-		case STATION_WRONG_PASSWORD:
-			dhuart_send_str(" has wrong password for ");
-			dhuart_send_line(stationConfig.ssid);
-			break;
-		case STATION_NO_AP_FOUND:
-			dhuart_send_str(" can not find AP with SSID ");
-			dhuart_send_line(stationConfig.ssid);
-			break;
-		case STATION_CONNECT_FAIL:
-			dhuart_send_str(" has fail while connecting to ");
-			dhuart_send_line(stationConfig.ssid);
-			break;
-		case STATION_GOT_IP:
-		{
-			dhuart_send_str(" is connected to ");
-			dhuart_send_line(stationConfig.ssid);
-			struct ip_info info;
-			if(!wifi_get_ip_info(STATION_IF, &info)) {
-				dhuart_send_line("Failed to get ip info");
-			} else {
-				dhuart_send_str("IP: ");
-				sprintIp(digitBuff, &info.ip);
-				dhuart_send_str(digitBuff);
-				dhuart_send_str(", netmask: ");
-				sprintIp(digitBuff, &info.netmask);
-				dhuart_send_str(digitBuff);
-				dhuart_send_str(", gateway: ");
-				sprintIp(digitBuff, &info.gw);
-				dhuart_send_line(digitBuff);
-			}
-			break;
-		}
-		default:
-			dhuart_send_line("is in unknown state");
-			break;
-		}
-		dhuart_send_str("DeviceHive: ");
-		switch(dhconnector_get_state()) {
-		case CS_DISCONNECT:
-			dhuart_send_line("connection is not established.");
-			break;
-		case CS_GETINFO:
-			dhuart_send_line("getting info from server.");
-			break;
-		case CS_REGISTER:
-			dhuart_send_line("registering device.");
-			break;
-		case CS_POLL:
-			dhuart_send_line("successfully connected to server.");
-			break;
-		default:
-			dhuart_send_line("unknown state");
-			break;
-		}
 	}
+
+	if(!wifi_station_get_config(&stationConfig)) {
+		os_memset(&stationConfig, 0, sizeof(stationConfig));
+		os_strcpy(stationConfig.ssid, "[Can not get SSID]");
+	}
+	switch(wifi_station_get_connect_status()) {
+	case STATION_IDLE:
+		dhuart_send_line(" is in idle");
+		break;
+	case STATION_CONNECTING:
+		dhuart_send_str(" is connecting to ");
+		dhuart_send_line(stationConfig.ssid);
+		break;
+	case STATION_WRONG_PASSWORD:
+		dhuart_send_str(" has wrong password for ");
+		dhuart_send_line(stationConfig.ssid);
+		break;
+	case STATION_NO_AP_FOUND:
+		dhuart_send_str(" can not find AP with SSID ");
+		dhuart_send_line(stationConfig.ssid);
+		break;
+	case STATION_CONNECT_FAIL:
+		dhuart_send_str(" has fail while connecting to ");
+		dhuart_send_line(stationConfig.ssid);
+		break;
+	case STATION_GOT_IP:
+	{
+		dhuart_send_str(" is connected to ");
+		dhuart_send_line(stationConfig.ssid);
+		struct ip_info info;
+		if(!wifi_get_ip_info(STATION_IF, &info)) {
+			dhuart_send_line("Failed to get ip info");
+		} else {
+			dhuart_send_str("IP: ");
+			sprintIp(digitBuff, &info.ip);
+			dhuart_send_str(digitBuff);
+			dhuart_send_str(", netmask: ");
+			sprintIp(digitBuff, &info.netmask);
+			dhuart_send_str(digitBuff);
+			dhuart_send_str(", gateway: ");
+			sprintIp(digitBuff, &info.gw);
+			dhuart_send_line(digitBuff);
+		}
+		break;
+	}
+	default:
+		dhuart_send_line("is in unknown state");
+		break;
+	}
+	const DHSTATISTIC *stat = dhstatistic_get_statistic();
+	dhuart_send_str("Wi-Fi disconnect count: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->wifiLosts);
+	dhuart_send_line(digitBuff);
+
+	dhuart_send_str("Bytes received: ");
+	printBytes(digitBuff, stat->bytesReceived);
+	dhuart_send_str(digitBuff);
+	dhuart_send_str(", sent: ");
+	printBytes(digitBuff, stat->bytesSent);
+	dhuart_send_str(digitBuff);
+	dhuart_send_str(", errors: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->networkErrors);
+	dhuart_send_line(digitBuff);
+
+	dhuart_send_str("DeviceHive: ");
+	switch(dhconnector_get_state()) {
+	case CS_DISCONNECT:
+		dhuart_send_str("connection is not established");
+		break;
+	case CS_GETINFO:
+		dhuart_send_str("getting info from server");
+		break;
+	case CS_REGISTER:
+		dhuart_send_str("registering device");
+		break;
+	case CS_POLL:
+		dhuart_send_str("successfully connected to server");
+		break;
+	default:
+		dhuart_send_str("unknown state");
+		break;
+	}
+	dhuart_send_str(", errors count: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->serverErrors);
+	dhuart_send_line(digitBuff);
+
+	dhuart_send_str("Responses created/dropped: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->responcesTotal, stat->responcesDroppedCount);
+	dhuart_send_str(digitBuff);
+	dhuart_send_str(", notification created/dropped: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->notificationsTotal, stat->notificationsDroppedCount);
+	dhuart_send_line(digitBuff);
+
+
 	dhuart_send_str("Free heap size: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%d", system_get_free_heap_size());
 	dhuart_send_str(digitBuff);
-	dhuart_send_line(" bytes.");
+	dhuart_send_str(" bytes");
+
+	dhuart_send_str(", request queue size: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%d", dhsender_queue_length());
+	dhuart_send_line(digitBuff);
+
 }
 
 LOCAL void ICACHE_FLASH_ATTR scan_done_cb (void *arg, STATUS status) {

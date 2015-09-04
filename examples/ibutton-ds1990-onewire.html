@@ -1,0 +1,88 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  var PIN = 0;
+  function print(text, color) {
+    document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  var lastTimestamp = '';
+  function poll() {
+       var path = '/notification/poll'; 
+       if(lastTimestamp != '')
+         path = path + '?timestamp=' + lastTimestamp;
+       var xmlhttp = createxmlhttp('GET', path)
+       xmlhttp.onreadystatechange = function() {
+         if(xmlhttp.readyState != 4)
+           return;
+         if(xmlhttp.status == 0)
+           return;
+         if(xmlhttp.status != 200)
+           alert('Last poll request return ' + xmlhttp.status);
+         var result = JSON.parse(xmlhttp.responseText);
+         result.forEach(function(myjson) {
+           if(myjson['notification'] != 'onewire/master/int')
+             return;  
+           print('<h1>Found: ' + myjson['parameters']['found'] + '</h1>', 'green');
+           lastTimestamp = myjson['timestamp'];
+         });
+         poll();
+       };
+       xmlhttp.send();
+     }
+     
+  function intr(enalbe) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    var paramters = {};
+    paramters[PIN] = (enalbe == true) ? "presence" : "disable";  
+    xmlhttp.send(JSON.stringify({"command":"onewire/master/int", "parameters":paramters}));
+  }
+  
+  function run(form){                  
+    print("Waiting... Connect device to GPIO" + PIN + " to find out serial", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    poll();
+    intr(true);
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 

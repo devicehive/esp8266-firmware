@@ -9,6 +9,9 @@
       width: 100%;
       color: blue;
     }
+    label[id=status] {
+      width: 100%;
+    }
     input {
       width: 40%;
       display: inline-block; 
@@ -44,6 +47,7 @@
     xmlhttp.send(JSON.stringify({"command":command, "parameters":parameters}));
   }
   
+  var notificationCount = 0;
   var lastTimestamp = ""; 
   function poll() {
     var path = '/notification/poll'; 
@@ -59,7 +63,8 @@
        print('Last poll request return ' + xmlhttp.status);
      var result = JSON.parse(xmlhttp.responseText);
      result.forEach(function(myjson) {
-       document.getElementById("lastnotification").innerHTML = myjson['notification'] + " id=" + myjson['id'] + " timestamp=" + myjson['timestamp'];
+       notificationCount++;
+       document.getElementById("lastnotification").innerHTML = "#" + notificationCount + " " + myjson['notification'] + " id=" + myjson['id'] + " timestamp=" + myjson['timestamp'];
        lastTimestamp = myjson['timestamp'];
      });
      poll();
@@ -73,10 +78,11 @@
     localStorage["dhdeviceid"] = form.deviceid.value;
     localStorage["dhpassword"] = form.password.value;
     if(rs) {
-      send_command("pwm/control", {"4":"50", "frequency":4000});
+      send_command("pwm/control", {"4":"50", "frequency":2000});
       send_command("gpio/int", {"4":"both", "timeout":50});
       send_command("adc/int", {"0":250});
-      print("Running...", "green");
+      print("Started at " + new Date(), "green");
+      notificationCount = 0;
     } else {
       send_command("pwm/control", {"4":"disable"});
       send_command("gpio/int", {"4":"disable"});

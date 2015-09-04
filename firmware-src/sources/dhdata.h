@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef DHDATA_H_
-#define DHDATA_H_
+#ifndef _DHDATA_H_
+#define _DHDATA_H_
 
 /**
  *	\brief				Encode binary data to text.
@@ -31,4 +31,4 @@ int dhdata_encode(const char *data, unsigned int datalen, char *out, unsigned in
  */
 int dhdata_decode(const char *data, unsigned int datalen, char *out, unsigned int outlen);
 
-#endif /* DHDATA_H_ */
+#endif /* _DHDATA_H_ */

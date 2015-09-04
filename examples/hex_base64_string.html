@@ -5,12 +5,16 @@
       width: 10%;
       display: inline-block;
     }
-    input {
+    textarea {
       width: 70%;
-      display: inline-block; 
+      display: inline-block;
+      height: 4em;
     }
     input[type=button] {
-      width: 10%;
+      width: 15%;
+    }
+    .inputform * {
+        vertical-align: middle;   
     }
   </style>
   <script type="text/javascript">
@@ -77,10 +81,10 @@
   </script>
   </head>
   <body>  
-    <form name="form">
-      <label>Hex: </label><input type="text" id="hex"> <input type="button" value="Convert from Hex" onClick="fromhex();"><br>
-      <label>Base64: </label><input type="text" id="base64"> <input type="button" value="Convert from Base64" onClick="frombase64();"><br>
-      <label>String: </label><input type="text" id="string"> <input type="button" value="Convert from String" onClick="fromstring();"><br>
+    <form name="form" class="inputform">
+      <label>Hex: </label><textarea id="hex"></textarea> <input type="button" value="Convert from Hex" onClick="fromhex();"><br><br> 
+      <label>Base64: </label><textarea id="base64"></textarea> <input type="button" value="Convert from Base64" onClick="frombase64();"><br><br>
+      <label>String: </label><textarea id="string"></textarea> <input type="button" value="Convert from String" onClick="fromstring();"><br><br>
       <label id="plength"></label><br>
     </form>  
   </body>

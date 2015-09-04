@@ -6,12 +6,12 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHTERMINAL_CONFIGURE_H_
-#define USER_DHTERMINAL_CONFIGURE_H_
+#ifndef _DHTERMINAL_CONFIGURE_H_
+#define _DHTERMINAL_CONFIGURE_H_
 
 /**
  *	\brief	Start configuration util in terminal.
  */
 void dhterminal_configure_start();
 
-#endif /* USER_DHSERIAL_CONFIGURE_H_ */
+#endif /* _DHSERIAL_CONFIGURE_H_ */

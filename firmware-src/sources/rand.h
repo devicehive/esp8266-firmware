@@ -7,8 +7,8 @@
  *	\copyright		Public Domain
  */
 
-#ifndef USER_RAND_H_
-#define USER_RAND_H_
+#ifndef _RAND_H_
+#define _RAND_H_
 
 /** Maximum random values count.*/
 #define RAND_MAX 32767
@@ -19,4 +19,19 @@
  */
 int rand();
 
-#endif /* USER_RAND_H_ */
+/**
+ *	\brief			Generate random device key.
+ *	\details		Key length is variable.
+ *	\param[out] buf	Pointer to buf where data will be copied. Should be at least 17 bytes. Pass zero to emulate and find out max size.
+ *	\return			Number of char was copied to buf, excluding null terminated.
+ */
+unsigned int rand_generate_key(char *buf);
+
+/**
+ *	\brief			Generate random device id.
+ *	\param[out] buf	Pointer to buf where data will be copied. Should be at least 20 bytes. Pass zero to emulate and find out max size.
+ *	\return			Number of char was copied to buf, excluding null terminated, always 19.
+ */
+unsigned int rand_generate_deviceid(char *buf);
+
+#endif /* _RAND_H_ */

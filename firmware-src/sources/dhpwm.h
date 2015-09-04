@@ -7,8 +7,8 @@
  *	\details 	This module uses ESP8266 hardware timer, so any other module with hardware timer requirement will be incompatible.
  */
 
-#ifndef USER_DHPWM_H_
-#define USER_DHPWM_H_
+#ifndef _DHPWM_H_
+#define _DHPWM_H_
 
 /** Default frequency in microseconds. */
 #define DHPWM_DEFAULT_PERIOD_US 1000
@@ -38,4 +38,4 @@ unsigned int dhpwm_get_period_us();
  */
 void dhpwm_disable_pins(unsigned int pinsmask);
 
-#endif /* USER_DHPWM_H_ */
+#endif /* _DHPWM_H_ */

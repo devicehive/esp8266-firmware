@@ -19,7 +19,7 @@
 #include "snprintf.h"
 #include "dhutils.h"
 
-char mComleaterBuff[48];
+LOCAL char mComleaterBuff[48];
 
 LOCAL void ICACHE_FLASH_ATTR get_devicekey_cb(const char *key) {
 	if(*key)
@@ -36,39 +36,8 @@ LOCAL void ICACHE_FLASH_ATTR get_devicekey_cb(const char *key) {
 }
 
 LOCAL char * ICACHE_FLASH_ATTR generate_key(const char *pattern) {
-	const int minlen = 8;
-	const int maxlen = 16;
-	char *buf = mComleaterBuff;
-	int num = minlen + rand() % (maxlen - minlen + 1);
-	while(num--) {
-		char c = 0x21 + rand() % 0x5C; // 0x21 - 0x7C
-		// removing unsuitable chars
-		if(c == '"')
-			c = '}'; // 0x7D
-		else if (c == '\\')
-			c = '~'; // 0x7E
-		*buf++ =  c;
-	}
-	*buf = 0;
+	rand_generate_key(mComleaterBuff);
 	return mComleaterBuff;
-}
-
-LOCAL int ICACHE_FLASH_ATTR deviceid_filter(char c) {
-	if(c == '-' || c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
-		return 1;
-	return 0;
-}
-
-LOCAL int ICACHE_FLASH_ATTR devicekey_filter(char c) {
-	if(c <= 0x20 || c >= 0x7F || c == '"' || c == '\\')
-			return 0;
-	return 1;
-}
-
-LOCAL int ICACHE_FLASH_ATTR url_filter(char c) {
-	if(c <= 0x20 || c >= 0x7F)
-		return 0;
-	return 1;
 }
 
 LOCAL void ICACHE_FLASH_ATTR get_deviceid_cb(const char *id) {
@@ -78,18 +47,14 @@ LOCAL void ICACHE_FLASH_ATTR get_deviceid_cb(const char *id) {
 	if(dhsettings_get_devicehive_devicekey()[0] == 0) {
 		dhuart_send_line("Key wasn't stored before. Generating random, change it if you want.");
 	}
-	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_devicekey_cb, generate_key, devicekey_filter, DHSETTINGS_DEVICEKEY_MAX_LENGTH);
+	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_devicekey_cb, generate_key, dhsettings_devicekey_filter, DHSETTINGS_DEVICEKEY_MAX_LENGTH);
 	if(dhsettings_get_devicehive_devicekey()[0] == 0) {
 		dhterminal_set_input(generate_key(""));
 	}
 }
 
 LOCAL char * ICACHE_FLASH_ATTR generate_deviceid(const char *pattern) {
-	int mComleaterBuffPos = snprintf(mComleaterBuff, sizeof(mComleaterBuff), "esp-device-");
-	int i;
-	for(i = 0; i < 8 && mComleaterBuffPos < sizeof(mComleaterBuff) - 1; i++) {
-		mComleaterBuffPos += snprintf(&mComleaterBuff[mComleaterBuffPos], sizeof(mComleaterBuff) - mComleaterBuffPos, "%x", rand() % 16);
-	}
+	rand_generate_deviceid(mComleaterBuff);
 	return mComleaterBuff;
 }
 
@@ -105,20 +70,22 @@ LOCAL void ICACHE_FLASH_ATTR get_server_cb(const char *server) {
 	dhsettings_set_devicehive_server(buf);
 	dhuart_send_line("Enter DeviceHive DeviceId. Press Tab button to generate random.");
 	dhuart_send_line("Allowed chars are A-Za-z0-9_-");
-	dhterminal_set_mode(SM_INPUT_MODE, get_deviceid_cb, generate_deviceid, deviceid_filter, DHSETTINGS_DEVICEID_MAX_LENGTH);
-	if(dhsettings_get_devicehive_deviceid()[0] == 0) {
+	dhterminal_set_mode(SM_INPUT_MODE, get_deviceid_cb, generate_deviceid, dhsettings_deviceid_filter, DHSETTINGS_DEVICEID_MAX_LENGTH);
+	if(dhsettings_get_devicehive_deviceid()[0] == 0)
 		dhterminal_set_input(generate_deviceid(""));
-	} else {
+	else
 		dhterminal_set_input(dhsettings_get_devicehive_deviceid());
-	}
 }
 
 LOCAL void ICACHE_FLASH_ATTR get_password_cb(const char *password) {
 	if(*password)
 		dhsettings_set_wifi_password(password);
 	dhuart_send_line("Enter DeviceHive API URL.");
-	dhterminal_set_mode(SM_INPUT_MODE, get_server_cb, 0, url_filter, DHSETTINGS_SERVER_MAX_LENGTH);
-	dhterminal_set_input(dhsettings_get_devicehive_server());
+	dhterminal_set_mode(SM_INPUT_MODE, get_server_cb, 0, dhsettings_server_filter, DHSETTINGS_SERVER_MAX_LENGTH);
+	if(dhsettings_get_devicehive_server()[0] == 0)
+		dhterminal_set_input("http://");
+	else
+		dhterminal_set_input(dhsettings_get_devicehive_server());
 }
 
 LOCAL void ICACHE_FLASH_ATTR get_ssid_cb(const char *ssid) {

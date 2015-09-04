@@ -38,10 +38,11 @@
 #define PIN_GPIO14 (1 << 14)
 #define PIN_GPIO15 (1 << 15)
 
-os_timer_t mGPIOTimer;
-unsigned int mGPIOTimerTimeout = 250;
-unsigned int mTriggeredIntrPins = 0;
-unsigned char mGPIOTimerArmed = 0;
+LOCAL os_timer_t mGPIOTimer;
+LOCAL unsigned int mGPIOTimerTimeout = 250;
+LOCAL unsigned int mTriggeredIntrPins = 0;
+LOCAL unsigned char mGPIOTimerArmed = 0;
+LOCAL unsigned int mExternalIntPins = 0;
 
 void ICACHE_FLASH_ATTR dhgpio_prepare_pins(unsigned int pin_mask, int disable_pwm) {
 	if(disable_pwm)
@@ -140,7 +141,7 @@ int ICACHE_FLASH_ATTR dhgpio_write(unsigned int set_mask, unsigned int unset_mas
 	return 1;
 }
 
-int ICACHE_FLASH_ATTR dhgpio_init(unsigned int init_mask, unsigned int pollup_mask, unsigned int nopoll_mask) {
+int ICACHE_FLASH_ATTR dhgpio_initialize(unsigned int init_mask, unsigned int pollup_mask, unsigned int nopoll_mask) {
 	if(pollup_mask & nopoll_mask)
 		return 0;
 	if( (init_mask | pollup_mask | nopoll_mask | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS)
@@ -163,9 +164,15 @@ LOCAL ICACHE_FLASH_ATTR void gpio_timeout(void *arg) {
 	mGPIOTimerArmed = 0;
 }
 
-LOCAL ICACHE_FLASH_ATTR void gpio_intr(void *arg) {
-	const unsigned int gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
+LOCAL void gpio_intr(void *arg) {
+	unsigned int gpio_status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
 	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, gpio_status);
+	if(gpio_status & mExternalIntPins) {
+		dhgpio_extra_int(gpio_status & mExternalIntPins);
+		gpio_status &= ~mExternalIntPins;
+		if(gpio_status == 0)
+			return;
+	}
 	mTriggeredIntrPins |= gpio_status;
 	if(mGPIOTimerArmed)
 		return;
@@ -179,7 +186,7 @@ LOCAL ICACHE_FLASH_ATTR void gpio_intr(void *arg) {
 	}
 }
 
-int ICACHE_FLASH_ATTR dhgpio_int(unsigned int disable_mask, unsigned int rising_mask, unsigned int falling_mask, unsigned int both_mask, unsigned int timeout) {
+LOCAL int ICACHE_FLASH_ATTR dhgpio_set_int(unsigned int disable_mask, unsigned int rising_mask, unsigned int falling_mask, unsigned int both_mask) {
 	unsigned int tmp = disable_mask;
 	if(tmp & rising_mask)
 		return 0;
@@ -190,7 +197,7 @@ int ICACHE_FLASH_ATTR dhgpio_int(unsigned int disable_mask, unsigned int rising_
 	if(tmp & both_mask)
 		return 0;
 	tmp |= both_mask;
-	if( (disable_mask | rising_mask | falling_mask | both_mask | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS)
+	if((tmp | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS)
 		return 0;
 	int i;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
@@ -206,12 +213,32 @@ int ICACHE_FLASH_ATTR dhgpio_int(unsigned int disable_mask, unsigned int rising_
 		else if(pin & both_mask)
 			gpio_pin_intr_state_set(GPIO_ID_PIN(i), GPIO_PIN_INTR_ANYEDGE);
 	}
+	return 1;
+}
+
+int ICACHE_FLASH_ATTR dhgpio_int(unsigned int disable_mask, unsigned int rising_mask, unsigned int falling_mask, unsigned int both_mask, unsigned int timeout) {
+	dhgpio_subscribe_extra_int(disable_mask | rising_mask | falling_mask | both_mask, 0, 0, 0);
+	if(dhgpio_set_int(disable_mask, rising_mask, falling_mask, both_mask) == 0)
+		return 0;
 	mGPIOTimerTimeout = timeout;
-	ETS_GPIO_INTR_ATTACH(gpio_intr, NULL);
-	ETS_GPIO_INTR_ENABLE();
 	return 1;
 }
 
 unsigned int ICACHE_FLASH_ATTR dhgpio_get_timeout() {
 	return mGPIOTimerTimeout;
+}
+
+void ICACHE_FLASH_ATTR dhgpio_init() {
+	ETS_GPIO_INTR_ATTACH(gpio_intr, NULL);
+	ETS_GPIO_INTR_ENABLE();
+}
+
+int ICACHE_FLASH_ATTR dhgpio_subscribe_extra_int(unsigned int disable_mask, unsigned int rising_mask, unsigned int falling_mask, unsigned int both_mask) {
+	disable_mask &= mExternalIntPins;
+	if(dhgpio_set_int(disable_mask, rising_mask, falling_mask, both_mask) == 0)
+		return 0;
+	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, disable_mask);
+	mExternalIntPins |= rising_mask | falling_mask | both_mask;
+	mExternalIntPins &= ~disable_mask;
+	return 1;
 }

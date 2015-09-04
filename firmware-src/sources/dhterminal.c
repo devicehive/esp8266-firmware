@@ -21,25 +21,25 @@
 #include "dhterminal_commands.h"
 
 #define DEBUG_BUFF_SPACE_FOR_ONE_LINE 128
-DHTERMINAL_MODE mMode = SM_NORMAL_MODE;
-char mDebugBuff[1024] = {0};
-int mDebugBuffPos = 0;
-char mRcvBuff[78];
-int mRcvBuffPos = 0;
-char mEscSequence[4] = {0};
-int mEscSequencePos = 0;
-int mEscRecieving = 0;
-char mHistoryBuff[1024] = {0};
-int mHistoryBuffPos = 0;
-int mHistoryPrevPos = 0;
-int mHistoryScrollBufPos = 0;
-char mHistoryRcvBuff[sizeof(mRcvBuff)] = {0};
-char mHistoryRcvBuffFill = 0;
-Input_Call_Back mInputCallBack = dhterminal_commandline_do;
-Input_Autocompleter mCompleaterCallBack = dhterminal_commandline_autocompleter;
-Input_Filter_Call_Back mFilterCallback = 0;
-os_timer_t mAwatingTimer;
-int mInputLimiter = sizeof(mRcvBuff);
+LOCAL DHTERMINAL_MODE mMode = SM_NORMAL_MODE;
+LOCAL char mDebugBuff[1024] = {0};
+LOCAL int mDebugBuffPos = 0;
+LOCAL char mRcvBuff[78];
+LOCAL int mRcvBuffPos = 0;
+LOCAL char mEscSequence[4] = {0};
+LOCAL int mEscSequencePos = 0;
+LOCAL int mEscRecieving = 0;
+LOCAL char mHistoryBuff[1024] = {0};
+LOCAL int mHistoryBuffPos = 0;
+LOCAL int mHistoryPrevPos = 0;
+LOCAL int mHistoryScrollBufPos = 0;
+LOCAL char mHistoryRcvBuff[sizeof(mRcvBuff)] = {0};
+LOCAL char mHistoryRcvBuffFill = 0;
+LOCAL Input_Call_Back mInputCallBack = dhterminal_commandline_do;
+LOCAL Input_Autocompleter mCompleaterCallBack = dhterminal_commandline_autocompleter;
+LOCAL Input_Filter_Call_Back mFilterCallback = 0;
+LOCAL os_timer_t mAwatingTimer;
+LOCAL int mInputLimiter = sizeof(mRcvBuff);
 
 LOCAL void ICACHE_FLASH_ATTR printWelcome() {
 	if (mMode == SM_NORMAL_MODE) {
@@ -305,7 +305,7 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhterminal_debug(const char *pFormat, va_list ap) {
+void dhterminal_debug(const char *pFormat, va_list ap) {
 	int len = vsnprintf(&mDebugBuff[mDebugBuffPos], sizeof(mDebugBuff) - mDebugBuffPos - 2, pFormat, ap);
 	if(mMode == SM_DEBUG_MODE) {
 		dhuart_send_line(&mDebugBuff[mDebugBuffPos]);
@@ -329,4 +329,5 @@ void ICACHE_FLASH_ATTR dhterminal_init() {
 	dhuart_set_mode(DUM_PER_BYTE, 0);
 	dhuart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
 	dhterminal_reset();
+	dhdebug_terminal();
 }

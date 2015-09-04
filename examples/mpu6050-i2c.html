@@ -1,0 +1,144 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  var SDA = 13;
+  var SCL = 12;
+  var mpuaddress = 0xD0;
+  function print(text, color) {
+    document.body.innerHTML = "<h1><font color=" + color + ">" + text + "</font></h1>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id, callback) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            print("ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            if(json['result'] == null || json['status'] == null) {
+              getres(id, callback);
+              return;
+            }
+            if(json['status'] != "OK") {
+              print("Error - " + xmlhttp.responseText, "red");
+              return;
+            }
+            if(callback != null)
+              callback(json['result']['data']);
+          }
+      }
+    }
+    xmlhttp.send("");
+  }
+  
+  function get_data(register, size, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not read data " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/read", "parameters":{"SDA":SDA, "SCL":SCL, "address":"0x" + mpuaddress.toString(16), "count":size, "data":btoa(String.fromCharCode(register))}}));
+  }
+  
+  function write_register(register, value, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not write register " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    data = btoa(String.fromCharCode(register) + String.fromCharCode(value));
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/write", "parameters":{"SDA":SDA, "SCL":SCL, "address":"0x" + mpuaddress.toString(16), "data":data}}));
+  }
+  
+  function unsignedInt16(data, pos) {
+    return data.charCodeAt(pos) * 256 + data.charCodeAt(pos + 1);
+  }
+  
+  function signedInt16(data, pos) {
+    i =  unsignedInt16(data, pos);
+    if( i <= 0x7FFF)
+      return i;
+    return i - 0x10000;
+  }
+  
+  function mpudata(base64) {
+    var data = atob(base64);
+    ac1g = 16384.0;
+    gyDS = 131.0;
+    acX=(signedInt16(data, 0)/ac1g).toFixed(2).toString();    
+    acY=(signedInt16(data, 2)/ac1g).toFixed(2).toString();    
+    acZ=(signedInt16(data, 4)/ac1g).toFixed(2).toString();    
+    temp=(signedInt16(data, 6)/340.00+36.53).toFixed(2).toString();    
+    gyX=(signedInt16(data, 8)/gyDS).toFixed(2).toString();    
+    gyY=(signedInt16(data, 10)/gyDS).toFixed(2).toString();    
+    gyZ=(signedInt16(data, 12)/gyDS).toFixed(2).toString();    
+    print(" Acceleration X=" +acX + "g Y=" + acY + "g Z=" + acZ + "g<br>Gyroscope X=" + gyX + " &#176;/s Y=" + gyY + " &#176;/s Z=" + gyZ + " &#176;/s<br>Temperature " + temp + " &#176;C", "green");
+    mpuget(null);  
+  }
+  
+  function mpuget(emptydata) {
+    get_data(0x3B, 14, mpudata);
+  }
+  
+  function mpuinit() { 
+    write_register(0x6B, 0x00, mpuget);  
+  }
+    
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    mpuinit();
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 

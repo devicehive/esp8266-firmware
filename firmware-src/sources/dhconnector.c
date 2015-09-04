@@ -21,38 +21,42 @@
 #include "dhsender.h"
 #include "dhdebug.h"
 #include "dhmem.h"
+#include "dhutils.h"
 #include "user_config.h"
 #include "snprintf.h"
+#include "dhstatistic.h"
 
-CONNECTION_STATE mConnectionState;
-struct espconn mDHConnector;
-dhconnector_command_json_cb mCommandCallback;
-HTTP_REQUEST *mRegisterRequest;
-HTTP_REQUEST *mPollRequest;
-HTTP_REQUEST *mInfoRequest;
-os_timer_t mRetryTimer;
+LOCAL CONNECTION_STATE mConnectionState;
+LOCAL struct espconn mDHConnector;
+LOCAL dhconnector_command_json_cb mCommandCallback;
+LOCAL HTTP_REQUEST mRegisterRequest;
+LOCAL HTTP_REQUEST mPollRequest;
+LOCAL HTTP_REQUEST mInfoRequest;
+LOCAL os_timer_t mRetryTimer;
+LOCAL unsigned char mNeedRecover = 0;
 
 LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state);
 
-LOCAL void ICACHE_FLASH_ATTR retry(void *arg) {
+LOCAL void retry(void *arg) {
 	set_state(mConnectionState);
 }
 
-LOCAL void ICACHE_FLASH_ATTR arm_repeat_timer(unsigned int ms) {
+LOCAL void arm_repeat_timer(unsigned int ms) {
 	os_timer_disarm(&mRetryTimer);
 	os_timer_setfn(&mRetryTimer, (os_timer_func_t *)retry, NULL);
 	os_timer_arm(&mRetryTimer, ms, 0);
 }
 
-LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
+LOCAL void network_error_cb(void *arg, sint8 err) {
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
+	dhstatistic_inc_network_errors_count();
 }
 
-LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
+LOCAL void parse_json(struct jsonparse_state *jparser) {
 	int type;
-	int id;
+	unsigned int id;
 	char command[128] = "";
 	const char *params;
 	int paramslen = 0;
@@ -64,9 +68,7 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 				if (jsonparse_next(jparser) != JSON_TYPE_ERROR) {
 					jsonparse_copy_value(jparser, timestamp, sizeof(timestamp));
 					dhdebug("Timestamp received %s", timestamp);
-					dhrequest_free(mInfoRequest);
-					mInfoRequest = NULL;
-					mPollRequest = dhrequest_create_poll(timestamp);
+					dhrequest_update_poll(&mPollRequest, timestamp);
 				}
 				break;
 			} else if (jsonparse_strcmp_value(jparser, "command") == 0) {
@@ -76,7 +78,7 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 			} else if (jsonparse_strcmp_value(jparser, "id") == 0) {
 				jsonparse_next(jparser);
 				if(jsonparse_next(jparser) != JSON_TYPE_ERROR)
-					id = jsonparse_get_value_as_int(jparser);
+					id = jsonparse_get_value_as_ulong(jparser);
 			} else if (jsonparse_strcmp_value(jparser, "parameters") == 0) {
 				jsonparse_next(jparser);
 				if(jsonparse_next(jparser) != JSON_TYPE_ERROR) {
@@ -100,14 +102,15 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	if (mConnectionState == CS_POLL) {
 		if(timestamp[0]) {
 			dhdebug("Timestamp received %s", timestamp);
-			mPollRequest = dhrequest_update_poll(mPollRequest, timestamp);
+			dhrequest_update_poll(&mPollRequest, timestamp);
 		}
 		mCommandCallback(id, command, params, paramslen);
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned short len) {
-	const char *rc = dhrequest_find_http_responce_code(data, len);
+LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
+	dhstatistic_add_bytes_received(len);
+	const char *rc = find_http_responce_code(data, len);
 	if (rc) { // HTTP
 		if (*rc == '2') { // HTTP responce code 2xx - Success
 			if (mConnectionState == CS_REGISTER) {
@@ -141,53 +144,53 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 			dhdebug("Connector HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
 			dhdebug(data);
 			dhdebug("--------------------------------------");
+			dhstatistic_server_errors_count();
 		}
 	} else {
 		mConnectionState = CS_DISCONNECT;
 		dhdebug("Connector HTTP magic number is wrong");
+		dhstatistic_server_errors_count();
 	}
 	espconn_disconnect(&mDHConnector);
 }
 
-LOCAL void ICACHE_FLASH_ATTR network_connect_cb(void *arg) {
+LOCAL void network_connect_cb(void *arg) {
 	HTTP_REQUEST *request;
 	switch(mConnectionState) {
 	case CS_GETINFO:
-		request = mInfoRequest;
+		request = &mInfoRequest;
 		dhdebug("Send info request...");
 		break;
 	case CS_REGISTER:
-		request = mRegisterRequest;
+		request = &mRegisterRequest;
 		dhdebug("Send register request...");
 		break;
 	case CS_POLL:
-		request = mPollRequest;
+		request = &mPollRequest;
 		dhdebug("Send poll request...");
 		break;
 	default:
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
 	int res;
-	if( (res = espconn_sent(&mDHConnector, request->body, request->len)) != ESPCONN_OK) {
+	if( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
 		mConnectionState = CS_DISCONNECT;
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
 		espconn_disconnect(&mDHConnector);
+	} else {
+		dhstatistic_add_bytes_sent(request->len);
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR network_disconnect_cb(void *arg) {
+LOCAL void network_disconnect_cb(void *arg) {
 	switch(mConnectionState) {
 	case CS_DISCONNECT:
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		break;
 	case CS_GETINFO:
-		dhmem_free_request(mInfoRequest);
-		mInfoRequest = 0;
 		set_state(CS_REGISTER);
 		break;
 	case CS_REGISTER:
-		dhmem_free_request(mRegisterRequest);
-		mRegisterRequest = 0;
 		mConnectionState = CS_POLL;
 		/* no break */
 	case CS_POLL:
@@ -211,6 +214,7 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 		dhdebug("Resolve %s failed. Trying again...", name);
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
+		dhstatistic_inc_network_errors_count();
 		return;
 	}
 	unsigned char *bip = (unsigned char *) ip;
@@ -218,7 +222,7 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 
 	dhsender_init(ip, mDHConnector.proto.tcp->remote_port);
 	dhconnector_init_connection(ip);
-	if(mPollRequest)
+	if(mPollRequest.len)
 		set_state(CS_POLL);
 	else
 		set_state(CS_GETINFO);
@@ -226,8 +230,16 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 
 LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server() {
 	static ip_addr_t ip;
-	char host[os_strlen(dhrequest_current_server()) + 1];
-	char *fr = os_strchr(dhrequest_current_server(), ':');
+	const char *server = dhrequest_current_server();
+	char host[os_strlen(server) + 1];
+	const char *fr = server;
+	while(*fr != ':') {
+		fr++;
+		if(*fr == 0) {
+			fr = 0;
+			break;
+		}
+	}
 	if(fr) {
 		fr++;
 		if(*fr != '/')
@@ -271,15 +283,14 @@ LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server() {
 	}
 }
 
-unsigned char mNeedRecover = 0;
-void ICACHE_FLASH_ATTR dhmem_unblock() {
+void ICACHE_FLASH_ATTR dhmem_unblock_cb() {
 	if(mNeedRecover) {
 		set_state(mConnectionState);
 		mNeedRecover = 0;
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
+LOCAL void set_state(CONNECTION_STATE state) {
 	mConnectionState = state;
 	if(state != CS_DISCONNECT) {
 		if(dhmem_isblock()) {
@@ -295,20 +306,6 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	case CS_REGISTER:
 	case CS_POLL:
 	{
-		if(state == CS_GETINFO && mInfoRequest == 0) {
-			mInfoRequest = dhrequest_create_info();
-			if(mInfoRequest ==0) {
-				arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-				return;
-			}
-		}
-		if(state == CS_REGISTER && mRegisterRequest == 0) {
-			mRegisterRequest = dhrequest_create_register();
-			if(mRegisterRequest ==0) {
-				arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-				return;
-			}
-		}
 		const sint8 cr = espconn_connect(&mDHConnector);
 		if(cr == ESPCONN_ISCONN)
 			return;
@@ -323,7 +320,7 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	}
 }
 
-LOCAL void wifi_state_cb(System_Event_t *event) {
+LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 	if(event->event == EVENT_STAMODE_GOT_IP) {
 		if(event->event_info.got_ip.ip.addr != 0) {
 			const unsigned char * const bip = (unsigned char *)&event->event_info.got_ip.ip;
@@ -337,6 +334,7 @@ LOCAL void wifi_state_cb(System_Event_t *event) {
 		os_timer_disarm(&mRetryTimer);
 		dhsender_stop_repeat();
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
+		dhstatistic_inc_wifi_lost_count();
 	} else {
 		dhesperrors_wifi_state("WiFi event", event->event);
 	}
@@ -345,14 +343,18 @@ LOCAL void wifi_state_cb(System_Event_t *event) {
 void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
 	dhrequest_load_settings();
 	mCommandCallback = cb;
-	mPollRequest = 0;
 	mConnectionState = CS_DISCONNECT;
+
+	dhrequest_create_info(&mInfoRequest);
+	dhrequest_create_register(&mRegisterRequest);
+	mPollRequest.len = mPollRequest.data[0] = 0;
 
 	wifi_set_opmode(STATION_MODE);
 	wifi_station_set_auto_connect(1);
 	wifi_station_set_reconnect_policy(true);
 	struct station_config stationConfig;
 	wifi_station_get_config(&stationConfig);
+	wifi_set_phy_mode(PHY_MODE_11N);
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
 	snprintf(stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
@@ -370,6 +372,6 @@ void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
 	wifi_set_event_handler_cb(wifi_state_cb);
 }
 
-CONNECTION_STATE dhconnector_get_state() {
+CONNECTION_STATE ICACHE_FLASH_ATTR dhconnector_get_state() {
 	return mConnectionState;
 }

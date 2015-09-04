@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHSETTINGS_H_
-#define USER_DHSETTINGS_H_
+#ifndef _DHSETTINGS_H_
+#define _DHSETTINGS_H_
 
 /** Wi-Fi SSID string max length. */
 #define DHSETTINGS_SSID_MAX_LENGTH 32
@@ -97,4 +97,25 @@ void dhsettings_set_devicehive_deviceid(const char *id);
  */
 void dhsettings_set_devicehive_devicekey(const char *key);
 
-#endif /* USER_DHSETTINGS_H_ */
+/**
+ *	\brief			Check if char is suitable for DeviceId string
+ *	\param[in]	c	Char for test.
+ *	\return			Non zero value if char is suitable, zero otherwise.
+ */
+int dhsettings_deviceid_filter(char c);
+
+/**
+ *	\brief			Check if char is suitable for DeviceKey string
+ *	\param[in]	c	Char for test.
+ *	\return			Non zero value if char is suitable, zero otherwise.
+ */
+int dhsettings_devicekey_filter(char c);
+
+/**
+ *	\brief			Check if char is suitable for API Url string
+ *	\param[in]	c	Char for test.
+ *	\return			Non zero value if char is suitable, zero otherwise.
+ */
+int dhsettings_server_filter(char c);
+
+#endif /* _DHSETTINGS_H_ */

@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHESPERRORS_H_
-#define USER_DHESPERRORS_H_
+#ifndef _DHESPERRORS_H_
+#define _DHESPERRORS_H_
 
 /**
  *	\brief					Print disconnect reason.
@@ -23,4 +23,4 @@ void dhesperrors_disconnect_reason(const char *descrption, uint8 reason);
  */
 void dhesperrors_espconn_result(const char *descrption, int reason);
 
-#endif /* USER_DHESPERRORS_H_ */
+#endif /* _DHESPERRORS_H_ */

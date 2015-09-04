@@ -9,16 +9,17 @@
  *				possible. But if no dynamic memory enough data will be lost, notification about it will print in debug.
  */
 
-#ifndef DHSENDER_H_
-#define DHSENDER_H_
+#ifndef _DHSENDER_H_
+#define _DHSENDER_H_
 
 #include <ip_addr.h>
+#include "dhsender_enums.h"
 
-/** Status string for success command */
-static const char STATUS_OK[] = "OK";
-/** Status string for command error*/
-static const char STATUS_ERROR[] = "Error";
-
+/** Responce status*/
+typedef enum {
+	DHSTATUS_ERROR = 0,	///< Send Error string
+	DHSTATUS_OK			///< Send OK string
+} RESPONCE_STATUS;
 
 /**
  *	\brief				Initializes sender for using remote DeviceHive server.
@@ -28,23 +29,31 @@ static const char STATUS_ERROR[] = "Error";
 void dhsender_init(ip_addr_t *ip, int port);
 
 /**
- *	\brief				Send command response.
- *	\param[in]	id		Command id that responce should be sent.
- *	\param[in]	status	Null terminated string with command status.
- *	\param[in]	result	Null terminated string with command result.
+ *	\brief				Start sending data from queue.
+ *	\details			It does nothing if data sending is already in progress or there is no data for sending
  */
-void dhsender_response(int id, const char *status, const char *result);
+void dhsender_start();
+
+/**
+ *	\brief					Send command response.
+ *	\param[in]	id			Command id that response should be sent.
+ *	\param[in]	status		Command status.
+ *	\param[in]	data_type	Data type for response.
+ *	\param[in]	...			Data according to the type.
+ */
+void dhsender_response(unsigned int id, RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...);
 
 /**
  *	\brief					Send notification.
- *	\param[in]	name		Null terminated string with notification name.
- *	\param[in]	parameters	Null terminated string with notification parameters.
+ *	\param[in]	type		Type of module that sends notification.
+ *	\param[in]	data_type	Data type for notification.
+ *	\param[in]	...			Data according to the type.
  */
-void dhsender_notification(const char *name, const char *parameters);
+void dhsender_notification(REQUEST_NOTIFICATION_TYPE type, REQUEST_DATA_TYPE data_type, ...);
 
 /**
  *	\brief				Stops repeat attempts on error.
  */
 void dhsender_stop_repeat();
 
-#endif /* DHSENDER_H_ */
+#endif /* _DHSENDER_H_ */

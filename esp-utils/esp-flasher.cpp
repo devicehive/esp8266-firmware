@@ -18,6 +18,7 @@
 #include "common/serialport.h"
 
 #define ESP_BLOCK_SIZE 0x400
+#define ESP_SECTOR_SIZE 0x1000
 #define AUTODETECT_TIMEOUT 1000
 #define FLASHING_TIMEOUT 5000
 #define AUTODETECT_MAX_PORT 20
@@ -174,7 +175,14 @@ bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address)
 	uint32_t blocks_count = ceil((double) size / (double) ESP_BLOCK_SIZE);
 	ESP_REQUEST_HEADER rh;
 	uint32_t pbody[4];
-	pbody[0] = htole32(ESP_BLOCK_SIZE * blocks_count);
+
+	// workaround for SPIEraseArea
+	const uint32_t sectors_count = ceil((double) size / (double) ESP_SECTOR_SIZE);
+	uint32_t fix = 16  - address / ESP_SECTOR_SIZE % 16;
+	if (sectors_count < fix)
+		fix = sectors_count;
+
+	pbody[0] = htole32(((sectors_count < 2 * fix) ? (sectors_count + 1) / 2 : (sectors_count - fix)) * ESP_SECTOR_SIZE);
 	pbody[1] = htole32(blocks_count);
 	pbody[2] = htole32(ESP_BLOCK_SIZE);
 	pbody[3] = htole32(address);

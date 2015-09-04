@@ -1,0 +1,131 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input[type=text] {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=password] {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  var PIN = 0;
+  function print(text, color) {
+    document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id, callback) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            print("ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            if(json['result'] == null || json['status'] == null) {
+              getres(id, callback);
+              return;
+            }
+            if(json['status'] != "OK") {
+              print("Error - " + xmlhttp.responseText, "red");
+              return;
+            }
+            callback(json['result']['data']);
+          }
+      }
+    }
+    xmlhttp.send("");
+  }
+  
+  function get_data(callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not read data " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify({"command":"onewire/dht/read", "parameters":{"pin":PIN}}));
+  }
+ 
+  function signedInt16(data, pos) {
+    i = data.charCodeAt(pos) * 256 + data.charCodeAt(pos + 1);
+    if( i <= 0x7FFF)
+      return i;
+    return i - 0x10000;
+  }
+  
+  var dht22 = true;
+  function data_recevied(base64) {
+    var data = atob(base64);
+    var cs = (data.charCodeAt(0) + data.charCodeAt(1) + data.charCodeAt(2) + data.charCodeAt(3)) & 0xFF;
+    if(cs != data.charCodeAt(4)) {
+      print("<h1>Wrong data checksum</h1>", "red");
+    } else {
+      var temperature;
+      var humidity;
+      deviceCode = "";
+      if(dht22) {
+        humidity = signedInt16(data, 0) / 10.0;
+        temperature = signedInt16(data, 2) / 10.0;
+      } else {
+        humidity = data.charCodeAt(0);
+        temperature = data.charCodeAt(2);
+      }
+      print("<h1>Humidity: " + humidity + "%<br>Temperature: " + temperature + " C</h1>", "green");
+    }
+    
+    setTimeout(function() { // No sense to read more frequently
+      get_data(data_recevied); // loop
+    }, 1000);
+  }
+  
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;  
+    dht22 = form.dht.value == "dht22";  
+    get_data(data_recevied);
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      DHT11:<input type="radio" name="dht"  value="dht11" checked="checked">
+      DHT22:<input type="radio" name="dht"  value="dht22"> <br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 

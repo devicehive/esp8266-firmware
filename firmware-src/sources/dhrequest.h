@@ -7,16 +7,19 @@
  *	\details 	All generated request will stored in dynamic memory. When request no longer need in have to be free with dhrequest_free().
  */
 
-#ifndef USER_DHREQUEST_H_
-#define USER_DHREQUEST_H_
+#ifndef _DHREQUEST_H_
+#define _DHREQUEST_H_
 
-/** HTTP requests linked list struct. */
-typedef struct __attribute__((packed)) HTTP_REQUEST HTTP_REQUEST;
-struct __attribute__((packed)) HTTP_REQUEST{
-	HTTP_REQUEST *next; 	//< pointer to next HTTP_REQUEST.
-	unsigned int len;		//< request data size in bytes.
-	char body[];			//< request data.
-};
+#include "dhsettings.h"
+#include "user_config.h"
+
+/** HTTP requests theoretical max size */
+#define HTTP_REQUEST_MIN_ALLOWED_PAYLOAD 2*INTERFACES_BUF_SIZE + 943 // 943 for json formatting and some extra text fields, we use exactly this value to pad to KB.
+#define HTTP_REQUEST_MAX_SIZE (DHSETTINGS_SERVER_MAX_LENGTH + DHSETTINGS_DEVICEID_MAX_LENGTH + DHSETTINGS_DEVICEKEY_MAX_LENGTH + HTTP_REQUEST_MIN_ALLOWED_PAYLOAD)
+typedef struct {
+	unsigned int len;
+	char data[HTTP_REQUEST_MAX_SIZE];
+} HTTP_REQUEST;
 
 /**
  *	\brief	Load DeviceHive server credentials from storage.
@@ -30,61 +33,48 @@ void dhrequest_load_settings();
 const char *dhrequest_current_server();
 
 /**
- *	\brief	Create register request.
- *	\return	Pointer created request or NULL if no memory.
+ *	\brief			Create register request.
+ *	\param[out]	buf	Buffer where request should be created.
  */
-HTTP_REQUEST *dhrequest_create_register();
+void dhrequest_create_register(HTTP_REQUEST *buf);
 
 /**
  *	\brief					Create poll request.
+ *	\param[out]	buf			Buffer where request should be created.
  *	\param[in]	timestamp	Pointer to null terminated string with timestamp that will be used in poll request.
- *	\return					Pointer created request or NULL if no memory.
  */
-HTTP_REQUEST *dhrequest_create_poll(const char *timestamp);
+void dhrequest_create_poll(HTTP_REQUEST *buf, const char *timestamp);
 
 /**
  *	\brief					Create update request.
+ *	\param[out]	buf			Buffer where request should be created.
  *	\param[in]	commandId	Id of command for update.
  *	\param[in]	status		Null terminated string with command status.
  *	\param[in]	result		Null terminated string with command result.
  *	\return					Pointer created request or NULL if no memory.
  */
-HTTP_REQUEST *dhrequest_create_update(int commandId, const char *status, const char *result);
+void dhrequest_create_update(HTTP_REQUEST *buf, unsigned int commandId, const char *status, const char *result);
 
 /**
  *	\brief					Create info request.
- *	\return					Pointer created request or NULL if no memory.
+ *	\param[out]	buf			Buffer where request should be created.
  */
-HTTP_REQUEST *dhrequest_create_info();
+void dhrequest_create_info(HTTP_REQUEST *buf);
 
 /**
  *	\brief					Create notification request.
+ *	\param[out]	buf			Buffer where request should be created.
  *	\param[in]	name		Notification name.
  *	\param[in]	parameters	Notification parameters.
- *	\return					Pointer created request or NULL if no memory.
  */
-HTTP_REQUEST *dhrequest_create_notification(const char *name, const char *parameters);
+void dhrequest_create_notification(HTTP_REQUEST *buf, const char *name, const char *parameters);
 
 /**
  *	\brief					Update poll request.
  *	\details				This function updates timestamp in poll request. If timestamp string length is different, request will be recreated, otherwise original will be reused.
  *	\param[in]	old			Pointer for request that should be updated.
  *	\param[in]	timestamp	Null terminated string with new timestamp.
- *	\return					Pointer to updated request or NULL if no memory.
  */
-HTTP_REQUEST *dhrequest_update_poll(HTTP_REQUEST *old, const char *timestamp);
+void dhrequest_update_poll(HTTP_REQUEST *old, const char *timestamp);
 
-/**
- *	\brief					Free request.
- *	\param[in]	request		Pointer for request.
- */
-void dhrequest_free(HTTP_REQUEST *request);
-
-/**
- *	\brief					Util function to find out response code in HTTP response.
- *	\param[in]	data		Pointer to HTTP response data.
- *	\param[in]	len			HTTP response data length.
- */
-const char *dhrequest_find_http_responce_code(const char *data, unsigned short len);
-
-#endif /* USER_DHREQUEST_H_ */
+#endif /* _DHREQUEST_H_ */

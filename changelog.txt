@@ -9,3 +9,11 @@ v0.2
 - Online status showing now works on server
 - timeout added for GPIO interruption
 - OS X flasher fix
+
+v0.3
+- wireless zero configuration mode
+- timestamp for gpio notifications
+- SPI added
+- onewire added
+- statistics in 'status' terminal command
+- stability improvement

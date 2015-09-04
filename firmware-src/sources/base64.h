@@ -6,8 +6,8 @@
  *	\copyright	Public Domain
  */
 
-#ifndef SOURCES_BASE64_H_
-#define SOURCES_BASE64_H_
+#ifndef _DATAENCODEBASE64_H_
+#define _DATAENCODEBASE64_H_
 
 #include "user_config.h"
 
@@ -52,4 +52,4 @@ unsigned int base64_decode_length(const char *data, unsigned int datalen);
 
 #endif //DATAENCODEBASE64
 
-#endif /* SOURCES_BASE64_H_ */
+#endif /* _DATAENCODEBASE64_H_ */

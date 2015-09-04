@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHCOMMANDS_H_
-#define USER_DHCOMMANDS_H_
+#ifndef _DHCOMMANDS_H_
+#define _DHCOMMANDS_H_
 
 /**
  *	\brief					Handle remote command.
@@ -16,6 +16,6 @@
  *	\param[in]	params		Pointer to JSON with parameters.
  *	\param[in]	paramslen	JSON parameters length in bytes.
  */
-void dhcommands_do(int id, const char *command, const char *params, unsigned int paramslen);
+void dhcommands_do(unsigned int id, const char *command, const char *params, unsigned int paramslen);
 
-#endif /* USER_DHCOMMANDS_H_ */
+#endif /* _DHCOMMANDS_H_ */

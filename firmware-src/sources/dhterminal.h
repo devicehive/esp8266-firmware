@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHTERMINAL_H_
-#define USER_DHTERMINAL_H_
+#ifndef _DHTERMINAL_H_
+#define _DHTERMINAL_H_
 #include <stdarg.h>
 
 /** Current terminal mode. */
@@ -76,4 +76,4 @@ void dhterminal_set_mode(DHTERMINAL_MODE mode, Input_Call_Back inputcb, Input_Au
  */
 void dhterminal_set_input(const char *line);
 
-#endif /* USER_DHTERMINAL_H_ */
+#endif /* _DHTERMINAL_H_ */

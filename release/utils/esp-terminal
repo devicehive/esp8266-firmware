@@ -1,0 +1,9 @@
+#!/bin/bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+if [[ $(uname) == *"MINGW"* ]]; then
+  $DIR/esp-terminal-win.exe $@
+elif [[ $(uname) == *"Darwin"* ]]; then
+  $DIR/esp-terminal-osx $@
+else
+  $DIR/esp-terminal-linux $@
+fi

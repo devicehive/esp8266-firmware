@@ -1,0 +1,227 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  var CS = 15;
+  // Hardware ping, can not be changed: MISO - 12, MOSI - 13, CLK - 14
+  
+  var cardType = [];
+  var cardUid = [];
+  var cardTypeLen;
+  var cardUidLen;
+  var cardTypeText = "";
+  var cardUidText = "";
+  function print(text, color) {
+    document.body.innerHTML = "<h1><font color=" + color + ">" + text + "</font></h1>";
+  }
+  function print_card() {
+    print("Card type: " + cardTypeText + (cardUidText.length > 0?("<br>Card UID: " + cardUidText):""), "green");
+  } 
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id, callback) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            print("ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            if(json['result'] == null || json['status'] == null) {
+              getres(id, callback);
+              return;
+            }
+            if(json['status'] != "OK") {
+              print("Error - " + xmlhttp.responseText, "red");
+              return;
+            }
+            callback(atob(json['result']['data']));
+          }
+      }
+    }
+    xmlhttp.send("");
+  }
+  
+  var commandList = []
+  var commandCallbackList = []
+  var commandInProgress = false;
+  function send_command_now(jsonstring, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+    if(xmlhttp.readyState == 4){
+        if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+          print("ERROR: Error while sending command " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+        } else {
+          if(callback != null)
+            getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+          
+          if(commandList.length > 0)
+            send_command_now(commandList.shift(), commandCallbackList.shift());
+          else
+            commandInProgress = false;
+        }
+      }
+    } 
+    xmlhttp.send(jsonstring);
+  }
+  
+  function send_command(command, parameters, callback) {
+    var jsonstring = JSON.stringify({"command":command, "parameters":parameters});
+    if(commandInProgress == true) {
+      commandList.push(jsonstring);
+      commandCallbackList.push(callback);
+      return;  
+    } 
+    commandInProgress = true;
+    send_command_now(jsonstring, callback);    
+  }
+  
+  function write_reg(reg, value) {
+    send_command("spi/master/write", {"CS":CS, "data":btoa(String.fromCharCode((reg << 1) & 0x7E) + String.fromCharCode(value))}, null);
+  }
+  
+  function read_reg(reg, callback) {
+    send_command("spi/master/read", {"CS":CS, "count": 1, "data":btoa(String.fromCharCode(0x80 | ((reg << 1) & 0x7E)))}, callback); 
+  }
+  
+  function read_card(command, flags, callback) {
+    write_reg(0x01, 0x0C); // stop
+    write_reg(0x0A, 0x80); // clear FIFO
+    for(i = 0; i < command.length; i++)
+      write_reg(0x09, command[i]); // write to FIFO
+    write_reg(0x01, 0x0C); // set transmit and receive
+    write_reg(0x0D, 0x80 | flags); // start transmitiom
+    write_reg(0x0D, 0x00 | flags); // stop transmitiom
+    read_reg(0x0A, callback);
+  }
+  
+  function read_type_cb(data) {
+    if(data.length > 0)
+      cardType.push(data.charCodeAt(0));
+    if(cardTypeLen > 0) {
+      cardTypeLen--;
+      read_reg(0x09, read_type_cb);
+    } else {
+      cardTypeText = "";
+      cardUidText = "";
+      while(cardType.length) {
+        c = cardType.shift().toString(16);
+        if(c.length == 1)
+          cardTypeText += "0" + c;
+        else
+          cardTypeText += c;
+      }
+      print_card();
+      read_uid();
+    }
+  }
+  
+  function read_uid_cb(data) {
+    if(data.length > 0)
+      cardUid.push(data.charCodeAt(0));
+    if(cardUidLen > 0) {
+      cardUidLen--;
+      read_reg(0x09, read_uid_cb);
+    } else {
+      cardUidText = "";
+      while(cardUid.length) {
+        c = cardUid.shift().toString(16);
+        if(c.length == 1)
+          cardUidText += "0" + c;
+        else
+          cardUidText += c;
+      }
+      print_card();
+      read_uid();
+    }
+  }
+  
+  function type_size_cb(data) {
+    cardTypeLen = data.charCodeAt(0).toString();
+    if(cardTypeLen == 0) {
+      read_type();
+      print("Place card near the reader.", "green");
+    } else {
+      read_type_cb([]);
+    }
+  }
+  
+  function uid_size_cb(data) {
+    cardUidLen = data.charCodeAt(0).toString();
+    if(cardUidLen == 0) {
+      read_type();
+      print("Place card near the reader.", "green");
+    } else {
+      read_uid_cb([]);
+    }
+  }
+  
+  function read_type() {
+    cardType = [];
+    read_card([0x26], 0x07, type_size_cb);
+  }
+  
+  function read_uid() {
+    cardUid = [];
+    read_card([0x93, 0x20], 0x00, uid_size_cb);
+  }
+  
+  function init() {
+    write_reg(0x2A, 0x8D); // prescaller hi, autotimer
+    write_reg(0x2B, 0x3E); // prescaller low 
+    write_reg(0x2C, 0x00); // timer reload hi    
+    write_reg(0x2D, 0x1E); // timer reload low
+    write_reg(0x15, 0x40); // force100ASK 
+    write_reg(0x11, 0x3D); // set up crc    
+    write_reg(0x14, 0x83); // Tx2RFEn 
+   
+    read_type();
+   // read_card([0x26], 0x07, type_size_cb);
+    //read_card([0x93, 0x20], 0x00);	 	 
+  }
+  
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    init();
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 

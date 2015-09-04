@@ -23,25 +23,24 @@ typedef enum {
     DIVDED_BY_16 = 4,
     DIVDED_BY_256 = 8
 } TIMER_DIV_MODE;
-const unsigned int TIMER_DIV = DIVDED_BY_16;
 typedef enum {
     TM_LEVEL_INT = 1,
     TM_EDGE_INT   = 0,
 } TIMER_INT_MODE;
 
-unsigned char mDisablePinOn[DHPWM_DEPTH + 1] = {0};
-unsigned int mPeriodUs = DHPWM_DEFAULT_PERIOD_US;
-unsigned char mCounter = 0;
-unsigned char mPwmInUse = 0;
-unsigned int mTotalCount = 0;
-uint32 mUsedPins = 0;
+LOCAL unsigned char mDisablePinOn[DHPWM_DEPTH + 1] = {0};
+LOCAL unsigned int mPeriodUs = DHPWM_DEFAULT_PERIOD_US;
+LOCAL unsigned char mCounter = 0;
+LOCAL unsigned char mPwmInUse = 0;
+LOCAL unsigned int mTotalCount = 0;
+LOCAL uint32 mUsedPins = 0;
 
 void ICACHE_FLASH_ATTR disarm_pwm_timer() {
 	TM1_EDGE_INT_DISABLE();
 	ETS_FRC1_INTR_DISABLE();
 }
 
-void ICACHE_FLASH_ATTR on_timer() {
+void on_timer() {
 	if(mCounter == 0) {
 		if(mTotalCount) {
 			mTotalCount--;
@@ -92,7 +91,7 @@ void ICACHE_FLASH_ATTR arm_pwm_timer() {
 
 int ICACHE_FLASH_ATTR dhpwm_set_pwm(unsigned int *pinsduty, unsigned int pinsmask, unsigned int periodus, unsigned int count) {
 	int i;
-	if((pinsmask | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS || periodus < 250 || periodus >= 2000004000)
+	if((pinsmask | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS || periodus < 500 || periodus >= 2000004000)
 		return 0;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		if(pinsduty[i] > DHPWM_DEPTH)

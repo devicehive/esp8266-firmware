@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHTERMINAL_COMMANDLINE_H_
-#define USER_DHTERMINAL_COMMANDLINE_H_
+#ifndef _DHTERMINAL_COMMANDLINE_H_
+#define _DHTERMINAL_COMMANDLINE_H_
 
 /**
  *	\brief				Perform command from terminal
@@ -23,4 +23,4 @@ void dhterminal_commandline_do(const char *command);
  */
 char *dhterminal_commandline_autocompleter(const char *pattern);
 
-#endif /* USER_DHTERMINAL_COMMANDLINE_H_ */
+#endif /* _DHTERMINAL_COMMANDLINE_H_ */

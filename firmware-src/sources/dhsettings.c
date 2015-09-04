@@ -35,7 +35,7 @@ typedef struct {
 	};
 } DH_SETTINGS;
 
-DH_SETTINGS mSettings = {0};
+LOCAL DH_SETTINGS mSettings = {0};
 
 uint32_t ICACHE_FLASH_ATTR getStorageCrc() {
 	return crc32(mSettings.storage, sizeof(mSettings.storage));
@@ -156,4 +156,22 @@ void ICACHE_FLASH_ATTR dhsettings_set_devicehive_deviceid(const char *id) {
 
 void ICACHE_FLASH_ATTR dhsettings_set_devicehive_devicekey(const char *key) {
 	set_arg(mSettings.data.deviceKey, sizeof(mSettings.data.deviceKey), key);
+}
+
+int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
+	if(c == '-' || c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+		return 1;
+	return 0;
+}
+
+int ICACHE_FLASH_ATTR dhsettings_devicekey_filter(char c) {
+	if(c <= 0x20 || c >= 0x7F || c == '"' || c == '\\')
+			return 0;
+	return 1;
+}
+
+int ICACHE_FLASH_ATTR dhsettings_server_filter(char c) {
+	if(c <= 0x20 || c >= 0x7F)
+		return 0;
+	return 1;
 }

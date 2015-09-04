@@ -6,11 +6,11 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHCONNECTOR_H_
-#define USER_DHCONNECTOR_H_
+#ifndef _DHCONNECTOR_H_
+#define _DHCONNECTOR_H_
 
 /** Function prototype for handling function. */
-typedef void (*dhconnector_command_json_cb)(int id, const char *command, const char *params, unsigned int paramslen);
+typedef void (*dhconnector_command_json_cb)(unsigned int id, const char *command, const char *params, unsigned int paramslen);
 
 /** Current connection state. */
 typedef enum {
@@ -32,4 +32,4 @@ void dhconnector_init(dhconnector_command_json_cb cb);
  */
 CONNECTION_STATE dhconnector_get_state();
 
-#endif /* USER_DHCONNECTOR_H_ */
+#endif /* _DHCONNECTOR_H_ */

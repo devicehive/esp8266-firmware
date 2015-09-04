@@ -12,8 +12,8 @@
  *				specified timeout.
  */
 
-#ifndef USER_DHUART_H_
-#define USER_DHUART_H_
+#ifndef _DHUART_H_
+#define _DHUART_H_
 
 /** UART mode. */
 typedef enum {
@@ -86,4 +86,4 @@ extern void dhuart_char_rcv(char c);
  */
 extern void dhuart_buf_rcv(const char *buf, unsigned int len);
 
-#endif /* USER_DHUART_H_ */
+#endif /* _DHUART_H_ */

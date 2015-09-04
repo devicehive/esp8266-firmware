@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHTERMINAL_COMMANDS_H_
-#define USER_DHTERMINAL_COMMANDS_H_
+#ifndef _DHTERMINAL_COMMANDS_H_
+#define _DHTERMINAL_COMMANDS_H_
 
 /**
  *	\brief		Check if command is currently working.
@@ -81,4 +81,4 @@ void dhterminal_commands_nslookup(const char *args);
  */
 void dhterminal_commands_ping(const char *args);
 
-#endif /* USER_DHTERMINAL_COMMANDS_H_ */
+#endif /* _DHTERMINAL_COMMANDS_H_ */

@@ -45,12 +45,17 @@ LOCAL void ICACHE_FLASH_ATTR load_defaults(gpio_command_params *out, unsigned in
 	out->timeout = timeout;
 }
 
-LOCAL char * ICACHE_FLASH_ATTR readUIntField(struct jsonparse_state *jparser, ALLOWED_FIELDS field, uint32_t *out, ALLOWED_FIELDS fields, ALLOWED_FIELDS *readedfields) {
+LOCAL char * ICACHE_FLASH_ATTR readUIntField(struct jsonparse_state *jparser, ALLOWED_FIELDS field, uint32_t *out, ALLOWED_FIELDS fields, ALLOWED_FIELDS *readedfields, unsigned int x) {
 	if((fields & field) == 0)
 		return UNEXPECTED;
 	int value;
 	jsonparse_next(jparser);
 	if(jsonparse_next(jparser) != JSON_TYPE_ERROR) {
+		if(x && jparser->vlen == 1 && jparser->json[jparser->vstart] == 'x' && (field & AF_CS)) {
+			*out = x;
+			*readedfields |= field;
+			return 0;
+		}
 		const int res = strToUInt(&jparser->json[jparser->vstart], &value);
 		if(!res)
 			return NONINTEGER;
@@ -74,45 +79,52 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 	while ((type = jsonparse_next(&jparser)) != JSON_TYPE_ERROR) {
 		if (type == JSON_TYPE_PAIR_NAME) {
 			if(strcmp_value(&jparser, "mode") == 0) {
-				if((fields & AF_UARTMODE) == 0)
+				if((fields & AF_UARTMODE) == 0 && (fields & AF_SPIMODE) == 0)
 					return UNEXPECTED;
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
-					int speed;
-					if(strcmp_value(&jparser, "disable") == 0) {
+					int val;
+					if(strcmp_value(&jparser, "disable") == 0 && (fields & AF_UARTMODE)) {
+						*readedfields |= AF_UARTMODE;
 						out->uart_speed = 0;
 						continue;
 					}
-					int res = strToUInt(&jparser.json[jparser.vstart], &speed);
+					int res = strToUInt(&jparser.json[jparser.vstart], &val);
 					if(!res)
-						return "Wrong mode speed integer value";
-					*readedfields |= AF_UARTMODE;
-					out->uart_speed = speed;
-					if(res < jparser.vlen && jparser.json[jparser.vstart + res] == ' ') {
-						while(res < jparser.vlen && jparser.json[jparser.vstart + res] == ' ')
-							res++;
-						if(res + 3 == jparser.vlen) {
-							const unsigned char b =  jparser.json[jparser.vstart + res] - '0';
-							const unsigned char p =  jparser.json[jparser.vstart + res + 1];
-							const unsigned char s =  jparser.json[jparser.vstart + res + 2] - '0';
-							if(b < 10 && s < 10) {
-								out->uart_bits = b;
-								out->uart_partity = p;
-								out->uart_stopbits = s;
-							} else {
-								return "Wrong mode framing";
+						return "Wrong mode integer value";
+					if(fields & AF_UARTMODE) {
+						*readedfields |= AF_UARTMODE;
+						out->uart_speed = val;
+						if(res < jparser.vlen && jparser.json[jparser.vstart + res] == ' ') {
+							while(res < jparser.vlen && jparser.json[jparser.vstart + res] == ' ')
+								res++;
+							if(res + 3 == jparser.vlen) {
+								const unsigned char b =  jparser.json[jparser.vstart + res] - '0';
+								const unsigned char p =  jparser.json[jparser.vstart + res + 1];
+								const unsigned char s =  jparser.json[jparser.vstart + res + 2] - '0';
+								if(b < 10 && s < 10) {
+									out->uart_bits = b;
+									out->uart_partity = p;
+									out->uart_stopbits = s;
+								} else {
+									return "Wrong mode framing";
+								}
 							}
 						}
+					}
+					if(fields & AF_SPIMODE) {
+						*readedfields |= AF_SPIMODE;
+						out->spi_mode = val;
 					}
 				}
 				continue;
 			} else if(strcmp_value(&jparser, "count") == 0) {
-				char * res = readUIntField(&jparser, AF_COUNT, &out->count, fields, readedfields);
+				char * res = readUIntField(&jparser, AF_COUNT, &out->count, fields, readedfields, 0);
 				if(res)
 					return res;
 				continue;
 			} else if(strcmp_value(&jparser, "timeout") == 0) {
-				char * res = readUIntField(&jparser, AF_TIMEOUT, &out->timeout, fields, readedfields);
+				char * res = readUIntField(&jparser, AF_TIMEOUT, &out->timeout, fields, readedfields, 0);
 				if(res)
 					return res;
 				continue;
@@ -151,12 +163,22 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				}
 				continue;
 			} else if(strcmp_value(&jparser, "SDA") == 0) {
-				char * res = readUIntField(&jparser, AF_SDA, &out->SDA, fields, readedfields);
+				char * res = readUIntField(&jparser, AF_SDA, &out->SDA, fields, readedfields, 0);
 				if(res)
 					return res;
 				continue;
 			} else if(strcmp_value(&jparser, "SCL") == 0) {
-				char * res = readUIntField(&jparser, AF_SCL, &out->SCL, fields, readedfields);
+				char * res = readUIntField(&jparser, AF_SCL, &out->SCL, fields, readedfields, 0);
+				if(res)
+					return res;
+				continue;
+			} else if(strcmp_value(&jparser, "CS") == 0) {
+				char * res = readUIntField(&jparser, AF_CS, &out->CS, fields, readedfields,  ~(uint32_t)0U);
+				if(res)
+					return res;
+				continue;
+			} else if(strcmp_value(&jparser, "pin") == 0) {
+				char * res = readUIntField(&jparser, AF_PIN, &out->pin, fields, readedfields, 0);
 				if(res)
 					return res;
 				continue;
@@ -177,7 +199,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 			} else {
 				const int res = strToUInt(&jparser.json[jparser.vstart], &pinnum);
 				if(!res || pinnum < 0 || pinnum > DHGPIO_MAXGPIONUM)
-					return "Wrong pin";
+					return "Wrong argument";
 				pinmask =  (1 << pinnum);
 			}
 			jsonparse_next(&jparser);
@@ -236,6 +258,11 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						return UNEXPECTED;
 					out->pins_to_read |= pinmask;
 					*readedfields |= AF_READ;
+				} else if(strcmp_value(&jparser, "presence") == 0) {
+					if((fields & AF_PRESENCE) == 0)
+						return UNEXPECTED;
+					out->pins_to_presence |= pinmask;
+					*readedfields |= AF_PRESENCE;
 				} else if((fields & AF_VALUES)) { // BE CAREFULL, all digits values have to be under this if
 					int value, i;
 					if(!strToUInt(&jparser.json[jparser.vstart], &value))

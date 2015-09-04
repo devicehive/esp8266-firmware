@@ -16,6 +16,8 @@
     }
   </style>
   <script type="text/javascript">
+  var SDA = 0;
+  var SCL = 2;
   function print(text, color) {
     document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
   }
@@ -58,11 +60,11 @@
   }
   
   function write_ssd1306_command(command) {
-    send_command("i2c/master/write", {"address":"78", "data":btoa(String.fromCharCode(0) + String.fromCharCode(command))});
+    send_command("i2c/master/write", {"SDA":SDA, "SCL":SCL, "address":"78", "data":btoa(String.fromCharCode(0) + String.fromCharCode(command))});
   }
   
   function write_ssd1306_data(data) {
-    send_command("i2c/master/write", {"address":"78", "data":btoa(String.fromCharCode(0x40) + data)});
+    send_command("i2c/master/write", {"SDA":SDA, "SCL":SCL, "address":"78", "data":btoa(String.fromCharCode(0x40) + data)});
   }
   
   function wait_finish() {

@@ -1,0 +1,149 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  var PIN = 0;
+  function print(text, color) {
+    document.body.innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id, callback) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            print("ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            if(json['result'] == null || json['status'] == null) {
+              getres(id, callback);
+              return;
+            }
+            if(json['status'] != "OK") {
+              print("Error - " + xmlhttp.responseText, "red");
+              return;
+            }
+            callback(json['result']['data']);
+          }
+      }
+    }
+    xmlhttp.send("");
+  }
+  
+  function get_data(onewire_command, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not read data " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify({"command":"onewire/master/read", "parameters":{"pin":PIN, "count":8, "data":btoa(String.fromCharCode.apply(null,onewire_command))}}));
+  }
+    
+  function calc_onewire_crc(data) {
+    var seed = 0;
+    for(i = 0; i < 8; i++) {
+      b = data.charCodeAt(i);
+      for (j = 0; j < 8; j++) {
+        if((seed ^ b) & 0x01)
+          seed = (seed >> 1) ^ 0x8C;
+        else
+          seed >>= 1;
+          b >>= 1;
+      }
+    }
+    return seed;
+  }
+  
+  var deviceCode = "";
+  function print_data(temperature) {
+    var str = "<h1>Device: " + deviceCode;
+    if(temperature)
+      str += "<br>Temperature: " + temperature + " C</h1>";
+    print(str, "green");
+  }
+  
+  function code_recevied(base64) {
+    var data = atob(base64);
+    deviceCode = "";
+    for (var i = 0; i < data.length; i++) {
+      h = data.charCodeAt(data.length - i - 1).toString(16);
+      deviceCode += (h.length == 1) ? "0" + h : h;
+    }
+    if(calc_onewire_crc(data) == 0) {
+      print_data(null);
+      get_data([0xCC, 0x44], measure_started);
+    } else {
+      print("Wrong crc! [" + deviceCode + "]", "Red");
+    }
+  }
+  
+  function measure_started(base64) {
+    setTimeout(function() { // Wait until measuring completed, depend on resolution. Default is maximum.
+      get_data([0xCC, 0xBE], temperature_data_recevied);
+    }, 750); 
+  }
+  
+  function signedInt16(data) {
+    i = data.charCodeAt(1) * 256 + data.charCodeAt(0);
+    if( i <= 0x7FFF)
+      return i;
+    return i - 0x10000;
+  }
+  
+  function temperature_data_recevied(base64) {
+    var data = atob(base64);
+    print_data(signedInt16(data) / 16.0);
+    get_data([0xCC, 0x44], measure_started); // loop  
+  }
+  
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;   
+    get_data([0x33], code_recevied);
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 

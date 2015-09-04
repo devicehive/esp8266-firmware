@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHCOMMAND_PARSER_H_
-#define USER_DHCOMMAND_PARSER_H_
+#ifndef _DHCOMMAND_PARSER_H_
+#define _DHCOMMAND_PARSER_H_
 
 #include <c_types.h>
 #include "dhgpio.h"
@@ -25,6 +25,7 @@ typedef struct {
 	uint16_t pins_to_falling;						///< Bitwise mask with pin marked as falling.
 	uint16_t pins_to_both;							///< Bitwise mask with pin marked as both.
 	uint16_t pins_to_read;							///< Bitwise mask with pin marked as read.
+	uint16_t pins_to_presence;						///< Bitwise mask with pin marked as presence.
 	uint32_t periodus;								///< converted frequency field value.
 	uint32_t count;									///< count field value.
 	uint32_t pin_value[DHGPIO_MAXGPIONUM + 1];		///< Pin values.
@@ -34,11 +35,14 @@ typedef struct {
 	char uart_partity;								///< Parity for UART from mode field.
 	uint8_t uart_stopbits;							///< Stop bits for UART from mode field.
 	char data[INTERFACES_BUF_SIZE];					///< Decoded data.
-	uint8_t data_len;								///< Decoded data length.
+	uint32_t data_len;								///< Decoded data length.
 	uint32_t timeout;								///< timeout field value.
 	uint32_t address;								///< address field value.
 	uint32_t SDA;									///< SDA field value.
 	uint32_t SCL;									///< SCL field value.
+	uint32_t spi_mode;								///< Mode for SPI.
+	uint32_t CS;									///< CS field value.
+	uint32_t pin;									///< pin field value
 } gpio_command_params;
 
 /** Flag based enum with available parameters fields. */
@@ -53,15 +57,19 @@ typedef enum {
 	AF_FALLING = 0x80,		///< Read pins with falling value.
 	AF_BOTH = 0x100,		///< Read pins with both value.
 	AF_READ = 0x200,		///< Read pins with read value.
-	AF_PERIOD = 0x400,		///< Read frequency field.
-	AF_COUNT = 0x800,		///< Read count field.
-	AF_VALUES = 0x1000,		///< Read pins values.
-	AF_UARTMODE = 0x2000,	///< Read mode field.
-	AF_DATA = 0x4000,		///< Read data field.
-	AF_TIMEOUT = 0x8000,	///< Read timeout field.
-	AF_ADDRESS = 0x10000,	///< Read address field.
-	AF_SDA = 0x20000,		///< Read SDA field.
-	AF_SCL = 0x40000		///< Read SCL field.
+	AF_PRESENCE = 0x400,	///< Read pins with presence value.
+	AF_PERIOD = 0x800,		///< Read frequency field.
+	AF_COUNT = 0x1000,		///< Read count field.
+	AF_VALUES = 0x2000,		///< Read pins values.
+	AF_UARTMODE = 0x4000,	///< Read mode field for UART.
+	AF_DATA = 0x8000,		///< Read data field.
+	AF_TIMEOUT = 0x10000,	///< Read timeout field.
+	AF_ADDRESS = 0x20000,	///< Read address field.
+	AF_SDA = 0x40000,		///< Read SDA field.
+	AF_SCL = 0x80000,		///< Read SCL field.
+	AF_SPIMODE = 0x100000,	///< Read mode field for SPI.
+	AF_CS = 0x200000,		///< Read CS field.
+	AF_PIN = 0x400000		///< Read pin field.
 } ALLOWED_FIELDS;
 
 /**
@@ -76,4 +84,4 @@ typedef enum {
  */
 char *parse_params_pins_set(const char *params, unsigned int paramslen, gpio_command_params *out, unsigned int all, unsigned int timeout, ALLOWED_FIELDS fields, ALLOWED_FIELDS *readedfields);
 
-#endif /* USER_DHCOMMAND_PARSER_H_ */
+#endif /* _DHCOMMAND_PARSER_H_ */

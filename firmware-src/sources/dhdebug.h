@@ -6,8 +6,18 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHDEBUG_H_
-#define USER_DHDEBUG_H_
+#ifndef _DHDEBUG_H_
+#define _DHDEBUG_H_
+
+/**
+ *	\brief			Switch debug output to dhterminal
+ */
+void dhdebug_terminal();
+
+/**
+ *	\brief			Switch debug output to UART
+ */
+void dhdebug_direct();
 
 /**
  *	\brief			Print to debug output.
@@ -16,4 +26,11 @@
  */
 void dhdebug(const char *fmt, ...);
 
-#endif /* USER_DHDEBUG_H_ */
+/**
+ *	\brief				Print dumped data in hex.
+ *	\param[in]	data	Data for dump.
+ *	\param[in]	len		Data size in bytes.
+ */
+void dhdebug_dump(const char *data, unsigned int len);
+
+#endif /* _DHDEBUG_H_ */

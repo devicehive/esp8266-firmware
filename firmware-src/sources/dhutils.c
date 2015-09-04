@@ -124,3 +124,14 @@ int ICACHE_FLASH_ATTR hexToByte(const char *hex, unsigned char *byteout) {
 	}
 	return 0;
 }
+
+const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned short len) {
+	unsigned short pos = sizeof(uint32);
+	if (len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
+		while (pos < len)
+			if (data[pos++] == ' ')
+				break;
+		return &data[pos];
+	}
+	return NULL;
+}

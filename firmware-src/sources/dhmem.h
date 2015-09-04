@@ -7,23 +7,20 @@
  *	\details	Observer current memory status, and blocks firmware from generating new objects until memory will be free.
  */
 
-#ifndef SOURCES_DHMEM_H_
-#define SOURCES_DHMEM_H_
+#ifndef _DHMEM_H_
+#define _DHMEM_H_
 
 #include "dhrequest.h"
 
 /**
- *	\brief				Allocate memory for request.
- *	\param[in]	size	Request size in bytes.
- *	\return				Pointer to allocated memory on success or NULL on failure.
+ *	\brief		Activate memory save mode
  */
-HTTP_REQUEST *dhmem_malloc_request(unsigned int size);
+void dhmem_block();
 
 /**
- *	\brief				Free request memory.
- *	\param[in]	r		Pointer to request
+ *	\brief		Deactivate memory save mode
  */
-void dhmem_free_request(HTTP_REQUEST *r);
+void dhmem_unblock();
 
 /**
  *	\brief		Check memory status good and new request allocation is possible.
@@ -34,6 +31,6 @@ int dhmem_isblock();
 /**
  *	\brief		Callback that will be called when allocation is possible again.
  */
-extern void dhmem_unblock();
+extern void dhmem_unblock_cb();
 
-#endif /* SOURCES_DHMEM_H_ */
+#endif /* _DHMEM_H_ */

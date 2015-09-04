@@ -12,6 +12,7 @@
 #include <c_types.h>
 #include <osapi.h>
 #include <gpio.h>
+#include <user_interface.h>
 #include "dhi2c.h"
 #include "dhgpio.h"
 #include "user_config.h"
@@ -19,8 +20,8 @@
 #define I2C_DELAY_US 5
 #define I2C_ERROR_TIMEOUT_US 50000
 
-unsigned int mSDAPin = (1 << 0);
-unsigned int mSCLPin = (1 << 2);
+LOCAL unsigned int mSDAPin = (1 << 0);
+LOCAL unsigned int mSCLPin = (1 << 2);
 
 DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_init(unsigned int sda_pin, unsigned int scl_pin) {
 	const unsigned int SDA = (1 << sda_pin);
@@ -171,6 +172,7 @@ LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_act(unsigned int address, char *buf, 
 	}
 	int i;
 	for(i = 0; i < len; i++) {
+		system_soft_wdt_feed();
 		if(is_read)	{
 			res = dhi2c_readbyte(&buf[i], (i + 1) == len);
 		} else {

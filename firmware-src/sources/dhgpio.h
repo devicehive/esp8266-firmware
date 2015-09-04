@@ -6,13 +6,18 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef USER_DHGPIO_H_
-#define USER_DHGPIO_H_
+#ifndef _DHGPIO_H_
+#define _DHGPIO_H_
 
 /** Bitwise pin mask for pin that can be used. */
 #define DHGPIO_SUITABLE_PINS 0b1111000000111111 // GPIO0-GPIO5, GPIO12-GPIO15
 /** Last pin number. */
 #define DHGPIO_MAXGPIONUM 15
+
+/**
+ *	\brief					Initialize GPIO.
+ */
+void dhgpio_init();
 
 /**
  *	\brief					Prepare pins for using as GPIO.
@@ -50,7 +55,7 @@ int dhgpio_write(unsigned int set_mask, unsigned int unset_mask);
  *	\param[in]	nopoll_mask	Bitwise pin mask for pins that should be switched to input mode with disable pull up.
  *	\return 				Non zero value on success, zero on failure.
  */
-int dhgpio_init(unsigned int init_mask, unsigned int pollup_mask, unsigned int nopoll_mask);
+int dhgpio_initialize(unsigned int init_mask, unsigned int pollup_mask, unsigned int nopoll_mask);
 
 /**
  *	\brief		Read GPIO pins state
@@ -59,7 +64,7 @@ int dhgpio_init(unsigned int init_mask, unsigned int pollup_mask, unsigned int n
 unsigned int dhgpio_read();
 
 /**
- *	\brief						Enbale GPIO interruption.
+ *	\brief						Enable GPIO interruption.
  *	\param[in]	disable_mask	Bitwise pin mask for disabling interruption.
  *	\param[in]	rising_mask		Bitwise pin mask for rising edge interruption.
  *	\param[in]	falling_mask	Bitwise pin mask for falling edge interruption..
@@ -81,4 +86,20 @@ unsigned int dhgpio_get_timeout();
  */
 extern void dhgpio_int_timeout(unsigned int caused_pins);
 
-#endif /* USER_DHGPIO_H_ */
+/**
+ *	\brief						Enable GPIO extra interruption.
+ *	\param[in]	disable_mask	Bitwise pin mask for disabling interruption.
+ *	\param[in]	rising_mask		Bitwise pin mask for rising edge interruption.
+ *	\param[in]	falling_mask	Bitwise pin mask for falling edge interruption..
+ *	\param[in]	both_mask		Bitwise pin mask for rising and falling edge interruption.
+ *	\return 					Non zero value on success, zero on failur
+ */
+int dhgpio_subscribe_extra_int(unsigned int disable_mask, unsigned int rising_mask, unsigned int falling_mask, unsigned int both_mask);
+
+/**
+ *	\brief					Extra interruption callback.
+ *	\param[in] caused_pins	Bitwise pin mask with pins that was trigger interruption.
+ */
+extern void dhgpio_extra_int(unsigned int caused_pins);
+
+#endif /* _DHGPIO_H_ */

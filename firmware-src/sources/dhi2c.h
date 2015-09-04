@@ -6,8 +6,8 @@
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef SOURCES_DHI2C_H_
-#define SOURCES_DHI2C_H_
+#ifndef _DHI2C_H_
+#define _DHI2C_H_
 
 /** I2C functions return status */
 typedef enum {
@@ -49,4 +49,4 @@ DHI2C_STATUS dhi2c_write(unsigned int address, const char *buf, unsigned int len
  */
 DHI2C_STATUS dhi2c_read(unsigned int address, char *buf, unsigned int len);
 
-#endif /* SOURCES_DHI2C_H_ */
+#endif /* _DHI2C_H_ */

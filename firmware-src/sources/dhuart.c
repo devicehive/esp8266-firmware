@@ -13,6 +13,7 @@
 #include <osapi.h>
 #include <os_type.h>
 #include <gpio.h>
+#include <user_interface.h>
 #include "dhuart.h"
 #include "user_config.h"
 
@@ -26,12 +27,12 @@
 #define UART_CONFIGURATION_REGISTER1 (UART_BASE + 0x24)
 
 #define DHUART_BUFFER_OVERFLOW_RESERVE INTERFACES_BUF_SIZE
-DHUART_DATA_MODE mDataMode = DUM_PER_BYTE;
-char mUartBuf[INTERFACES_BUF_SIZE + DHUART_BUFFER_OVERFLOW_RESERVE];
-unsigned int mUartBufPos = 0;
-os_timer_t mUartTimer;
-unsigned int mUartTimerTimeout = 250;
-unsigned char mBufInterrupt = 0;
+LOCAL DHUART_DATA_MODE mDataMode = DUM_PER_BYTE;
+LOCAL char mUartBuf[INTERFACES_BUF_SIZE + DHUART_BUFFER_OVERFLOW_RESERVE];
+LOCAL unsigned int mUartBufPos = 0;
+LOCAL os_timer_t mUartTimer;
+LOCAL unsigned int mUartTimerTimeout = 250;
+LOCAL unsigned char mBufInterrupt = 0;
 
 LOCAL ICACHE_FLASH_ATTR void arm_buf_timer();
 
@@ -58,7 +59,7 @@ LOCAL ICACHE_FLASH_ATTR void arm_buf_timer() {
 	os_timer_arm(&mUartTimer, (mUartTimerTimeout == 0 | mUartBufPos >= INTERFACES_BUF_SIZE) ? 1 :mUartTimerTimeout, 0);
 }
 
-LOCAL ICACHE_FLASH_ATTR void dhuart_intr_handler(void *arg) {
+LOCAL void dhuart_intr_handler(void *arg) {
 	if (READ_PERI_REG(UART_INTERUPTION_STATE_REGISTER) & BIT(0)) {
 		const char rcvChar = READ_PERI_REG(UART_BASE) & 0xFF;
 		WRITE_PERI_REG(UART_INTERUPTION_REGISTER, BIT(0));
@@ -91,6 +92,8 @@ int ICACHE_FLASH_ATTR dhuart_init(unsigned int speed, unsigned int databits, cha
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0RXD_U);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_U0TXD);
 	gpio_output_set(0, 0, 0, BIT(1) | BIT(3));
+	PIN_PULLUP_EN(PERIPHS_IO_MUX_U0RXD_U);
+	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
 
 	WRITE_PERI_REG(UART_DIV_REGISTER, UART_CLK_FREQ / speed);
 	WRITE_PERI_REG(UART_CONFIGURATION_REGISTER0, 0);
@@ -128,8 +131,10 @@ void ICACHE_FLASH_ATTR dhuart_send_line(const char *str) {
 void ICACHE_FLASH_ATTR dhuart_send_buf(const char *buf, unsigned int len) {
 	if(mDataMode != DUM_PER_BUF)
 		return;
-	while(len--)
+	while(len--) {
+		system_soft_wdt_feed();
 		dhuart_send_char(*buf++);
+	}
 }
 
 void ICACHE_FLASH_ATTR dhuart_set_mode(DHUART_DATA_MODE mode, unsigned int timeout) {
