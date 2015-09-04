@@ -63,7 +63,7 @@ Returns 'OK' on success with result or 'Error' with description in result.
 ```json
 {
 	"0":"0",
-	"1":"1"
+	"1":"1",
 	"2":"0"
 }
 ```
