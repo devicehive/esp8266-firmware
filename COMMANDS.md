@@ -2,6 +2,7 @@
 This document explains the set of RESTful API commands to control your remote ESP8266 — an incredible all around DIY IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
 
 Once ESP8266 device is connected to the cloud you can issue commands using DeviceHive's RESTful API. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
+
 *Example using curl on Mac or Linux:*
 ```
 curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' -H 'Content-Type: application/json' -d '{"command":"gpio/write","parameters":{"1":0}}' http://nn8571.pg.devicehive.com/api/device/astaff/command
