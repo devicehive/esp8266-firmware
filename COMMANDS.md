@@ -39,8 +39,8 @@ Read the state of all GPIO pins. Only pins specified in the request will be init
 *Parameters*:  
 JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
 * "init" - in ESP8266 all pins are initialized as input by default. If pin was used as output in gpio/write or to interface with other peripheral module before, pass this argument to re-init the pin before reading. Pullup state will not be affected.  
-"pullup" - init pin as input and enable pullup  
-"nopull" - init pin as input and disable pullup  
+* "pullup" - init pin as input and enable pullup  
+* "nopull" - init pin as input and disable pullup  
 
 *Example*:  
 ```json
