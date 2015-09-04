@@ -1,67 +1,86 @@
-﻿#1. GPIO
+﻿#Overview
+This document explains the set of RESTful API commands to control your remote ESP8266 — an incredible all around DIY IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
+
+Once ESP8266 device is connected to the cloud you can issue commands using DeviceHive's RESTful API. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
+*Example using curl on Mac or Linux:*
+```
+curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' -H 'Content-Type: application/json' -d '{"command":"gpio/write","parameters":{"1":0}}' http://nn8571.pg.devicehive.com/api/device/astaff/command
+```
+This would setting pin1 to 0. For expampe with Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on. 
+
+#GPIO
 Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and reverse protection.
 
-##1.1 gpio/write
-Sets gpio pins state according to the specified parameters. Pins will be automatically initialized to output. All pins will be setted up simultaneously. Unlisted pins will not be touched.
+##gpio/write
+Sets gpio pins state according to parameters specified. Pins will be automatically initialized as output when command is received. All pins will be setup simultaneously. Unlisted pins will remain unaffected.
 
 *Parameters*:    
-Json with set of key-value, where key is pin name and value ‘0’, ‘1’ or ‘x’. ‘0’ means low level, ‘1’ means high level, ‘x’ means dummy request which added for compatibility and easy string json generation. Sample below, sets gpio10 to low level and gpio11 to high level.
+JSON with a set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below, sets gpio10 to LOW and gpio11 to HGIH.
 
 *Example*:
 ```json
-{
-	"10":"0",
-	"11":"1",
-	"12":"x"
+{ 
+	"command":"gpio/write",
+	"parameters":
+	{
+		"10":"0",
+		"11":"1",
+		"12":"x"
+	}
 }
 ```
 
-Return ‘OK’ in status on success or ‘Error’ and description in result on error.
+Returns 'OK' on success or 'Error' with description in result.
 
-##1.2 gpio/read
-Read all gpio pins state. Pins will not be initialized as input. if pins were not specified in parameters. 
+##gpio/read
+Read the state of all GPIO pins. Only pins specified in the request will be initialized as input.
 
 *Parameters*:  
-Can be empty. 
-Json with set of key-value, where key is pin name and value can be:  
-"init" - all pins are initialized as input by default, if pin was used as output or any other peripheral module before, pass this argument to reinit pin before reading. Pullup state will not be touched.  
+JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
+* "init" - in ESP8266 all pins are initialized as input by default. If pin was used as output in gpio/write or to interface with other peripheral module before, pass this argument to re-init the pin before reading. Pullup state will not be affected.  
 "pullup" - init pin as input and enable pullup  
 "nopull" - init pin as input and disable pullup  
 
 *Example*:  
 ```json
-{
-	"10":"init",
-	"11":"pullup",
-	"12":"nopull"
+{ 
+	"command":"gpio/read",
+	"parameters":
+	{
+		"10":"init",
+		"11":"pullup",
+		"12":"nopull"
+	}
 }
 ```
 
-Note: pull up and pull down are the SoC feature that allow to put input to high level or low level through resistor with very high resistance. By default each pin in float (‘Z’’) condition which state not determined and reading will return random value if pin doesn’t connect to high or low source. Enabling pull up feature helps to have very weak high level on input pin by default and pull down sets very weak low level.
+Note: pull up and pull down are the SoC feature that allows to set input to high or low through resistor with very high resistance. By default each pin is not connected (Z) and reading will return random value it it's not connected to anything. Enabling pull up feature helps to have very weak high level on input pin by default and pull down sets very weak low level, thus making it's state determined.
 
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Returns 'OK' on success with result or 'Error' with description in result.
+
+*Example*:  
 ```json
 {
 	"0":"0",
 	"1":"1"
-	...
-	"16":"0"
+	"2":"0"
 }
 ```
 
-##1.3 gpio/int
-Enable or disable notification on pin state changes(enable interruptions).
+##gpio/int
+Allows you to subscribe to notifications (interrupts) on pin state change.
 
 *Parameters*:  
-Json with set of key-value, where key is pin name and value can be:  
-"disable" - disable interruption if it was enabled before  
-"rising" - send notification on rising edge  
-"falling" - send notification on falling edge  
-"both"  - send notification on rising and falling edge  
-'timeout' - additional parameters. Notification will be sent only after this period of time. Minimum is 50 ms. Maximum is 8388607 ms. If not specified previous timeout will be used. Default is 250 ms.  
-Mnemonic "all" can be used as key to set up something for all pins.
+JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
+* "disable" - disable notifications
+* "rising" - send notification on rising edge  
+* "falling" - send notification on falling edge  
+* "both"  - send notification on rising and falling edge  
+* "timeout" - notification will be sent only after a certain period of time. Minimum is 50 ms. Maximum is 8388607 ms. If not specified previous timeout will be used. Default is 250 ms.  
 
-*Notes: Timeout feature can be very useful with real physical switches for contact bounce filtering.*
+Mnemonic "all" can be used to set value for all pins.
+
+*Note: Timeout feature shall be used whenever is practicle to avoid flooding with notifications.*
 
 *Example*:  
 ```json
@@ -74,32 +93,29 @@ Mnemonic "all" can be used as key to set up something for all pins.
 }
 ```
 
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-Notifications will be sent with name ‘gpio/int’. Each notification will contain list of gpio which caused interruption in ‘caused’ field, current(on notification creating moment, after timeout) gpio inputs(all of them) state in ‘state’ field and tick count on gpio read moment in microseconds based on internal on chip time:
+Returns 'OK' on success with result or 'Error' with description in result.
+
+Notifications will be generated with the name 'gpio/int'. Each notification will contain list of gpio pins affected in 'caused' field, 'state' contains values of all gpio inputs after timeout and 'tick' contains the number of ticks of internal clock as a timestamp:
 ```json
 {
 	"caused":["0", "1"],
 	"state":{
 		"0":"0",
 		"1":"1"
-		...
 		"16":"0"
 	}
 	"tick":"123456"
 }
 ```
+#ADC
+ESP8266 has just one ADC channel. This channel is connected to a dedicated pin 6 - ‘TOUT’. ADC can measure voltage in range from 0.0V to 1.0V with 10 bit resolution. 
 
-
-
-#2. ADC
-ESP8266 has just one ADC channel. This channel connected to dedicated pin #6 - ‘TOUT’. ADC can measure voltage in range 0..1 Volts with 10 bit resolution. 
-
-##2.1 adc/read
+##adc/read
 Reads ADC channels values. ESP8266 has just one channel - ‘0’.
 
 *Parameters*:  
-Can be empty, all channels value will be sent in this case.
-Json with set of key-value, where key is ADC channel and value can be:  
+Can be empty, all channels will be sent in this case.
+JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
 "read" - read channel current value  
 
 *Example*:  
@@ -110,14 +126,14 @@ Json with set of key-value, where key is ADC channel and value can be:
 }
 ```
 
-Return ‘OK’ in status and json like below in result on success. Each entry contains channel number and value in volts. ‘Error’ and description will be send in result on error.
+Returns 'OK' on success with result or 'Error' with description in result. Each entry contains channel number and value in volts. 
 ```json
 {
 	"0":"0.6"
 }
 ```
 
-## 2.2 adc/int
+##adc/int
 Subscribes on notifications with ADC value with some period.
 
 *Parameters*:  
