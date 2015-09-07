@@ -61,10 +61,13 @@ SerialPort *SerialPort::open(const char *port) {
            close(comp);
            return 0;
        }
-       tio.c_cflag     &=  ~(PARENB | CSTOPB | CSIZE | CRTSCTS);
-       tio.c_cflag=CS8|CREAD|CLOCAL;
-       tio.c_cc[VMIN]=1;
-       tio.c_cc[VTIME]=5;
+       tio.c_iflag = 0;
+       tio.c_oflag = 0;
+       tio.c_lflag = 0;
+       tio.c_cflag &= ~(PARENB | CSTOPB | CSIZE | CRTSCTS);
+       tio.c_cflag = CS8|CREAD|CLOCAL;
+       tio.c_cc[VMIN] = 1;
+       tio.c_cc[VTIME] = 5;
 
        cfsetospeed(&tio,B115200);
        cfsetispeed(&tio,B115200);
