@@ -10,16 +10,18 @@ curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
 -d '{"command":"gpio/write","parameters":{"1":0}}' \
 http://nn8571.pg.devicehive.com/api/device/astaff/command
 ```
-This would setting pin1 to 0. For expampe with Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on. 
+This would set PIN1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on. 
+
+Below you can find JSON commands to interact with low-level peripherals on your chip.
 
 #GPIO
-Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and reverse protection.
+Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and reverse current protection.
 
 ##gpio/write
-Sets gpio pins state according to parameters specified. Pins will be automatically initialized as output when command is received. All pins will be setup simultaneously. Unlisted pins will remain unaffected.
+Sets gpio pins according to parameters specified. Pins will be automatically initialized as output when command is received. All pins will be set up simultaneously. Unlisted pins will remain unaffected.
 
 *Parameters*:    
-JSON with a set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below, sets gpio10 to LOW and gpio11 to HGIH.
+JSON with a set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio10 to LOW and gpio11 to HGIH.
 
 *Example*:
 ```json
@@ -37,11 +39,11 @@ JSON with a set of key-value pairs, where key is pin number and value '0' for LO
 Returns 'OK' on success or 'Error' with description in result.
 
 ##gpio/read
-Read the state of all GPIO pins. Only pins specified in the request will be initialized as input.
+Reads the state of all GPIO pins. Only pins specified in the request will be initialized as input.
 
 *Parameters*:  
-JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
-* "init" - in ESP8266 all pins are initialized as input by default. If pin was used as output in gpio/write or to interface with other peripheral module before, pass this argument to re-init the pin before reading. Pullup state will not be affected.  
+JSON with a set of key-value pairs, where key is pin number and value is one of the following: 
+* "init" - in ESP8266 all pins are initialized as input by default. If pin was used as output in gpio/write or to interface with other peripherals before, pass this argument to re-init the pin before reading. Pullup state will not be affected.  
 * "pullup" - init pin as input and enable pullup  
 * "nopull" - init pin as input and disable pullup  
 
@@ -58,7 +60,7 @@ JSON with a set of key-value pairs. Where key is pin number and value is one of 
 }
 ```
 
-Note: pull up and pull down are the SoC feature that allows to set input to high or low through resistor with very high resistance. By default each pin is not connected (Z) and reading will return random value it it's not connected to anything. Enabling pull up feature helps to have very weak high level on input pin by default and pull down sets very weak low level, thus making it's state determined.
+Note: pull up and pull down are the SoC feature that allows to set input to high or low through resistor with very high resistance. By default each pin is not connected (Z) and reading will return random value. Enabling pull up feature puts a very weak high level on input pin by default and pull down sets very weak low level, thus making it's state determined as 1 or 0.
 
 Returns 'OK' on success with result or 'Error' with description in result.
 
@@ -80,7 +82,7 @@ JSON with a set of key-value pairs. Where key is pin number and value is one of 
 * "rising" - send notification on rising edge  
 * "falling" - send notification on falling edge  
 * "both"  - send notification on rising and falling edge  
-* "timeout" - notification will be sent only after a certain period of time. Minimum is 50 ms. Maximum is 8388607 ms. If not specified previous timeout will be used. Default is 250 ms.  
+* "timeout" - notification will be sent only after a certain period of time. Minimum is 50 ms. Maximum is 8388607 ms. If not specified, previous timeout will be used. Default is 250 ms.  
 
 Mnemonic "all" can be used to set value for all pins.
 
@@ -99,7 +101,7 @@ Mnemonic "all" can be used to set value for all pins.
 
 Returns 'OK' on success with result or 'Error' with description in result.
 
-Notifications will be generated with the name 'gpio/int'. Each notification will contain list of gpio pins affected in 'caused' field, 'state' contains values of all gpio inputs after timeout and 'tick' contains the number of ticks of internal clock as a timestamp:
+Notifications will be generated with the name 'gpio/int'. Each notification will contain list of gpio pins affected in 'caused' field (read: pins that caused an interrupt), 'state' contains values of all gpio inputs after timeout and 'tick' contains the number of ticks of SoC's internal clock as a timestamp:
 ```json
 {
 	"caused":["0", "1"],
@@ -119,7 +121,7 @@ Reads ADC channels values. ESP8266 has just one channel - ‘0’.
 
 *Parameters*:  
 Can be empty, all channels will be sent in this case.
-JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
+JSON with a set of key-value pairs, where key is pin number and value is one of the following: 
 "read" - read channel current value  
 
 *Example*:  
@@ -161,7 +163,7 @@ Return ‘OK’ in status. Or ‘Error’ and description in result on error. No
 Where "0" channel number, and "0.0566" current voltage in volts.
 
 #3. PWM
-PWM implementation is software. PWM has just one channel, but this channel can control all GPIO outputs with different duty cycle. It also means that all outputs are synchronized and work with the same frequency. PWM depth is 100. PWM can be used as pulse generator with specified number of pulses.
+ESP8266 has only software implementation of PWM wich means there is no real-time guarantee on high frequency of PWM. PWM has just one channel, but this channel can control all GPIO outputs with different duty cycle. It also means that all outputs are synchronized and work with the same frequency. PWM depth is 100. PWM can be used as pulse generator with specified number of pulses.
 
 ##3.1 pwm/control
 Enable or disable PWM.
