@@ -4,10 +4,12 @@ This document explains the set of REST API commands to control your remote ESP82
 Once ESP8266 device is connected you can issue commands using DeviceHive's REST API. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
 
 *Example using curl on Mac or Linux:*
-> ```shell
-> curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' -H 'Content-Type: application/json' -d
-> '{"command":"gpio/write","parameters":{"1":0}}' http://nn8571.pg.devicehive.com/api/device/astaff/command
-> ```
+```shell
+curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
+-H 'Content-Type: application/json' \
+-d '{"command":"gpio/write","parameters":{"1":0}}' \
+http://nn8571.pg.devicehive.com/api/device/astaff/command
+```
 This would setting pin1 to 0. For expampe with Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on. 
 
 #GPIO
