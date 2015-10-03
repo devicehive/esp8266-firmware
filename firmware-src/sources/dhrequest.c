@@ -21,27 +21,27 @@
 #include "snprintf.h"
 
 static const char REGISTER_JSON[] =
-		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\"1.0\",\"offlineTimeout\":\"120\"}}";
+		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\""FIRMWARE_VERSION"\",\"offlineTimeout\":\"120\"}}";
 static const char UPDATE_JSON[] =
 		"{\"status\":\"%s\",\"result\":%s%s%s}";
 static const char NOTIFICATION_JSON[] =
 		"{\"notification\":\"%s\",\"parameters\":%s%s%s}";
 
 static const char HTTP_REQUEST_PATTERN[] =
-		"%s %s%s%s%s%s HTTP/1.0\r\nAuth-DeviceID: %s\r\nAuth-DeviceKey: %s\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %s\r\n\r\n%s";
+		"%s %s%s%s%s%s HTTP/1.0\r\nAuthorization: Bearer %s\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %s\r\n\r\n%s";
 
 LOCAL char mServer[DHSETTINGS_SERVER_MAX_LENGTH];
 LOCAL char mDeviceId[DHSETTINGS_DEVICEID_MAX_LENGTH];
-LOCAL char mDeviceKey[DHSETTINGS_DEVICEKEY_MAX_LENGTH];
+LOCAL char mAccessKey[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
 
 LOCAL unsigned short mServerLen;
 LOCAL unsigned short mDeviceIdLen;
-LOCAL unsigned short mDeviceKeyLen;
+LOCAL unsigned short mAccessKeyLen;
 
 void ICACHE_FLASH_ATTR dhrequest_load_settings() {
 	mServerLen = snprintf(mServer, sizeof(mServer), "%s", dhsettings_get_devicehive_server());
 	mDeviceIdLen = snprintf(mDeviceId, sizeof(mDeviceId), "%s", dhsettings_get_devicehive_deviceid());
-	mDeviceKeyLen = snprintf(mDeviceKey, sizeof(mDeviceKey), "%s", dhsettings_get_devicehive_devicekey());
+	mAccessKeyLen = snprintf(mAccessKey, sizeof(mAccessKey), "%s", dhsettings_get_devicehive_accesskey());
 }
 
 const char *dhrequest_current_server() {
@@ -49,11 +49,16 @@ const char *dhrequest_current_server() {
 }
 
 void ICACHE_FLASH_ATTR dhrequest_create_register(HTTP_REQUEST *buf) {
+	uint8 mac[6];
+	char keybuf[64];
+	if(!wifi_get_macaddr(STATION_IF, mac))
+		memset(mac,0, sizeof(mac));
+	int keybuflen = snprintf(keybuf, sizeof(keybuf) - 1, "%X%X%X%X%X%X%X", system_get_chip_id(), mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	char lenbuf[16];
-	char jsonbuf[sizeof(REGISTER_JSON) - 4 + DHSETTINGS_DEVICEID_MAX_LENGTH + DHSETTINGS_DEVICEKEY_MAX_LENGTH];
-	const unsigned int jsonbuflen = snprintf(jsonbuf, sizeof(jsonbuf), REGISTER_JSON, mDeviceId, mDeviceKey);
+	char jsonbuf[sizeof(REGISTER_JSON) - 4 + DHSETTINGS_DEVICEID_MAX_LENGTH + keybuflen];
+	const unsigned int jsonbuflen = snprintf(jsonbuf, sizeof(jsonbuf), REGISTER_JSON, mDeviceId, keybuf);
 	snprintf(lenbuf, sizeof(lenbuf), "%d", jsonbuflen);
-	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "PUT", mServer, "/device/", mDeviceId, "", "", mDeviceId, mDeviceKey, lenbuf, jsonbuf);
+	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "PUT", mServer, "/device/", mDeviceId, "", "", mAccessKey, lenbuf, jsonbuf);
 	dhdebug("Register request created, %d/%d", buf->len + 1, sizeof(buf->data));
 }
 
@@ -63,7 +68,7 @@ void ICACHE_FLASH_ATTR dhrequest_create_poll(HTTP_REQUEST *buf, const char *time
 
 void ICACHE_FLASH_ATTR dhrequest_update_poll(HTTP_REQUEST *old, const char *timestamp) {
 	const unsigned int timestamplength = os_strlen(timestamp);
-	const unsigned int len = sizeof(HTTP_REQUEST_PATTERN) - 20 + 3 + mServerLen + 8 + mDeviceIdLen + 24 + timestamplength + mDeviceIdLen + mDeviceKeyLen + 1;
+	const unsigned int len = sizeof(HTTP_REQUEST_PATTERN) - 18 + 3 + mServerLen + 8 + mDeviceIdLen + 24 + timestamplength + mAccessKeyLen + 1;
 	if(old) {
 		if(old->len + 1 == len) {
 			os_memcpy(&old->data[4 + mServerLen + 8 + mDeviceIdLen + 24], timestamp, timestamplength);
@@ -71,7 +76,7 @@ void ICACHE_FLASH_ATTR dhrequest_update_poll(HTTP_REQUEST *old, const char *time
 			return;
 		}
 	}
-	old->len = snprintf(old->data, sizeof(old->data), HTTP_REQUEST_PATTERN, "GET", mServer, "/device/", mDeviceId, "/command/poll?timestamp=", timestamp, mDeviceId, mDeviceKey, "0", "");
+	old->len = snprintf(old->data, sizeof(old->data), HTTP_REQUEST_PATTERN, "GET", mServer, "/device/", mDeviceId, "/command/poll?timestamp=", timestamp, mAccessKey, "0", "");
 	dhdebug("Poll request created, %d/%d", old->len + 1, sizeof(old->data));
 }
 
@@ -85,12 +90,12 @@ void ICACHE_FLASH_ATTR dhrequest_create_update(HTTP_REQUEST *buf, unsigned int c
 	const unsigned int jsonbuflen = snprintf(jsonbuf, sizeof(jsonbuf), UPDATE_JSON, status, extra, result, extra);
 	char lenbuf[16];
 	snprintf(lenbuf, sizeof(lenbuf), "%d", jsonbuflen);
-	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "PUT", mServer, "/device/", mDeviceId, "/command/", idbuf, mDeviceId, mDeviceKey, lenbuf, jsonbuf);
-	dhdebug("Update request created, %d/%d", buf->len + 1, sizeof(buf->data));
+	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "PUT", mServer, "/device/", mDeviceId, "/command/", idbuf, mAccessKey, lenbuf, jsonbuf);
+	dhdebug("Update %d request created, %d/%d", commandId, buf->len + 1, sizeof(buf->data));
 }
 
 void ICACHE_FLASH_ATTR dhrequest_create_info(HTTP_REQUEST *buf) {
-	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "GET", mServer, "/info", "", "", "", mDeviceId, mDeviceKey, "0", "");
+	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "GET", mServer, "/info", "", "", "", mAccessKey, "0", "");
 	dhdebug("Info request created, %d/%d", buf->len + 1, sizeof(buf->data));
 }
 
@@ -102,6 +107,6 @@ void ICACHE_FLASH_ATTR dhrequest_create_notification(HTTP_REQUEST *buf, const ch
 	const unsigned int jsonbuflen = snprintf(jsonbuf, sizeof(jsonbuf), NOTIFICATION_JSON, name, extra, parameters, extra);
 	char lenbuf[16];
 	snprintf(lenbuf, sizeof(lenbuf), "%d", jsonbuflen);
-	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "POST", mServer, "/device/", mDeviceId, "/notification", "", mDeviceId, mDeviceKey, lenbuf, jsonbuf);
+	buf->len = snprintf(buf->data, sizeof(buf->data), HTTP_REQUEST_PATTERN, "POST", mServer, "/device/", mDeviceId, "/notification", "", mAccessKey, lenbuf, jsonbuf);
 	dhdebug("Notification created, %d/%d", buf->len + 1, sizeof(buf->data));
 }

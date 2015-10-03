@@ -14,6 +14,7 @@
 #include "snprintf.h"
 #include "dhsettings.h"
 #include "rand.h"
+#include "user_config.h"
 
 #define DHAP_PAGE_TITLE_META  "<title>DeviceHive ESP8266 Configuration</title><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
 #define DHAP_PAGE_HTTP_HEADER "HTTP/1.0 %u %s\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n"
@@ -29,9 +30,9 @@
 								"<input type='password' name='pass'><br><br>"\
 								"DeviceHive API Url:<br>"\
 								"<input type='text' name='url' value='%s'><br><br>"\
-								"DeviceId (allowed chars are A-Za-z0-9_-):<br>"\
+								"DeviceId (allowed chars are A-Za-z0-9_- ):<br>"\
 								"<input type='text' name='id' value='%s'><br><br>"\
-								"DeviceKey (leave empty to keep current, do not use &#92; and &quot; chars):<br>"\
+								"AccessKey (leave empty to keep current, allowed chars are A-Za-z0-9/+= ):<br>"\
 								"<input type='password' name='key'><br><br>"\
 								"<input type='submit' value='Apply'>"\
 							"</form></body>"\
@@ -86,7 +87,7 @@ LOCAL unsigned int esc_len(const char *str) {
 char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 	if(init() == 0)
 		return 0;
-	const char http[] = "http://";
+	const char defhttp[] = DEFAULT_SERVER;
 	const char *ssid = dhsettings_get_wifi_ssid();
 	const char *server = dhsettings_get_devicehive_server();
 	const char *deviceid = dhsettings_get_devicehive_deviceid();
@@ -94,7 +95,7 @@ char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 	unsigned int esc_server_len = esc_len(server);
 	unsigned int esc_deviceid_len = esc_len(deviceid);
 	if(server[0] == 0)
-		esc_server_len = esc_len(http);
+		esc_server_len = esc_len(defhttp);
 	if(deviceid[0] == 0)
 		esc_deviceid_len = rand_generate_deviceid(0);
 	char esc_ssid[esc_ssid_len + 1];
@@ -104,7 +105,7 @@ char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 	if(server[0])
 		esc_cpystr(esc_server, server);
 	else
-		esc_cpystr(esc_server, http);
+		esc_cpystr(esc_server, defhttp);
 	if(deviceid[0])
 		esc_cpystr(esc_deviceid, deviceid);
 	else

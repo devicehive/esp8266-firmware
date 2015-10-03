@@ -116,6 +116,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(unsigned int id, const char *command, const
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res;
 	unsigned int check;
+	dhdebug("Got command: %s %d", command, id);
 	if( os_strcmp(command, "gpio/write") == 0 ) {
 		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHGPIO_SUITABLE_PINS, 0, AF_SET | AF_CLEAR, &fields);
 		if (parse_res)

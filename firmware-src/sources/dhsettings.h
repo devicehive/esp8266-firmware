@@ -17,8 +17,8 @@
 #define DHSETTINGS_SERVER_MAX_LENGTH 384
 /** DeviceID string max length. */
 #define DHSETTINGS_DEVICEID_MAX_LENGTH 128
-/** DeviceKey string max length. */
-#define DHSETTINGS_DEVICEKEY_MAX_LENGTH 65
+/** AccessKey string max length. */
+#define DHSETTINGS_ACCESSKEY_MAX_LENGTH 65
 
 /**
  *	\brief			Inits settings, reads values from storage.
@@ -63,10 +63,10 @@ const char *dhsettings_get_devicehive_server();
 const char *dhsettings_get_devicehive_deviceid();
 
 /**
- *	\brief			Get DeviceHive DeviceKey.
+ *	\brief			Get DeviceHive AccessKey.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_devicekey();
+const char *dhsettings_get_devicehive_acceykey();
 
 /**
  *	\brief				Set Wi-Fi SSID.
@@ -92,10 +92,10 @@ void dhsettings_set_devicehive_server(const char *server);
 void dhsettings_set_devicehive_deviceid(const char *id);
 
 /**
- *	\brief				Set DeviceHive DeviceKey.
+ *	\brief				Set DeviceHive AccessKey.
  *	\param[in]	key		Pointer to buffer with null terminated string.
  */
-void dhsettings_set_devicehive_devicekey(const char *key);
+void dhsettings_set_devicehive_accesskey(const char *key);
 
 /**
  *	\brief			Check if char is suitable for DeviceId string
@@ -105,11 +105,11 @@ void dhsettings_set_devicehive_devicekey(const char *key);
 int dhsettings_deviceid_filter(char c);
 
 /**
- *	\brief			Check if char is suitable for DeviceKey string
+ *	\brief			Check if char is suitable for AccessKey string
  *	\param[in]	c	Char for test.
  *	\return			Non zero value if char is suitable, zero otherwise.
  */
-int dhsettings_devicekey_filter(char c);
+int dhsettings_accesskey_filter(char c);
 
 /**
  *	\brief			Check if char is suitable for API Url string

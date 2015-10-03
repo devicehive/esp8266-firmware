@@ -122,14 +122,14 @@ char * ICACHE_FLASH_ATTR dhap_post_parse(const char *data, unsigned int len) {
 		} else if(os_strncmp(&data[pos], key, sizeof(key) - 1) == 0) {
 			pos += sizeof(key) - 1;
 			if(pos <= len) {
-				int vl = read_value(&data[pos], len - pos, value, &rb, dhsettings_devicekey_filter);
+				int vl = read_value(&data[pos], len - pos, value, &rb, dhsettings_accesskey_filter);
 				if(vl == 0)
 					return "Wrong DeviceKey.";
 				pos += rb;
 				if(rb) {
-					if(rb > DHSETTINGS_DEVICEKEY_MAX_LENGTH - 1)
-						return "DeviceKey too long";
-					dhsettings_set_devicehive_devicekey(value);
+					if(rb > DHSETTINGS_ACCESSKEY_MAX_LENGTH - 1)
+						return "AccessKey too long";
+					dhsettings_set_devicehive_accesskey(value);
 					found = 1;
 				}
 			}

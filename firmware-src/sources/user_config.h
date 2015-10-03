@@ -16,12 +16,14 @@
 /** UART speed to terminal. */
 #define UART_BAUND_RATE 115200
 /** Current firmware version. */
-#define FIRMWARE_VERSION "v0.3"
+#define FIRMWARE_VERSION "0.4"
 /** Buffer size for data that uses for commands which require data transmition via interfaces like UART, I2C etc. */
 #define INTERFACES_BUF_SIZE 264
 /** Encode type for data field in commands. Can be DATAENCODEBASE64 or DATAENCODEHEX.*/
 #define DATAENCODEBASE64
 /** SSID of Wi-Fi network for wireless configuration. */
 #define WIFI_CONFIGURATION_SSID "DeviceHive"
+/** Default playgroung url */
+#define DEFAULT_SERVER "http://playground.devicehive.com/api/rest"
 
 #endif /* _USER_CONFIG_H_ */

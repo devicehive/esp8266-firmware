@@ -18,12 +18,13 @@
 #include "rand.h"
 #include "snprintf.h"
 #include "dhutils.h"
+#include "user_config.h"
 
 LOCAL char mComleaterBuff[48];
 
-LOCAL void ICACHE_FLASH_ATTR get_devicekey_cb(const char *key) {
+LOCAL void ICACHE_FLASH_ATTR get_accesskey_cb(const char *key) {
 	if(*key)
-		dhsettings_set_devicehive_devicekey(key);
+		dhsettings_set_devicehive_accesskey(key);
 	dhuart_send_str("Configuring complete, store settings...");
 	if(dhsettings_commit()) {
 		dhuart_send_line("OK");
@@ -35,22 +36,11 @@ LOCAL void ICACHE_FLASH_ATTR get_devicekey_cb(const char *key) {
 	dhterminal_set_mode(SM_NORMAL_MODE, 0, 0, 0, 0);
 }
 
-LOCAL char * ICACHE_FLASH_ATTR generate_key(const char *pattern) {
-	rand_generate_key(mComleaterBuff);
-	return mComleaterBuff;
-}
-
 LOCAL void ICACHE_FLASH_ATTR get_deviceid_cb(const char *id) {
 	dhsettings_set_devicehive_deviceid(id);
-	dhuart_send_line("Enter DeviceHive DeviceKey. Press Tab button to generate random key (will be");
-	dhuart_send_line("shown on screen). Leave empty to keep current. Do not use \\ and \" chars.");
-	if(dhsettings_get_devicehive_devicekey()[0] == 0) {
-		dhuart_send_line("Key wasn't stored before. Generating random, change it if you want.");
-	}
-	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_devicekey_cb, generate_key, dhsettings_devicekey_filter, DHSETTINGS_DEVICEKEY_MAX_LENGTH);
-	if(dhsettings_get_devicehive_devicekey()[0] == 0) {
-		dhterminal_set_input(generate_key(""));
-	}
+	dhuart_send_line("Enter DeviceHive AccessKey. Leave empty to keep current.");
+	dhuart_send_line("Allowed chars are A-Za-z0-9/+=");
+	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_accesskey_cb, 0, dhsettings_accesskey_filter, DHSETTINGS_ACCESSKEY_MAX_LENGTH);
 }
 
 LOCAL char * ICACHE_FLASH_ATTR generate_deviceid(const char *pattern) {
@@ -83,7 +73,7 @@ LOCAL void ICACHE_FLASH_ATTR get_password_cb(const char *password) {
 	dhuart_send_line("Enter DeviceHive API URL.");
 	dhterminal_set_mode(SM_INPUT_MODE, get_server_cb, 0, dhsettings_server_filter, DHSETTINGS_SERVER_MAX_LENGTH);
 	if(dhsettings_get_devicehive_server()[0] == 0)
-		dhterminal_set_input("http://");
+		dhterminal_set_input(DEFAULT_SERVER);
 	else
 		dhterminal_set_input(dhsettings_get_devicehive_server());
 }

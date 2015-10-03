@@ -30,7 +30,7 @@ typedef struct {
 			char password[DHSETTINGS_PASSWORD_MAX_LENGTH];
 			char server[DHSETTINGS_SERVER_MAX_LENGTH];
 			char deviceId[DHSETTINGS_DEVICEID_MAX_LENGTH];
-			char deviceKey[DHSETTINGS_DEVICEKEY_MAX_LENGTH];
+			char accessKey[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
 		} data;
 	};
 } DH_SETTINGS;
@@ -128,8 +128,8 @@ const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid() {
 	return mSettings.data.deviceId;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_devicekey() {
-	return mSettings.data.deviceKey;
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey() {
+	return mSettings.data.accessKey;
 }
 
 void ICACHE_FLASH_ATTR set_arg(char *arg, size_t argSize, const char *value) {
@@ -154,8 +154,8 @@ void ICACHE_FLASH_ATTR dhsettings_set_devicehive_deviceid(const char *id) {
 	set_arg(mSettings.data.deviceId, sizeof(mSettings.data.deviceId), id);
 }
 
-void ICACHE_FLASH_ATTR dhsettings_set_devicehive_devicekey(const char *key) {
-	set_arg(mSettings.data.deviceKey, sizeof(mSettings.data.deviceKey), key);
+void ICACHE_FLASH_ATTR dhsettings_set_devicehive_accesskey(const char *key) {
+	set_arg(mSettings.data.accessKey, sizeof(mSettings.data.accessKey), key);
 }
 
 int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
@@ -164,10 +164,10 @@ int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
 	return 0;
 }
 
-int ICACHE_FLASH_ATTR dhsettings_devicekey_filter(char c) {
-	if(c <= 0x20 || c >= 0x7F || c == '"' || c == '\\')
-			return 0;
-	return 1;
+int ICACHE_FLASH_ATTR dhsettings_accesskey_filter(char c) {
+	if(c == '=' || c == '+' || c == '/' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+			return 1;
+	return 0;
 }
 
 int ICACHE_FLASH_ATTR dhsettings_server_filter(char c) {
