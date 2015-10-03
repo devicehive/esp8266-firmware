@@ -28,7 +28,7 @@ typedef enum {
     TM_EDGE_INT   = 0,
 } TIMER_INT_MODE;
 
-LOCAL unsigned char mDisablePinOn[DHPWM_DEPTH + 1] = {0};
+LOCAL uint32 mDisablePinOn[DHPWM_DEPTH + 1] = {0};
 LOCAL unsigned int mPeriodUs = DHPWM_DEFAULT_PERIOD_US;
 LOCAL unsigned char mCounter = 0;
 LOCAL unsigned char mPwmInUse = 0;
@@ -125,7 +125,7 @@ unsigned int ICACHE_FLASH_ATTR dhpwm_get_period_us() {
 
 void ICACHE_FLASH_ATTR dhpwm_disable_pins(unsigned int pinsmask) {
 	int i;
-	for(i = 0; i < sizeof(mDisablePinOn); i++) {
+	for(i = 0; i < sizeof(mDisablePinOn)/sizeof(uint32); i++) {
 		mDisablePinOn[i] &= ~pinsmask;
 	}
 	mUsedPins &= ~pinsmask;
