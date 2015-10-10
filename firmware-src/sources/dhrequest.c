@@ -77,7 +77,7 @@ void ICACHE_FLASH_ATTR dhrequest_update_poll(HTTP_REQUEST *old, const char *time
 		}
 	}
 	old->len = snprintf(old->data, sizeof(old->data), HTTP_REQUEST_PATTERN, "GET", mServer, "/device/", mDeviceId, "/command/poll?timestamp=", timestamp, mAccessKey, "0", "");
-	dhdebug("Poll request created, %d/%d", old->len + 1, sizeof(old->data));
+	dhdebug("Poll request created, %d/%d/%d", old->len + 1, len, sizeof(old->data));
 }
 
 void ICACHE_FLASH_ATTR dhrequest_create_update(HTTP_REQUEST *buf, unsigned int commandId, const char *status, const char *result) {

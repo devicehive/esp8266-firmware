@@ -177,7 +177,7 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 		c = '\n';
 	int i;
 	if(mMode == SM_DEBUG_MODE || mMode == SM_OUTPUT_MODE || mMode == SM_AWATING_MODE) {
-		if(c == 'q' || c == 0x3 /*Ctrl+C*/) {
+		if(c == 'Q' || c == 'q' || c == 0x3 /*Ctrl+C*/) {
 			if (mMode == SM_AWATING_MODE && c == 0x3)
 				dhuart_send_str("^C\r\n");
 			dhterminal_reset();
