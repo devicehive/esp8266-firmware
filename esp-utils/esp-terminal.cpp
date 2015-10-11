@@ -58,7 +58,7 @@ void SerialPortRecieved(SerialPort */*port*/, const char *text,  unsigned int le
 SerialPort *detectPort(){
     SerialPort *res;
     printf("Detecting device...\r\n");
-    for(int i = 0; i < AUTODETECT_MAX_PORT; i++) {
+    for(int i = 0; i <= AUTODETECT_MAX_PORT; i++) {
     	const char *name = SerialPort::findNextPort(false);
     	if(name[0] == 0)
     		break;

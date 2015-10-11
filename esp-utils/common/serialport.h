@@ -53,6 +53,7 @@ private:
     COM get_com();
     COM mCom;
     bool mTreadFlag;
+    bool mReadFlag;
     void *mThread;
     unsigned int mBytesRecivedSinceLastSend;
     bool mReadError;

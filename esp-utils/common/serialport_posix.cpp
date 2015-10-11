@@ -30,6 +30,7 @@ void * SerialPort::thread_start(void *arg) {
     char buff[buffSize];
     while (true) {
         int rb = read(hCOM, buff, buffSize);
+        port->mReadFlag = true;
         if(!port->mTreadFlag)
         	break;
         if(rb>0) {
@@ -42,10 +43,10 @@ void * SerialPort::thread_start(void *arg) {
             if(port->mReadError==false)
                 SerialPortError(port, ERROR_READ_STRING);
             port->mReadError = true;
-            port->sleep(100);
+            port->sleep(10);
         } else {
             port->mReadError = false;
-            port->sleep(100);
+            port->sleep(10);
         }
     }
     return 0;
@@ -79,15 +80,16 @@ SerialPort *SerialPort::open(const char *port) {
            return 0;
        }
 
-       SerialPort *port = new SerialPort(comp);
+       SerialPort *comport = new SerialPort(comp);
        pthread_t  thr;
-       if(pthread_create(&thr, 0, thread_start, (void *)port)!=0) {
-           delete port;
+       if(pthread_create(&thr, 0, thread_start, (void *)comport)!=0) {
+           delete comport;
            return 0;
        }
-       port->mThread = (void *)thr;
-
-       return port;
+       comport->mThread = (void *)thr;
+       while(!comport->mReadFlag)
+            comport->sleep(10);
+       return comport;
     }
     return 0;
 }

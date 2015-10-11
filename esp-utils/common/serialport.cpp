@@ -15,6 +15,7 @@
 SerialPort::SerialPort(COM comport) {
     mCom = comport;
     mTreadFlag = true;
+    mReadFlag = false;
     mReadError = false;
     mBytesRecivedSinceLastSend = 0;
     mThread = 0;

@@ -23,6 +23,7 @@ DWORD SerialPort::ThreadProc (LPVOID lpdwThreadParam ) {
     while (true) {
         read = 0;
         bool res = ReadFile(hCOM, buff, buffSize, &read,0);
+        port->mReadFlag = true;
         if(!port->mTreadFlag)
         	break;
         if(res) {
@@ -40,12 +41,12 @@ DWORD SerialPort::ThreadProc (LPVOID lpdwThreadParam ) {
                 } else {
                     port->mReadError = false;
                 }
-                port->sleep(100);
+                port->sleep(10);
             }
         } else {
             port->mReadError = true;
             SerialPortError(port, ERROR_READ_STRING);
-            port->sleep(100);
+            port->sleep(10);
         }
     }
     return 0;
@@ -82,14 +83,16 @@ SerialPort *SerialPort::open(const char *port) {
         to.WriteTotalTimeoutConstant = 0;
         SetCommTimeouts(hCOM,&to);
 
-        SerialPort *port = new SerialPort(hCOM);
+        SerialPort *comport = new SerialPort(hCOM);
         DWORD dwThreadId;
-        if ( (port->mThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ThreadProc, (LPVOID)port,  0, &dwThreadId)) == NULL)
+        if ( (comport->mThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ThreadProc, (LPVOID)comport,  0, &dwThreadId)) == NULL)
         {
-            delete port;
+            delete comport;
             return 0;
         }
-        return port;
+        while(!comport->mReadFlag)
+            comport->sleep(10);
+        return comport;
     }
     return 0;
 }
