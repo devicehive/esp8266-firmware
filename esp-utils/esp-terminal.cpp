@@ -44,10 +44,10 @@ void SerialPortRecieved(SerialPort */*port*/, const char *text,  unsigned int le
 	} else {
 		for (unsigned int i = 0; i < len; i++) {
 			if(detectBufPos >= sizeof(detectBuf) - 1) {
-				for(unsigned int j = 0; j < sizeof(detectBuf) - 2; j--) {
+				for(unsigned int j = 0; j < sizeof(detectBuf) - 1; j++) {
 					detectBuf[j] = detectBuf[j + 1];
 				}
-				detectBuf[detectBufPos] = text[i];
+				detectBuf[sizeof(detectBuf) - 2] = text[i];
 			} else {
 				detectBuf[detectBufPos++] = text[i];
 			}
@@ -100,7 +100,7 @@ int main(int argc, char* argv[]) {
 				return 1;
 		}
 	} else {
-	port = detectPort();
+		port = detectPort();
 		if(!port) {
 			printf("Can not detect port. Check if device connected and driver is installed.\r\n" \
 					"If port number greater than %d, specify port manualy as arg.\r\n" \
