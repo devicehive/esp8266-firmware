@@ -35,17 +35,20 @@ DWORD SerialPort::ThreadProc (LPVOID lpdwThreadParam ) {
                 port->mBytesRecivedSinceLastSend += read;
             } else {
                 if(GetCommModemStatus(hCOM, &read)==0) {
-                    if(port->mReadError == false)
-                        SerialPortError(port, ERROR_READ_STRING);
+                    const bool w = port->mReadError;
                     port->mReadError = true;
+                    if(w == false)
+                        SerialPortError(port, ERROR_READ_STRING);
                 } else {
                     port->mReadError = false;
                 }
                 port->sleep(10);
             }
         } else {
+            const bool w = port->mReadError;
             port->mReadError = true;
-            SerialPortError(port, ERROR_READ_STRING);
+            if(w == false)
+                SerialPortError(port, ERROR_READ_STRING);
             port->sleep(10);
         }
     }

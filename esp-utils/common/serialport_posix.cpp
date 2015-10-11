@@ -40,9 +40,10 @@ void * SerialPort::thread_start(void *arg) {
             SerialPortRecieved(port, buff, rb);
             port->mBytesRecivedSinceLastSend += rb;
         } else if(rb==0) {
-            if(port->mReadError==false)
-                SerialPortError(port, ERROR_READ_STRING);
+            const bool w = port->mReadError;
             port->mReadError = true;
+            if(w == false)
+                SerialPortError(port, ERROR_READ_STRING);
             port->sleep(10);
         } else {
             port->mReadError = false;

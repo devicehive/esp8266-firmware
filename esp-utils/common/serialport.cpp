@@ -63,5 +63,5 @@ void SerialPort::send(const void *data, unsigned int len) {
 	mBytesRecivedSinceLastSend = 0;
 	unsigned int bw = write_native(data, len);
 	if(bw != len)
-		SerialPortError(this, ERROR_WRITE_STRING);
+        SerialPortError(this, ERROR_WRITE_STRING);
 }
