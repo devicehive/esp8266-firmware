@@ -45,7 +45,7 @@ unsigned int ICACHE_FLASH_ATTR rand_generate_key(char *buf) {
 
 unsigned int ICACHE_FLASH_ATTR rand_generate_deviceid(char *buf) {
 	const char prefix[] = "esp-device-";
-	const unsigned int len = 8;
+	const unsigned int len = 16;
 	if(buf == 0)
 		return len + sizeof(prefix) - 1;
 	unsigned int bufpos = snprintf(buf, sizeof(prefix), prefix);
