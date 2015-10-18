@@ -92,7 +92,7 @@
     var data = atob(base64);
     val = unsignedInt16(data, 0);
     lx = ((val >> 1) & 0xFFFF + (val & 0x1)/2.0)/1.2;   
-    print("Illumination is " + lx.toFixed(1) + " Lux", "green");
+    print("Ambient light is " + lx.toFixed(1) + " lux", "green");
     measure(); // loop
   }
   
