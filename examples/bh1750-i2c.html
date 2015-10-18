@@ -1,0 +1,133 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+      position: absolute;
+      left: 20%;
+    }
+  </style>
+  <script type="text/javascript">
+  var SDA = 0;
+  var SCL = 2;
+  var address = 0x46;
+  function print(text, color) {
+    document.body.innerHTML = "<h1><font color=" + color + ">" + text + "</font></h1>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function getres(id, callback) {
+    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+    xmlhttp.onreadystatechange = function() {
+      if(xmlhttp.readyState == 4){
+          if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+            print("ERROR: Command result returned " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+          } else {
+            var json = JSON.parse(xmlhttp.responseText);
+            if(json['result'] == null || json['status'] == null) {
+              getres(id, callback);
+              return;
+            }
+            if(json['status'] != "OK") {
+              print("Error - " + xmlhttp.responseText, "red");
+              return;
+            }
+            if(callback != null)
+              callback(json['result']['data']);
+          }
+      }
+    }
+    xmlhttp.send("");
+  }
+  
+  function get_data(size, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not read data " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/read", "parameters":{"SDA":SDA, "SCL":SCL, "address":"0x" + address.toString(16), "count":size}}));
+  }
+  
+  function write_register(register, callback) {
+    var xmlhttp = createxmlhttp("POST", "/command");
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4){
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              print("ERROR: Can not write register " + xmlhttp.status + " " + xmlhttp.responseText, "red");
+            } else {
+              getres(JSON.parse(xmlhttp.responseText)["id"], callback);
+            }
+          }
+        } 
+    data = btoa(String.fromCharCode(register));
+    xmlhttp.send(JSON.stringify({"command":"i2c/master/write", "parameters":{"SDA":SDA, "SCL":SCL, "address":"0x" + address.toString(16), "data":data}}));
+  }
+  
+  function unsignedInt16(data, pos) {
+    return data.charCodeAt(pos) * 256 + data.charCodeAt(pos + 1);
+  }
+  
+  function datarecevied(base64) {
+    var data = atob(base64);
+    val = unsignedInt16(data, 0);
+    lx = ((val >> 1) & 0xFFFF + (val & 0x1)/2.0)/1.2;   
+    print("Illumination is " + lx.toFixed(1) + " Lux", "green");
+    measure(); // loop
+  }
+  
+  function readvalue(emptydata) {
+    setTimeout(function() { // wait for measurement completed
+        get_data(2, datarecevied);
+    }, 180);   
+  }
+  
+  function measure() {
+    // one shot measure 
+    write_register(0x21, readvalue);  
+  }
+    
+  function run(form){ 
+    print("Connecting... Refresh page for canceling.", "black");
+    localStorage["dhurl"] = form.url.value;
+    localStorage["dhdeviceid"] = form.deviceid.value;
+    localStorage["dhpassword"] = form.password.value;
+    measure();
+  }
+  
+  function initform(form){
+    form.url.value = localStorage["dhurl"];
+    form.deviceid.value = localStorage["dhdeviceid"];
+    form.password.value = localStorage["dhpassword"];
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>DeviceId: </label><input type="text" name="deviceid"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <input type="button" value="Run" onClick="run(this.form);"><br>
+    </form>  
+  </body>
+</html> 
