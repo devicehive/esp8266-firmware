@@ -8,18 +8,18 @@ Photo above is a real photo of the demo device contructed with esp8266. See
 http://youtu.be/hzi4djt-wdg
 
 # Demo videos
-Zero wireless configuring with Android http://youtu.be/2J98YDpbJKo
-BH1750 Ambient light http://youtu.be/AkSFdO0soyo
-DS18B20 + iButton + DHT11 http://youtu.be/IuvxwCPNZCc
-Muscle connected to the cloud http://youtu.be/8L96nBNHE14
-SSD1306 OLED display http://youtu.be/gKgU6RzaxFU
-Multple sensor connection http://youtu.be/hzi4djt-wdg
-Smart socket http://youtu.be/hCdzcCjYYMw
-Wireless Configuring with Mac and Linux http://youtu.be/sFD2TTZNNvo
-BMP180 Atmospheric pressure http://youtu.be/P2rxnVjRPyc
-MPU6050 Accelerometer + Gyroscope http://youtu.be/IRj4tOfLTAM
-MFRC522 RFID Reader http://youtu.be/VMT3v49d57g
-Simple relay http://youtu.be/ZLq2X2n_wR0
+Zero wireless configuring with Android http://youtu.be/2J98YDpbJKo  
+BH1750 Ambient light http://youtu.be/AkSFdO0soyo  
+DS18B20 + iButton + DHT11 http://youtu.be/IuvxwCPNZCc  
+Muscle connected to the cloud http://youtu.be/8L96nBNHE14  
+SSD1306 OLED display http://youtu.be/gKgU6RzaxFU  
+Multple sensor connection http://youtu.be/hzi4djt-wdg  
+Smart socket http://youtu.be/hCdzcCjYYMw  
+Wireless Configuring with Mac and Linux http://youtu.be/sFD2TTZNNvo  
+BMP180 Atmospheric pressure http://youtu.be/P2rxnVjRPyc  
+MPU6050 Accelerometer + Gyroscope http://youtu.be/IRj4tOfLTAM  
+MFRC522 RFID Reader http://youtu.be/VMT3v49d57g  
+Simple relay http://youtu.be/ZLq2X2n_wR0  
 
 # esp-utils
 Simple utils for flashing and connecting to ESP8266.
