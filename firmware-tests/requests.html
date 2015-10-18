@@ -143,8 +143,8 @@
  
   function createxmlhttp(method, path) {
     var xmlhttp = new XMLHttpRequest();  
-    xmlhttp.open(method, localStorage["url"] + "/device/" + localStorage["deviceid"] + path, true);
-    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["password"]);
+    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
     xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
     return xmlhttp;
   }
