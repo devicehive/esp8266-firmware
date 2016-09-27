@@ -26,6 +26,10 @@
 #include "snprintf.h"
 #include "dhstatistic.h"
 
+#include "devices/ds18b20.h"
+#include "devices/dht11.h"
+#include "devices/bmp180.h"
+
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
 LOCAL dhconnector_command_json_cb mCommandCallback;
@@ -117,7 +121,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 				dhdebug("Successfully register");
 			} else {
 				char *content = (char *) os_strstr(data, (char *) "\r\n\r\n");
-				if (content) {
+				if (content && mConnectionState != CS_POLL) {
 					int deep = 0;
 					unsigned int pos = 0;
 					unsigned int jsonstart = 0;
@@ -166,9 +170,41 @@ LOCAL void network_connect_cb(void *arg) {
 		dhdebug("Send register request...");
 		break;
 	case CS_POLL:
-		request = &mPollRequest;
-		dhdebug("Send poll request...");
+	{
+		dhdebug("Prepare sensors data...");
+		HTTP_REQUEST notification;
+		float temperature = ds18b20_read(1);
+		dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
+		dhgpio_write(1 << 4, 0); // power up dht11
+		os_delay_us(300000); //wait dht11
+		int humiduty = dht11_read(2, 0);
+		int pressure = bmp180_read(12, 14, 0);
+		dhgpio_write(0, 1 << 4); // power down dht11
+		dhgpio_initialize(1 << 4, 0, 0);
+		char json[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD] = "{";
+		char *jsonp = json + 1;
+		int comma = 0;
+		if (temperature != DS18B20_ERROR) {
+			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "\"temperature\":%f", temperature);
+			comma = 1;
+		}
+		if (humiduty != DHT11_ERROR) {
+			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "%s\"humiduty\":%d", (comma ? ", ":""), humiduty);
+			comma = 1;
+		}
+		if (pressure != BMP180_ERROR) {
+			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "%s\"pressure\":%d", (comma ? ", ":""), pressure);
+		}
+		*jsonp ='}';
+		*(jsonp + 1) = 0;
+		// HACK using pollreuqest and all pole state for sending notifications
+		dhrequest_create_notification(&notification, "weather", json);
+		request = &notification;
+
+		//request = &mPollRequest;
+		//dhdebug("Send poll request...");
 		break;
+	}
 	default:
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
@@ -192,9 +228,11 @@ LOCAL void network_disconnect_cb(void *arg) {
 		break;
 	case CS_REGISTER:
 		mConnectionState = CS_POLL;
-		/* no break */
-	case CS_POLL:
 		arm_repeat_timer(DHREQUEST_PAUSE_MS);
+		break;
+	case CS_POLL:
+		system_deep_sleep(180000000);
+		// after deep sleep chip will be rebooted
 		break;
 	default:
 		dhdebug("ASSERT: networkDisconnectCb wrong state %d", mConnectionState);
