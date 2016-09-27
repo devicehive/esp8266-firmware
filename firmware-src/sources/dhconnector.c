@@ -198,7 +198,7 @@ LOCAL void network_connect_cb(void *arg) {
 		*jsonp ='}';
 		*(jsonp + 1) = 0;
 		// HACK using pollreuqest and all pole state for sending notifications
-		dhrequest_create_notification(&notification, "weather", json);
+		dhrequest_create_notification(&notification, "climate", json);
 		request = &notification;
 
 		//request = &mPollRequest;
