@@ -117,5 +117,5 @@ int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 	x2 = (-7357 * p) >> 16;
 	p = p + ((x1 + x2 + 3791) >> 4);
 
-	return p * 10;
+	return p;
 }
