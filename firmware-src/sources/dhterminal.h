@@ -76,4 +76,10 @@ void dhterminal_set_mode(DHTERMINAL_MODE mode, Input_Call_Back inputcb, Input_Au
  */
 void dhterminal_set_input(const char *line);
 
+/**
+ *	\brief				Check if terminal is in use by user
+ *	\return 			Non zero if terminal is in use, zero otherwise
+ */
+int dhterminal_is_in_use();
+
 #endif /* _DHTERMINAL_H_ */

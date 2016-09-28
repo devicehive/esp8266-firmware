@@ -173,13 +173,13 @@ LOCAL void network_connect_cb(void *arg) {
 	{
 		dhdebug("Prepare sensors data...");
 		HTTP_REQUEST notification;
+		dhgpio_write(1 << 4, 0); // power up sensors
+		os_delay_us(300000); //wait dht11
 		float temperature = ds18b20_read(1);
 		dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-		dhgpio_write(1 << 4, 0); // power up dht11
-		os_delay_us(300000); //wait dht11
 		int humiduty = dht11_read(2, 0);
 		int pressure = bmp180_read(12, 14, 0);
-		dhgpio_write(0, 1 << 4); // power down dht11
+		dhgpio_write(0, 1 << 4); // power down sensors
 		dhgpio_initialize(1 << 4, 0, 0);
 		char json[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD] = "{";
 		char *jsonp = json + 1;
@@ -231,8 +231,13 @@ LOCAL void network_disconnect_cb(void *arg) {
 		arm_repeat_timer(DHREQUEST_PAUSE_MS);
 		break;
 	case CS_POLL:
-		system_deep_sleep(180000000);
-		// after deep sleep chip will be rebooted
+		if (dhterminal_is_in_use()) {
+			dhdebug("Terminal is in use, no deep sleep");
+			arm_repeat_timer(DHREQUEST_NOTIFICATION_MS);
+		} else {
+			system_deep_sleep(DHREQUEST_NOTIFICATION_MS * 1000);
+			// after deep sleep chip will be rebooted
+		}
 		break;
 	default:
 		dhdebug("ASSERT: networkDisconnectCb wrong state %d", mConnectionState);
