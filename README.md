@@ -5,6 +5,7 @@ Notifications named `climate` and look like
 ```
 {"temperature":24.9375,"humiduty":29,"pressure":998540}
 ```
+Temperature is in Celsius, humidity is in percentages, pressure is in Pascals.
 In pauses between cycles esp8266 put's into deep sleep mode to prevent heating
 and mismesurement of temperature sesnor. If some sensor are not connected to
 chip, result json will be without this sensor field. This implementation uses
