@@ -10,7 +10,7 @@ In pauses between cycles esp8266 put's into deep sleep mode to prevent heating
 and mismesurement of temperature sesnor. If some sensor are not connected to
 chip, result json will be without this sensor field. This implementation uses
 DS18B20, DHT11, BMP180 sensors. Sensors pin map: DS18B20->GPIO1, DHT22->GPIO2,
-BMP180 SDA->GPIO12, SCL->GPIO14, Powering sensors - GPIO4.  
+BMP180 SDA->GPIO12, SCL->GPIO14, Powering sensors - GPIO4, WAKE(GPIO16)->RST.
 `climate-monitor.html` file is a sample web page for monitoring data from
 sensors. Specify DeviceHive server, AccessKey and devices id pattern (part of
 deviceid which is common for all devices) and table will print live data from
