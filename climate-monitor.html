@@ -139,7 +139,8 @@
     deviceIds.sort();
     var template = "";
     deviceIds.forEach(function(device) {
-      template += "<tr id=" + device +"></div></tr>"
+      template += "<tr id=" + device +"><td>" + device + 
+        "</td><td></td><td></td><td></td><td>More then 5 minutes ago</td></tr>";
     });
     print("Monitoring devices: " + deviceIds.toString() + "<br><br>" +
       "<table class='table-striped'><tr><th>Device</th><th>Temperature</th>" +
