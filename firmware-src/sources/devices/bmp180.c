@@ -12,17 +12,7 @@
 #include "bmp180.h"
 #include "dhi2c.h"
 #include "dhdebug.h"
-
-LOCAL unsigned int ICACHE_FLASH_ATTR unsignedInt16(const char *buf, int pos) {
-	return ((int)buf[pos] * 0x100 + (int)buf[pos + 1]);
-}
-
-LOCAL int ICACHE_FLASH_ATTR signedInt16(const char *buf, int pos) {
-	int r = unsignedInt16(buf, pos);
-	if (r <= 0x7FFF)
-		return r;
-	return r - 0x10000;
-}
+#include "dhutils.h"
 
 int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 	char buf[22];

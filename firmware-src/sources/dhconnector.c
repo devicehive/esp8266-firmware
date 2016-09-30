@@ -27,8 +27,8 @@
 #include "dhstatistic.h"
 
 #include "devices/ds18b20.h"
-#include "devices/dht11.h"
 #include "devices/bmp180.h"
+#include "devices/dht.h"
 
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
@@ -175,9 +175,13 @@ LOCAL void network_connect_cb(void *arg) {
 		HTTP_REQUEST notification;
 		dhgpio_write(1 << 4, 0); // power up sensors
 		os_delay_us(300000); //wait dht11
-		float temperature = ds18b20_read(1);
-		dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-		int humiduty = dht11_read(2, 0);
+		float temperature;
+		float humiduty = dht22_read(5, &temperature);
+		if (humiduty == DHT_ERROR) {
+			temperature = ds18b20_read(1);
+			dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
+			humiduty = (float)dht11_read(2, 0);
+		}
 		int pressure = bmp180_read(12, 14, 0);
 		dhgpio_write(0, 1 << 4); // power down sensors
 		dhgpio_initialize(1 << 4, 0, 0);
@@ -188,8 +192,8 @@ LOCAL void network_connect_cb(void *arg) {
 			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "\"temperature\":%f", temperature);
 			comma = 1;
 		}
-		if (humiduty != DHT11_ERROR) {
-			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "%s\"humiduty\":%d", (comma ? ", ":""), humiduty);
+		if (humiduty != DHT_ERROR) {
+			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "%s\"humiduty\":%f", (comma ? ", ":""), humiduty);
 			comma = 1;
 		}
 		if (pressure != BMP180_ERROR) {

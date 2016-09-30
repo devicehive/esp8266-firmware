@@ -65,17 +65,17 @@
     temperature = parameters['temperature'];
     humiduty = parameters['humiduty'];
     pressure = parameters['pressure'];
-    if (temperature) {
+    if (temperature != undefined) {
       temperature = temperature + " C";
     } else {
       temperature = " <font color=red>Error</font>";
     }
-    if (humiduty) {
+    if (humiduty != undefined) {
       humiduty = humiduty + "%";
     } else {
       humiduty = "";
     }
-    if (pressure) {
+    if (pressure != undefined) {
       pressure = pressure/1000 + " kPa";
     } else {
       pressure = "";
