@@ -69,7 +69,6 @@ void user_init(void) {
 		dhsettings_init();
 		dhap_init();
 	} else {
-		//test_output();
 		dhterminal_init();
 		dhdebug("*****************************");
 		dhsender_queue_init();
