@@ -135,7 +135,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 							if (deep == 0) {
 								struct jsonparse_state jparser;
 								jsonparse_setup(&jparser, &data[jsonstart],
-										pos - jsonstart);
+										pos - jsonstart + 1);
 								parse_json(&jparser);
 							}
 						}
