@@ -76,7 +76,7 @@ void user_init(void) {
 		os_delay_us(300000); //wait sensors
 		float ds18b20_temperature = ds18b20_read(1);
 		int dht11_humiduty = dht11_read(2, &dht11_temperature);
-		float dht22_humiduty = dht11_read(2, &dht22_temperature);
+		float dht22_humiduty = dht22_read(5, &dht22_temperature);
 		float bmp180_temperature;
 		int bmp180_pressure = bmp180_read(12, 14, &bmp180_temperature);
 
