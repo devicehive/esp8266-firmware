@@ -1,23 +1,3 @@
-# 'climate' branch
-Branch for climate sensor firmware implementation. This firmware sends
-temperature, humidity and atmospheric pressure data to cloud each 3 minutes.
-Notifications named `climate` and look like
-```
-{"temperature":24.9375,"humiduty":29,"pressure":998540}
-```
-Temperature is in Celsius, humidity is in percentages, pressure is in Pascals.
-In pauses between cycles esp8266 put's into deep sleep mode to prevent heating
-and mismesurement of temperature sesnor. If some sensor are not connected to
-chip, result json will be without this sensor field. This implementation uses
-DS18B20, DHT11, BMP180 sensors. Sensors pin map: DS18B20->GPIO1, DHT11->GPIO2,
-BMP180 SDA->GPIO12, SCL->GPIO14, Powering sensors - GPIO4, WAKE(GPIO16)->RST.
-Optionaly DHT22 can be connected to GPIO5, temperature will be taken from that
-sensors instedof DS18B20 in this case.
-`climate-monitor.html` file is a sample web page for monitoring data from
-sensors. Specify DeviceHive server, AccessKey and devices id pattern (part of
-deviceid which is common for all devices) and table will print live data from
-sensors.
-
 # DeviceHive ESP8266 Firmware
 Special firmware for usage ESP8266 in DeviceHive clouds.
 This repo consist of few parts of this project which can be used with
