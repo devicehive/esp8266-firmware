@@ -26,10 +26,6 @@
 #include "snprintf.h"
 #include "dhstatistic.h"
 
-#include "devices/ds18b20.h"
-#include "devices/bmp180.h"
-#include "devices/dht.h"
-
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
 LOCAL dhconnector_command_json_cb mCommandCallback;
@@ -121,7 +117,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 				dhdebug("Successfully register");
 			} else {
 				char *content = (char *) os_strstr(data, (char *) "\r\n\r\n");
-				if (content && mConnectionState != CS_POLL) {
+				if (content && mConnectionState != CS_CUSTOM) {
 					int deep = 0;
 					unsigned int pos = 0;
 					unsigned int jsonstart = 0;
@@ -170,45 +166,15 @@ LOCAL void network_connect_cb(void *arg) {
 		dhdebug("Send register request...");
 		break;
 	case CS_POLL:
-	{
-		dhdebug("Prepare sensors data...");
-		HTTP_REQUEST notification;
-		dhgpio_write(1 << 4, 0); // power up sensors
-		os_delay_us(300000); //wait dht11
-		float temperature;
-		float humiduty = dht22_read(5, &temperature);
-		if (humiduty == DHT_ERROR) {
-			temperature = ds18b20_read(1);
-			dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-			humiduty = (float)dht11_read(2, 0);
+	case CS_CUSTOM:
+		request = custom_firmware_request();
+		if(request) {
+			mConnectionState = CS_CUSTOM;
+		} else {
+			request = &mPollRequest;
+			dhdebug("Send poll request...");
 		}
-		int pressure = bmp180_read(12, 14, 0);
-		dhgpio_write(0, 1 << 4); // power down sensors
-		dhgpio_initialize(1 << 4, 0, 0);
-		char json[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD] = "{";
-		char *jsonp = json + 1;
-		int comma = 0;
-		if (temperature != DS18B20_ERROR) {
-			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "\"temperature\":%f", temperature);
-			comma = 1;
-		}
-		if (humiduty != DHT_ERROR) {
-			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "%s\"humiduty\":%f", (comma ? ", ":""), humiduty);
-			comma = 1;
-		}
-		if (pressure != BMP180_ERROR) {
-			jsonp += snprintf(jsonp, sizeof(json) - (jsonp - json) - 1, "%s\"pressure\":%d", (comma ? ", ":""), pressure);
-		}
-		*jsonp ='}';
-		*(jsonp + 1) = 0;
-		// HACK using pollreuqest and all pole state for sending notifications
-		dhrequest_create_notification(&notification, "climate", json);
-		request = &notification;
-
-		//request = &mPollRequest;
-		//dhdebug("Send poll request...");
 		break;
-	}
 	default:
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
@@ -232,14 +198,16 @@ LOCAL void network_disconnect_cb(void *arg) {
 		break;
 	case CS_REGISTER:
 		mConnectionState = CS_POLL;
+		/* no break */
+	case CS_POLL:
 		arm_repeat_timer(DHREQUEST_PAUSE_MS);
 		break;
-	case CS_POLL:
+	case CS_CUSTOM:
 		if (dhterminal_is_in_use()) {
 			dhdebug("Terminal is in use, no deep sleep");
-			arm_repeat_timer(DHREQUEST_NOTIFICATION_MS);
+			arm_repeat_timer(CUSTOM_NOTIFICATION_INTERVAL_MS);
 		} else {
-			system_deep_sleep(DHREQUEST_NOTIFICATION_MS * 1000);
+			system_deep_sleep(CUSTOM_NOTIFICATION_INTERVAL_MS * 1000);
 			// after deep sleep chip will be rebooted
 		}
 		break;
@@ -352,6 +320,7 @@ LOCAL void set_state(CONNECTION_STATE state) {
 	case CS_GETINFO:
 	case CS_REGISTER:
 	case CS_POLL:
+	case CS_CUSTOM:
 	{
 		const sint8 cr = espconn_connect(&mDHConnector);
 		if(cr == ESPCONN_ISCONN)

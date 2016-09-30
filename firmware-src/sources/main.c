@@ -69,26 +69,7 @@ void user_init(void) {
 		dhsettings_init();
 		dhap_init();
 	} else {
-		// debug start
-		int dht11_temperature;
-		float dht22_temperature;
-		dhgpio_write(1 << 4, 0); // power up sensors
-		os_delay_us(300000); //wait sensors
-		float ds18b20_temperature = ds18b20_read(1);
-		int dht11_humiduty = dht11_read(2, &dht11_temperature);
-		float dht22_humiduty = dht22_read(5, &dht22_temperature);
-		float bmp180_temperature;
-		int bmp180_pressure = bmp180_read(12, 14, &bmp180_temperature);
-
-		dhdebug("-----------------------------");
-		dhdebug("ds18b20 temperature = %f C", ds18b20_temperature);
-		dhdebug("dht11 humidity %d %%, temperature %d C", dht11_humiduty, dht11_temperature);
-		dhdebug("dht22 humidity %f %%, temperature %f C", dht22_humiduty, dht22_temperature);
-		dhdebug("bmp180 pressure %d Pa, temperature %f C", bmp180_pressure, bmp180_temperature);
-		dhdebug("-----------------------------");
-		dhgpio_initialize(1 << 1, 0, 0);
-		// debug end
-
+		//test_output();
 		dhterminal_init();
 		dhdebug("*****************************");
 		dhsender_queue_init();
