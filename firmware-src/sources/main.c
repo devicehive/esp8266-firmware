@@ -20,7 +20,6 @@
 #include "dhterminal.h"
 #include "dhsettings.h"
 #include "dhap.h"
-#include "devices/ds18b20.h"
 
 typedef struct {
 	unsigned int magic;
@@ -70,6 +69,7 @@ void user_init(void) {
 		dhsettings_init();
 		dhap_init();
 	} else {
+		// debug start
 		int dht11_temperature;
 		float dht22_temperature;
 		dhgpio_write(1 << 4, 0); // power up sensors
@@ -87,6 +87,7 @@ void user_init(void) {
 		dhdebug("bmp180 pressure %d Pa, temperature %f C", bmp180_pressure, bmp180_temperature);
 		dhdebug("-----------------------------");
 		dhgpio_initialize(1 << 1, 0, 0);
+		// debug end
 
 		dhterminal_init();
 		dhdebug("*****************************");
