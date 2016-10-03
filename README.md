@@ -21,6 +21,15 @@ MPU6050 Accelerometer + Gyroscope http://youtu.be/IRj4tOfLTAM
 MFRC522 RFID Reader http://youtu.be/VMT3v49d57g  
 Simple relay http://youtu.be/ZLq2X2n_wR0  
 
+# custom firmwares
+There is a possibility to build custom firmware on top of this which sends some
+notifications to DeviceHive server periodically. In pauses firmware goes to deep
+sleep mode. Reimplement `custom_firmware_request()` method in
+`custom_firmware.c` file with reading of some sensors data. There are
+implementation for some sensors in `sources/devices` dir. Also, it is possible
+to create interaction with any sensor using interface implementation modules
+(dhi2c, dhspi, dhonewire etc). See `climate` branch as an example.
+
 # esp-utils
 Simple utils for flashing and connecting to ESP8266.
 

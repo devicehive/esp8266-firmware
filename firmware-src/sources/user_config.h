@@ -25,5 +25,7 @@
 #define WIFI_CONFIGURATION_SSID "DeviceHive"
 /** Default playgroung url */
 #define DEFAULT_SERVER "http://playground.devicehive.com/api/rest"
+/** Interval of notification for. */
+#define CUSTOM_NOTIFICATION_INTERVAL_MS 180000
 
 #endif /* _USER_CONFIG_H_ */

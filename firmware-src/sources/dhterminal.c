@@ -40,6 +40,9 @@ LOCAL Input_Autocompleter mCompleaterCallBack = dhterminal_commandline_autocompl
 LOCAL Input_Filter_Call_Back mFilterCallback = 0;
 LOCAL os_timer_t mAwatingTimer;
 LOCAL int mInputLimiter = sizeof(mRcvBuff);
+#define RECEIVE_TIMEOUT_MS 300000
+LOCAL os_timer_t mUsageTimer;
+LOCAL int isInUse = 0;
 
 LOCAL void ICACHE_FLASH_ATTR printWelcome() {
 	if (mMode == SM_NORMAL_MODE) {
@@ -166,7 +169,15 @@ LOCAL void ICACHE_FLASH_ATTR dhterminal_reset() {
 	os_memset(mRcvBuff, 0, sizeof(mRcvBuff));
 }
 
+LOCAL void ICACHE_FLASH_ATTR usage_timer(void *arg) {
+	isInUse = 0;
+}
+
 void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
+	isInUse = 1;
+	os_timer_disarm(&mUsageTimer);
+	os_timer_setfn(&mUsageTimer, (os_timer_func_t *)usage_timer, NULL);
+	os_timer_arm(&mUsageTimer, RECEIVE_TIMEOUT_MS, 0);
 	static char lastRecieved = 0;
 	if(c == '\n' && lastRecieved=='\r') {
 		lastRecieved = c;
@@ -330,4 +341,8 @@ void ICACHE_FLASH_ATTR dhterminal_init() {
 	dhuart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
 	dhterminal_reset();
 	dhdebug_terminal();
+}
+
+int ICACHE_FLASH_ATTR dhterminal_is_in_use() {
+	return isInUse;
 }

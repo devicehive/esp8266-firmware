@@ -160,6 +160,7 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 		dhuart_send_str("registering device");
 		break;
 	case CS_POLL:
+	case CS_CUSTOM:
 		dhuart_send_str("successfully connected to server");
 		break;
 	default:

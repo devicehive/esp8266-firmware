@@ -117,7 +117,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 				dhdebug("Successfully register");
 			} else {
 				char *content = (char *) os_strstr(data, (char *) "\r\n\r\n");
-				if (content) {
+				if (content && mConnectionState != CS_CUSTOM) {
 					int deep = 0;
 					unsigned int pos = 0;
 					unsigned int jsonstart = 0;
@@ -166,8 +166,14 @@ LOCAL void network_connect_cb(void *arg) {
 		dhdebug("Send register request...");
 		break;
 	case CS_POLL:
-		request = &mPollRequest;
-		dhdebug("Send poll request...");
+	case CS_CUSTOM:
+		request = custom_firmware_request();
+		if(request) {
+			mConnectionState = CS_CUSTOM;
+		} else {
+			request = &mPollRequest;
+			dhdebug("Send poll request...");
+		}
 		break;
 	default:
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
@@ -195,6 +201,15 @@ LOCAL void network_disconnect_cb(void *arg) {
 		/* no break */
 	case CS_POLL:
 		arm_repeat_timer(DHREQUEST_PAUSE_MS);
+		break;
+	case CS_CUSTOM:
+		if (dhterminal_is_in_use()) {
+			dhdebug("Terminal is in use, no deep sleep");
+			arm_repeat_timer(CUSTOM_NOTIFICATION_INTERVAL_MS);
+		} else {
+			system_deep_sleep(CUSTOM_NOTIFICATION_INTERVAL_MS * 1000);
+			// after deep sleep chip will be rebooted
+		}
 		break;
 	default:
 		dhdebug("ASSERT: networkDisconnectCb wrong state %d", mConnectionState);
@@ -305,6 +320,7 @@ LOCAL void set_state(CONNECTION_STATE state) {
 	case CS_GETINFO:
 	case CS_REGISTER:
 	case CS_POLL:
+	case CS_CUSTOM:
 	{
 		const sint8 cr = espconn_connect(&mDHConnector);
 		if(cr == ESPCONN_ISCONN)
