@@ -208,7 +208,7 @@ Send data via UART.
 }
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-8.2 uart/int
+##4.2 uart/int
 Subscribe on notification which contains data that was read from UART. Firmware starts wait for data from and each time when byte is received byte puts into buffer (264 bytes len), then firmware starts wait for the next byte with some timeout. When timeout reached or buffer is full firmware sends notification.
 
 *Parameters*:  
