@@ -61,7 +61,7 @@ Pre built binaries of utils and released firmwares.
 SDK from chip manufactor. Included in this repo to make sure that we are
 using the same version of this SDK to avoid any surprises from changing APIs
 
-# DeviceHiveESP8266commands.pdf
+# DeviceHiveESP8266.pdf
 Document contains cloud commands specification for this firmware.
 
 # License
