@@ -61,8 +61,8 @@ Pre built binaries of utils and released firmwares.
 SDK from chip manufactor. Included in this repo to make sure that we are
 using the same version of this SDK to avoid any surprises from changing APIs
 
-# DeviceHiveESP8266.pdf
-Document contains cloud commands specification for this firmware.
+# DeviceHiveESP8266.md
+Document contains cloud commands specification for this firmware. [Click here to open it.](DeviceHiveESP8266.md)
 
 # License
 The MIT License. See LICENSE file. Except sdk directory, it has ESPRSSIF MIT 
