@@ -3,7 +3,7 @@ Special firmware for usage ESP8266 in DeviceHive clouds.
 This repo consist of few parts of this project which can be used with
 other projects. Each project has dedicated readme file.
 
-![](demo-device.jpg?raw=true)
+![](images/demo-device.jpg?raw=true)
 Photo above is a real photo of the demo device contructed with esp8266. See
 http://youtu.be/hzi4djt-wdg
 
