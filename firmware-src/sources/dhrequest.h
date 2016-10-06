@@ -33,6 +33,12 @@ void dhrequest_load_settings();
 const char *dhrequest_current_server();
 
 /**
+ *	\brief	Get current DeviceHive DeviceId.
+ *	\return	Pointer to null terminated buffer with DeviceHive DeviceId.
+ */
+const char *dhrequest_current_deviceid();
+
+/**
  *	\brief			Create register request.
  *	\param[out]	buf	Buffer where request should be created.
  */

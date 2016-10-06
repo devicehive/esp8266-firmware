@@ -294,7 +294,7 @@ LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server() {
 			arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		}
 	} else {
-		dhdebug("Can not find scheme in server url");
+		dhdebug("Can not find scheme in server url. Server connectivity is disabled.");
 	}
 }
 
@@ -343,6 +343,16 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 			dhdebug("WiFi connected, ip: %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
 			mConnectionState = CS_DISCONNECT;
 			arm_repeat_timer(DHREQUEST_PAUSE_MS);
+
+			if(dhrequest_current_deviceid()[0]) {
+				struct mdns_info info;
+				os_memset(&info, 0, sizeof(info));
+				info.host_name = (char *)dhrequest_current_deviceid();
+				info.ipAddr = event->event_info.got_ip.ip.addr;
+				info.server_name = "DeviceHive";
+				info.server_port = 80;
+				espconn_mdns_init(&info);
+			}
 		} else {
 			dhdebug("ERROR: WiFi reports STAMODE_GOT_IP, but no actual ip found");
 		}
@@ -351,6 +361,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 		dhsender_stop_repeat();
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
 		dhstatistic_inc_wifi_lost_count();
+		espconn_mdns_close();
 	} else {
 		dhesperrors_wifi_state("WiFi event", event->event);
 	}
@@ -371,6 +382,12 @@ void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
 	struct station_config stationConfig;
 	wifi_station_get_config(&stationConfig);
 	wifi_set_phy_mode(PHY_MODE_11N);
+	if(dhrequest_current_deviceid()[0]) {
+		char hostname[33];
+		// limit length to 32 chars
+		snprintf(hostname, sizeof(hostname), "%s", dhrequest_current_deviceid());
+		wifi_station_set_hostname(hostname);
+	}
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
 	snprintf(stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
