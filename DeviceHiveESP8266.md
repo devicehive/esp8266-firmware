@@ -1,4 +1,7 @@
-﻿#Overview
+#DeviceHive ESP8266 Firmware User Guide.
+![](images/dh-logo.png?raw=true)
+
+#Overview
 This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
 
 Once ESP8266 device is connected you can issue commands using DeviceHive's REST API. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
@@ -10,9 +13,84 @@ curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
 -d '{"command":"gpio/write","parameters":{"1":0}}' \
 http://nn8571.pg.devicehive.com/api/device/astaff/command
 ```
-This would set PIN1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on. 
+This would set PIN1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.  
+The same idea with other interfaces. To check if your hardware device is suitable with firmware check which interface your devices has and then check if this interface is supported by DeviceHive ESP8266 firmware.  
+The latest version can be found in git project repository. There are sources codes and binary images: https://github.com/devicehive/esp8266-firmware  
+The purpose of this firmware is to provide easy tool for building IoT solutions for developers which used to program on unsuitable for microcontroller programming languages. You can easily use AngularJS framework for example to implement your idea. Also, considering chip price, DeviceHive usability and plenty modules on market which are not require soldering, it looks like perfect tool for prototyping. DIY developers also may find this firmware very useful for their project.  
 
-Below you can find JSON commands to interact with low-level peripherals on your chip.
+#Getting started
+First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.  
+For flashing chip needs to be connected to computer via USB-UART converter, CH_PD pin have to be connected to Vcc, GPIO15 and GPIO0 have to be connected to ground and 3.3 power supply should be used. Sample for most popular pre soldered modules connection is below:  
+![](images/sample1.jpg?raw=true)
+![](images/sample2.jpg?raw=true)
+![](images/sample3.jpg?raw=true)
+Real connection sample:  
+![](images/sample4.jpg?raw=true)
+Also, it's possible to use NodeMCU boards. It already has UART converter, reset and flash buttons on board. So there is no need to assemble anything. Such module looks like:
+![](images/sample5.jpg?raw=true)
+
+After assembling, connect it to computer. Install driver for your USB->UART converter. The most popular chip and official sites with drivers below:
+* CP210x: http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx
+* PL230x: http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41
+* FTDI: http://www.ftdichip.com/Drivers/VCP.htm
+* CH341: http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html
+
+Make sure that virtual serial port is available in your system( virtual COM is present on Windows OS, '/dev/ttyUSB*' on Linux, '/dev/tty.*' on OS X). Unpack archive with firmware and flash it running 'esp-flasher' in terminal. Flasher automatically detects serial port and use 'devicehive.bin' file for flashing. Successful flasher output is below:
+![](images/term.png?raw=true)
+
+Now remove wire from GPIO0(live it float or connect to high), reboot device and connect to firmware with with 'esp-terminal' util. You can also use any other tool that can connect to terminal via UART and support escape sequences, PuTTY or GNU 'screen' for example. Port parameters are: 115200 8N1.  
+_Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in paragraph 3 instead. Wireless configuring procedure also can be used for end-user devices with this firmware._  
+Firmware terminal is a unix like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring.  
+
+_For the very beginning or DIY purpose you can use DeviceHive free playground located here: http://playground.devicehive.com/ Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on http://devicehive.com _  
+
+Configuring sample is below:
+![](images/conf.png?raw=true)
+
+After rebooting you can send commands to DeviceHive server and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go in web admin, 'Devices' tab, 'commands' subtab, 'enter new command'. Type command and parameters and press 'push'. After ESP8266 perform your command you can press 'refresh' button to see result. For example 'gpio/read' command would look in admin control panel as below:
+![](images/web.png?raw=true)
+
+Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks usigng DeviceHive RESTfull API: http://devicehive.com/restful which you can transmited with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
+
+#Wireless configuring
+Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
+![](images/phone1.jpg?raw=true)
+Android devices will show notification 'Sign into Wi-Fi network' in bar:
+![](images/phone2.jpg?raw=true)
+Tap on it to open the same configuration page. In case of using other devices, just open browser and type URL: http://devicehive.config
+Also you can type any URL with http scheme in it, you will be redirected on URL above anyway while you are connected to ESP8266 in configuration mode.
+Type your configuration in form and click 'Apply' button. Device will be rebooted in 10 seconds in normal mode with new configuration.
+_Notice: You can automate configuration process for your devices. Actually to configure firmware you need to send HTTP POST request like below to 192.168.2.1:80_
+```
+POST / HTTP/1.0
+Host: devicehive.config
+Content-Type:.application/x-www-form-urlencoded
+Content-Length: 80
+
+ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=accesskey
+```
+
+#Pin definition
+
+ Pin name in commands |  Function        |ESP8266 pin number |NodeMCU board pin
+GPIO                  |                  |                   |
+      "0"             |    GPIO0         |        15         |       D3
+      "1"             |  GPIO1, UART_TX  |        26         |       D10
+      "2"             |    GPIO2         |        14         |       D4
+      "3"             |  GPIO3, UART_RX  |        25         |       D9
+      "4"             |    GPIO4         |        16         |       D2
+      "5"             |    GPIO5         |        24         |       D1
+      "12"            | GPIO12, SPI_MISO |        10         |       D6
+      "13"            | GPIO13, SPI_MOSI |        12         |       D7
+      "14"            | GPIO14, SPI_CLK  |        9          |       D5
+      "15"            |    GPIO15        |        13         |       D8
+ADC                   |                  |                   |
+      "0"             |    ADC0          |        6          |       A0
+Common                |                  |                   |
+      "0"             |          all pins in current group
+  
+_Notes:  
+GPIO6-GPIO11 usually connected to on-module EEPROM, that is why no API for this pins._
 
 #GPIO
 Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and reverse current protection.
@@ -87,7 +165,7 @@ JSON with a set of key-value pairs. Where key is pin number and value is one of 
 Mnemonic "all" can be used to set value for all pins.
 
 *Note: Timeout feature shall be used whenever is practicle to avoid flooding with notifications.*
-
+![](images/edge.jpg?raw=true)
 *Example*:  
 ```json
 {
@@ -162,10 +240,10 @@ Return ‘OK’ in status. Or ‘Error’ and description in result on error. No
 ```
 Where "0" channel number, and "0.0566" current voltage in volts.
 
-#3. PWM
+# PWM
 ESP8266 has only software implementation of PWM wich means there is no real-time guarantee on high frequency of PWM. PWM has just one channel, but this channel can control all GPIO outputs with different duty cycle. It also means that all outputs are synchronized and work with the same frequency. PWM depth is 100. PWM can be used as pulse generator with specified number of pulses.
 
-##3.1 pwm/control
+## pwm/control
 Enable or disable PWM.
 
 *Parameters*:  
@@ -191,10 +269,10 @@ PWM is can be used to generate single or multiple pulses with specific length:
 { "0":"100",  "frequency":"1000", "count":"100"} - generate single pulse 100 milliseconds length
 { "0":"30",  "frequency":"0.1", "count":"4"} - generate 4 pulses 3 seconds length, 7 seconds interval between pulses.*
 
-#4. UART
+# UART
 ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1). All read operations have to be done with notifications.
 
-##4.1 uart/write
+## uart/write
 Send data via UART.
 
 *Parameters*:  
@@ -208,7 +286,7 @@ Send data via UART.
 }
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-##4.2 uart/int
+## uart/int
 Subscribe on notification which contains data that was read from UART. Firmware starts wait for data from and each time when byte is received byte puts into buffer (264 bytes len), then firmware starts wait for the next byte with some timeout. When timeout reached or buffer is full firmware sends notification.
 
 *Parameters*:  
@@ -230,7 +308,7 @@ Return ‘OK’ in status. Or ‘Error’ and description in result on error. No
 ```
 
 Where "data" key name is always used and value is string with base64 encoded data(264 or less bytes).
-8.3 uart/terminal
+## uart/terminal
 Resume terminal on UART interface. If UART’s pins were used by another feature(i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with 115200 8N1.
 
 *Parameters*:  
@@ -238,10 +316,10 @@ No parameters.
 
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
 s
-#5.I2C
+# I2C
 There is software implementation of I2C protocol. Any GPIO pin can be SDA or SCL.
 
-##5.1 i2с/master/read
+## i2с/master/read
 Read specified number of bytes from bus. This command also can set up pins that will be used for I2C protocol. Pins will be init with open-drain output mode and on-board pull up will be enabled.
 
 *Parameters*:  
@@ -274,7 +352,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 "data" field is base64 encoded data that was read from bus.
 
 
-##5.2 i2с/master/write
+## i2с/master/write
 Write data to I2C bus.
 
 *Parameters*:  
@@ -295,10 +373,10 @@ Write data to I2C bus.
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
 
 
-#6. SPI
+# SPI
 ESP8266 has hardware SPI module. MISO pin is 10 (GPIO12), MOSI pin is 12(GPIO13), CLK is 9(GPIO14), CS can be specified as any other pin. Clock divider is fixed and equal 80, i.e. SPI clock is 1 MHz.
 
-##6.1 spi/master/read
+## spi/master/read
 Read data from SPI bus.
 
 *Parameters*:  
@@ -333,7 +411,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 
 
 
-##6.2 spi/master/write
+## spi/master/write
 Write data to SPI bus.
 
 *Parameters*:  
@@ -358,10 +436,10 @@ Write data to SPI bus.
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
 
 
-#7. Onewire
+# Onewire
 There is a software implementation of some onewire protocols. Any GPIO pin can be used for connection. Master operate as 1-wire master. Though selected pin will have on chip pull up, additional pull up resistor may require. Typically 4.7k Ohm.
 
-##7.1 onewire/master/read
+## onewire/master/read
 Read specified number of bytes from onewire bus. Onewire pin can also be specified with this for this command. Selected pin will be init with open-drain output mode and on-board pull up will be enabled.
 
 *Parameters*:  
@@ -385,7 +463,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 "data" field is base64 encoded data that was read from bus.
 
-##7.2 onewire/master/write
+## onewire/master/write
 Read specified data to onewire bus. Onewire pin can also be specified with this for this command. Selected pin will be init with open-drain output mode and on-board pull up will be enabled.
 
 *Parameters*:  
@@ -401,7 +479,7 @@ Read specified data to onewire bus. Onewire pin can also be specified with this 
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
 
-##7.3 onewire/master/int
+## onewire/master/int
 Enable or disable notifications for event on one wires buses.
 
 *Parameters*:  
@@ -424,7 +502,7 @@ Notifications will be sent with name 'onewire/master/int’. Each notification w
 	"pin":"2"
 }
 ```
-##7.4 onewire/master/search
+## onewire/master/search
 Search bus for serial numbers of all attached devices.
 
 *Parameters*:  
@@ -444,7 +522,7 @@ Return ‘OK’ in status and result with list as below. Or ‘Error’ and desc
 }
 ```
 
-##7.5 onewire/master/alarm
+## onewire/master/alarm
 Search bus for serial numbers of attached devices which are in alarm state.
 
 *Parameters*:  
@@ -466,7 +544,7 @@ Return ‘OK’ in status and result with list as below. Or ‘Error’ and desc
 ```
 
 
-##7.6 onewire/dht/read
+## onewire/dht/read
 Read data from DHT11/DHT22/AM2302 or device with the same protocol. Number of readed data depends on device, but can not be more that 264. Any checksums will not be checked.
 
 *Parameters*:  
@@ -485,3 +563,41 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 }
 ```
 "data" field is base64 encoded data that was read from bus.
+
+
+# License
+The MIT License (MIT):
+
+Copyright (c) 2015 DeviceHive
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+DeviceHive firmware is based on Espressif IoT SDK which has ESPRSSIF MIT License:
+
+ESPRSSIF MIT License
+
+Copyright (c) 2015 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
+
+Permission is hereby granted for use on ESPRESSIF SYSTEMS ESP8266 only, in which case, it is free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+乐鑫 MIT 许可证
+
+版权 (c) 2015  <乐鑫信息科技（上海）有限公司>
+
+该许可证授权仅限于乐鑫信息科技 ESP8266 产品的应用开发。在此情况下，该许可证免费授权任何获得该软件及其相关文档（统称为“软件”）的人无限制地经营该软件，包括无限制的使用、复制、修改、合并、出版发行、散布、再授权、及贩售软件及软件副本的权利。被授权人在享受这些权利的同时，需服从下面的条件：
+
+在软件和软件的所有副本中都必须包含以上的版权声明和授权声明。
+
+该软件按本来的样子提供，没有任何明确或暗含的担保，包括但不仅限于关于试销性、适合某一特定用途和非侵权的保证。作者和版权持有人在任何情况下均不就由软件或软件使用引起的以合同形式、民事侵权或其它方式提出的任何索赔、损害或其它责任负责。
+
+  
+All trademarks, service marks, trade names, trade dress, product names and logos appearing on the firmware repository are the property of their respective owners.
