@@ -1,5 +1,38 @@
 #DeviceHive ESP8266 Firmware User Guide.
-![](images/dh-logo.png?raw=true)
+![](images/dh-logo.png?raw=true)  
+Table of contents
+=================
+  * [Overview](#overview)
+  * [Getting started](#getting-started)
+  * [Wireless configuring](#wireless-configuring)
+  * [Pin definition](#pin-definition)
+  * [GPIO](#gpio)
+    * [gpio/write](#gpiowrite)
+    * [gpio/read](#gpioread)
+    * [gpio/int](#gpioint)
+  * [ADC](#adc)
+    * [adc/read](#adcread)
+    * [adc/int](#adcint)
+  * [PWM](#pwm)
+    * [pwm/control](#pwmcontrol)
+  * [UART](#uart)
+    * [uart/write](#uartwrite)
+    * [uart/int](#uartint)
+    * [uart/terminal](#uartterminal)
+  * [I2C](#i2c)
+    * [i2c/master/read](#i2сmasterread)
+    * [i2c/master/write](#i2сmasterwrite)
+  * [SPI](#spi)
+    * [spi/master/read](#spimasterread)
+    * [spi/master/write](#spimasterwrite)
+  * [Onewire](#onewire)
+    * [onewire/master/read](#onewiremasterread)
+    * [onewire/master/write](#onewiremasterwrite)
+    * [onewire/master/int](#onewiremasterint)
+    * [onewire/master/search](#onewiremastersearch)
+    * [onewire/master/alarm](#onewiremasteralarm)
+    * [onewire/dht/read](#onewiredhtread)
+  * [License](#license)
 
 #Overview
 This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
@@ -13,20 +46,31 @@ curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
 -d '{"command":"gpio/write","parameters":{"1":0}}' \
 http://nn8571.pg.devicehive.com/api/device/astaff/command
 ```
-This would set PIN1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.  
-The same idea with other interfaces. To check if your hardware device is suitable with firmware check which interface your devices has and then check if this interface is supported by DeviceHive ESP8266 firmware.  
-The latest version can be found in git project repository. There are sources codes and binary images: https://github.com/devicehive/esp8266-firmware  
-The purpose of this firmware is to provide easy tool for building IoT solutions for developers which used to program on unsuitable for microcontroller programming languages. You can easily use AngularJS framework for example to implement your idea. Also, considering chip price, DeviceHive usability and plenty modules on market which are not require soldering, it looks like perfect tool for prototyping. DIY developers also may find this firmware very useful for their project.  
+This would set PIN1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.
+
+The same idea with other interfaces. To check if your hardware device is suitable with firmware check which interface your devices has and then check if this interface is supported by DeviceHive ESP8266 firmware.
+
+The latest version can be found in git project repository. There are sources codes and binary images: https://github.com/devicehive/esp8266-firmware
+
+The purpose of this firmware is to provide easy tool for building IoT solutions for developers which used to program on unsuitable for microcontroller programming languages. You can easily use AngularJS framework for example to implement your idea. Also, considering chip price, DeviceHive usability and plenty modules on market which are not require soldering, it looks like perfect tool for prototyping. DIY developers also may find this firmware very useful for their project.
 
 #Getting started
-First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.  
-For flashing chip needs to be connected to computer via USB-UART converter, CH_PD pin have to be connected to Vcc, GPIO15 and GPIO0 have to be connected to ground and 3.3 power supply should be used. Sample for most popular pre soldered modules connection is below:  
+First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.
+
+For flashing chip needs to be connected to computer via USB-UART converter, CH_PD pin have to be connected to Vcc, GPIO15 and GPIO0 have to be connected to ground and 3.3 power supply should be used. Sample for most popular pre soldered modules connection is below:
+
 ![](images/sample1.jpg?raw=true)
+
 ![](images/sample2.jpg?raw=true)
+
 ![](images/sample3.jpg?raw=true)
-Real connection sample:  
+
+Real connection sample:
+
 ![](images/sample4.jpg?raw=true)
+
 Also, it's possible to use NodeMCU boards. It already has UART converter, reset and flash buttons on board. So there is no need to assemble anything. Such module looks like:
+
 ![](images/sample5.jpg?raw=true)
 
 After assembling, connect it to computer. Install driver for your USB->UART converter. The most popular chip and official sites with drivers below:
@@ -36,30 +80,41 @@ After assembling, connect it to computer. Install driver for your USB->UART conv
 * CH341: http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html
 
 Make sure that virtual serial port is available in your system( virtual COM is present on Windows OS, '/dev/ttyUSB*' on Linux, '/dev/tty.*' on OS X). Unpack archive with firmware and flash it running 'esp-flasher' in terminal. Flasher automatically detects serial port and use 'devicehive.bin' file for flashing. Successful flasher output is below:
+
 ![](images/term.png?raw=true)
 
-Now remove wire from GPIO0(live it float or connect to high), reboot device and connect to firmware with with 'esp-terminal' util. You can also use any other tool that can connect to terminal via UART and support escape sequences, PuTTY or GNU 'screen' for example. Port parameters are: 115200 8N1.  
-_Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in paragraph 3 instead. Wireless configuring procedure also can be used for end-user devices with this firmware._  
+Now remove wire from GPIO0(live it float or connect to high), reboot device and connect to firmware with with 'esp-terminal' util. You can also use any other tool that can connect to terminal via UART and support escape sequences, PuTTY or GNU 'screen' for example. Port parameters are: 115200 8N1.
+
+_Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in paragraph 3 instead. Wireless configuring procedure also can be used for end-user devices with this firmware._
+
 Firmware terminal is a unix like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring.  
 
-_For the very beginning or DIY purpose you can use DeviceHive free playground located here: http://playground.devicehive.com/ Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on http://devicehive.com _  
+_For the very beginning or DIY purpose you can use DeviceHive free playground located here: http://playground.devicehive.com/ Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on http://devicehive.com_  
 
 Configuring sample is below:
+
 ![](images/conf.png?raw=true)
 
 After rebooting you can send commands to DeviceHive server and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go in web admin, 'Devices' tab, 'commands' subtab, 'enter new command'. Type command and parameters and press 'push'. After ESP8266 perform your command you can press 'refresh' button to see result. For example 'gpio/read' command would look in admin control panel as below:
+
 ![](images/web.png?raw=true)
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks usigng DeviceHive RESTfull API: http://devicehive.com/restful which you can transmited with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
 #Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
+
 ![](images/phone1.jpg?raw=true)
+
 Android devices will show notification 'Sign into Wi-Fi network' in bar:
+
 ![](images/phone2.jpg?raw=true)
+
 Tap on it to open the same configuration page. In case of using other devices, just open browser and type URL: http://devicehive.config
 Also you can type any URL with http scheme in it, you will be redirected on URL above anyway while you are connected to ESP8266 in configuration mode.
+
 Type your configuration in form and click 'Apply' button. Device will be rebooted in 10 seconds in normal mode with new configuration.
+
 _Notice: You can automate configuration process for your devices. Actually to configure firmware you need to send HTTP POST request like below to 192.168.2.1:80_
 ```
 POST / HTTP/1.0
@@ -73,6 +128,7 @@ ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=accesskey
 #Pin definition
 
  Pin name in commands |  Function        |ESP8266 pin number |NodeMCU board pin
+----------------------|------------------|-------------------|------------------
 GPIO                  |                  |                   |
       "0"             |    GPIO0         |        15         |       D3
       "1"             |  GPIO1, UART_TX  |        26         |       D10
@@ -185,9 +241,9 @@ Notifications will be generated with the name 'gpio/int'. Each notification will
 	"caused":["0", "1"],
 	"state":{
 		"0":"0",
-		"1":"1"
+		"1":"1",
 		"16":"0"
-	}
+	},
 	"tick":"123456"
 }
 ```
