@@ -362,23 +362,19 @@ int main(int argc, char* argv[]) {
 				"hex adress and image file name, for example:\r\n" \
 				"esp-flasher 0x00000 image1.bin 0x40000 image2.bin\r\n"
 				"Trying to flash with defaults:\r\n" \
-				"0x00000 <- 0x00000.bin\r\n" \
-				"0x40000 <- 0x40000.bin\r\n" \
+				"0x00000 <- devicehive.bin\r\n" \
 				"0x7C000 <- default configuration\r\n" \
 				"0x7E000 <- 4K of 0xFF\r\n"
 				);
-				isSuccess = flash_file(port, (char*)"0x00000.bin", 0x00000);
+				isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000);
 				if(isSuccess) {
-					isSuccess = flash_file(port, (char*)"0x40000.bin", 0x40000);
+					printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
+					isSuccess = flash_mem(port, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT), 0x7C000);
 					if(isSuccess) {
-						printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
-						isSuccess = flash_mem(port, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT), 0x7C000);
-						if(isSuccess) {
-							uint8_t data[4*1024];
-							memset(data, 0xFF, sizeof(data));
-							printf("Flashing 4K of 0xFF at 0x%08X\r\n", 0x7E000);
-							isSuccess = flash_mem(port, data, sizeof(data), 0x7E000);
-						}
+						uint8_t data[4*1024];
+						memset(data, 0xFF, sizeof(data));
+						printf("Flashing 4K of 0xFF at 0x%08X\r\n", 0x7E000);
+						isSuccess = flash_mem(port, data, sizeof(data), 0x7E000);
 					}
 				}
 	} else {

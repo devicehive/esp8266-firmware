@@ -8,12 +8,11 @@ else
 	SINCLUDE		= /usr/include
 endif
 
-TARGET			= devicehive
 SDKPATH			= ./../sdk
-FIRMWAREDIR		= firmware
+FIRMWARE		= firmware/devicehive.bin
 OBJDIR			= build
-TARGETAR		= $(OBJDIR)/$(TARGET).a
-TARGETELF		= $(OBJDIR)/$(TARGET).elf
+TARGETAR		= $(OBJDIR)/devicehive.a
+TARGETELF		= $(OBJDIR)/devicehive.elf
 INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include sources $(CURDIR) $(SINCLUDE))
 LIBDIR			= $(addprefix -L,$(SDKPATH)/lib)
 LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto)
@@ -25,9 +24,9 @@ CC				= $(CROSS_COMPILE)gcc
 AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
 
-.PHONY: all flash terminal clean MAKEBINS
+.PHONY: all flash terminal clean
 
-all: $(TARGET) MAKEBINS
+all: $(FIRMWARE)
 
 $(OBJDIR)/%.o: %.c
 	@echo "CC $<"
@@ -39,18 +38,18 @@ $(TARGETAR): $(OBJECTS)
 	@$(AR) cru $@ $(OBJECTS)
 
 $(TARGETELF): $(TARGETAR)
-	@$(CC) $(LIBDIR) -T$(SDKPATH)/ld/eagle.app.v6.ld $(LDFLAGS) -Wl,--start-group $(LIBS) $(TARGETAR) -Wl,--end-group -o $@
-
-$(TARGET): $(TARGETELF)
 	@echo "LD $@"
+	@$(CC) $(LIBDIR) -T$(SDKPATH)/ld/eagle.app.v6.ld $(LDFLAGS) -Wl,--start-group $(LIBS) $(TARGETAR) -Wl,--end-group -o $@
 	@$(SIZE) -d $(TARGETELF)
 	
-MAKEBINS: $(TARGET)
-	@mkdir -p $(FIRMWAREDIR)
-	@./genbin.sh $(TARGETELF) $(FIRMWAREDIR)
+$(FIRMWARE): $(TARGETELF)
+	@mkdir -p $(dir $(FIRMWARE))
+	@./genbin.sh $(TARGETELF) $(FIRMWARE)
+	@echo -n "Firmware file is $(FIRMWARE), size is "
+	@stat -c '%s bytes' $(FIRMWARE)
 	
 flash: all
-	@(cd $(FIRMWAREDIR) && ./../../esp-utils/build/esp-flasher)
+	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher)
 	
 terminal:
 	@./../esp-utils/build/esp-terminal
