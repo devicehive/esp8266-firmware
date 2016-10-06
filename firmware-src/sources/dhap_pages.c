@@ -61,7 +61,7 @@ char * ICACHE_FLASH_ATTR dhap_pages_ok(unsigned int *len) {
 	return mPageBuffer;
 }
 
-LOCAL void esc_cpystr(char *dst, const char *src) {
+LOCAL void ICACHE_FLASH_ATTR esc_cpystr(char *dst, const char *src) {
 	const char esc_quote[] = "&#39;";
 	while(*src) {
 		if(*src == '\'')
@@ -73,7 +73,7 @@ LOCAL void esc_cpystr(char *dst, const char *src) {
 	*dst = 0;
 }
 
-LOCAL unsigned int esc_len(const char *str) {
+LOCAL unsigned int ICACHE_FLASH_ATTR esc_len(const char *str) {
 	int res = 0;
 	while(*str) {
 		res++;

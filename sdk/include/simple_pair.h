@@ -22,53 +22,43 @@
  *
  */
 
-#ifndef __UPGRADE_H__
-#define __UPGRADE_H__
+#ifndef __SIMPLE_PAIR_H__
+#define __SIMPLE_PAIR_H__
 
-#define SPI_FLASH_SEC_SIZE      4096
-#define LIMIT_ERASE_SIZE		0x10000
+typedef enum {
+	SP_ST_STA_FINISH = 0,
+	SP_ST_AP_FINISH = 0,
+	SP_ST_AP_RECV_NEG,
+	SP_ST_STA_AP_REFUSE_NEG,
+	/* all following is err */
+	SP_ST_WAIT_TIMEOUT,
+	SP_ST_SEND_ERROR,
+	SP_ST_KEY_INSTALL_ERR,
+	SP_ST_KEY_OVERLAP_ERR,  //means the same macaddr has two different keys 
+	SP_ST_OP_ERROR,
+	SP_ST_UNKNOWN_ERROR,
+	SP_ST_MAX,
+} SP_ST_t;
 
-#define USER_BIN1               0x00
-#define USER_BIN2               0x01
 
-#define UPGRADE_FLAG_IDLE       0x00
-#define UPGRADE_FLAG_START      0x01
-#define UPGRADE_FLAG_FINISH     0x02
+typedef void (*simple_pair_status_cb_t)(u8 *sa, u8 status);
 
-#define UPGRADE_FW_BIN1         0x00
-#define UPGRADE_FW_BIN2         0x01
+int register_simple_pair_status_cb(simple_pair_status_cb_t cb);
+void unregister_simple_pair_status_cb(void);
 
-typedef void (*upgrade_states_check_callback)(void * arg);
+int simple_pair_init(void);
+void simple_pair_deinit(void);
 
-//#define UPGRADE_SSL_ENABLE
+int simple_pair_state_reset(void);
+int simple_pair_ap_enter_announce_mode(void);
+int simple_pair_sta_enter_scan_mode(void);
 
-struct upgrade_server_info {
-    uint8 ip[4];
-    uint16 port;
+int simple_pair_sta_start_negotiate(void);
+int simple_pair_ap_start_negotiate(void);
+int simple_pair_ap_refuse_negotiate(void);
 
-    uint8 upgrade_flag;
+int simple_pair_set_peer_ref(u8 *peer_mac, u8 *tmp_key, u8 *ex_key);
+int simple_pair_get_peer_ref(u8 *peer_mac, u8 *tmp_key, u8 *ex_key);
 
-    uint8 pre_version[16];
-    uint8 upgrade_version[16];
 
-    uint32 check_times;
-    uint8 *url;
-
-    upgrade_states_check_callback check_cb;
-    struct espconn *pespconn;
-};
-
-#define UPGRADE_FLAG_IDLE       0x00
-#define UPGRADE_FLAG_START      0x01
-#define UPGRADE_FLAG_FINISH     0x02
-
-void system_upgrade_init();
-void system_upgrade_deinit();
-bool system_upgrade(uint8 *data, uint16 len);
-
-#ifdef UPGRADE_SSL_ENABLE
-bool system_upgrade_start_ssl(struct upgrade_server_info *server);	// not supported now
-#else
-bool system_upgrade_start(struct upgrade_server_info *server);
-#endif
-#endif
+#endif /* __SIMPLE_PAIR_H__ */

@@ -22,53 +22,41 @@
  *
  */
 
-#ifndef __UPGRADE_H__
-#define __UPGRADE_H__
+#ifndef __WPA2_ENTERPRISE_H__
+#define __WPA2_ENTERPRISE_H__
 
-#define SPI_FLASH_SEC_SIZE      4096
-#define LIMIT_ERASE_SIZE		0x10000
+typedef long os_time_t;
 
-#define USER_BIN1               0x00
-#define USER_BIN2               0x01
-
-#define UPGRADE_FLAG_IDLE       0x00
-#define UPGRADE_FLAG_START      0x01
-#define UPGRADE_FLAG_FINISH     0x02
-
-#define UPGRADE_FW_BIN1         0x00
-#define UPGRADE_FW_BIN2         0x01
-
-typedef void (*upgrade_states_check_callback)(void * arg);
-
-//#define UPGRADE_SSL_ENABLE
-
-struct upgrade_server_info {
-    uint8 ip[4];
-    uint16 port;
-
-    uint8 upgrade_flag;
-
-    uint8 pre_version[16];
-    uint8 upgrade_version[16];
-
-    uint32 check_times;
-    uint8 *url;
-
-    upgrade_states_check_callback check_cb;
-    struct espconn *pespconn;
+struct os_time {
+	os_time_t sec;
+	os_time_t usec;
 };
 
-#define UPGRADE_FLAG_IDLE       0x00
-#define UPGRADE_FLAG_START      0x01
-#define UPGRADE_FLAG_FINISH     0x02
+typedef int (* get_time_func_t)(struct os_time *t);
 
-void system_upgrade_init();
-void system_upgrade_deinit();
-bool system_upgrade(uint8 *data, uint16 len);
+int  wifi_station_set_wpa2_enterprise_auth(int enable);
 
-#ifdef UPGRADE_SSL_ENABLE
-bool system_upgrade_start_ssl(struct upgrade_server_info *server);	// not supported now
-#else
-bool system_upgrade_start(struct upgrade_server_info *server);
-#endif
-#endif
+int  wifi_station_set_enterprise_cert_key(u8 *client_cert, int client_cert_len,
+			u8 *private_key, int private_key_len,
+			u8 *private_key_passwd, int private_key_passwd_len);
+void  wifi_station_clear_enterprise_cert_key(void);
+
+int  wifi_station_set_enterprise_ca_cert(u8 *ca_cert, int ca_cert_len);
+void  wifi_station_clear_enterprise_ca_cert(void);
+
+int  wifi_station_set_enterprise_username(u8 *username, int len);
+void  wifi_station_clear_enterprise_username(void);
+
+int  wifi_station_set_enterprise_password(u8 *password, int len);
+void  wifi_station_clear_enterprise_password(void);
+
+int  wifi_station_set_enterprise_new_password(u8 *new_password, int len);
+void  wifi_station_clear_enterprise_new_password(void);
+
+void  wifi_station_set_enterprise_disable_time_check(bool disable);
+bool  wifi_station_get_enterprise_disable_time_check(void);
+
+void  wpa2_enterprise_set_user_get_time(get_time_func_t cb);
+
+
+#endif /* __WPA2_ENTERPRISE_H__ */
