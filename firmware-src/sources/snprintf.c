@@ -11,7 +11,9 @@
 
 #include "snprintf.h"
 
-int vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
+#include "c_types.h" // ICACHE_FLASH_ATTR
+
+int ICACHE_FLASH_ATTR vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 {
 	char digitBuffer[32];
 	char *pOriginalStr = pString;
@@ -104,7 +106,7 @@ int vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 	return (pString-pOriginalStr);
 }
 
-int snprintf(char *pString, size_t length, const char *pFormat, ...)
+int ICACHE_FLASH_ATTR snprintf(char *pString, size_t length, const char *pFormat, ...)
 {
     va_list    ap;
     int rc;

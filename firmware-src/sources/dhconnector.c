@@ -35,7 +35,7 @@ LOCAL HTTP_REQUEST mInfoRequest;
 LOCAL os_timer_t mRetryTimer;
 LOCAL unsigned char mNeedRecover = 0;
 
-LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state);
+LOCAL void set_state(CONNECTION_STATE state);
 
 LOCAL void retry(void *arg) {
 	set_state(mConnectionState);
@@ -47,14 +47,14 @@ LOCAL void arm_repeat_timer(unsigned int ms) {
 	os_timer_arm(&mRetryTimer, ms, 0);
 }
 
-LOCAL void network_error_cb(void *arg, sint8 err) {
+LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 	dhstatistic_inc_network_errors_count();
 }
 
-LOCAL void parse_json(struct jsonparse_state *jparser) {
+LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	int type;
 	unsigned int id;
 	char command[128] = "";
@@ -305,7 +305,7 @@ void ICACHE_FLASH_ATTR dhmem_unblock_cb() {
 	}
 }
 
-LOCAL void set_state(CONNECTION_STATE state) {
+LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	mConnectionState = state;
 	if(state != CS_DISCONNECT) {
 		if(dhmem_isblock()) {

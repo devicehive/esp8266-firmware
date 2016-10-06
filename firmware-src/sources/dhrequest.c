@@ -44,7 +44,7 @@ void ICACHE_FLASH_ATTR dhrequest_load_settings() {
 	mAccessKeyLen = snprintf(mAccessKey, sizeof(mAccessKey), "%s", dhsettings_get_devicehive_accesskey());
 }
 
-const char *dhrequest_current_server() {
+const char * ICACHE_FLASH_ATTR dhrequest_current_server() {
 	return mServer;
 }
 

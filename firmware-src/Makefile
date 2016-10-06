@@ -16,7 +16,7 @@ TARGETAR		= $(OBJDIR)/$(TARGET).a
 TARGETELF		= $(OBJDIR)/$(TARGET).elf
 INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include sources $(CURDIR) $(SINCLUDE))
 LIBDIR			= $(addprefix -L,$(SDKPATH)/lib)
-LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json)
+LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto)
 SOURCES			= $(wildcard sources/*.c) $(wildcard drivers/*.c) $(wildcard sources/devices/*.c) 
 OBJECTS			= $(addprefix $(OBJDIR)/, $(SOURCES:%.c=%.o))
 CFLAGS			= -O2 -Wpointer-arith -Wundef -Werror -Wunused -mlongcalls -mtext-section-literals -D__ets__ -DICACHE_FLASH -nostdlib

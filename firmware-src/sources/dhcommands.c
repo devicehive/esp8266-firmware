@@ -329,7 +329,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(unsigned int id, const char *command, const
 				return;
 		}
 		parse_pins.data_len = sizeof(parse_pins.data) ;
-		if(dhonewire_search(parse_pins.data, &parse_pins.data_len, (check == 0) ? 0xF0 : 0xEC, dhonewire_get_pin()))
+		if(dhonewire_search(parse_pins.data, (unsigned long *)&parse_pins.data_len, (check == 0) ? 0xF0 : 0xEC, dhonewire_get_pin()))
 			dhsender_response(id, DHSTATUS_OK, RDT_SEARCH64, dhonewire_get_pin(), parse_pins.data, parse_pins.data_len);
 		else
 			responce_error(id, "Error during search");
