@@ -18,7 +18,7 @@
 #include "dhdebug.h"
 
 // using main and backup storage to keep old setting in case of power loss during writing
-#define ESP_SETTINGS_MAIN_SEC   0x3C
+#define ESP_SETTINGS_MAIN_SEC   0x7A
 #define ESP_SETTINGS_BACKUP_SEC (ESP_SETTINGS_MAIN_SEC + 1)
 
 typedef struct {
