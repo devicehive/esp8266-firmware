@@ -17,7 +17,6 @@
 #include "user_config.h"
 
 #define DHAP_PAGE_TITLE_META  "<title>DeviceHive ESP8266 Configuration</title><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-#define DHAP_PAGE_HTTP_HEADER "HTTP/1.0 %u %s\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n"
 #define DHAP_PAGE_ERROR "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='red'>%s<br>Go <a href='javascript:history.back()'>back</a> to try again.</font></body></html>"
 #define DHAP_PAGE_OK "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='green'>Configuration was saved. System will reboot shortly.</font></body></html>"
 #define DHAP_PAGE_FORM "<html>" \
@@ -49,16 +48,13 @@ LOCAL char * ICACHE_FLASH_ATTR init() {
 char * ICACHE_FLASH_ATTR dhap_pages_error(const char *error, unsigned int *len) {
 	if(init() == 0)
 		return 0;
-	const unsigned int cl = sizeof(DHAP_PAGE_ERROR) - 3 + os_strlen(error);
-	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_HTTP_HEADER""DHAP_PAGE_ERROR, 400, "Bad Request", cl, error);
+	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_ERROR, error);
 	return mPageBuffer;
 }
 
 char * ICACHE_FLASH_ATTR dhap_pages_ok(unsigned int *len) {
-	if(init() == 0)
-		return 0;
-	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_HTTP_HEADER""DHAP_PAGE_OK, 200, "OK", sizeof(DHAP_PAGE_OK) - 1);
-	return mPageBuffer;
+	*len = sizeof(DHAP_PAGE_OK) - 1;
+	return DHAP_PAGE_OK;
 }
 
 LOCAL void ICACHE_FLASH_ATTR esc_cpystr(char *dst, const char *src) {
@@ -110,7 +106,6 @@ char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 		esc_cpystr(esc_deviceid, deviceid);
 	else
 		esc_deviceid_len = rand_generate_deviceid(esc_deviceid);
-	const unsigned int cl = sizeof(DHAP_PAGE_FORM) - 9 + esc_ssid_len + esc_server_len + esc_deviceid_len;
-	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_HTTP_HEADER""DHAP_PAGE_FORM, 200, "OK", cl, esc_ssid, esc_server, esc_deviceid);
+	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_FORM, esc_ssid, esc_server, esc_deviceid);
 	return mPageBuffer;
 }

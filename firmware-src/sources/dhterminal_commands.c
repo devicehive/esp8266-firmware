@@ -148,6 +148,13 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->networkErrors);
 	dhuart_send_line(digitBuff);
 
+	dhuart_send_str("Httpd requests received: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->httpdRequestsCount);
+	dhuart_send_str(digitBuff);
+	dhuart_send_str(", errors: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->httpdErrorsCount);
+	dhuart_send_line(digitBuff);
+
 	dhuart_send_str("DeviceHive: ");
 	switch(dhconnector_get_state()) {
 	case CS_DISCONNECT:
