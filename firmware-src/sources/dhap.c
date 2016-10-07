@@ -15,8 +15,8 @@
 #include "snprintf.h"
 #include "user_config.h"
 #include "dhdebug.h"
-#include "dhap_httpd.h"
 #include "dhap_dnsd.h"
+#include "dhap_web.h"
 
 void ICACHE_FLASH_ATTR dhap_init() {
 	dhdebug_direct();
@@ -54,7 +54,7 @@ void ICACHE_FLASH_ATTR dhap_init() {
 	dhap_dnsd_init();
 
 	// initialize HTTP server
-	dhap_httpd_init();
+	dhap_web_init();
 
 	unsigned char *bip = (unsigned char *)&ipinfo->ip;
 	dhdebug("Zero configuration server initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
