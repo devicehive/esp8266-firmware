@@ -39,7 +39,7 @@ $(TARGETAR): $(OBJECTS)
 
 $(TARGETELF): $(TARGETAR)
 	@echo "LD $@"
-	@$(CC) $(LIBDIR) -T$(SDKPATH)/ld/eagle.app.v6.ld $(LDFLAGS) -Wl,--start-group $(LIBS) $(TARGETAR) -Wl,--end-group -o $@
+	@$(CC) $(LIBDIR) -Tdevicehive.ld $(LDFLAGS) -Wl,--start-group $(LIBS) $(TARGETAR) -Wl,--end-group -o $@
 	@$(SIZE) -d $(TARGETELF)
 	
 $(FIRMWARE): $(TARGETELF)
