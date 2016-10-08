@@ -13,14 +13,29 @@
 #include "httpd.h"
 #include "rest.h"
 
-static const char api[] = "/api/";
+LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *path,
+		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
+	static const char api[] = "/api";
+	if(os_strncmp(path, api, sizeof(api) - 1) == 0) {
+		const char *p = &path[sizeof(api) - 1];
+		if(p[0] == 0) {
+			*res = rest_handle(p, key, content_in, content_out);
+			return 1;
+		}else if(p[0] == '/') {
+			*res = rest_handle(&p[1], key, content_in, content_out);
+			return 1;
+		}
+	}
+	return 0;
+}
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
-	if(os_strncmp(path, api, sizeof(api) - 1) == 0) {
-		return rest_handle(&path[sizeof(api) - 1], key, content_in, content_out);
+	HTTP_RESPONSE_STATUS res;
+	if(check_rest(&res, path, key, content_in, content_out)) {
+		return res;
 	}
-	char hw[] = "Hello, world";
+	static const char hw[] = "Hello, world!";
 	content_out->data = hw;
 	content_out->len = sizeof(hw) - 1;
 	return HRCS_ANSWERED;
@@ -28,8 +43,9 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
-	if(os_strncmp(path, api, sizeof(api) - 1) == 0) {
-		return rest_handle(&path[sizeof(api) - 1], key, content_in, content_out);
+	HTTP_RESPONSE_STATUS res;
+	if(check_rest(&res, path, key, content_in, content_out)) {
+		return res;
 	}
 	return HRCS_NOT_FOUND;
 }
