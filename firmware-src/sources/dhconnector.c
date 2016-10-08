@@ -34,6 +34,7 @@ LOCAL HTTP_REQUEST mPollRequest;
 LOCAL HTTP_REQUEST mInfoRequest;
 LOCAL os_timer_t mRetryTimer;
 LOCAL unsigned char mNeedRecover = 0;
+LOCAL struct mdns_info mMdnsinfo;
 
 LOCAL void set_state(CONNECTION_STATE state);
 
@@ -345,13 +346,12 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 			arm_repeat_timer(DHREQUEST_PAUSE_MS);
 
 			if(dhrequest_current_deviceid()[0]) {
-				struct mdns_info info;
-				os_memset(&info, 0, sizeof(info));
-				info.host_name = (char *)dhrequest_current_deviceid();
-				info.ipAddr = event->event_info.got_ip.ip.addr;
-				info.server_name = "DeviceHive";
-				info.server_port = 80;
-				espconn_mdns_init(&info);
+				os_memset(&mMdnsinfo, 0, sizeof(mMdnsinfo));
+				mMdnsinfo.host_name = (char *)dhrequest_current_deviceid();
+				mMdnsinfo.ipAddr = event->event_info.got_ip.ip.addr;
+				mMdnsinfo.server_name = "DeviceHive";
+				mMdnsinfo.server_port = 80;
+				espconn_mdns_init(&mMdnsinfo);
 			}
 		} else {
 			dhdebug("ERROR: WiFi reports STAMODE_GOT_IP, but no actual ip found");
