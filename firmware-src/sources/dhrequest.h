@@ -39,6 +39,12 @@ const char *dhrequest_current_server();
 const char *dhrequest_current_deviceid();
 
 /**
+ *	\brief	Get current DeviceHive AccessKey.
+ *	\return	Pointer to null terminated buffer with AccessKey.
+ */
+const char *dhrequest_current_accesskey();
+
+/**
  *	\brief			Create register request.
  *	\param[out]	buf	Buffer where request should be created.
  */

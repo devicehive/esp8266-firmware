@@ -24,12 +24,14 @@
 
 LOCAL unsigned int mConfigured = 0;
 LOCAL os_timer_t mReconfigureTimer;
+
 LOCAL void ICACHE_FLASH_ATTR system_reconfigure(void *arg) {
 	dhdebug("Rebooting...");
 	system_restart();
 }
 
-LOCAL HTTP_REQUEST_CALLBACK_STATUS check_if_configured(HTTP_CONTENT *content_out) {
+LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR check_if_configured(
+		HTTP_CONTENT *content_out) {
 	if(mConfigured) {
 		content_out->data = dhap_pages_ok(&content_out->len);
 		if(content_out->data == 0) {
@@ -41,9 +43,9 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS check_if_configured(HTTP_CONTENT *content_out
 	return HRCS_NOT_FINISHED;
 }
 
-LOCAL HTTP_REQUEST_CALLBACK_STATUS get_cb(const char *path, const char *key,
-		HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
-	HTTP_REQUEST_CALLBACK_STATUS res = check_if_configured(content_out);
+LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
+		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
+	HTTP_RESPONSE_STATUS res = check_if_configured(content_out);
 	if(res != HRCS_NOT_FINISHED)
 		return res;
 	if(path[0] == '/') {
@@ -58,9 +60,9 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS get_cb(const char *path, const char *key,
 	return HRCS_NOT_FOUND;
 }
 
-LOCAL HTTP_REQUEST_CALLBACK_STATUS post_cb(const char *path, const char *key,
-		HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
-	HTTP_REQUEST_CALLBACK_STATUS res = check_if_configured(content_out);
+LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
+		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
+	HTTP_RESPONSE_STATUS res = check_if_configured(content_out);
 	if(res != HRCS_NOT_FINISHED)
 		return res;
 	dhdebug("got POST with settings len %u", content_in->len);

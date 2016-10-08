@@ -20,6 +20,7 @@
 #include "dhterminal.h"
 #include "dhsettings.h"
 #include "dhap.h"
+#include "webserver.h"
 
 typedef struct {
 	unsigned int magic;
@@ -106,6 +107,7 @@ void user_init(void) {
 		dhsettings_init();
 		dhconnector_init(dhcommands_do);
 		dhgpio_init();
+		webserver_init();
 		dhdebug("Initialization completed");
 	}
 }
