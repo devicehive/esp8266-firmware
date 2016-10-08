@@ -191,14 +191,14 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	static const char get[] = "GET ";
 	static const char post[] = "POST ";
 	static const char host[] = "Host:";
-	static char internal[] = "HTTP/1.0 500 No Memory\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNo memory";
-	static char notfound[] = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot found";
+	static char internal[] = "HTTP/1.0 500 No Memory\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
+	static char notfound[] = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
 	static char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
+	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
+	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nContent-Length:11\r\n\r\nBad Request";
 	static char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
-	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nContent-Length:0\r\n\r\n";
 	static char ok[] = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	static char no_content[] = "HTTP/1.0 204 No content\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
-	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
 	HTTP_CONTENT content_out;
 	content_out.len = 0;
 	dhdebug("Httpd received %d bytes", len);
