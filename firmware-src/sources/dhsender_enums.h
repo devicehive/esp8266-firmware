@@ -34,4 +34,10 @@ typedef enum {
 	RNT_NOTIFICATION_ONEWIRE	///< Notification will be marked as onewire.
 } REQUEST_NOTIFICATION_TYPE;
 
+/** Responce status*/
+typedef enum {
+	DHSTATUS_ERROR = 0,	///< Send Error string
+	DHSTATUS_OK			///< Send OK string
+} RESPONCE_STATUS;
+
 #endif /* _DHSENDER_ENUMS_H_ */

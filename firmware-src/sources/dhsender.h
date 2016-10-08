@@ -15,12 +15,6 @@
 #include <ip_addr.h>
 #include "dhsender_enums.h"
 
-/** Responce status*/
-typedef enum {
-	DHSTATUS_ERROR = 0,	///< Send Error string
-	DHSTATUS_OK			///< Send OK string
-} RESPONCE_STATUS;
-
 /**
  *	\brief				Initializes sender for using remote DeviceHive server.
  *	\param[in]	ip		Remote server IP.
