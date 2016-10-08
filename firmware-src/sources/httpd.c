@@ -27,7 +27,8 @@
 #define POST_BUF_SIZE 2048
 
 typedef struct {
-	struct espconn *client;
+	uint8 remote_ip[4];
+	int remote_port;
 	HTTP_CONTENT content;
 } CONTENT_ITEM;
 
@@ -41,6 +42,14 @@ LOCAL HttpRequestCb mGetHttpRequestCb = 0;
 LOCAL HttpRequestCb mPostHttpRequestCb = 0;
 LOCAL CONTENT_ITEM mContentQueue[MAX_CONNECTIONS] = {0};
 
+LOCAL int ICACHE_FLASH_ATTR is_remote_equal(esp_tcp *tcp, CONTENT_ITEM *item) {
+	if (os_memcmp(tcp->remote_ip, item->remote_ip, sizeof(tcp->remote_ip)) == 0
+			&& tcp->remote_port == item->remote_port) {
+		return 1;
+	}
+	return 0;
+}
+
 LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, int len) {
 	sint8 res = espconn_send(conn, (char *)data, len);
 	if(res) {
@@ -51,16 +60,20 @@ LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, in
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhap_httpd_disconnect_cb(void *arg) {
-	struct espconn *conn = arg;
+LOCAL void ICACHE_FLASH_ATTR on_client_disconnect(struct espconn *conn) {
 	int i;
 	for(i = 0; i < MAX_CONNECTIONS; i++) {
-		if(mContentQueue[i].client == conn) {
-			mContentQueue[i].client = 0;
+		if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
+			mContentQueue[i].remote_port = 0;
 			break;
 		}
 	}
 	mConnected--;
+}
+
+LOCAL void ICACHE_FLASH_ATTR dhap_httpd_disconnect_cb(void *arg) {
+	struct espconn *conn = arg;
+	on_client_disconnect(conn);
 	dhdebug("Httpd client disconnected, %u left", mConnected);
 }
 
@@ -68,8 +81,9 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_sent_cb(void *arg) {
 	struct espconn *conn = arg;
 	int i;
 	for(i = 0; i < MAX_CONNECTIONS; i++) {
-		if(mContentQueue[i].client == conn) {
+		if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 			send_res(conn, mContentQueue[i].content.data, mContentQueue[i].content.len);
+			mContentQueue[i].remote_port = 0;
 			return;
 		}
 	}
@@ -112,7 +126,7 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS ICACHE_FLASH_ATTR parse_request(
 			}
 		} else if(os_strncmp(&data[i], authorization, sizeof(authorization) - 1) == 0) {
 			i += sizeof(authorization) - 1;
-			while(data[i++] == ' ')
+			while(data[i] == ' ')
 				i++;
 			if(os_strncmp(&data[i], bearer, sizeof(bearer) - 1) == 0) {
 				i += sizeof(bearer) - 1;
@@ -246,12 +260,12 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		int i;
 		CONTENT_ITEM *item = 0;
 		for(i = 0; i < MAX_CONNECTIONS; i++) {
-			if(mContentQueue[i].client == conn) {
+			if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 				dhdebug("Httpd duplicate responses");
 				send_res(conn, internal, sizeof(internal) - 1);
 				dhstatistic_inc_httpd_errors_count();
 				return;
-			} else if(mContentQueue[i].client == 0) {
+			} else if(mContentQueue[i].remote_port == 0) {
 				item = &mContentQueue[i];
 			}
 		}
@@ -264,7 +278,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		char response[sizeof(ok) + 8];
 		int response_len = snprintf(response, sizeof(response), ok, content_out.len);
 		if(content_out.len) {
-			item->client = conn;
+			os_memcpy(item->remote_ip, conn->proto.tcp->remote_ip, sizeof(item->remote_ip));
+			item->remote_port = conn->proto.tcp->remote_port;
 			item->content.data = content_out.data;
 			item->content.len = content_out.len;
 		}
@@ -294,7 +309,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_reconnect_cb(void *arg, sint8 err) {
-	mConnected--;
+	struct espconn *conn = arg;
+	on_client_disconnect(conn);
 	dhdebug("Httpd connection error occurred %d", err);
 }
 

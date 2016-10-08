@@ -46,7 +46,7 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS get_cb(const char *path, const char *key,
 	HTTP_REQUEST_CALLBACK_STATUS res = check_if_configured(content_out);
 	if(res != HRCS_NOT_FINISHED)
 		return res;
-	if(path[0] == '\\') {
+	if(path[0] == '/') {
 		if(path[1] == 0) {
 			content_out->data = dhap_pages_form(&content_out->len);
 			if(content_out->data == 0) {

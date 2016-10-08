@@ -27,7 +27,7 @@
 								"<input type='text' name='ssid' value='%s'><br><br>"\
 								"Wi-Fi Password(leave empty to keep current):<br>"\
 								"<input type='password' name='pass'><br><br>"\
-								"DeviceHive API Url:<br>"\
+								"DeviceHive API Url (Example "DEFAULT_SERVER"):<br>"\
 								"<input type='text' name='url' value='%s'><br><br>"\
 								"DeviceId (allowed chars are A-Za-z0-9_- ):<br>"\
 								"<input type='text' name='id' value='%s'><br><br>"\
@@ -83,25 +83,19 @@ LOCAL unsigned int ICACHE_FLASH_ATTR esc_len(const char *str) {
 char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 	if(init() == 0)
 		return 0;
-	const char defhttp[] = DEFAULT_SERVER;
 	const char *ssid = dhsettings_get_wifi_ssid();
 	const char *server = dhsettings_get_devicehive_server();
 	const char *deviceid = dhsettings_get_devicehive_deviceid();
 	unsigned int esc_ssid_len = esc_len(ssid);
 	unsigned int esc_server_len = esc_len(server);
 	unsigned int esc_deviceid_len = esc_len(deviceid);
-	if(server[0] == 0)
-		esc_server_len = esc_len(defhttp);
 	if(deviceid[0] == 0)
 		esc_deviceid_len = rand_generate_deviceid(0);
 	char esc_ssid[esc_ssid_len + 1];
 	char esc_server[esc_server_len + 1];
 	char esc_deviceid[esc_deviceid_len + 1];
 	esc_cpystr(esc_ssid, ssid);
-	if(server[0])
-		esc_cpystr(esc_server, server);
-	else
-		esc_cpystr(esc_server, defhttp);
+	esc_cpystr(esc_server, server);
 	if(deviceid[0])
 		esc_cpystr(esc_deviceid, deviceid);
 	else
