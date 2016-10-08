@@ -17,7 +17,8 @@ typedef enum {
 	HRCS_INTERNAL_ERROR,	///< Internal error happens
 	HRCS_BAD_REQUEST,		///< Request is not correct
 	HRCS_NOT_IMPLEMENTED,	///< Method is not implemented
-} HTTP_REQUEST_CALLBACK_STATUS;
+	HRCS_UNAUTHORIZED		///< Unauthorized
+} HTTP_RESPONSE_STATUS;
 
 /** Content descriptor */
 typedef struct {
@@ -26,7 +27,7 @@ typedef struct {
 } HTTP_CONTENT;
 
 /** Callback prototype for requests. */
-typedef HTTP_REQUEST_CALLBACK_STATUS (*HttpRequestCb)(const char *path, const char *key,
+typedef HTTP_RESPONSE_STATUS (*HttpRequestCb)(const char *path, const char *key,
 		HTTP_CONTENT *content_in, HTTP_CONTENT *content_out);
 
 /**

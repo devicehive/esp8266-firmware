@@ -52,6 +52,10 @@ const char * ICACHE_FLASH_ATTR dhrequest_current_deviceid() {
 	return mDeviceId;
 }
 
+const char * ICACHE_FLASH_ATTR dhrequest_current_accesskey() {
+	return mAccessKey;
+}
+
 void ICACHE_FLASH_ATTR dhrequest_create_register(HTTP_REQUEST *buf) {
 	uint8 mac[6];
 	char keybuf[64];

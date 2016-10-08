@@ -91,7 +91,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_sent_cb(void *arg) {
 	dhdebug("Httpd data sent");
 }
 
-LOCAL HTTP_REQUEST_CALLBACK_STATUS ICACHE_FLASH_ATTR parse_request(
+LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 		const char *data, unsigned short len, HttpRequestCb cb, HTTP_CONTENT *content_out) {
 	static const char content_length[] = "Content-Length:";
 	static const char authorization[] = "Authorization:";
@@ -114,7 +114,7 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS ICACHE_FLASH_ATTR parse_request(
 
 	unsigned int cont_len = 0;
 	char *key = 0;
-	HTTP_REQUEST_CALLBACK_STATUS res = HRCS_INTERNAL_ERROR;
+	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 	for(i = j; i < len; i++) {
 		if(os_strncmp(&data[i], content_length, sizeof(content_length) - 1) == 0) {
 			i += sizeof(content_length) - 1;
@@ -162,7 +162,7 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS ICACHE_FLASH_ATTR parse_request(
 	return res;
 }
 
-LOCAL HTTP_REQUEST_CALLBACK_STATUS ICACHE_FLASH_ATTR receive_post(
+LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR receive_post(
 		const char *data, unsigned short len, HTTP_CONTENT *content_out) {
 	if(mPostBuf == 0) {
 		mPostBuf = (char*)os_malloc(POST_BUF_SIZE);
@@ -177,7 +177,7 @@ LOCAL HTTP_REQUEST_CALLBACK_STATUS ICACHE_FLASH_ATTR receive_post(
 	}
 	os_memcpy(&mPostBuf[mPostBufPos], data, len);
 	mPostBufPos += len;
-	HTTP_REQUEST_CALLBACK_STATUS res = parse_request(mPostBuf, mPostBufPos, mPostHttpRequestCb, content_out);
+	HTTP_RESPONSE_STATUS res = parse_request(mPostBuf, mPostBufPos, mPostHttpRequestCb, content_out);
 	if(res != HRCS_NOT_FINISHED && mCurrentPost) {
 		mCurrentPost = 0;
 		os_free(mPostBuf);
@@ -198,11 +198,12 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nContent-Length:0\r\n\r\n";
 	static char ok[] = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	static char no_content[] = "HTTP/1.0 204 No content\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
+	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
 	HTTP_CONTENT content_out;
 	content_out.len = 0;
 	dhdebug("Httpd received %d bytes", len);
 	dhstatistic_add_bytes_received(len);
-	HTTP_REQUEST_CALLBACK_STATUS res = HRCS_INTERNAL_ERROR;
+	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 
 	if(conn == mCurrentPost) {
 		res = receive_post(data, len, &content_out);
@@ -299,6 +300,10 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	case HRCS_NOT_IMPLEMENTED:
 		dhdebug("Httpd not implemented");
 		send_res(conn, notimplemented, sizeof(notimplemented) - 1);
+		break;
+	case HRCS_UNAUTHORIZED:
+		dhdebug("Httpd unauthorized");
+		send_res(conn, unauthorized, sizeof(unauthorized) - 1);
 		break;
 	case HRCS_INTERNAL_ERROR:
 	default:
