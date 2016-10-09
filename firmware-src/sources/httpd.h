@@ -29,7 +29,7 @@ typedef struct {
 /** Struct for HRCS_ANSWERED data */
 typedef struct {
 	HTTP_CONTENT content;		///< Data to return.
-	unsigned ok : 1;			///< Is error occur? True by default.
+	unsigned ok : 1;			///< Is response with 2xx code? True by default.
 	unsigned free_content : 1;	///< Is data was malloced, need to be free? False by default.
 } HTTP_ANSWER;
 
