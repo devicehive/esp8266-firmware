@@ -19,6 +19,7 @@
 #include "dhgpio.h"
 #include "snprintf.h"
 #include "dhmem.h"
+#include "dhsender_data.h"
 
 LOCAL const char STATUS_OK[] = "OK";
 LOCAL const char STATUS_ERROR[] = "Error";
@@ -27,19 +28,6 @@ LOCAL unsigned int mQueueMaxSize;
 #define RESERVE_FOR_RESPONCE (mQueueMaxSize - 3)
 #define MEM_RECOVER_THRESHOLD (mQueueMaxSize * 3 / 4)
 #define MEMORY_RESERVER 10240
-
-typedef struct {
-	unsigned int caused;
-	unsigned int state;
-	unsigned int timestamp;
-} GPIO_DATA;
-
-typedef union {
-	char array[INTERFACES_BUF_SIZE];
-	const char *string;
-	float adc;
-	GPIO_DATA gpio;
-} SENDERDATA;
 
 typedef struct {
 	unsigned int				id;
@@ -67,39 +55,8 @@ int ICACHE_FLASH_ATTR dhsender_queue_add(REQUEST_TYPE type, REQUEST_NOTIFICATION
 	mQueue[mQueueAddPos].type = type;
 	mQueue[mQueueAddPos].data_type = data_type;
 	mQueue[mQueueAddPos].notification_type = notification_type;
-	switch(data_type) {
-		case RDT_CONST_STRING:
-			mQueue[mQueueAddPos].data.string = va_arg(ap, const char *);
-			mQueue[mQueueAddPos].data_len = sizeof(const char *);
-			break;
-		case RDT_GPIO:
-			mQueue[mQueueAddPos].data.gpio.caused = va_arg(ap, unsigned int);
-			mQueue[mQueueAddPos].data.gpio.state = va_arg(ap, unsigned int);
-			mQueue[mQueueAddPos].data.gpio.timestamp = va_arg(ap, unsigned int);
-			mQueue[mQueueAddPos].data_len = sizeof(GPIO_DATA);
-			break;
-		case RDT_FLOAT:
-			mQueue[mQueueAddPos].data.adc = (float)va_arg(ap, double);
-			mQueue[mQueueAddPos].data_len = sizeof(float);
-			break;
-		case RDT_SEARCH64:
-			mQueue[mQueueAddPos].pin = va_arg(ap, unsigned int);
-			/* no break */
-		case RDT_DATA_WITH_LEN:
-		{
-			const char *s = va_arg(ap, char *);
-			char *d = mQueue[mQueueAddPos].data.array;
-			unsigned int l = va_arg(ap, unsigned int);
-			mQueue[mQueueAddPos].data_len = l;
-			while(l--)
-				*d++ = *s++;
-		}
-			break;
-		default:
-			mQueue[mQueueAddPos].data.string = "ERROR: Unknown request data type.";
-			mQueue[mQueueAddPos].type = RDT_CONST_STRING;
-			dhdebug("ERROR: Unknown request data type %d", data_type);
-	}
+	dhsender_data_parse_va(ap, &data_type, &mQueue[mQueueAddPos].data,
+			&mQueue[mQueueAddPos].data_len, &mQueue[mQueueAddPos].pin);
 	if(mQueueTakePos < 0)
 		mQueueTakePos = mQueueAddPos;
 	if(mQueueAddPos >= mQueueMaxSize - 1)
@@ -111,37 +68,6 @@ int ICACHE_FLASH_ATTR dhsender_queue_add(REQUEST_TYPE type, REQUEST_NOTIFICATION
 		dhmem_block();
 	ETS_INTR_UNLOCK();
 	return 1;
-}
-
-LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf, unsigned int buflen, unsigned int state) {
-	unsigned int len = snprintf(buf, buflen, "{");
-	unsigned int i;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
-		const pinvalue = (state & pin) ? 1 : 0;
-		if(DHGPIO_SUITABLE_PINS & pin) {
-			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":\"%d\"" : ", \"%d\":\"%d\"", i, pinvalue);
-		}
-	}
-	return len + snprintf(&buf[len], buflen - len, "}");
-}
-
-LOCAL void ICACHE_FLASH_ATTR gpio_notification(char *buf, unsigned int buflen, const GPIO_DATA *data) {
-	unsigned int len = snprintf(buf, buflen, "{\"caused\":[");
-	unsigned int i;
-	int comma = 0;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
-		if(DHGPIO_SUITABLE_PINS & pin == 0)
-			continue;
-		if( pin & data->caused) {
-			len += snprintf(&buf[len], buflen - len, comma?", \"%d\"":"\"%d\"", i);
-			comma = 1;
-		}
-	}
-	len += snprintf(&buf[len], buflen - len, "], \"state\":");
-	len += gpio_state(&buf[len], buflen - len, data->state);
-	snprintf(&buf[len], buflen - len, ", \"tick\":\"%u\"}", data->timestamp);
 }
 
 int ICACHE_FLASH_ATTR dhsender_queue_take(HTTP_REQUEST *out, unsigned int *is_notification) {
@@ -163,74 +89,33 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(HTTP_REQUEST *out, unsigned int *is_no
 		dhmem_unblock();
 
 	char buf[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD];
-	const char *result = buf;
-	switch(item.data_type) {
-		case RDT_CONST_STRING:
-			result = item.data.string;
-			break;
-		case RDT_DATA_WITH_LEN:
-		{
-			const unsigned int pos = snprintf(buf, sizeof(buf), "{\"data\":\"");
-			const unsigned int res = dhdata_encode(item.data.array, item.data_len, &buf[pos], sizeof(buf) - pos - 3);
-			if(res == 0) {
-				result = "Failed to convert data in base64";
-				item.type = RT_RESPONCE_ERROR;
-			} else {
-				snprintf(&buf[pos + res], sizeof(buf) - pos, "\"}");
-			}
-			break;
-		}
-		case RDT_FLOAT:
-			snprintf(buf, sizeof(buf), "{\"0\":\"%f\"}", item.data.adc);
-			break;
-		case RDT_GPIO:
-			if(item.notification_type == RNT_NOTIFICATION_GPIO)
-				gpio_notification(buf, sizeof(buf), &item.data.gpio);
-			else
-				gpio_state(buf, sizeof(buf), item.data.gpio.state);
-			break;
-		case RDT_SEARCH64:
-		{
-			unsigned int i;
-			unsigned int len = snprintf(buf, sizeof(buf), "{\"found\":[");
-			if(item.data_len) {
-				len += snprintf(&buf[len], sizeof(buf) - len, "\"");
-				for(i = 0; i < item.data_len; i++) {
-					if(i % 8 == 0 &&  i != 0) {
-						len += snprintf(&buf[len], sizeof(buf) - len, "\", \"");
-					}
-					if(len + 2 < sizeof(buf))
-						len += byteToHex(item.data.array[item.data_len - i - 1], &buf[len]);
-				}
-				len += snprintf(&buf[len], sizeof(buf) - len, "\"");
-			}
-			snprintf(&buf[len], sizeof(buf) - len, "], \"pin\":\"%d\"}", item.pin);
-			break;
-		}
-		default:
-			dhdebug("ERROR: Unknown data type of request %d", item.data_type);
-			return 0;
+	if(dhsender_data_to_json(buf, sizeof(buf),
+			item.notification_type == RNT_NOTIFICATION_GPIO, item.data_type,
+			&item.data, item.data_len, item.pin) < 0) {
+		snprintf(buf, sizeof(buf), "Failed to convert data to json");
+		item.type = RT_RESPONCE_ERROR;
 	}
+
 	*is_notification = 0;
 	switch(item.type) {
 		case RT_RESPONCE_OK:
 		case RT_RESPONCE_ERROR:
-			dhrequest_create_update(out, item.id, (item.type == RT_RESPONCE_OK) ? STATUS_OK : STATUS_ERROR, result);
+			dhrequest_create_update(out, item.id, (item.type == RT_RESPONCE_OK) ? STATUS_OK : STATUS_ERROR, buf);
 			break;
 		case RT_NOTIFICATION:
 			*is_notification = 1;
 			switch(item.notification_type) {
 			case RNT_NOTIFICATION_GPIO:
-				dhrequest_create_notification(out, "gpio/int", result);
+				dhrequest_create_notification(out, "gpio/int", buf);
 				break;
 			case RNT_NOTIFICATION_ADC:
-				dhrequest_create_notification(out, "adc/int", result);
+				dhrequest_create_notification(out, "adc/int", buf);
 				break;
 			case RNT_NOTIFICATION_UART:
-				dhrequest_create_notification(out, "uart/int", result);
+				dhrequest_create_notification(out, "uart/int", buf);
 				break;
 			case RNT_NOTIFICATION_ONEWIRE:
-				dhrequest_create_notification(out, "onewire/master/int", result);
+				dhrequest_create_notification(out, "onewire/master/int", buf);
 				break;
 			default:
 				dhdebug("ERROR: Unknown notification type of request %d", item.notification_type);

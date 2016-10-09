@@ -10,10 +10,12 @@
 #include <stdarg.h>
 #include <c_types.h>
 #include <osapi.h>
+#include <mem.h>
 #include "rest.h"
 #include "dhrequest.h"
 #include "dhcommands.h"
 #include "dhsender_data.h"
+#include "user_config.h"
 
 static const char desription[] = "<html><body>This is firmware RESTfull API endpoint. "\
 	"Please follow the firmware manual to use it.<br><a href='http://devicehive.com/' "\
@@ -27,13 +29,28 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 	va_start(ap, data_type);
 	HTTP_ANSWER *answer = cid.arg;
 	answer->ok = status == DHSTATUS_OK ? 1 : 0;
-	if(data_type == RDT_CONST_STRING) {
+	if(data_type == RDT_CONST_STRING) { // optimization
 		answer->content.data = va_arg(ap, const char *);;
 		answer->content.len = os_strlen(answer->content.data);
 	} else {
-		static char test[] = "Something";
-		answer->content.data = test;
-		answer->content.len = sizeof(test) - 1;
+		SENDERDATA data;
+		unsigned int data_len;
+		unsigned int pin;
+		dhsender_data_parse_va(ap, &data_type, &data, &data_len, &pin);
+		char *buf = (char *)os_malloc(2*INTERFACES_BUF_SIZE); // do we really can have more?
+		int res = dhsender_data_to_json(buf, 2*INTERFACES_BUF_SIZE, 0, data_type, &data,
+				data_len, pin);
+		if(res < 0) {
+			os_free(buf);
+			static char error[] = "Failed to build json";
+			answer->ok = 0;
+			answer->content.data = error;
+			answer->content.len = sizeof(error) - 1;
+			return;
+		}
+		answer->content.data = buf;
+		answer->content.len = res;
+		answer->free_content = 1;
 	}
 	va_end(ap);
 }

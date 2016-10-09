@@ -10,6 +10,7 @@
 #define _DHSENDER_DATA_H_
 
 #include <stdarg.h>
+#include "user_config.h"
 
 /** Data type that should be read from arguments and how it will be formatted in response or notification. */
 typedef enum {
@@ -54,8 +55,49 @@ typedef void (*command_callback)(CommandResultArgument data,
 
 /** Struct for declaring callback for command result. */
 typedef struct {
-	command_callback callback;
-	CommandResultArgument data;
+	command_callback callback;	///< Callback function.
+	CommandResultArgument data;	///< Arguments for callback.
 } COMMAND_RESULT;
+
+/** Special struct for handling gpio result. */
+typedef struct {
+	unsigned int caused;	///< Which pins caused interruption.
+	unsigned int state;		///< Current pins state.
+	unsigned int timestamp;	///< Current internal time in microseconds.
+} GPIO_DATA;
+
+/** Struct for storing command result. */
+typedef union {
+	char array[INTERFACES_BUF_SIZE];	///< Raw data.
+	const char *string;					///< Static string pointer.
+	float adc;							///< Float value.
+	GPIO_DATA gpio;						///< GPIO data.
+} SENDERDATA;
+
+/**
+ *	\brief						Parse va list to SENDERDATA.
+ *	\param[in]		ap			Std va list.
+ *	\param[in,out]	data_type	Type of data in va. Can be modified on error.
+ *	\param[out]		data		Pointer where data will be stored.
+ *	\param[out]		data_len	Pointer where length of data will be stored.
+ *	\param[out]		pin			Pointer for storing pin number.
+ */
+void dhsender_data_parse_va(va_list ap, REQUEST_DATA_TYPE *data_type,
+		SENDERDATA *data, unsigned int *data_len, unsigned int *pin);
+
+/**
+ *	\brief							Convert SENDERDATA to json.
+ *	\param[out]		buf				Buffer for output json.
+ *	\param[in]		buf_len			Available buffer length.
+ *	\param[in]		is_notification	Json for notifition will be generated on non zero value.
+ *	\param[in]		data_type		Type of data.
+ *	\param[in]		data			Pointer to SENDERDATA.
+ *	\param[in]		data_len		Data length.
+ *	\param[in]		pin				Pin number.
+ *	\return 						Number of copied bytes, negative value on error.
+ */
+int dhsender_data_to_json(char *buf, unsigned int buf_len, int is_notification,
+		REQUEST_DATA_TYPE data_type, SENDERDATA *data, unsigned int data_len,
+		unsigned int pin);
 
 #endif /* _DHSENDER_DATA_H_ */
