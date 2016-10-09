@@ -17,7 +17,8 @@ typedef enum {
 	HRCS_INTERNAL_ERROR,	///< Internal error happens.
 	HRCS_BAD_REQUEST,		///< Request is not correct.
 	HRCS_NOT_IMPLEMENTED,	///< Method is not implemented.
-	HRCS_UNAUTHORIZED		///< Unauthorized.
+	HRCS_UNAUTHORIZED,		///< Unauthorized.
+	HRCS_OPTIONS			///< Options.
 } HTTP_RESPONSE_STATUS;
 
 /** Content descriptor */
