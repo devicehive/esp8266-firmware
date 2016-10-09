@@ -31,10 +31,10 @@ LOCAL void ICACHE_FLASH_ATTR system_reconfigure(void *arg) {
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR check_if_configured(
-		HTTP_CONTENT *content_out) {
+		HTTP_ANSWER *answer) {
 	if(mConfigured) {
-		content_out->data = dhap_pages_ok(&content_out->len);
-		if(content_out->data == 0) {
+		answer->content.data = dhap_pages_ok(&answer->content.len);
+		if(answer->content.data == 0) {
 			return HRCS_INTERNAL_ERROR;
 		}
 		dhdebug("Already configured");
@@ -44,14 +44,14 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR check_if_configured(
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
-		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
-	HTTP_RESPONSE_STATUS res = check_if_configured(content_out);
+		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
+	HTTP_RESPONSE_STATUS res = check_if_configured(answer);
 	if(res != HRCS_NOT_FINISHED)
 		return res;
 	if(path[0] == '/') {
 		if(path[1] == 0) {
-			content_out->data = dhap_pages_form(&content_out->len);
-			if(content_out->data == 0) {
+			answer->content.data = dhap_pages_form(&answer->content.len);
+			if(answer->content.data == 0) {
 				return HRCS_INTERNAL_ERROR;
 			}
 			return HRCS_ANSWERED;
@@ -61,20 +61,20 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
-		const char *key, HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
-	HTTP_RESPONSE_STATUS res = check_if_configured(content_out);
+		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
+	HTTP_RESPONSE_STATUS res = check_if_configured(answer);
 	if(res != HRCS_NOT_FINISHED)
 		return res;
 	dhdebug("got POST with settings len %u", content_in->len);
 	char *parse_res = dhap_post_parse(content_in->data, content_in->len);
 	if(parse_res) {
-		content_out->data = dhap_pages_error(parse_res, &content_out->len);
+		answer->content.data = dhap_pages_error(parse_res, &answer->content.len);
 	} else {
 		if(dhsettings_commit() == 0) {
 			return HRCS_INTERNAL_ERROR;
 		} else {
-			content_out->data = dhap_pages_ok(&content_out->len);
-			if(content_out->data == 0) {
+			answer->content.data = dhap_pages_ok(&answer->content.len);
+			if(answer->content.data == 0) {
 				dhdebug("Generate OK page fail");
 				return HRCS_INTERNAL_ERROR;
 			} else {
