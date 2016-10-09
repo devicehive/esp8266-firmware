@@ -18,6 +18,9 @@
       position: absolute;
       left: 20%;
     }
+    input[type=radio] {
+      width: 5%;
+    }
   </style>
   <script type="text/javascript">
   function print(text) {
@@ -35,6 +38,7 @@
   var isErrorOccurried = false;
   var generate = false;
   var isrun = 0;
+  var islocal = 0;
   function addtest(command, parameters, status, result) {
     commands[currentId] = {"command":command, "parameters":parameters};
     statuses[currentId] = status;
@@ -143,14 +147,60 @@
  
   function createxmlhttp(method, path) {
     var xmlhttp = new XMLHttpRequest();  
-    xmlhttp.open(method, localStorage["dhurl"] + "/device/" + localStorage["dhdeviceid"] + path, true);
+    xmlhttp.open(method, localStorage["dhurl"] + path, true);
     xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
     xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
     return xmlhttp;
   }
-  
-  function getres(id) {
-    var xmlhttp = createxmlhttp("GET", "/command/" + id);
+
+  function createxmlhttp_cloud(method, path) {
+    return createxmlhttp(method, "/device/" + localStorage["dhdeviceid"] + path);
+  }
+
+  function getres(status, result, responseText) {
+    if(generate == true || (status == "OK" && statuses[currentId]) || (status != "OK" && !statuses[currentId])) {
+      if(generate == true){
+        println('addtest("' + commands[currentId]['command'] + '", ' + JSON.stringify(commands[currentId]['parameters']) + ', ' + (status == "OK") + ', ' + result + ');');
+      } else {
+        if(results[currentId] == null || JSON.stringify(results[currentId]) == result) {
+          println("<font color=green>OK</font>");
+        } else {
+          println("<font color=red>ERROR: Wrong result " + responseText + "</font>");
+          isErrorOccurried = true;
+        }
+      }
+    } else {
+      println("<font color=red>ERROR: Wrong status " + responseText + "</font>");
+      isErrorOccurried = true;
+    }
+    while(true) {
+      currentId++;
+      if(currentId >= commands.length || !islocal)
+        break;
+      if(commands[currentId]["command"].endsWith("/int")) {
+        println("<font color=grey>Skipping command: " + JSON.stringify(commands[currentId]) + " due local test</font>");
+        continue;
+      }
+      break;
+    }
+    if(currentId < commands.length) {
+      if(isrun == 2) {
+        println("<font color=red>Canceled.</font>");
+        isrun = 0;
+      } else { 
+        sendnext();
+      }  
+    } else {
+      isrun = 0;
+      if(isErrorOccurried)
+        println("<font color=red>Test done. Error occurried. See above for deatails.</font>");
+      else
+        println("<font color=green>Test done. No errors.</font>");
+    }
+  }
+
+  function getres_cloud(id) {
+    var xmlhttp = createxmlhttp_cloud("GET", "/command/" + id);
     xmlhttp.onreadystatechange = function() {
       if(xmlhttp.readyState == 4){
           if(xmlhttp.status < 200 || xmlhttp.status> 299) {
@@ -160,52 +210,24 @@
             var status = json["status"];
             var result = JSON.stringify(json['result']);
             if(status == null) {
-              getres(JSON.parse(xmlhttp.responseText)["id"]);
+              getres_cloud(JSON.parse(xmlhttp.responseText)["id"]);
             } else {
-              if(generate == true || (status == "OK" && statuses[currentId]) || (status != "OK" && !statuses[currentId])) {
-                if(generate == true){
-                  println('addtest("' + commands[currentId]['command'] + '", ' + JSON.stringify(commands[currentId]['parameters']) + ', ' + (status == "OK") + ', ' + result + ');');
-                } else {
-                  if(results[currentId] == null || JSON.stringify(results[currentId]) == result) {
-                    println("<font color=green>OK</font>");
-                  } else {
-                    println("<font color=red>ERROR: Wrong result " + xmlhttp.responseText + "</font>");
-                    isErrorOccurried = true;
-                  }
-                }
-              } else {
-                println("<font color=red>ERROR: Wrong status " + xmlhttp.responseText + "</font>");
-                isErrorOccurried = true;
-              }
-              currentId++;
-              if(currentId < commands.length) {
-                if(isrun == 2) {
-                  println("<font color=red>Canceled.</font>");
-                  isrun = 0;
-                } else { 
-                  sendnext();
-                }  
-              } else {
-                isrun = 0;
-                if(isErrorOccurried)
-                  println("<font color=red>Test done. Error occurried. See above for deatails.</font>");
-                else
-                  println("<font color=green>Test done. No errors.</font>");
-              }
+              getres(status, result, xmlhttp.responseText);
             }
           }
         }
       }
     xmlhttp.send("");
   }
-  function sendnext() {
-    var xmlhttp = createxmlhttp("POST", "/command");
+
+  function sendnext_cloud() {
+    var xmlhttp = createxmlhttp_cloud("POST", "/command");
     xmlhttp.onreadystatechange = function() {
-        if(xmlhttp.readyState == 4){
+        if(xmlhttp.readyState == 4) {
             if(xmlhttp.status < 200 || xmlhttp.status> 299) {
               println("<font color=red>ERROR: Command request returned " + xmlhttp.status + " " + xmlhttp.responseText + "</font>");
             } else {
-              getres(JSON.parse(xmlhttp.responseText)["id"]);
+              getres_cloud(JSON.parse(xmlhttp.responseText)["id"]);
             }
           }
         } 
@@ -213,7 +235,42 @@
     if(generate == false)
       print("Command sent: " + JSON.stringify(commands[currentId]) + " ");
   }
-  
+
+  function sendnext_local() {
+    var xmlhttp = createxmlhttp("POST", "/" + commands[currentId]["command"]);
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4) {
+            if(xmlhttp.responseText.charAt(0) == '{') {
+              result = xmlhttp.responseText.replace(", ", ",");
+            } else {
+              result = "\"" + xmlhttp.responseText + "\"";
+            }
+            responseText = xmlhttp.status + " " +xmlhttp.responseText;
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              getres("Error", result, responseText);
+            } else {
+              getres("OK", result, responseText);
+            }
+          }
+        } 
+    parameters = commands[currentId]["parameters"];
+    if(parameters == null) {
+      xmlhttp.send();
+    } else {
+      xmlhttp.send(JSON.stringify(parameters));
+    }
+    if(generate == false)
+      print("Command sent: " + JSON.stringify(commands[currentId]) + " ");
+  }
+
+  function sendnext() {
+     if(islocal) {
+       sendnext_local();
+     } else {
+       sendnext_cloud();
+     }
+  }
+
   function perform(form){ 
     if(isrun != 0) {
       isrun = 2;
@@ -225,6 +282,7 @@
       isErrorOccurried = false;
       generate = form.debug.checked;
       isrun = 1;
+      islocal = form.api.value == "local";
       sendnext();
     }
   }
@@ -243,6 +301,8 @@
       <label>DeviceId: </label><input type="text" name="deviceid"><br>
       <label>AccesKey: </label><input type="password" name="password"><br>
       <label>Generate tests: </label><input type="checkbox" name="debug"><br>
+      Local RESTfull API:<input type="radio" name="api"  value="local" checked="checked">
+      Cloud DeviceHive API:<input type="radio" name="api"  value="cloud"> <br>
       <input type="button" value="Run/Stop" onClick="perform(this.form);"><br>
     </form>  
     <div id="con"> </div>
