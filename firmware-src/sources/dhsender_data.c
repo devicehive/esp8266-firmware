@@ -100,7 +100,8 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 			if(res == 0) {
 				return -1;
 			} else {
-				return snprintf(&buf[pos + res], buf_len - pos, "\"}");
+				return pos + res + snprintf(&buf[pos + res], buf_len - pos,
+						"\"}");
 			}
 		}
 		case RDT_FLOAT:

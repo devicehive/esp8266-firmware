@@ -473,10 +473,10 @@ Write data to SPI bus.
 *Parameters*:  
 "data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.  
 "mode" - Select SPI clock mode. Can be:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 - Low clock polarity, front edge
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 - Low clock polarity, rear edge
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 - High clock polarity, front edge
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3 - High clock polarity, rear edge
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 - Low clock polarity, front edge  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 - Low clock polarity, rear edge  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 - High clock polarity, front edge  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3 - High clock polarity, rear edge  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If not specified, previous mode will be used. Default is 0.  
 "CS" - GPIO port number for CS(chip select) line. If not specified, previous pin will be used. Can be "x" for disabling CS usage. Default is "x". Can not be the same pin as used for other SPI data communication.  
 
