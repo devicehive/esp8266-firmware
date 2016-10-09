@@ -26,6 +26,7 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 	va_list ap;
 	va_start(ap, data_type);
 	HTTP_ANSWER *answer = cid.arg;
+	answer->ok = status == DHSTATUS_OK ? 1 : 0;
 	if(data_type == RDT_CONST_STRING) {
 		answer->content.data = va_arg(ap, const char *);;
 		answer->content.len = os_strlen(answer->content.data);
@@ -58,7 +59,10 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 	int pathlen = os_strlen(path);
 	if(pathlen >= sizeof(cint) - 1) {
 		if(os_strncmp(&path[pathlen - sizeof(cint) + 1], cint, sizeof(cint) - 1) == 0) {
-			return HRCS_NOT_FOUND;
+			CommandResultArgument cid;
+			cid.arg = answer;
+			rest_command_callback(cid, DHSTATUS_ERROR, RDT_CONST_STRING, "Unknown command");
+			return HRCS_ANSWERED;
 		}
 	}
 
