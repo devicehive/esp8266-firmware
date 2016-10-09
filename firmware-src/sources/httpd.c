@@ -196,16 +196,19 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	struct espconn *conn = arg;
 	static const char get[] = "GET ";
 	static const char post[] = "POST ";
+	static const char options[] = "OPTIONS ";
 	static const char host[] = "Host:";
-	static char internal[] = "HTTP/1.0 500 No Memory\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
-	static char notfound[] = "HTTP/1.0 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
-	static char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
-	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
-	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nContent-Length:11\r\n\r\nBad Request";
+	static char internal[] = "HTTP/1.0 500  Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
+	static char notfound[] = "HTTP/1.0 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
+	static char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
+	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
+	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Length:11\r\n\r\nBad Request";
 	static char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
-	static char ok[] = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
-	static char no_content[] = "HTTP/1.0 204 No content\r\nContent-Length: 0\r\n\r\n";
-	static char forbidden[] = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	static char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	static char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
+	static char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	static char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
+
 	HTTP_ANSWER answer;
 	answer.content.len = 0;
 	answer.free_content = 0;
@@ -239,7 +242,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			}
 		}
 
-		if(len < sizeof(get) || len < sizeof(post)) {
+		if(len < sizeof(get) || len < sizeof(post) || len < sizeof(options)) {
 			res = HRCS_BAD_REQUEST;
 		} else if(os_strncmp(data, post, sizeof(post) - 1) == 0) {
 			if(mCurrentPost) {
@@ -251,6 +254,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			res = receive_post(data, len, &answer);
 		} else if(os_strncmp(data, get, sizeof(get) - 1) == 0) {
 			res = parse_request(data, len, mGetHttpRequestCb, &answer);
+		} else if(os_strncmp(data, options, sizeof(options) - 1) == 0) {
+			res = HRCS_OPTIONS;
 		} else {
 			res = HRCS_NOT_IMPLEMENTED;
 		}
@@ -304,6 +309,10 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	}
 	case HRCS_NOT_FINISHED:
 		return;
+	case HRCS_OPTIONS:
+		dhdebug("Httpd options request");
+		send_res(conn, options_response, sizeof(options_response) - 1);
+		break;
 	case HRCS_BAD_REQUEST:
 		dhdebug("Httpd bad request");
 		send_res(conn, badrequest, sizeof(badrequest) - 1);
