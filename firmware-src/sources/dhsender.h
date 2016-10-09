@@ -13,7 +13,8 @@
 #define _DHSENDER_H_
 
 #include <ip_addr.h>
-#include "dhsender_enums.h"
+
+#include "dhsender_data.h"
 
 /**
  *	\brief				Initializes sender for using remote DeviceHive server.
@@ -30,12 +31,12 @@ void dhsender_start();
 
 /**
  *	\brief					Send command response.
- *	\param[in]	id			Command id that response should be sent.
+ *	\param[in]	cid			Command id that response should be sent.
  *	\param[in]	status		Command status.
  *	\param[in]	data_type	Data type for response.
  *	\param[in]	...			Data according to the type.
  */
-void dhsender_response(unsigned int id, RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...);
+void dhsender_response(CommandResultArgument cid, RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...);
 
 /**
  *	\brief					Send notification.

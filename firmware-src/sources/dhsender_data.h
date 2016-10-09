@@ -1,13 +1,15 @@
 /**
- *	\file		dhsender_enums.h
- *	\brief		Declaration of enums for dhsender.
+ *	\file		dhsender_data.h
+ *	\brief		Declaration of data structs for dhsender, i.e. command results.
  *	\author		Nikolay Khabarov
  *	\date		2015
  *	\copyright	DeviceHive MIT
  */
 
-#ifndef _DHSENDER_ENUMS_H_
-#define _DHSENDER_ENUMS_H_
+#ifndef _DHSENDER_DATA_H_
+#define _DHSENDER_DATA_H_
+
+#include <stdarg.h>
 
 /** Data type that should be read from arguments and how it will be formatted in response or notification. */
 typedef enum {
@@ -40,4 +42,20 @@ typedef enum {
 	DHSTATUS_OK			///< Send OK string
 } RESPONCE_STATUS;
 
-#endif /* _DHSENDER_ENUMS_H_ */
+/** Data for command result. */
+typedef union {
+	unsigned int id;	///< DeviceHive command id
+	void *arg;			///< Anything else
+} CommandResultArgument;
+
+/** Function prototype for handling command result. */
+typedef void (*command_callback)(CommandResultArgument data,
+		RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...);
+
+/** Struct for declaring callback for command result. */
+typedef struct {
+	command_callback callback;
+	CommandResultArgument data;
+} COMMAND_RESULT;
+
+#endif /* _DHSENDER_DATA_H_ */
