@@ -10,9 +10,11 @@
 #define _DHCONNECTOR_H_
 
 #include "dhrequest.h"
+#include "dhsender_data.h"
 
 /** Function prototype for handling function. */
-typedef void (*dhconnector_command_json_cb)(unsigned int id, const char *command, const char *params, unsigned int paramslen);
+typedef void (*dhconnector_command_json_cb)(COMMAND_RESULT *cb,
+		const char *command, const char *params, unsigned int paramslen);
 
 /** Current connection state. */
 typedef enum {

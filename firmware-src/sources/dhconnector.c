@@ -105,7 +105,10 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 			dhdebug("Timestamp received %s", timestamp);
 			dhrequest_update_poll(&mPollRequest, timestamp);
 		}
-		mCommandCallback(id, command, params, paramslen);
+		COMMAND_RESULT cb;
+		cb.callback = dhsender_response;
+		cb.data.id = id;
+		mCommandCallback(&cb, command, params, paramslen);
 	}
 }
 

@@ -11,7 +11,7 @@
 
 #include <stdarg.h>
 #include "dhrequest.h"
-#include "dhsender_enums.h"
+#include "dhsender_data.h"
 
 /**
  *	\brief							Add new request for dhsender in queue.
