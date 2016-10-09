@@ -126,7 +126,21 @@
   addtest("i2c/master/write", {"address":"EE","data":"AA==","SDA":0,"SCL":0}, false, "Wrong I2C parameters");
   addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":2}, false, "ACK response not detected");
   addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":22}, false, "Wrong I2C parameters");
-  // place for spi
+  addtest("spi/master/read", {"count": 1}, true, {"data":"/w=="});
+  addtest("spi/master/read", {"count": 1, "CS":"x"}, true, {"data":"/w=="});
+  addtest("spi/master/read", {"count": 3}, true, {"data":"////"});
+  addtest("spi/master/read", {"count": 3,"CS":333}, false, "Wrong CS pin");
+  addtest("spi/master/read", null, false, "No parameters specified");
+  addtest("spi/master/read", {"count": 3,"gfdgfd":333}, false, "Wrong argument");
+  addtest("spi/master/read", {"count": 3,"mode":4}, false, "Wrong SPI mode");
+  addtest("spi/master/read", {"count": 2,"mode":0, "data":"YWI=", "CS":"2"}, true, {"data":"//8="});
+  addtest("spi/master/read", {"count": 2,"mode":0, "data":"123"}, false, "Data is broken");
+  addtest("spi/master/read", {"count": 1024}, false, "Wrong read size");
+  addtest("spi/master/write", {"mode":0, "data":"AA==", "CS":2}, true, "");
+  addtest("spi/master/write", {"data":"////", "CS":"x"}, true, "");
+  addtest("spi/master/write", {"data":"123"}, false, "Data is broken");
+  addtest("spi/master/write", {"data":"////", "CS":"12"}, false, "Wrong CS pin");
+  addtest("spi/master/write", {"data":"////", "CS":"16"}, false, "Wrong CS pin");
   addtest("onewire/master/read", {"count":0}, false, "Wrong read size");
   addtest("onewire/master/read", {"count":1024}, false, "Wrong read size");
   addtest("onewire/master/read", {"count":1}, false, "Command for reading is not specified");
