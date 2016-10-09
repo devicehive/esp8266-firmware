@@ -21,6 +21,6 @@
  */
 
 HTTP_RESPONSE_STATUS rest_handle(const char *path, const char *key,
-		HTTP_CONTENT *content_in, HTTP_CONTENT *content_out);
+		HTTP_CONTENT *content_in, HTTP_ANSWER *answer);
 
 #endif /* _REST_H_ */

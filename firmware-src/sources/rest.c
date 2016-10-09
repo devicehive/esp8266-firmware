@@ -25,24 +25,24 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 		RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...) {
 	va_list ap;
 	va_start(ap, data_type);
-	HTTP_CONTENT *content_out = cid.arg;
+	HTTP_ANSWER *answer = cid.arg;
 	if(data_type == RDT_CONST_STRING) {
-		content_out->data = va_arg(ap, const char *);;
-		content_out->len = os_strlen(content_out->data);
+		answer->content.data = va_arg(ap, const char *);;
+		answer->content.len = os_strlen(answer->content.data);
 	} else {
 		static char test[] = "Something";
-		content_out->data = test;
-		content_out->len = sizeof(test) - 1;
+		answer->content.data = test;
+		answer->content.len = sizeof(test) - 1;
 	}
 	va_end(ap);
 }
 
 HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char *key,
-		HTTP_CONTENT *content_in, HTTP_CONTENT *content_out) {
+		HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
 	static const char cint[] = "/int";
 	if(path[0] == 0) {
-		content_out->data = desription;
-		content_out->len = sizeof(desription) - 1;
+		answer->content.data = desription;
+		answer->content.len = sizeof(desription) - 1;
 		return HRCS_ANSWERED;
 	}
 	if(dhrequest_current_accesskey()[0]) {
@@ -64,7 +64,7 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 
 	COMMAND_RESULT cb;
 	cb.callback = rest_command_callback;
-	cb.data.arg = (void*)content_out;
+	cb.data.arg = (void*)answer;
 	dhcommands_do(&cb, path, content_in->data, content_in->len);
 	return HRCS_ANSWERED;
 }

@@ -30,6 +30,7 @@ typedef struct {
 	uint8 remote_ip[4];
 	int remote_port;
 	HTTP_CONTENT content;
+	unsigned free_mem : 1;
 } CONTENT_ITEM;
 
 LOCAL struct espconn mHttpdConn;
@@ -42,10 +43,24 @@ LOCAL HttpRequestCb mGetHttpRequestCb = 0;
 LOCAL HttpRequestCb mPostHttpRequestCb = 0;
 LOCAL CONTENT_ITEM mContentQueue[MAX_CONNECTIONS] = {0};
 
-LOCAL int ICACHE_FLASH_ATTR is_remote_equal(esp_tcp *tcp, CONTENT_ITEM *item) {
+LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *item) {
 	if (os_memcmp(tcp->remote_ip, item->remote_ip, sizeof(tcp->remote_ip)) == 0
 			&& tcp->remote_port == item->remote_port) {
 		return 1;
+	}
+	return 0;
+}
+
+LOCAL int ICACHE_FLASH_ATTR dequeue(const esp_tcp *tcp) {
+	int i;
+	for(i = 0; i < MAX_CONNECTIONS; i++) {
+		if(is_remote_equal(tcp, &mContentQueue[i])) {
+			if(mContentQueue[i].free_mem) {
+				os_free(mContentQueue[i].content.data);
+			}
+			mContentQueue[i].remote_port = 0;
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -61,13 +76,7 @@ LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, in
 }
 
 LOCAL void ICACHE_FLASH_ATTR on_client_disconnect(struct espconn *conn) {
-	int i;
-	for(i = 0; i < MAX_CONNECTIONS; i++) {
-		if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
-			mContentQueue[i].remote_port = 0;
-			break;
-		}
-	}
+	dequeue(conn->proto.tcp);
 	mConnected--;
 }
 
@@ -79,20 +88,15 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_disconnect_cb(void *arg) {
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_sent_cb(void *arg) {
 	struct espconn *conn = arg;
-	int i;
-	for(i = 0; i < MAX_CONNECTIONS; i++) {
-		if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
-			send_res(conn, mContentQueue[i].content.data, mContentQueue[i].content.len);
-			mContentQueue[i].remote_port = 0;
-			return;
-		}
+	if(dequeue(conn->proto.tcp)) {
+		return;
 	}
 	espconn_disconnect(conn);
 	dhdebug("Httpd data sent");
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
-		const char *data, unsigned short len, HttpRequestCb cb, HTTP_CONTENT *content_out) {
+		const char *data, unsigned short len, HttpRequestCb cb, HTTP_ANSWER *answer) {
 	static const char content_length[] = "Content-Length:";
 	static const char authorization[] = "Authorization:";
 	static const char bearer[] = "Bearer";
@@ -152,7 +156,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 			HTTP_CONTENT in;
 			in.data = cont_len ? &data[i] : 0;
 			in.len = cont_len;
-			res = cb(path, key, &in, content_out);
+			res = cb(path, key, &in, answer);
 			break;
 		}
 	}
@@ -163,7 +167,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR receive_post(
-		const char *data, unsigned short len, HTTP_CONTENT *content_out) {
+		const char *data, unsigned short len, HTTP_ANSWER *answer) {
 	if(mPostBuf == 0) {
 		mPostBuf = (char*)os_malloc(POST_BUF_SIZE);
 		if(mPostBuf == 0) {
@@ -177,7 +181,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR receive_post(
 	}
 	os_memcpy(&mPostBuf[mPostBufPos], data, len);
 	mPostBufPos += len;
-	HTTP_RESPONSE_STATUS res = parse_request(mPostBuf, mPostBufPos, mPostHttpRequestCb, content_out);
+	HTTP_RESPONSE_STATUS res = parse_request(mPostBuf, mPostBufPos, mPostHttpRequestCb, answer);
 	if(res != HRCS_NOT_FINISHED && mCurrentPost) {
 		mCurrentPost = 0;
 		os_free(mPostBuf);
@@ -198,15 +202,18 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nContent-Length:11\r\n\r\nBad Request";
 	static char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
 	static char ok[] = "HTTP/1.0 200 OK\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
-	static char no_content[] = "HTTP/1.0 204 No content\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 0\r\n\r\n";
-	HTTP_CONTENT content_out;
-	content_out.len = 0;
+	static char no_content[] = "HTTP/1.0 204 No content\r\nContent-Length: 0\r\n\r\n";
+	static char forbidden[] = "HTTP/1.0 403 Forbidden\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	HTTP_ANSWER answer;
+	answer.content.len = 0;
+	answer.free_content = 0;
+	answer.ok = 1;
 	dhdebug("Httpd received %d bytes", len);
 	dhstatistic_add_bytes_received(len);
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 
 	if(conn == mCurrentPost) {
-		res = receive_post(data, len, &content_out);
+		res = receive_post(data, len, &answer);
 	} else {
 		if(mRedirectHost) {
 			const int redirect_host_len = os_strlen(mRedirectHost);
@@ -239,9 +246,9 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			}
 			mCurrentPost = conn;
 			mPostBufPos = 0;
-			res = receive_post(data, len, &content_out);
+			res = receive_post(data, len, &answer);
 		} else if(os_strncmp(data, get, sizeof(get) - 1) == 0) {
-			res = parse_request(data, len, mGetHttpRequestCb, &content_out);
+			res = parse_request(data, len, mGetHttpRequestCb, &answer);
 		} else {
 			res = HRCS_NOT_IMPLEMENTED;
 		}
@@ -254,12 +261,10 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	switch (res) {
 	case HRCS_ANSWERED:
 	{
-		if(content_out.len == 0) {
-			send_res(conn, no_content, sizeof(no_content) - 1);
-			return;
-		}
 		int i;
 		CONTENT_ITEM *item = 0;
+		int response_len;
+		char response[(sizeof(ok) > sizeof(forbidden) ? sizeof(ok) : sizeof(forbidden)) + 8];
 		for(i = 0; i < MAX_CONNECTIONS; i++) {
 			if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 				dhdebug("Httpd duplicate responses");
@@ -270,20 +275,28 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 				item = &mContentQueue[i];
 			}
 		}
+		if(answer.content.len == 0) {
+			if(answer.ok) {
+				send_res(conn, no_content, sizeof(no_content) - 1);
+			} else {
+				response_len = snprintf(response, sizeof(response), forbidden, 0);
+				send_res(conn, response, response_len);
+			}
+			return;
+		}
 		if(item == 0) {
 			dhdebug("Httpd no place for responses");
 			send_res(conn, internal, sizeof(internal) - 1);
 			dhstatistic_inc_httpd_errors_count();
 			return;
 		}
-		char response[sizeof(ok) + 8];
-		int response_len = snprintf(response, sizeof(response), ok, content_out.len);
-		if(content_out.len) {
-			os_memcpy(item->remote_ip, conn->proto.tcp->remote_ip, sizeof(item->remote_ip));
-			item->remote_port = conn->proto.tcp->remote_port;
-			item->content.data = content_out.data;
-			item->content.len = content_out.len;
-		}
+		response_len = snprintf(response, sizeof(response),
+				answer.ok ? ok : forbidden, answer.content.len);
+		os_memcpy(item->remote_ip, conn->proto.tcp->remote_ip, sizeof(item->remote_ip));
+		item->remote_port = conn->proto.tcp->remote_port;
+		item->content.data = answer.content.data;
+		item->content.len = answer.content.len;
+		item->free_mem = answer.free_content;
 		send_res(conn, response, response_len);
 		return;
 	}

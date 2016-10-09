@@ -11,24 +11,31 @@
 
 /** Callback return code */
 typedef enum {
-	HRCS_ANSWERED,			///< Response was sent, content field is set
-	HRCS_NOT_FINISHED,		///< Request is not finished
-	HRCS_NOT_FOUND,			///< Path not found
-	HRCS_INTERNAL_ERROR,	///< Internal error happens
-	HRCS_BAD_REQUEST,		///< Request is not correct
-	HRCS_NOT_IMPLEMENTED,	///< Method is not implemented
-	HRCS_UNAUTHORIZED		///< Unauthorized
+	HRCS_ANSWERED,			///< Response was sent, content field is set.
+	HRCS_NOT_FINISHED,		///< Request is not finished.
+	HRCS_NOT_FOUND,			///< Path not found.
+	HRCS_INTERNAL_ERROR,	///< Internal error happens.
+	HRCS_BAD_REQUEST,		///< Request is not correct.
+	HRCS_NOT_IMPLEMENTED,	///< Method is not implemented.
+	HRCS_UNAUTHORIZED		///< Unauthorized.
 } HTTP_RESPONSE_STATUS;
 
 /** Content descriptor */
 typedef struct {
-	const char *data;
-	unsigned int len;
+	const char *data;  		///< Data to data.
+	unsigned int len;		///< Data length.
 } HTTP_CONTENT;
+
+/** Struct for HRCS_ANSWERED data */
+typedef struct {
+	HTTP_CONTENT content;		///< Data to return.
+	unsigned ok : 1;			///< Is error occur? True by default.
+	unsigned free_content : 1;	///< Is data was malloced, need to be free? False by default.
+} HTTP_ANSWER;
 
 /** Callback prototype for requests. */
 typedef HTTP_RESPONSE_STATUS (*HttpRequestCb)(const char *path, const char *key,
-		HTTP_CONTENT *content_in, HTTP_CONTENT *content_out);
+		HTTP_CONTENT *content_in, HTTP_ANSWER *answer);
 
 /**
  *	\brief		Initialize HTTP daemon
