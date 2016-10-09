@@ -51,20 +51,6 @@ LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *it
 	return 0;
 }
 
-LOCAL int ICACHE_FLASH_ATTR dequeue(const esp_tcp *tcp) {
-	int i;
-	for(i = 0; i < MAX_CONNECTIONS; i++) {
-		if(is_remote_equal(tcp, &mContentQueue[i])) {
-			if(mContentQueue[i].free_mem) {
-				os_free(mContentQueue[i].content.data);
-			}
-			mContentQueue[i].remote_port = 0;
-			return 1;
-		}
-	}
-	return 0;
-}
-
 LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, int len) {
 	sint8 res = espconn_send(conn, (char *)data, len);
 	if(res) {
@@ -75,20 +61,36 @@ LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, in
 	}
 }
 
+LOCAL int ICACHE_FLASH_ATTR dequeue(struct espconn *conn, int send) {
+	int i;
+	for(i = 0; i < MAX_CONNECTIONS; i++) {
+		if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
+			if(send) {
+				send_res(conn, mContentQueue[i].content.data, mContentQueue[i].content.len);
+			}
+			if(mContentQueue[i].free_mem) {
+				os_free(mContentQueue[i].content.data);
+			}
+			mContentQueue[i].remote_port = 0;
+			return 1;
+		}
+	}
+	return 0;
+}
+
 LOCAL void ICACHE_FLASH_ATTR on_client_disconnect(struct espconn *conn) {
-	dequeue(conn->proto.tcp);
+	dequeue(conn, 0);
 	mConnected--;
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_disconnect_cb(void *arg) {
-	struct espconn *conn = arg;
-	on_client_disconnect(conn);
+	on_client_disconnect((struct espconn *)arg);
 	dhdebug("Httpd client disconnected, %u left", mConnected);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_sent_cb(void *arg) {
 	struct espconn *conn = arg;
-	if(dequeue(conn->proto.tcp)) {
+	if(dequeue((struct espconn *)arg, 1)) {
 		return;
 	}
 	espconn_disconnect(conn);
