@@ -20,12 +20,12 @@ print "typedef struct {const char *path; const char *data; unsigned int data_len
 index="WEBPAGE web_pages[] = { "
 comma=""
 for file in $DIR/*.html; do
-    filename=$(basename $file)
+    filename=$(basename "$file")
     echo "Generating $filename ..."
     name=${filename/./_}
-    data=$(cat $file | sed 's/^ *//' | tr -d '\n\r\t' | sed 's/"/\\"/g')
+    data=$(cat "$file" | sed 's/^ *//' | tr -d '\n\r\t' | sed 's/"/\\"/g')
     print "static const char $name[] = \"$data\";"
-    index="$index {\"/$filename\", $name, sizeof($name)}$comma"
+    index="$index$comma {\"/$filename\", $name, sizeof($name)}"
     comma=", "
 done
 print "$index };"
