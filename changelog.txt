@@ -17,3 +17,10 @@ v0.3
 - onewire added
 - statistics in 'status' terminal command
 - stability improvement
+
+v0.4
+- new playgrounds support
+
+v0.5
+- local RESTful API
+- bug fixes
