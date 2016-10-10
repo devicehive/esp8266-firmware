@@ -4,6 +4,7 @@ Table of contents
 =================
   * [Overview](#overview)
   * [Getting started](#getting-started)
+  * [Local RESTful API](#local-restful-api)  
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
   * [GPIO](#gpio)
@@ -37,7 +38,7 @@ Table of contents
 #Overview
 This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
 
-Once ESP8266 device is connected you can issue commands using DeviceHive's REST API. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
+Once ESP8266 device is connected you can issue commands using DeviceHive's REST API or local REST API hosted rigth on the chip. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
 
 *Example using curl on Mac or Linux:*
 ```shell
@@ -46,7 +47,14 @@ curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
 -d '{"command":"gpio/write","parameters":{"1":0}}' \
 http://nn8571.pg.devicehive.com/api/device/astaff/command
 ```
-This would set PIN1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.
+This would set pin GPIO1 to 0. For expample on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.
+
+In the same way local REST api can be used. Just run:
+```shell
+curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
+http://eps-device-id.local/api/gpio/read
+```
+This would print input state of all GPIO pins with json format.
 
 The same idea with other interfaces. To check if your hardware device is suitable with firmware check which interface your devices has and then check if this interface is supported by DeviceHive ESP8266 firmware.
 
@@ -87,7 +95,7 @@ Now remove wire from GPIO0(live it float or connect to high), reboot device and 
 
 _Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in paragraph 3 instead. Wireless configuring procedure also can be used for end-user devices with this firmware._
 
-Firmware terminal is a unix like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring.  
+Firmware terminal is a unix like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring for working with cloud services.  
 
 _For the very beginning or DIY purpose you can use DeviceHive free playground located here: http://playground.devicehive.com/ Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on http://devicehive.com_  
 
@@ -95,11 +103,23 @@ Configuring sample is below:
 
 ![](images/conf.png?raw=true)
 
-After rebooting you can send commands to DeviceHive server and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go in web admin, 'Devices' tab, 'commands' subtab, 'enter new command'. Type command and parameters and press 'push'. After ESP8266 perform your command you can press 'refresh' button to see result. For example 'gpio/read' command would look in admin control panel as below:
+_If DeviceHive API url isn't specified, chip will work only as local RESTful server. AccessKey is used for local RESTful API and remote DeviceHive server. See [Local RESTful API](#local-restful-api) for details._
+
+After rebooting you can send commands to DeviceHive server or local RESTful API and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go in web admin, 'Devices' tab, 'commands' subtab, 'enter new command'. Type command and parameters and press 'push'. After ESP8266 perform your command you can press 'refresh' button to see result. For example 'gpio/read' command would look in admin control panel as below:
 
 ![](images/web.png?raw=true)
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks usigng DeviceHive RESTfull API: http://devicehive.com/restful which you can transmited with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
+
+#Local RESTful API
+Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. There is a tiny web server on chip port 80. It provides local RESTful API. API endpoint is `http://device-id.local/api/`. Firmware commands are available as subpaths of API endpoint. For example command `spi/master/read` available at `http://device-id.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
+
+For example, we would like to set up pin GPIO1 to high state and chip has AccessKey configured. `curl` request is:
+```shell
+curl -i -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
+http://eps-device-id.local/api/gpio/write -d '{"1":1}'
+```
+Chip answers on this request '204 No content' which means that operation successfully completed.
 
 #Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
