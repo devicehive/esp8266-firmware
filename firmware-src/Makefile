@@ -23,12 +23,16 @@ LDFLAGS			= -u call_user_start -Wl,-static -nostdlib
 CC				= $(CROSS_COMPILE)gcc
 AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
+PAGESH			= pages/pages.h
 
 .PHONY: all flash terminal clean
 
 all: $(FIRMWARE)
 
-$(OBJDIR)/%.o: %.c
+$(PAGESH):
+	@./pages/gen_pages.sh
+
+$(OBJDIR)/%.o: %.c $(PAGESH)
 	@echo "CC $<"
 	@mkdir -p $(dir $@)
 	@$(CC) $(INCLUDEDIRS) $(CFLAGS) -c $< -o $@
@@ -58,4 +62,5 @@ rebuild: clean all
 
 clean:
 	@rm -rf $(OBJDIR)
+	@rm -f $(PAGESH)
 
