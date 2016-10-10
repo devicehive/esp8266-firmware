@@ -62,8 +62,9 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	const char *params;
 	int paramslen = 0;
 	char timestamp[128] = "";
-	while ((type = jsonparse_next(jparser)) != JSON_TYPE_ERROR) {
-		if (type == JSON_TYPE_PAIR_NAME) {
+	while (jparser->pos < jparser->len) {
+		type = jsonparse_next(jparser);
+		if(type == JSON_TYPE_PAIR_NAME) {
 			if (jsonparse_strcmp_value(jparser, "serverTimestamp") == 0) {
 				jsonparse_next(jparser);
 				if (jsonparse_next(jparser) != JSON_TYPE_ERROR) {
@@ -98,6 +99,8 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 				if(jsonparse_next(jparser) != JSON_TYPE_ERROR)
 					jsonparse_copy_value(jparser, timestamp, sizeof(timestamp));
 			}
+		} else if(type == JSON_TYPE_ERROR) {
+			break;
 		}
 	}
 	if (mConnectionState == CS_POLL) {
