@@ -76,7 +76,8 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 	unsigned int pinmask;
 	*readedfields = 0;
 	load_defaults(out, timeout);
-	while ((type = jsonparse_next(&jparser)) != JSON_TYPE_ERROR) {
+	while (jparser.pos < jparser.len) {
+		type = jsonparse_next(&jparser);
 		if (type == JSON_TYPE_PAIR_NAME) {
 			if(strcmp_value(&jparser, "mode") == 0) {
 				if((fields & AF_UARTMODE) == 0 && (fields & AF_SPIMODE) == 0)
@@ -294,6 +295,8 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					return "Unsupported action";
 				}
 			}
+		} else if(type == JSON_TYPE_ERROR) {
+			return "Broken json";
 		}
 	}
 	return NULL;
