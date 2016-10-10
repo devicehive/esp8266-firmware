@@ -68,7 +68,7 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 	if(path[0] == 0) {
 		answer->content.data = desription;
 		answer->content.len = sizeof(desription) - 1;
-		return HRCS_ANSWERED;
+		return HRCS_ANSWERED_HTML;
 	}
 	if(dhrequest_current_accesskey()[0]) {
 		if(key == 0) {
@@ -86,7 +86,7 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 			CommandResultArgument cid;
 			cid.arg = answer;
 			rest_command_callback(cid, DHSTATUS_ERROR, RDT_CONST_STRING, "Unknown command");
-			return HRCS_ANSWERED;
+			return HRCS_ANSWERED_PLAIN;
 		}
 	}
 
@@ -94,5 +94,10 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 	cb.callback = rest_command_callback;
 	cb.data.arg = (void*)answer;
 	dhcommands_do(&cb, path, content_in->data, content_in->len);
-	return HRCS_ANSWERED;
+	if(answer->content.data && answer->content.len) {
+		if(answer->content.data[0] == '{') {
+			return HRCS_ANSWERED_JSON;
+		}
+	}
+	return HRCS_ANSWERED_PLAIN;
 }

@@ -38,7 +38,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR check_if_configured(
 			return HRCS_INTERNAL_ERROR;
 		}
 		dhdebug("Already configured");
-		return HRCS_ANSWERED;
+		return HRCS_ANSWERED_HTML;
 	}
 	return HRCS_NOT_FINISHED;
 }
@@ -54,7 +54,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 			if(answer->content.data == 0) {
 				return HRCS_INTERNAL_ERROR;
 			}
-			return HRCS_ANSWERED;
+			return HRCS_ANSWERED_HTML;
 		}
 	}
 	return HRCS_NOT_FOUND;
@@ -86,7 +86,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 			}
 		}
 	}
-	return HRCS_ANSWERED;
+	return HRCS_ANSWERED_HTML;
 }
 
 void ICACHE_FLASH_ATTR dhap_web_init() {
