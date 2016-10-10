@@ -201,13 +201,16 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	static char internal[] = "HTTP/1.0 500  Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
 	static char notfound[] = "HTTP/1.0 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
 	static char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
-	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
-	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Length:11\r\n\r\nBad Request";
+	static char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
+	static char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:11\r\n\r\nBad Request";
 	static char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
-	static char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	static char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	static char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
-	static char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/html; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	static char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	static char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
+	static char html[] = "html";
+	static char json[] = "json";
+	static char plain[] = "plain";
 
 	HTTP_ANSWER answer;
 	answer.content.len = 0;
@@ -266,12 +269,14 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	}
 
 	switch (res) {
-	case HRCS_ANSWERED:
+	case HRCS_ANSWERED_PLAIN:
+	case HRCS_ANSWERED_JSON:
+	case HRCS_ANSWERED_HTML:
 	{
 		int i;
 		CONTENT_ITEM *item = 0;
 		int response_len;
-		char response[(sizeof(ok) > sizeof(forbidden) ? sizeof(ok) : sizeof(forbidden)) + 8];
+		char response[(sizeof(ok) > sizeof(forbidden) ? sizeof(ok) : sizeof(forbidden)) + 32];
 		for(i = 0; i < MAX_CONNECTIONS; i++) {
 			if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 				dhdebug("Httpd duplicate responses");
@@ -297,8 +302,15 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			dhstatistic_inc_httpd_errors_count();
 			return;
 		}
+		const char *content_type = plain;
+		if(res == HRCS_ANSWERED_JSON) {
+			content_type = json;
+		} else if(res == HRCS_ANSWERED_HTML) {
+			content_type = html;
+		}
+
 		response_len = snprintf(response, sizeof(response),
-				answer.ok ? ok : forbidden, answer.content.len);
+				answer.ok ? ok : forbidden, content_type, answer.content.len);
 		os_memcpy(item->remote_ip, conn->proto.tcp->remote_ip, sizeof(item->remote_ip));
 		item->remote_port = conn->proto.tcp->remote_port;
 		item->content.data = answer.content.data;

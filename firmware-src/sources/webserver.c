@@ -38,7 +38,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 	static const char hw[] = "Hello, world!";
 	answer->content.data = hw;
 	answer->content.len = sizeof(hw) - 1;
-	return HRCS_ANSWERED;
+	return HRCS_ANSWERED_PLAIN;
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
