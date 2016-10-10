@@ -38,6 +38,13 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 		unsigned int pin;
 		dhsender_data_parse_va(ap, &data_type, &data, &data_len, &pin);
 		char *buf = (char *)os_malloc(2*INTERFACES_BUF_SIZE); // do we really can have more?
+		if(buf == 0) {
+			static char error[] = "No memory";
+			answer->ok = 0;
+			answer->content.data = error;
+			answer->content.len = sizeof(error) - 1;
+			return;
+		}
 		int res = dhsender_data_to_json(buf, 2*INTERFACES_BUF_SIZE, 0, data_type, &data,
 				data_len, pin);
 		if(res < 0) {
