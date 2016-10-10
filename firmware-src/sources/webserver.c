@@ -12,6 +12,7 @@
 #include "webserver.h"
 #include "httpd.h"
 #include "rest.h"
+#include "../pages/pages.h"
 
 LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
@@ -35,10 +36,25 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 	if(check_rest(&res, path, key, content_in, answer)) {
 		return res;
 	}
-	static const char hw[] = "Hello, world!";
-	answer->content.data = hw;
-	answer->content.len = sizeof(hw) - 1;
-	return HRCS_ANSWERED_PLAIN;
+	if(path[0]=='/') {
+		if(path[1]==0) {
+			static const char hw[] = "Hello, world!";
+			answer->content.data = hw;
+			answer->content.len = sizeof(hw) - 1;
+			return HRCS_ANSWERED_PLAIN;
+		}
+	}
+
+	int i;
+	for(i = 0; i < sizeof(web_pages) / sizeof(WEBPAGE); i++) {
+		if(os_strcmp(web_pages[i].path, path) == 0) {
+			answer->content.data = web_pages[i].data;
+			answer->content.len = web_pages[i].data_len;
+			return HRCS_ANSWERED_HTML;
+		}
+	}
+
+	return HRCS_NOT_FOUND;
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
