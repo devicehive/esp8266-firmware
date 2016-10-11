@@ -162,9 +162,6 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 			break;
 		}
 	}
-	os_free(path);
-	if(key)
-		os_free(key);
 	return res;
 }
 
