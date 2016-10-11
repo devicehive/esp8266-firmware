@@ -21,10 +21,12 @@
 #include "dhsettings.h"
 #include "dhstatistic.h"
 #include "snprintf.h"
+#include "dhsettings.h"
 
 #define MAX_CONNECTIONS 5
 #define HTTPD_PORT 80
 #define POST_BUF_SIZE 2048
+#define MAX_PATH 64
 
 typedef struct {
 	uint8 remote_ip[4];
@@ -104,6 +106,8 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 	static const char bearer[] = "Bearer";
 	static const char sp[] = "\r\n\r\n";
 	int i, j;
+	char path[MAX_PATH];
+	char key[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
 
 	i = 0;
 	while(data[i] != ' ') // rewind method
@@ -113,13 +117,12 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 	j = i;
 	while(data[j] != ' ') // find end of path
 		j++;
-	char *path = (char *)os_malloc(j - i + 1);
-	if(path == 0)
-		return HRCS_INTERNAL_ERROR;
+	if(j - i >= MAX_PATH)
+		return HRCS_NOT_FOUND;
 	snprintf(path, j - i + 1, "%s", &data[i]);
 
 	unsigned int cont_len = 0;
-	char *key = 0;
+	key[0] = 0;
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 	for(i = j; i < len; i++) {
 		if(os_strncmp(&data[i], content_length, sizeof(content_length) - 1) == 0) {
@@ -141,12 +144,9 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 				j = i;
 				while(data[j] != '\r')
 					j++;
-				key = (char *)os_malloc(j - i + 1);
-				if(key == 0) {
-					res = HRCS_INTERNAL_ERROR;
-					break;
-				}
-				snprintf(key, j - i + 1, "%s", &data[i]);
+				snprintf(key, (j - i < DHSETTINGS_ACCESSKEY_MAX_LENGTH) ?
+						(j - i + 1) : DHSETTINGS_ACCESSKEY_MAX_LENGTH,
+						"%s", &data[i]);
 				i = j - 1;
 			}
 		} else if(os_strncmp(&data[i], sp, sizeof(sp) - 1) == 0) {
