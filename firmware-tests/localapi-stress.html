@@ -26,21 +26,21 @@
   var errorCount = 0;
   var currentRequestsNumber = 0;
   var commands = [];
-  var numberOfThreads = 2;
+  var numberOfThreads = 1;
 
-  commands.push({"command":"spi/master/read", "parameters":{"count":20}});
+  commands.push({"command":"spi/master/read", "parameters":{"count":264}});
   commands.push({"command":"gpio/read", "parameters":null});
   commands.push({"command":"spi/master/write", "parameters":{"data":"QWJyYWNhZGFicmFBYnJhY2FkYWJyYUFicmFjYWRhYnJh"}});
-  commands.push({"command":"spi/master/read", "parameters":{"count":10}});
+  commands.push({"command":"spi/master/read", "parameters":{"count":128}});
   commands.push({"command":"onewire/master/search", "parameters":null});
 
   function print(text, color) {
     document.getElementById("status").innerHTML = "<font color=" + color + ">" + text + "</font>";
   }
   
-    function printerror(text, color) {
-      document.getElementById("error").innerHTML += "<font color=" + color + ">" + text + "</font><br>";
-    }
+  function printerror(text, color) {
+    document.getElementById("error").innerHTML += "<font color=" + color + ">" + text + "</font><br>";
+  }
   
   function createxmlhttp(method, path) {
     var xmlhttp = new XMLHttpRequest();  
@@ -51,13 +51,13 @@
   }
   
   function send_command(command, parameters) {
-    var xmlhttp = createxmlhttp("POST", "/" + command);
+    var xmlhttp = createxmlhttp("GET", "/" + command);
     xmlhttp.onreadystatechange = function() {
         if(xmlhttp.readyState == 4) {
             if(xmlhttp.status < 200 || xmlhttp.status> 299) {
               printerror("ERROR: Error while sending command " + command + " " +
-               JSON.stringify(parameters) + " GOT "+ xmlhttp.status + " " +
-               xmlhttp.responseText, "red");
+                JSON.stringify(parameters) + " GOT "+ xmlhttp.status + " " +
+                xmlhttp.responseText, "red");
               errorCount++;
             } else {
               // on success
@@ -85,6 +85,9 @@
   }
   
   function run_multi_requests() {
+    if(!isrun) {
+      return;
+    }
     while(currentRequestsNumber < numberOfThreads) {
       run_requests();
     }
