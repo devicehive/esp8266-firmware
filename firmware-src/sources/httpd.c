@@ -57,7 +57,7 @@ LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, in
 	sint8 res = espconn_send(conn, (char *)data, len);
 	if(res) {
 		dhstatistic_inc_network_errors_count();
-		dhesperrors_espconn_result("Httpd espconn_send returned: %d", res);
+		dhesperrors_espconn_result("Httpd espconn_send returned:", res);
 	} else {
 		dhstatistic_add_bytes_sent(len);
 	}
