@@ -51,7 +51,7 @@
   }
   
   function send_command(command, parameters) {
-    var xmlhttp = createxmlhttp("GET", "/" + command);
+    var xmlhttp = createxmlhttp("POST", "/" + command);
     xmlhttp.onreadystatechange = function() {
         if(xmlhttp.readyState == 4) {
             if(xmlhttp.status < 200 || xmlhttp.status> 299) {
