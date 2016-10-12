@@ -104,8 +104,8 @@ void user_init(void) {
 	} else {
 		dhterminal_init();
 		dhdebug("*****************************");
-		dhsender_queue_init();
 		dhsettings_init();
+		dhsender_queue_init();
 		dhconnector_init(dhcommands_do);
 		dhgpio_init();
 		webserver_init();
