@@ -18,6 +18,6 @@ typedef union {
 
 char irom_char(const char *rostr) {
 	FourChars t;
-	t.uint = *(uint32_t *)(((uint32_t)rostr / 4) << 2);
-	return t.chars[(uint32_t)rostr % 4];
+	t.uint = *(uint32_t *)((uint32_t)rostr & ~0b11);
+	return t.chars[(uint32_t)rostr & 0b11];
 }
