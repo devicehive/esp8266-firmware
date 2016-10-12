@@ -31,4 +31,12 @@
  */
 char irom_char(const char *rostr);
 
+/**
+ *	\brief				Read multiple bytes from ROM.
+ *	\param[out]	buf		Point where to store data in RAM.
+  *	\param[in]	addr	Point to data in ROM.
+ *	\param[in]	len		Number of bytes to read.
+ */
+void irom_read(char *buf, const char *addr, unsigned int len);
+
 #endif /* _IROM_H_ */
