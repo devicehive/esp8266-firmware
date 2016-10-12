@@ -4,6 +4,12 @@
  *	\author		Nikolay Khabarov
  *	\date		2016
  *	\copyright	DeviceHive MIT
+ *	\details	ESP8266 stores read only variables in RAM by default. It's
+ *				possible to force compliller to store data in ROM, but reading
+ *				from ROM is possible only per 32 bits and should be 4 bytes
+ *				aligned. That's why direct access to this memory via system
+ *				function causes chip to reboot. This module gives access to
+ *				this data in easy way.
  */
 
 #ifndef _IROM_H_
