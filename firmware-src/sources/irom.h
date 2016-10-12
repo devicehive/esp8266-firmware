@@ -18,7 +18,7 @@
 #include <c_types.h>
 
 /** Store data in ROM memory. Access to this data will be slower, but amount
- * of free RAM will be bigger. Never read such variables directly.*/
+ * of free RAM will be bigger. Never read such variables directly, except 32 bits.*/
 #define RO_DATA const ICACHE_RODATA_ATTR STORE_ATTR static
 
 /** Checks if pointer stored in ROM */
