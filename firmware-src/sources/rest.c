@@ -39,7 +39,7 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 		dhsender_data_parse_va(ap, &data_type, &data, &data_len, &pin);
 		char *buf = (char *)os_malloc(2*INTERFACES_BUF_SIZE); // do we really can have more?
 		if(buf == 0) {
-			static char error[] = "No memory";
+			static const char error[] = "No memory";
 			answer->ok = 0;
 			answer->content.data = error;
 			answer->content.len = sizeof(error) - 1;
@@ -49,7 +49,7 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 				data_len, pin);
 		if(res < 0) {
 			os_free(buf);
-			static char error[] = "Failed to build json";
+			static const char error[] = "Failed to build json";
 			answer->ok = 0;
 			answer->content.data = error;
 			answer->content.len = sizeof(error) - 1;
