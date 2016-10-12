@@ -71,7 +71,8 @@ int ICACHE_FLASH_ATTR vsnprintf(char *pString, size_t length, const char *pForma
 			break;
 			case 's': {
 				char * tmp = va_arg(ap, char *);
-				while (*tmp && (pString-pOriginalStr) < length) *pString++ = irom_char(tmp++);
+				char c;
+				while ((c = irom_char(tmp++)) && (pString-pOriginalStr) < length) *pString++ = c;
 				break;
 			}
 			case 'c': *pString++ = va_arg(ap, unsigned int); break;

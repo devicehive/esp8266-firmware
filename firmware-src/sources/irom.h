@@ -22,7 +22,7 @@
 #define RO_DATA const ICACHE_RODATA_ATTR STORE_ATTR static
 
 /** Checks if pointer stored in ROM */
-#define ifrom(data) if((void *)data >= 0x40200000)
+#define ifrom(data) if((uint32_t)data >= 0x40200000)
 
 /**
  *	\brief				Read single char from ROM.

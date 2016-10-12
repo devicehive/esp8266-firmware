@@ -15,11 +15,14 @@
 #include "dhsettings.h"
 #include "rand.h"
 #include "user_config.h"
+#include "irom.h"
 
 #define DHAP_PAGE_TITLE_META  "<title>DeviceHive ESP8266 Configuration</title><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-#define DHAP_PAGE_ERROR "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='red'>%s<br>Go <a href='javascript:history.back()'>back</a> to try again.</font></body></html>"
-#define DHAP_PAGE_OK "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='green'>Configuration was saved. System will reboot shortly.</font></body></html>"
-#define DHAP_PAGE_FORM "<html>" \
+#define DHAP_PAGE_MAX_SIZE 4096
+
+RO_DATA char DHAP_PAGE_ERROR[] = "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='red'>%s<br>Go <a href='javascript:history.back()'>back</a> to try again.</font></body></html>";
+RO_DATA char DHAP_PAGE_OK[] =  "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='green'>Configuration was saved. System will reboot shortly.</font></body></html>";
+RO_DATA char DHAP_PAGE_FORM[] =  "<html>" \
 							"<head>"DHAP_PAGE_TITLE_META\
 							"<style type='text/css'>input{width:100%%;}input[type=submit]{width:30%%;}</style></head>"\
 							"<body><form method='post'>"\
@@ -35,8 +38,7 @@
 								"<input type='password' name='key'><br><br>"\
 								"<input type='submit' value='Apply'>"\
 							"</form></body>"\
-						"</html>"
-#define DHAP_PAGE_MAX_SIZE 4096
+						"</html>";
 LOCAL char *mPageBuffer = 0;
 
 LOCAL char * ICACHE_FLASH_ATTR init() {
@@ -45,14 +47,14 @@ LOCAL char * ICACHE_FLASH_ATTR init() {
 	return mPageBuffer;
 }
 
-char * ICACHE_FLASH_ATTR dhap_pages_error(const char *error, unsigned int *len) {
+const char * ICACHE_FLASH_ATTR dhap_pages_error(const char *error, unsigned int *len) {
 	if(init() == 0)
 		return 0;
 	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_ERROR, error);
 	return mPageBuffer;
 }
 
-char * ICACHE_FLASH_ATTR dhap_pages_ok(unsigned int *len) {
+const char * ICACHE_FLASH_ATTR dhap_pages_ok(unsigned int *len) {
 	*len = sizeof(DHAP_PAGE_OK) - 1;
 	return DHAP_PAGE_OK;
 }
@@ -80,7 +82,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR esc_len(const char *str) {
 	return res;
 }
 
-char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
+const char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 	if(init() == 0)
 		return 0;
 	const char *ssid = dhsettings_get_wifi_ssid();
