@@ -16,6 +16,7 @@
 #include "dhonewire.h"
 #include "dhgpio.h"
 #include "user_config.h"
+#include "dhdebug.h"
 
 LOCAL unsigned int mOneWirePin = 0;
 LOCAL unsigned int mIntPins = 0;
