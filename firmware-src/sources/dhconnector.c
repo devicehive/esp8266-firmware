@@ -149,7 +149,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 		} else {
 			mConnectionState = CS_DISCONNECT;
 			dhdebug("Connector HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
-			dhdebug(data);
+			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
 			dhstatistic_server_errors_count();
 		}

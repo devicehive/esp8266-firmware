@@ -21,6 +21,7 @@
 #include "dhsettings.h"
 #include "dhap.h"
 #include "webserver.h"
+#include "irom.h"
 
 typedef struct {
 	unsigned int magic;

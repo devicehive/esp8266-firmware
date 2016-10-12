@@ -13,7 +13,7 @@
 
 /**
  *	\brief				Write formatted data to char array.
- *	\details			Lightweight version of snprintf for embedded systems.
+ *	\details			Pointers to ROM is supported.
  *	\param[out]	pString	Output buffer.
  *	\param[in]	length	Output buffer maximum size(including space for null terminated char).
  *	\param[in]	pFormat	Format.
@@ -24,7 +24,7 @@ int snprintf(char *pString, size_t length, const char *pFormat, ...);
 
 /**
  *	\brief				Write formatted data to char array.
- *	\details			Lightweight version of snprintf for embedded systems.
+ *	\details			Pointers to ROM is supported.
  *	\param[out]	pString	Output buffer.
  *	\param[in]	length	Output buffer maximum size(including space for null terminated char).
  * 	\param[in]	pFormat	Format.

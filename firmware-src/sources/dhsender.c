@@ -99,7 +99,7 @@ LOCAL void ICACHE_FLASH_ATTR senderRecvCb(void *arg, char *data, unsigned short 
 			dhdebug("Sender received OK");
 		} else {
 			dhdebug("Sender HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
-			dhdebug(data);
+			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
 			dhstatistic_server_errors_count();
 		}

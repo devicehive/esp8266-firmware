@@ -51,7 +51,7 @@ void ICACHE_FLASH_ATTR dhdebug_direct() {
 	isDirect = 1;
 }
 
-void dhdebug(const char *fmt, ...) {
+void dhdebug_ram(const char *fmt, ...) {
 	va_list    ap;
 	va_start(ap, fmt);
 	if(isDirect)

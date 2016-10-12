@@ -16,6 +16,7 @@
 #include <user_interface.h>
 #include "dhuart.h"
 #include "user_config.h"
+#include "dhdebug.h"
 
 #define UART_BASE 0x60000000
 #define UART_INTERUPTION_STATE_REGISTER (UART_BASE + 0x08)

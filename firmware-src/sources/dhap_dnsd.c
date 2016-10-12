@@ -14,6 +14,7 @@
 #include <espconn.h>
 #include <mem.h>
 #include "dhap_dnsd.h"
+#include "dhdebug.h"
 
 #define MAX_CONNECTIONS 2
 #define DNSD_PORT 53

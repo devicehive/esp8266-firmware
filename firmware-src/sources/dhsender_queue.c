@@ -28,6 +28,7 @@ LOCAL unsigned int mQueueMaxSize;
 #define RESERVE_FOR_RESPONCE (mQueueMaxSize - 3)
 #define MEM_RECOVER_THRESHOLD (mQueueMaxSize * 3 / 4)
 #define MEMORY_RESERVER 10240
+#define MAX_QUEUE_LENGTH 25
 
 typedef struct {
 	unsigned int				id;
@@ -135,6 +136,8 @@ unsigned int ICACHE_FLASH_ATTR dhsender_queue_length() {
 
 void ICACHE_FLASH_ATTR dhsender_queue_init() {
 	mQueueMaxSize = (system_get_free_heap_size() - MEMORY_RESERVER) / sizeof(DHSENDER_QUEUE);
+	if(mQueueMaxSize > MAX_QUEUE_LENGTH)
+		mQueueMaxSize = MAX_QUEUE_LENGTH;
 	mQueue = (DHSENDER_QUEUE *)os_malloc(mQueueMaxSize * sizeof(DHSENDER_QUEUE));
 	if(mQueue == 0) {
 		dhdebug("ERROR: can not allocate memory for queue");

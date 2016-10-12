@@ -24,6 +24,7 @@
 #include "dhi2c.h"
 #include "dhspi.h"
 #include "dhonewire.h"
+#include "dhdebug.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
