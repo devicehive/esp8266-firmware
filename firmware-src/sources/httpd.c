@@ -27,6 +27,7 @@
 #define MAX_CONNECTIONS 5
 #define HTTPD_PORT 80
 #define POST_BUF_SIZE 2048
+#define MAX_SINGLE_PACKET 2048
 #define MAX_PATH 64
 
 typedef struct {
@@ -76,7 +77,19 @@ LOCAL int ICACHE_FLASH_ATTR dequeue(struct espconn *conn, int send) {
 	for(i = 0; i < MAX_CONNECTIONS; i++) {
 		if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 			if(send) {
-				send_res(conn, mContentQueue[i].content.data, mContentQueue[i].content.len);
+				if(mContentQueue[i].content.len > MAX_SINGLE_PACKET &&
+						mContentQueue[i].free_mem == 0) {
+					send_res(conn, mContentQueue[i].content.data,
+							MAX_SINGLE_PACKET);
+					mContentQueue[i].content.len -= MAX_SINGLE_PACKET;
+					mContentQueue[i].content.data += MAX_SINGLE_PACKET;
+					if(mContentQueue[i].content.len) {
+						return 1;
+					}
+				} else {
+					send_res(conn, mContentQueue[i].content.data,
+							mContentQueue[i].content.len);
+				}
 			}
 			if(mContentQueue[i].free_mem) {
 				os_free(mContentQueue[i].content.data);
