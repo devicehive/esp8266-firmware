@@ -16,8 +16,9 @@
 #include "dhcommands.h"
 #include "dhsender_data.h"
 #include "user_config.h"
+#include "irom.h"
 
-static const char desription[] = "<html><body>This is firmware RESTfull API endpoint. "\
+RO_DATA char desription[] = "<html><body>This is firmware RESTfull API endpoint. "\
 	"Please follow the firmware manual to use it.<br><a href='http://devicehive.com/' "\
 	"target='_blank'>DeviceHive</a> Firmware v"FIRMWARE_VERSION"<br>"\
 	"<a href='https://github.com/devicehive/esp8266-firmware' target='_blank'>"\
@@ -39,7 +40,7 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 		dhsender_data_parse_va(ap, &data_type, &data, &data_len, &pin);
 		char *buf = (char *)os_malloc(2*INTERFACES_BUF_SIZE); // do we really can have more?
 		if(buf == 0) {
-			static const char error[] = "No memory";
+			RO_DATA char error[] = "No memory";
 			answer->ok = 0;
 			answer->content.data = error;
 			answer->content.len = sizeof(error) - 1;
@@ -49,7 +50,7 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 				data_len, pin);
 		if(res < 0) {
 			os_free(buf);
-			static const char error[] = "Failed to build json";
+			RO_DATA char error[] = "Failed to build json";
 			answer->ok = 0;
 			answer->content.data = error;
 			answer->content.len = sizeof(error) - 1;

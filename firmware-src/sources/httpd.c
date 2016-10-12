@@ -22,6 +22,7 @@
 #include "dhstatistic.h"
 #include "snprintf.h"
 #include "dhsettings.h"
+#include "irom.h"
 
 #define MAX_CONNECTIONS 5
 #define HTTPD_PORT 80
@@ -54,7 +55,14 @@ LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *it
 }
 
 LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, int len) {
-	sint8 res = espconn_send(conn, (char *)data, len);
+	sint8 res;
+	ifrom(data) {
+		char buf[len];
+		irom_read(buf, data, len);
+		res = espconn_send(conn, buf, len);
+	} else {
+		res = espconn_send(conn, (char *)data, len);
+	}
 	if(res) {
 		dhstatistic_inc_network_errors_count();
 		dhesperrors_espconn_result("Httpd espconn_send returned:", res);
@@ -195,19 +203,19 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	static const char post[] = "POST ";
 	static const char options[] = "OPTIONS ";
 	static const char host[] = "Host:";
-	static const char internal[] = "HTTP/1.0 500  Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
-	static const char notfound[] = "HTTP/1.0 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
-	static const char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
-	static const char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
-	static const char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:11\r\n\r\nBad Request";
-	static const char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
-	static const char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
-	static const char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
-	static const char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
-	static const char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
-	static const char html[] = "html";
-	static const char json[] = "json";
-	static const char plain[] = "plain";
+	RO_DATA char internal[] = "HTTP/1.0 500  Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
+	RO_DATA char notfound[] = "HTTP/1.0 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
+	RO_DATA char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
+	RO_DATA char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
+	RO_DATA char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:11\r\n\r\nBad Request";
+	RO_DATA char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
+	RO_DATA char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	RO_DATA char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
+	RO_DATA char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	RO_DATA char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
+	RO_DATA char html[] = "html";
+	RO_DATA char json[] = "json";
+	RO_DATA char plain[] = "plain";
 
 	HTTP_ANSWER answer;
 	answer.content.len = 0;
