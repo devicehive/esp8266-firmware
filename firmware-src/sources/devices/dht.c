@@ -16,9 +16,11 @@
 #define DHT_PACKET_SIZE 5
 
 LOCAL int ICACHE_FLASH_ATTR dht_read(int pin, char *buf) {
-	if (!dhonewire_set_pin(pin)) {
-		dhdebug("dht: failed to set up onewire pin");
-		return DHT_ERROR;
+	if (pin != DHT_NO_PIN) {
+		if (!dhonewire_set_pin(pin)) {
+			dhdebug("dht: failed to set up onewire pin");
+			return DHT_ERROR;
+		}
 	}
 	if (dhonewire_dht_read(buf, DHT_PACKET_SIZE) != DHT_PACKET_SIZE ) {
 		dhdebug("dht: failed to read data");

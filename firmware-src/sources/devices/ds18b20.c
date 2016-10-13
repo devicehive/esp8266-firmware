@@ -18,9 +18,11 @@ float ICACHE_FLASH_ATTR ds18b20_read(int pin) {
 	char out_buf[2];
 	int16_t *res = (int16_t *)&in_buf[0];
 	out_buf[0] = 0xCC;
-	if (!dhonewire_set_pin(pin)) {
-		dhdebug("ds18b20: failed to set up onewire pin");
-		return DS18B20_ERROR;
+	if (pin != DS18B20_NO_PIN) {
+		if (!dhonewire_set_pin(pin)) {
+			dhdebug("ds18b20: failed to set up onewire pin");
+			return DS18B20_ERROR;
+		}
 	}
 	out_buf[1] = 0x44; // start measure, use defaults
 	if (!dhonewire_write(out_buf, sizeof(out_buf))) {
