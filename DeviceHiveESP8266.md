@@ -651,7 +651,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 This section desribes simple API for handling some hardware sensors. Internally it uses one of interfaces described above, so parameters and error responses are mostly common.
 
 ## devices/ds18b20/read
-Read temperature from DS18B20 sensor.
+Read temperature from DS18B20 sensor. Only one sensor can be connected to pin(skip ROM is used). Measurement uses sensor defaults.
 
 *Parameters*:  
 "pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
@@ -738,7 +738,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 Temperature unit in Celsius degrees. Pressure unit is pascal.
 
 ## devices/bh1750/read
-Read illuminance from BH1750 sensor.
+Read illuminance from BH1750 sensor. Mode is 'High Resolution2'.
 
 *Parameters*:  
 "address" - I2C BH1750 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x46.
@@ -762,7 +762,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 Illuminance unit in lux(lumens per square metre).
 
 ## devices/mpu6050/read
-Read accelerometer, gyroscope and temperature data from MPU6050 sensor.
+Read accelerometer, gyroscope and temperature data from MPU6050 sensor. Accelerometer config gives -8g...+8g values, gyroscope -1000...+1000 dps.
 
 *Parameters*:  
 "address" - I2C MPU6050 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0xD0.

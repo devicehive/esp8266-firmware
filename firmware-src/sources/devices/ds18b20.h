@@ -9,16 +9,15 @@
 #ifndef SOURCES_DEVICES_DS18B20_H_
 #define SOURCES_DEVICES_DS18B20_H_
 
-/** Value for returning on error*/
-#define DS18B20_ERROR -274
 /** Do not initialize pin */
 #define DS18B20_NO_PIN -1
 
 /**
- *	\brief				Measure temperature one time.
- *	\param[in]	pin		1-wire pin for communication.
- *	\return 			Temperature in Celcius or DS18B20_ERROR on error.
+ *	\brief					Measure temperature one time.
+ *	\param[in]	pin			1-wire pin for communication.
+ *	\param[out]	temperature	Pointer to store measure result in degree Celsius.
+ *	\return 				NULL on success, text description on error.
  */
-float ds18b20_read(int pin);
+char *ds18b20_read(int pin, float *temperature);
 
 #endif /* SOURCES_DEVICES_DS18B20_H_ */

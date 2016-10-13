@@ -368,11 +368,11 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			if(onewire_init(cb, fields, &parse_pins))
 				return;
 		}
-		float temperature = ds18b20_read(DS18B20_NO_PIN);
-		if(temperature != DS18B20_ERROR)
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-		else
-			responce_error(cb, "Error while reading");
+		float temperature;
+		char *res = ds18b20_read(DS18B20_NO_PIN, &temperature);
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
 	} else if( os_strcmp(command, "devices/dht11/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
@@ -383,11 +383,11 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		}
 
 		int temperature;
-		int humidity = dht11_read(DHT_NO_PIN, &temperature);
-		if(humidity != DHT_ERROR)
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%d, \"humidity\":%d}", temperature, humidity);
-		else
-			responce_error(cb, "Error while reading");
+		int humidity;
+		char *res = dht11_read(DHT_NO_PIN, &humidity, &temperature);
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%d, \"humidity\":%d}", temperature, humidity);
 	} else if( os_strcmp(command, "devices/dht22/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
@@ -398,11 +398,11 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		}
 
 		float temperature;
-		float humidity = dht22_read(DHT_NO_PIN, &temperature);
-		if(humidity != DHT_ERROR)
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
-		else
-			responce_error(cb, "Error while reading");
+		float humidity;
+		char *res = dht22_read(DHT_NO_PIN, &humidity, &temperature);
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
 	} else if( os_strcmp(command, "devices/bmp180/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
@@ -415,11 +415,11 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(i2c_init(cb, fields, &parse_pins))
 			return;
 		float temperature;
-		int pressure = bmp180_read(BMP180_NO_PIN, BMP180_NO_PIN, &temperature);
-		if(pressure != BMP180_ERROR)
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
-		else
-			responce_error(cb, "Error while reading");
+		int pressure;
+		char *res = i2c_status_tochar(bmp180_read(BMP180_NO_PIN, BMP180_NO_PIN, &pressure, &temperature));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
 	} else if( os_strcmp(command, "devices/bh1750/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
@@ -431,11 +431,11 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		fields |= AF_ADDRESS;
 		if(i2c_init(cb, fields, &parse_pins))
 			return;
-		float illuminance = bh1750_read(BH1750_NO_PIN, BH1750_NO_PIN);
-		if(illuminance != BH1750_ERROR)
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
-		else
-			responce_error(cb, "Error while reading");
+		float illuminance;
+		char *res = i2c_status_tochar(bh1750_read(BH1750_NO_PIN, BH1750_NO_PIN, &illuminance));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
 	} else if( os_strcmp(command, "devices/mpu6050/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
@@ -449,13 +449,13 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			return;
 		MPU6050_XYZ acc;
 		MPU6050_XYZ gyro;
-		float temperature = mpu6050_read(MPU6050_NO_PIN, MPU6050_NO_PIN, &acc, &gyro);
-		if(temperature != MPU6050_ERROR)
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-					"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
-					temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
-		else
-			responce_error(cb, "Error while reading");
+		float temperature;
+		char *res = i2c_status_tochar(mpu6050_read(MPU6050_NO_PIN, MPU6050_NO_PIN, &acc, &gyro, &temperature));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+			"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
+			temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
 	} else {
 		responce_error(cb, "Unknown command");
 	}
