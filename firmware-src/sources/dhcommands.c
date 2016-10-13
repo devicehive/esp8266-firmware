@@ -28,6 +28,8 @@
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
 #include "devices/bmp180.h"
+#include "devices/bh1750.h"
+#include "devices/mpu6050.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -401,7 +403,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
 		else
 			responce_error(cb, "Error while reading");
-	}  else if( os_strcmp(command, "devices/bmp180/read") == 0 ) {
+	} else if( os_strcmp(command, "devices/bmp180/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 			if (responce_error(cb, parse_res))
@@ -416,6 +418,42 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		int pressure = bmp180_read(BMP180_NO_PIN, BMP180_NO_PIN, &temperature);
 		if(pressure != BMP180_ERROR)
 			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
+		else
+			responce_error(cb, "Error while reading");
+	} else if( os_strcmp(command, "devices/bh1750/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				bh1750_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float illuminance = bh1750_read(BH1750_NO_PIN, BH1750_NO_PIN);
+		if(illuminance != BH1750_ERROR)
+			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
+		else
+			responce_error(cb, "Error while reading");
+	} else if( os_strcmp(command, "devices/mpu6050/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				mpu6050_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		MPU6050_XYZ acc;
+		MPU6050_XYZ gyro;
+		float temperature = mpu6050_read(MPU6050_NO_PIN, MPU6050_NO_PIN, &acc, &gyro);
+		if(temperature != MPU6050_ERROR)
+			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+					"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
+					temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
 		else
 			responce_error(cb, "Error while reading");
 	} else {
