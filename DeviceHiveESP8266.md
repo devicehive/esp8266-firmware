@@ -33,6 +33,11 @@ Table of contents
     * [onewire/master/search](#onewiremastersearch)
     * [onewire/master/alarm](#onewiremasteralarm)
     * [onewire/dht/read](#onewiredhtread)
+  * [Devices](#devices)
+    * [devices/ds18b20/read](#devicesds18b20read)
+    * [devices/dht11/read](#devicesdht11read)
+    * [devices/dht22/read](#devicesdht22read)
+    * [devices/bmp180/read](#devicesbmp180read)
   * [License](#license)
 
 #Overview
@@ -640,6 +645,95 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 "data" field is base64 encoded data that was read from bus.
 
+# Devices
+This section desribes simple API for handling some hardware sensors. Internally it uses one of interfaces described above, so parameters and error responses are mostly common.
+
+## devices/ds18b20/read
+Read temperature from DS18B20 sensor.
+
+*Parameters*:  
+"pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
+
+*Example*:  
+```json
+{
+	"pin":"2"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":24.5000
+}
+```
+Temperature unit in Celsius degrees.
+
+## devices/dht11/read
+Read temperature and humidity from DHT11 sensor.
+
+*Parameters*:  
+"pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
+
+*Example*:  
+```json
+{
+	"pin":"2"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":24,
+  "humidity":20
+}
+```
+Temperature unit in Celsius degrees. Humidity unit is percent.
+
+## devices/dht22/read
+Read temperature and humidity from DHT22 sensor.
+
+*Parameters*:  
+"pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
+
+*Example*:  
+```json
+{
+	"pin":"2"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":25.5000,
+  "humidity":22.3000
+}
+```
+Temperature unit in Celsius degrees. Humidity unit is percent.
+
+## devices/bmp180/read
+Read temperature and pressure from BMP180 sensor.
+
+*Parameters*:  
+"address" - I2C BMP180 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0xEE.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"4",
+	"SCL":"5",
+	"address":"0xEE",
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":25.5000,
+  "pressure":100521
+}
+Temperature unit in Celsius degrees. Pressure unit is pascal.
 
 # License
 The MIT License (MIT):

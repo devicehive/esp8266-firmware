@@ -23,4 +23,5 @@ v0.4
 
 v0.5
 - local RESTful API
+- support for some popular sensor devices
 - bug fixes
