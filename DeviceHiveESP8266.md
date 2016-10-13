@@ -736,6 +736,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 	"temperature":25.5000,
   "pressure":100521
 }
+```
 Temperature unit in Celsius degrees. Pressure unit is pascal.
 
 ## devices/bh1750/read
