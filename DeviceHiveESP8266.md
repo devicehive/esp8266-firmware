@@ -687,7 +687,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```json
 {
 	"temperature":24,
-  "humidity":20
+	"humidity":20
 }
 ```
 Temperature unit in Celsius degrees. Humidity unit is percent.
@@ -708,7 +708,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```json
 {
 	"temperature":25.5000,
-  "humidity":22.3000
+	"humidity":22.3000
 }
 ```
 Temperature unit in Celsius degrees. Humidity unit is percent.
@@ -734,7 +734,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```json
 {
 	"temperature":25.5000,
-  "pressure":100521
+  	"pressure":100521
 }
 ```
 Temperature unit in Celsius degrees. Pressure unit is pascal.
@@ -824,8 +824,8 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 	"magnetometer":
   {
 	"X":-0.0603,
-  "Y":0.2203,
-  "Z":0.0755
+	"Y":0.2203,
+	"Z":0.0755
   }
 }
 ```
