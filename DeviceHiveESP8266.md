@@ -38,6 +38,8 @@ Table of contents
     * [devices/dht11/read](#devicesdht11read)
     * [devices/dht22/read](#devicesdht22read)
     * [devices/bmp180/read](#devicesbmp180read)
+    * [devices/bh1750/read](#devicesbh1750read)
+    * [devices/mpu6050/read](#devicesmpu6050read)        
   * [License](#license)
 
 #Overview
@@ -734,6 +736,66 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
   "pressure":100521
 }
 Temperature unit in Celsius degrees. Pressure unit is pascal.
+
+## devices/bh1750/read
+Read illuminance from BH1750 sensor.
+
+*Parameters*:  
+"address" - I2C BH1750 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x46.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"4",
+	"SCL":"5",
+	"address":"0x46",
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"illuminance":59.1667
+}
+Illuminance unit in lux(lumens per square metre).
+
+## devices/mpu6050/read
+Read accelerometer, gyroscope and temperature data from MPU6050 sensor.
+
+*Parameters*:  
+"address" - I2C MPU6050 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0xD0.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"4",
+	"SCL":"5",
+	"address":"0xD0",
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":32.2947,
+	"acceleration":
+  {
+    "X":-0.8475,
+    "Y":-0.1748,
+    "Z":9.9623
+  },
+  "rotation":
+  {
+    "X":-0.4272,
+    "Y":0.4883,
+    "Z":3.3264
+  }
+}
+Temperature unit in Celsius degrees. Acceleration unit is metre per second squared. Rotation unit is degree per second.
 
 # License
 The MIT License (MIT):
