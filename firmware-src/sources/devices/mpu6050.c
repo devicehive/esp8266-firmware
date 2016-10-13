@@ -82,7 +82,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl,
 	}
 
 	if(temparature)
-		temparature = signedInt16(buf, 6) / 340.0f + 36.53f;
+		*temparature = signedInt16(buf, 6) / 340.0f + 36.53f;
 	return DHI2C_OK;
 }
 
