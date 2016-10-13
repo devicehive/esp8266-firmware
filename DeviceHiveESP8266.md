@@ -272,7 +272,7 @@ Notifications will be generated with the name 'gpio/int'. Each notification will
 		"1":"1",
 		"16":"0"
 	},
-	"tick":"123456"
+	"tick":123456
 }
 ```
 #ADC
@@ -297,7 +297,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 Returns 'OK' on success with result or 'Error' with description in result. Each entry contains channel number and value in volts. 
 ```json
 {
-	"0":"0.6"
+	"0":0.6
 }
 ```
 
