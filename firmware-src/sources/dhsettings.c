@@ -66,7 +66,7 @@ int ICACHE_FLASH_ATTR dhsettings_init() {
 			dhdebug("Could not read settings from backup storage %d", res);
 		} else if(getStorageCrc(settings) != settings->crc) {
 			dhdebug("Backup storage data corrupted or never saved, using empty settings");
-			os_memset(&settings, 0, sizeof(DH_SETTINGS));
+			os_memset(settings, 0, sizeof(DH_SETTINGS));
 		} else {
 			read = 1;
 			dhdebug("Settings successfully loaded from backup storage");
