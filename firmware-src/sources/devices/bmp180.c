@@ -14,14 +14,18 @@
 #include "dhdebug.h"
 #include "dhutils.h"
 
+static mAddress = BMP180_DEFAULT_ADDRESS;
+
 int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 	char buf[22];
 	const int address = 0xEE;
 	unsigned int raw_temperature;
 	unsigned int raw_pressure;
-	if (dhi2c_init(sda, scl) != DHI2C_OK) {
-		dhdebug("bmp180: failed to set up pins");
-		return BMP180_ERROR;
+	if (sda != BMP180_NO_PIN || scl != BMP180_NO_PIN) {
+		if (dhi2c_init(sda, scl) != DHI2C_OK) {
+			dhdebug("bmp180: failed to set up pins");
+			return BMP180_ERROR;
+		}
 	}
 	buf[0] = 0xAA; // get factory parameters
 	if (dhi2c_write(address, buf, 1, 0) != DHI2C_OK) {
@@ -108,4 +112,8 @@ int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 	p = p + ((x1 + x2 + 3791) >> 4);
 
 	return p;
+}
+
+void ICACHE_FLASH_ATTR bmp180_set_address(int address) {
+	mAddress = address;
 }

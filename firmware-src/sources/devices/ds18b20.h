@@ -9,7 +9,10 @@
 #ifndef SOURCES_DEVICES_DS18B20_H_
 #define SOURCES_DEVICES_DS18B20_H_
 
+/** Value for returning on error*/
 #define DS18B20_ERROR -274
+/** Do not initialize pin */
+#define DS18B20_NO_PIN -1
 
 /**
  *	\brief				Measure temperature one time.

@@ -47,6 +47,9 @@ void ICACHE_FLASH_ATTR dhsender_data_parse_va(va_list ap,
 				*d++ = *s++;
 		}
 			break;
+		case RDT_FORMAT_STRING:
+			*data_len = vsnprintf(data->array, sizeof(data->array), va_arg(ap, char *), ap);
+			break;
 		default:
 			data->string = "ERROR: Unknown response data type.";
 			*data_type = RDT_CONST_STRING;
@@ -90,6 +93,8 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 		int is_notification, REQUEST_DATA_TYPE data_type, SENDERDATA *data,
 		unsigned int data_len, unsigned int pin) {
 	switch(data_type) {
+		case RDT_FORMAT_STRING:
+			return snprintf(buf, buf_len, "%s", data->array);
 		case RDT_CONST_STRING:
 			return snprintf(buf, buf_len, "%s", data->string);
 		case RDT_DATA_WITH_LEN:

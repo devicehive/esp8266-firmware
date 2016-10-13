@@ -9,7 +9,10 @@
 #ifndef SOURCES_DEVICES_DHT_H_
 #define SOURCES_DEVICES_DHT_H_
 
+/** Value for returning on error*/
 #define DHT_ERROR -274
+/** Do not initialize pin */
+#define DHT_NO_PIN -1
 
 /**
  *	\brief					Measure humidity with DHT11 sensor one time.
