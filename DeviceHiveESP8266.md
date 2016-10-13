@@ -39,7 +39,8 @@ Table of contents
     * [devices/dht22/read](#devicesdht22read)
     * [devices/bmp180/read](#devicesbmp180read)
     * [devices/bh1750/read](#devicesbh1750read)
-    * [devices/mpu6050/read](#devicesmpu6050read)        
+    * [devices/mpu6050/read](#devicesmpu6050read)
+    * [devices/hmc5883l/read](#deviceshmc5883lread)
   * [License](#license)
 
 #Overview
@@ -796,6 +797,35 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
   }
 }
 Temperature unit in Celsius degrees. Acceleration unit is metre per second squared. Rotation unit is degree per second.
+
+## devices/hmc5883l/read
+Read magnetometer, i.e. compass data. All configs are default, sensor field range is 1.3 gauss.
+
+*Parameters*:  
+"address" - I2C HMC5883L device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x3C.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"4",
+	"SCL":"5",
+	"address":"0x3C",
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"magnetometer":
+  {
+	"X":-0.0603,
+  "Y":0.2203,
+  "Z":0.0755
+  }
+}
+Data unit is gauss. Proportional to the magnetic field component along its axis. NaN value is possible for any axis on overflow.
 
 # License
 The MIT License (MIT):

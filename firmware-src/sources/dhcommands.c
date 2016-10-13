@@ -30,6 +30,7 @@
 #include "devices/bmp180.h"
 #include "devices/bh1750.h"
 #include "devices/mpu6050.h"
+#include "devices/hmc5883l.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -76,8 +77,8 @@ LOCAL char *ICACHE_FLASH_ATTR i2c_status_tochar(DHI2C_STATUS status) {
 			return "ACK response not detected";
 		case DHI2C_WRONG_PARAMETERS:
 			return "Wrong I2C parameters";
-		case DHI2C_TIMEOUT:
-			return "Can not set bus";
+		case DHI2C_BUS_BUSY:
+			return "Bus is busy";
 	}
 	return 0;
 }
@@ -456,6 +457,33 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
 			"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
 			temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
+	} else if( os_strcmp(command, "devices/hmc5883l/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				hmc5883l_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		HMC5883L_XYZ compass;
+		char *res = i2c_status_tochar(hmc5883l_read(HMC5883L_NO_PIN, HMC5883L_NO_PIN, &compass));
+		if(responce_error(cb, res))
+			return;
+		char floatbufx[10] = "NaN";
+		char floatbufy[10] = "NaN";
+		char floatbufz[10] = "NaN";
+		if(compass.X != HMC5883l_OVERFLOWED)
+			snprintf(floatbufx, sizeof(floatbufx), "%f", compass.X);
+		if(compass.Y != HMC5883l_OVERFLOWED)
+			snprintf(floatbufy, sizeof(floatbufy), "%f", compass.Y);
+		if(compass.Z != HMC5883l_OVERFLOWED)
+			snprintf(floatbufz, sizeof(floatbufz), "%f", compass.Z);
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+			"{\"magnetometer\":{\"X\":%s, \"Y\":%s, \"Z\":%s}}",
+			floatbufx, floatbufy, floatbufz);
 	} else {
 		responce_error(cb, "Unknown command");
 	}
