@@ -9,8 +9,8 @@
 #ifndef SOURCES_DEVICES_BH1750_H_
 #define SOURCES_DEVICES_BH1750_H_
 
-/** Value for returning on error*/
-#define BH1750_ERROR -274
+#include "dhi2c.h"
+
 /** Default sensor i2c address*/
 #define BH1750_DEFAULT_ADDRESS 0x46
 /** Do not initialize pin */
@@ -20,9 +20,10 @@
  *	\brief					Measure illuminance one time.
  *	\param[in]	sda			Pin for I2C's SDA.
  *	\param[in]	scl			Pin for I2C's SCL.
- *	\return 				Illuminance in lux or BH1750_ERROR on error.
+ *	\param[in]	illuminance	Illuminance in lux.
+ *	\return 				Status value, one of DHI2C_STATUS enum.
  */
-float bh1750_read(int sda, int scl);
+DHI2C_STATUS bh1750_read(int sda, int scl, float *illuminance);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

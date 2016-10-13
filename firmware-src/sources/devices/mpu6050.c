@@ -17,53 +17,56 @@
 static int mAddress = MPU6050_DEFAULT_ADDRESS;
 #define EARTH_GRAVITY_ACCELERATION 9.80665f
 
-float ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl, MPU6050_XYZ *acceleromter, MPU6050_XYZ *gyroscope) {
+DHI2C_STATUS ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl,
+		MPU6050_XYZ *acceleromter, MPU6050_XYZ *gyroscope, float *temparature)
+{
 	char buf[16];
+	DHI2C_STATUS status;
 	if(sda != MPU6050_NO_PIN || scl != MPU6050_NO_PIN) {
-		if (dhi2c_init(sda, scl) != DHI2C_OK) {
+		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
 			dhdebug("mpu6050: failed to set up pins");
-			return MPU6050_ERROR;
+			return status;
 		}
 	}
 
 	buf[0] = 0x6B; // power up
 	buf[1] = 0; // no sleep bit
-	if(dhi2c_write(mAddress, buf, 2, 1) != DHI2C_OK) {
+	if((status = dhi2c_write(mAddress, buf, 2, 1)) != DHI2C_OK) {
 		dhdebug("mpu6050: failed to power up");
-		return MPU6050_ERROR;
+		return status;
 	}
 
 	buf[0] = 0x1C; // accelerometer configuration
 	buf[1] = (1 << 4); // AFS_SEL = 2, range +-8 g
-	if(dhi2c_write(mAddress, buf, 2, 1) != DHI2C_OK) {
+	if((status = dhi2c_write(mAddress, buf, 2, 1)) != DHI2C_OK) {
 		dhdebug("mpu6050: failed to configure accelerometer");
-		return MPU6050_ERROR;
+		return status;
 	}
 
 	buf[0] = 0x1B; // gyroscope configuration
 	buf[1] = (1 << 4); // FS_SEL = 2, range +-1000 dps
-	if(dhi2c_write(mAddress, buf, 2, 1) != DHI2C_OK) {
+	if((status = dhi2c_write(mAddress, buf, 2, 1)) != DHI2C_OK) {
 		dhdebug("mpu6050: failed to configure gyroscope");
-		return MPU6050_ERROR;
+		return status;
 	}
 
 	os_delay_us(50000);
 
 	buf[0] = 0x3B; // get data
-	if(dhi2c_write(mAddress, buf, 1, 0) != DHI2C_OK) {
+	if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
 		dhdebug("mpu6050: failed to set read register");
-		return MPU6050_ERROR;
+		return status;
 	}
-	if(dhi2c_read(mAddress, buf, 14) != DHI2C_OK) {
+	if((status = dhi2c_read(mAddress, buf, 14)) != DHI2C_OK) {
 		dhdebug("mpu6050: failed to read");
-		return MPU6050_ERROR;
+		return status;
 	}
 
 	buf[14] = 0x6B; // power down
 	buf[15] = 1 << 6; // sleep bit
-	if(dhi2c_write(mAddress, &buf[14], 2, 1) != DHI2C_OK) {
+	if((status = dhi2c_write(mAddress, &buf[14], 2, 1)) != DHI2C_OK) {
 		dhdebug("mpu6050: failed to power up");
-		return MPU6050_ERROR;
+		return status;
 	}
 
 	if(acceleromter) {
@@ -78,7 +81,9 @@ float ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl, MPU6050_XYZ *acceleromter
 		gyroscope->Z = signedInt16(buf, 12) * 1000.0f / 32768.0f;
 	}
 
-	return signedInt16(buf, 6) / 340.0f + 36.53f;
+	if(temparature)
+		temparature = signedInt16(buf, 6) / 340.0f + 36.53f;
+	return DHI2C_OK;
 }
 
 void ICACHE_FLASH_ATTR mpu6050_set_address(int address) {
