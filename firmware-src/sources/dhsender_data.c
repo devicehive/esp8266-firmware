@@ -86,7 +86,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf, unsigned int b
 	len += snprintf(&buf[len], buflen - len, "], \"state\":");
 	len += gpio_state(&buf[len], buflen - len, data->state);
 	return len + snprintf(&buf[len], buflen - len,
-			", \"tick\":\"%u\"}", data->timestamp);
+			", \"tick\":%u}", data->timestamp);
 }
 
 int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
@@ -110,7 +110,7 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 			}
 		}
 		case RDT_FLOAT:
-			return snprintf(buf, buf_len, "{\"0\":\"%f\"}", data->adc);
+			return snprintf(buf, buf_len, "{\"0\":%f}", data->adc);
 		case RDT_GPIO:
 			if(is_notification) {
 				return gpio_notification(buf, buf_len, &data->gpio);
