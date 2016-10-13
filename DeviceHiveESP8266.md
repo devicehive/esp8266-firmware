@@ -761,6 +761,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"illuminance":59.1667
 }
+```
 Illuminance unit in lux(lumens per square metre).
 
 ## devices/mpu6050/read
@@ -797,6 +798,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
     "Z":3.3264
   }
 }
+```
 Temperature unit in Celsius degrees. Acceleration unit is metre per second squared. Rotation unit is degree per second.
 
 ## devices/hmc5883l/read
@@ -826,6 +828,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
   "Z":0.0755
   }
 }
+```
 Data unit is gauss. Proportional to the magnetic field component along its axis. NaN value is possible for any axis on overflow.
 
 # License
