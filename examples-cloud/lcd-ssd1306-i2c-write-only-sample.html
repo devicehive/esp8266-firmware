@@ -102,7 +102,7 @@
         var tb = 0;
         for (j = 0; j < 8; j++) {
           y = i * 8 + j;
-          if(getBWPix(x,y)) // if we have bright pixel
+          if(getBWPix(128 - x, 64 - y)) // if we have bright pixel, screen rotation can be adjusted here
             tb |= (1 << j);
         }
         data += String.fromCharCode(tb)
@@ -168,4 +168,5 @@
       <br><input type="button" value="Run" onClick="run(this.form);"><br>
     </form>  
   </body>
-</html> 
+</html>
+
