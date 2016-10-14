@@ -27,7 +27,6 @@
    document.getElementById('output').innerHTML = text;
   }
   function run() {
-   print('');
    localStorage['accesskey'] = document.getElementById('accesskey').value;
    var xmlhttp = new XMLHttpRequest();  
    xmlhttp.open('POST', "http://" + window.location.hostname + '/api/devices/ds18b20/read', true);
@@ -54,7 +53,7 @@
   <label>AccesKey: </label><input type="password" id="accesskey"><br>
   <label>Pin: </label><input type="text" id="pin" value="2"><br>
   <p>This sample reads temperature from sensor every 1 second. Click on buttons below to start or stop.</p>
-  <input type="button" value="Run" onclick="isrun=true; run();">
+  <input type="button" value="Run" onclick="isrun=true; print(''); run();">
   <input type="button" value="Stop" onclick="isrun=false; print('Stopped');"><br>
   <br><div id="output"></div>
  </body>
