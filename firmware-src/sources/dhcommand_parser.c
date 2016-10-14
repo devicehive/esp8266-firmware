@@ -208,17 +208,17 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				if(strcmp_value(&jparser, "x") == 0)
 					continue;
 				else if(strcmp_value(&jparser, "init") == 0) {
-					if(fields & AF_INIT == 0)
+					if((fields & AF_INIT) == 0)
 						return UNEXPECTED;
 					out->pins_to_init |= pinmask;
 					*readedfields |= AF_INIT;
 				} else if(strcmp_value(&jparser, "pullup") == 0) {
-					if(fields & AF_PULLUP == 0)
+					if((fields & AF_PULLUP) == 0)
 						return UNEXPECTED;
 					out->pins_to_pullup |= pinmask;
 					*readedfields |= AF_PULLUP;
 				} else if(strcmp_value(&jparser, "nopull") == 0) {
-					if(fields & AF_NOPULLUP == 0)
+					if((fields & AF_NOPULLUP) == 0)
 						return UNEXPECTED;
 					out->pins_to_nopull |= pinmask;
 					*readedfields |= AF_NOPULLUP;
