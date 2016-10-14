@@ -1,0 +1,32 @@
+<html>
+ <head>
+ <style type="text/css">
+  html *
+  {
+   font-family: sans-serif;
+  }
+  body {
+    padding: 15px 30px 15px 30px;
+    text-indent: 20px;
+  }
+ </style>
+ <title>DeviceHive firmware</title>
+ </head>
+ <body>
+  <br><h1><center>Welcome to <a href='https://github.com/devicehive/esp8266-firmware' target='_blank'>DeviceHive ESP8266 firmware</a>!</center></h1><hr>
+  <p>This firmware allows to connect different devices to <a href='http://devicehive.com/' target='_blank'>DeviceHive</a> cloud service or use local tiny HTTP server with RESTful API embedded rigth into the chip. This page is hosted by that server.</p>
+  <p>Plenty of different devices can be connected with this firmware. There are few digital interfaces: GPIO, PWM, I2C, SPI and onewire which can be used for connecting device with such interface to IoT cloud. There is also ADC converted on board of this chip, so it's possible to measure voltage of analog sensor. This firmware gives transparent gateway between this physical interfaces and clouds. There are also implementations for some popular devices like DS18B20, DHT22 etc. Please follow <a href='https://github.com/devicehive/esp8266-firmware/blob/master/DeviceHiveESP8266.md' target='_blank'>the documentaion</a> for details.</p>
+  <p>Not only DeviceHive cloud service is supported. This firmware provides RESTful API which can be used in local network. Any 3rd party services can send direct HTTP requests on the chip. This endpoint is available at an URL like http://chip-device-id.local/api. It's <a href='./api' target='_blank'>here</a> for this chip. Firmware announce itself with mDNS, so device can be discovered with local domain name.</p>
+  <br><h3>Samples of using RESTful API.</h3>
+  <p>Requests can be sent from anywhere from any different services. The most simple and easy way to send such request is JavaScript. Samples below are the simple HTML pages with short JavaScript which perform HTTP requests and display human readable data. In all samples keep AccessKey field empty if it is not configured. Entered AccessKey is saved by browser. Feel free to view page sources directly from there as the examples of using it.</p>
+  <ul>
+   <li>GPIO pin handling <a href='./gpio.html'>gpio.html</a></li>
+   <li>PWM controlling <a href='./pwm.html'>pwm.html</a></li>
+   <li>Reading analog to digital converter(ADC) voltage <a href='./adc.html'>adc.html</a></li>
+   <li>Reading temperature from DS18B20 sensor <a href='./ds18b20.html'>ds18b20.html</a></li>
+   <li>Getting humidity from DHT11/DHT22 sensor <a href='./dht.html'>dht.html</a></li>
+   <li>Draw an image with SSD1306 OLED display <a href='./ssd1306.html'>ssd1306.html</a></li>
+   <li>Print a text on LCD1602 with PCF8574 adapter <a href='./ssd1306.html'>lcd.html</a></li>
+  </ul>
+ </body>
+</html>

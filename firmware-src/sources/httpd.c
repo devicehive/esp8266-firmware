@@ -136,7 +136,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 	while(data[i] == ' ')
 		i++;
 	j = i;
-	while(data[j] != ' ') // find end of path
+	while(data[j] != ' ' && data[j] != '?') // find end of path
 		j++;
 	if(j - i >= MAX_PATH)
 		return HRCS_NOT_FOUND;
