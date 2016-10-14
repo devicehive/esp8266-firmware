@@ -31,7 +31,6 @@
    document.getElementById('output').innerHTML = text;
   }
   function run() {
-   print('');
    type = document.getElementById('dht11').checked ? 'dht11':'dht22';  
    localStorage['accesskey'] = document.getElementById('accesskey').value;
    var xmlhttp = new XMLHttpRequest();  
@@ -61,7 +60,7 @@
   DHT11:<input type="radio" name="dht" id="dht11" value="dht11" checked="checked">
   DHT22:<input type="radio" name="dht" id="dht22" value="dht22"> <br>
   <p>This sample humidity and temperature from sensor every 1 second. Click on buttons below to start or stop.</p>
-  <input type="button" value="Run" onclick="isrun=true; run();">
+  <input type="button" value="Run" onclick="isrun=true; print(''); run();">
   <input type="button" value="Stop" onclick="isrun=false; print('Stopped');"><br>
   <br><div id="output"></div>
  </body>
