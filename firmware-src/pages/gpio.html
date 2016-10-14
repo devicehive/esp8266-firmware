@@ -22,10 +22,12 @@
  </style>
  <title>GPIO</title>
  <script type="text/javascript">
-  function print(text) {
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
    document.getElementById('output').innerHTML = text;
   }
   function send(command, data, cb) {
+   print('');
    localStorage['accesskey'] = document.getElementById('accesskey').value;
     var xmlhttp = new XMLHttpRequest();  
     xmlhttp.open('POST', "http://" + window.location.hostname + '/api/gpio/' + command, true);
@@ -33,7 +35,7 @@
     xmlhttp.onreadystatechange = function() {
      if(xmlhttp.readyState == 4){
       if(xmlhttp.status < 200 || xmlhttp.status > 299) {
-       print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText);
+       print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
       } else {
        cb(xmlhttp.responseText);
       }
