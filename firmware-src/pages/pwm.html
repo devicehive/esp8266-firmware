@@ -28,7 +28,7 @@
   function send(dc, count, frequency) {
    localStorage['accesskey'] = document.getElementById('accesskey').value;
    var xmlhttp = new XMLHttpRequest();  
-   xmlhttp.open('POST', "http://192.168.0.246" + window.location.hostname + '/api/pwm/control', true);
+   xmlhttp.open('POST', "http://" + window.location.hostname + '/api/pwm/control', true);
    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
    xmlhttp.onreadystatechange = function() {
     if(xmlhttp.readyState == 4 && isrun){
