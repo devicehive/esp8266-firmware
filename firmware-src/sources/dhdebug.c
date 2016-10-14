@@ -26,7 +26,7 @@ LOCAL char isDirect = 0;
 LOCAL void ICACHE_FLASH_ATTR recover_led(void *arg) {
 	ETS_INTR_LOCK();
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1);
-	gpio_output_set(0, 0x2, 0x2, 0);
+	gpio_output_set(0, 1 << 2, 1 << 2, 0);
 	ETS_INTR_UNLOCK();
 }
 
@@ -34,7 +34,8 @@ LOCAL void ICACHE_FLASH_ATTR direct_debug(const char *fmt, va_list ap) {
 	os_timer_disarm(&mRecoverLEDTimer);
 	char buf[256];
 	vsnprintf(buf, sizeof(buf), fmt, ap);
-	gpio_output_set(0, 0, 0, 0x2);
+	// keep tx led on for displaying this mode
+	gpio_output_set(0, 0, 0, 1 << 2);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
 	dhuart_send_line(buf);
 	os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)recover_led, NULL);
