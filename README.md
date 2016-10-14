@@ -33,13 +33,16 @@ to create interaction with any sensor using interface implementation modules
 # esp-utils
 Simple utils for flashing and connecting to ESP8266.
 
-# examples
+# examples-cloud
 Simple web pages with JavaScript sample of sendind recieving command
 from device via cloud. Onewire DS18B20 examples use 0x33[SKIP ROM] command
 which means that examples work only with one currently connected device. Some
 browsers(for example Firefox) block cross domen requests even for local file.
 Allow temporary cross domain requests in setting or use another browser to run
 examples.
+
+Local RESTful API samples are embedded to firmware. Sources of them can be found
+at firmware-src/pages directory.
 
 # firmware-src
 Sources of DeviceHive ESP8266 firmware.
