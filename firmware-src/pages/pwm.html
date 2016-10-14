@@ -22,18 +22,20 @@
  </style>
  <title>PWM</title>
  <script type="text/javascript">
-  function print(text) {
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
    document.getElementById('output').innerHTML = text;
   }
   function send(dc, count, frequency) {
+  print('');
    localStorage['accesskey'] = document.getElementById('accesskey').value;
    var xmlhttp = new XMLHttpRequest();  
    xmlhttp.open('POST', "http://" + window.location.hostname + '/api/pwm/control', true);
    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
    xmlhttp.onreadystatechange = function() {
-    if(xmlhttp.readyState == 4 && isrun){
+    if(xmlhttp.readyState == 4){
      if(xmlhttp.status < 200 || xmlhttp.status > 299) {
-      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText);
+      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
      }
     }
    }
@@ -60,7 +62,7 @@
   <input type="button" value="Blink 3 times" onclick="send(50, 3, 4);"><br><br>
   <input type="button" value="Strobe" onclick="send(1, 0, 4);"><br><br>
   <input type="button" value="Inverted Strobe" onclick="send(99, 0, 4);"><br><br>
-  <label>Brightness control, slide to light up</label> <input type="range" id="brightness" value="50" onchange='slide(this.value)'>
+  <label>Brightness control, slide to light up</label> <input type="range" id="brightness" value="50" onchange='slide(this.value)'><br>
   <br><div id="output"></div>
  </body>
 </html>

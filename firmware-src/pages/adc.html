@@ -12,16 +12,15 @@
    width: 10%;
    display: inline-block; 
   }
-  div {
-   color: green;
-  }
  </style>
  <title>ADC</title>
  <script type="text/javascript">
-  function print(text) {
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
    document.getElementById('output').innerHTML = text;
   }
   function run() {
+   print('');
    localStorage['accesskey'] = document.getElementById('accesskey').value;
    var xmlhttp = new XMLHttpRequest();  
    xmlhttp.open('POST', "http://" + window.location.hostname + '/api/adc/read', true);
@@ -29,7 +28,7 @@
    xmlhttp.onreadystatechange = function() {
     if(xmlhttp.readyState == 4 && isrun){
      if(xmlhttp.status < 200 || xmlhttp.status > 299) {
-      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText);
+      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
      } else {
       var json = JSON.parse(xmlhttp.responseText);
       print('ADC value is ' + json['0'] + 'V');
