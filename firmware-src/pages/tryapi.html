@@ -1,0 +1,79 @@
+<html>
+ <head>
+ <style type="text/css">
+  html * {
+   font-family: sans-serif;
+  }
+  code {
+   font-family: monospace;
+   white-space:pre-wrap;
+  }
+  label {
+   width: 10%;
+   display: inline-block;
+   vertical-align: top;
+  }
+  input, textarea {
+   width: 40%;
+   display: inline-block; 
+  }
+  input[type=button] {
+   width: 10%;
+   display: inline-block; 
+  }
+ </style>
+ <title>RESTful API</title>
+ <script type="text/javascript">
+  function printinput(text) {
+   document.getElementById('input').innerHTML = text;
+  }
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
+   document.getElementById('output').innerHTML = text;
+  }
+  function run() {
+   print('');
+   localStorage['accesskey'] = document.getElementById('accesskey').value;
+   command = document.getElementById('command').value;
+   parameters = document.getElementById('parameters').value;
+   if(parameters.length > 0) {
+    try {
+     parameters = JSON.parse(parameters);
+    } catch(e) {
+     print('Bad JSON', true);
+     return;
+    }
+   }
+   url = "http://" + window.location.hostname + '/api/' + command;
+   printinput('This command for cURL util:<br><code>curl -i -X POST  \\<br>     -H "Authorization: Bearer YourAccessKeyHere="  \\<br>'
+    + (Object.keys(parameters).length > 0 ? '     -d &#39;' + JSON.stringify(parameters) + '&#39;  \\<br>' : '') + '     ' + url + '</code>');
+   var xmlhttp = new XMLHttpRequest();  
+   xmlhttp.open('POST', url, true);
+   xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
+   xmlhttp.onreadystatechange = function() {
+    if(xmlhttp.readyState == 4){
+     err = xmlhttp.status < 200 || xmlhttp.status > 299;
+     if(xmlhttp.status == 0) {
+      print('Response is not received', true);
+     } else {
+      print('Response is<br>HTTP/1.0 ' + xmlhttp.status + ' ' + xmlhttp.statusText + '<br>' + xmlhttp.getAllResponseHeaders().split('\r\n').join('<br>') + '<br>' + xmlhttp.responseText, err);
+     }
+    }
+   }
+   xmlhttp.send(Object.keys(parameters).length > 0 ? JSON.stringify(parameters) : null);
+  }
+  function init() {
+   document.getElementById('accesskey').value = localStorage['accesskey'];
+  }
+ </script>
+ </head>
+ <body onload="init()">
+  <label>AccesKey: </label><input type="password" id="accesskey"><br>
+  <p>This sample allows to send an arbitrary request and observe a response. Enter command name and parameters which should be valid JSON and click 'Run' button.</p>
+  <label>Command: </label><input type="text" id="command" value="gpio/read"><br>
+  <br><label>Parameters: </label><textarea id="parameters" rows="10"></textarea><br>
+  <br><input type="button" value="Run" onclick="run();"><br>
+  <br><div id="input"></div>
+  <br><div id="output"></div>
+ </body>
+</html>
