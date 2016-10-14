@@ -1,0 +1,128 @@
+<html>
+  <head>
+  <style type="text/css">
+    label {
+      width: 20%;
+      display: inline-block;
+    }
+    label[id=error] {
+      width: 100%;
+      color: blue;
+    }
+    label[id=status] {
+      width: 100%;
+    }
+    input {
+      width: 40%;
+      display: inline-block; 
+    }
+    input[type=button] {
+      width: 25%;
+    }
+  </style>
+  <script type="text/javascript">
+  var isrun = false;
+  var requestsCount = 0;
+  var errorCount = 0;
+  var currentRequestsNumber = 0;
+  var commands = [];
+  var numberOfThreads = 1;
+
+  commands.push({"command":"spi/master/read", "parameters":{"count":264}});
+  commands.push({"command":"gpio/read", "parameters":null});
+  commands.push({"command":"spi/master/write", "parameters":{"data":"QWJyYWNhZGFicmFBYnJhY2FkYWJyYUFicmFjYWRhYnJh"}});
+  commands.push({"command":"spi/master/read", "parameters":{"count":128}});
+  commands.push({"command":"onewire/master/search", "parameters":null});
+
+  function print(text, color) {
+    document.getElementById("status").innerHTML = "<font color=" + color + ">" + text + "</font>";
+  }
+  
+  function printerror(text, color) {
+    document.getElementById("error").innerHTML += "<font color=" + color + ">" + text + "</font><br>";
+  }
+  
+  function createxmlhttp(method, path) {
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open(method, localStorage["dhurl"] + path, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
+    xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
+    return xmlhttp;
+  }
+  
+  function send_command(command, parameters) {
+    var xmlhttp = createxmlhttp("POST", "/" + command);
+    xmlhttp.onreadystatechange = function() {
+        if(xmlhttp.readyState == 4) {
+            if(xmlhttp.status < 200 || xmlhttp.status> 299) {
+              printerror("ERROR: Error while sending command " + command + " " +
+                JSON.stringify(parameters) + " GOT "+ xmlhttp.status + " " +
+                xmlhttp.responseText, "red");
+              errorCount++;
+            } else {
+              // on success
+            }
+            print("Sent: " + requestsCount + " commands, error count: " +
+              errorCount, "green");
+            currentRequestsNumber--;
+            run_multi_requests();
+          }
+        }
+    currentRequestsNumber++;
+    requestsCount++;
+    if(parameters == null)
+      xmlhttp.send();
+    else
+      xmlhttp.send(JSON.stringify(parameters));
+  }
+  
+  function run_requests() {
+    if(!isrun) {
+      return;
+    }
+    command = commands[Math.floor(Math.random() * commands.length)];
+    send_command(command["command"], command["parameters"]);
+  }
+  
+  function run_multi_requests() {
+    if(!isrun) {
+      return;
+    }
+    while(currentRequestsNumber < numberOfThreads) {
+      run_requests();
+    }
+  }
+
+  function run(form, rs) {
+    if(rs) {
+      print("Connecting... Refresh page for canceling.", "black");
+      localStorage["dhurl"] = form.url.value;
+      localStorage["dhpassword"] = form.password.value;
+      numberOfThreads = form.threads.value;
+      isrun = true;
+      requestsCount = 0;
+      errorCount = 0;
+      run_multi_requests();
+    } else {
+      isrun = false;
+    }
+  }
+  
+  function initform(form) {
+    form.url.value = localStorage["dhurl"];
+    form.password.value = localStorage["dhpassword"];
+    form.threads.value = numberOfThreads;
+  }
+  </script>
+  </head>
+    <body onLoad="initform(this.form);">  
+    <form name="form">
+      <label>DeviceHive API Url: </label><input type="text" name="url"><br>
+      <label>AccesKey: </label><input type="password" name="password"><br>
+      <label>Number of threads: </label><input type="text" name="threads"><br>
+      <br><input type="button" value="Run" onClick="run(this.form, true);"> <input type="button" value="Stop" onClick="run(this.form, false);"><br>
+    </form>
+    <label id="status"> </label><br>
+    <label id="error"> </label><br>  
+  </body>
+</html> 

@@ -11,23 +11,29 @@
 
 #include "snprintf.h"
 
-int vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
+#include "c_types.h" // ICACHE_FLASH_ATTR
+#include "irom.h"
+
+int ICACHE_FLASH_ATTR vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 {
 	char digitBuffer[32];
 	char *pOriginalStr = pString;
 	length--; // for null terminated char
+	char pf;
 
 	/* Phase string */
-	while (*pFormat != 0 && (pString-pOriginalStr) < length){
-		if (*pFormat != '%'){
-			*pString++ = *pFormat++;
-		} else if (*(pFormat+1) == '%'){
+	while ( (pf = irom_char(pFormat)) != 0 && (pString-pOriginalStr) < length){
+		if (pf != '%'){
+			*pString++ = pf;
+			pFormat++;
+		} else if (irom_char(pFormat + 1) == '%'){
 			*pString++ = '%';
 			pFormat += 2;
 		} else {
 			pFormat++;
+			pf = irom_char(pFormat);
 
-			switch (*pFormat) {
+			switch (pf) {
 			case 'd':
 			case 'i':{
 				char *tmp = digitBuffer;
@@ -47,14 +53,14 @@ int vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 			case 'x':
 			case 'X':
 			{
-				unsigned int base = (*pFormat == 'u') ? 10 : 16;
+				unsigned int base = (pf == 'u') ? 10 : 16;
 				char *tmp = digitBuffer;
 				unsigned long val = va_arg(ap, unsigned long);
 				do {
 					unsigned int c = val % base;
 					if(c < 10)
 						*tmp++ = c + '0';
-					else if(*pFormat == 'x')
+					else if(pf == 'x')
 						*tmp++ = c - 10 + 'a';
 					else
 						*tmp++ = c - 10 + 'A';
@@ -65,7 +71,8 @@ int vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 			break;
 			case 's': {
 				char * tmp = va_arg(ap, char *);
-				while (*tmp && (pString-pOriginalStr) < length) *pString++ = *tmp++;
+				char c;
+				while ((c = irom_char(tmp++)) && (pString-pOriginalStr) < length) *pString++ = c;
 				break;
 			}
 			case 'c': *pString++ = va_arg(ap, unsigned int); break;
@@ -104,7 +111,7 @@ int vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 	return (pString-pOriginalStr);
 }
 
-int snprintf(char *pString, size_t length, const char *pFormat, ...)
+int ICACHE_FLASH_ATTR snprintf(char *pString, size_t length, const char *pFormat, ...)
 {
     va_list    ap;
     int rc;

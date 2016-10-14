@@ -57,7 +57,7 @@ LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_set_pin(unsigned int pin_mask, int va
 			return DHI2C_OK;
 		os_delay_us(1);
 	}
-	return DHI2C_TIMEOUT;
+	return DHI2C_BUS_BUSY;
 }
 
 LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_start() {

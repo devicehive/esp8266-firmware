@@ -20,6 +20,7 @@ PROVIDE ( SPI_read_status = 0x400043c8 );
 PROVIDE ( SPI_write_status = 0x40004400 );
 PROVIDE ( SPI_write_enable = 0x4000443c );
 PROVIDE ( Wait_SPI_Idle = 0x4000448c );
+PROVIDE ( Enable_QMode = 0x400044c0 );
 PROVIDE ( SPIEraseArea = 0x40004b44 );
 PROVIDE ( SPIEraseBlock = 0x400049b4 );
 PROVIDE ( SPIEraseChip = 0x40004984 );
@@ -343,5 +344,8 @@ PROVIDE ( xthal_window_spill = 0x4000e324 );
 PROVIDE ( xthal_window_spill_nw = 0x4000e320 );
 
 PROVIDE ( Te0 = 0x3fffccf0 );
+PROVIDE ( Td0 = 0x3fffd100 );
+PROVIDE ( Td4s = 0x3fffd500);
+PROVIDE ( rcons = 0x3fffd0f0);
 PROVIDE ( UartDev = 0x3fffde10 );
 PROVIDE ( flashchip = 0x3fffc714);

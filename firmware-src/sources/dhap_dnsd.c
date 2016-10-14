@@ -14,6 +14,7 @@
 #include <espconn.h>
 #include <mem.h>
 #include "dhap_dnsd.h"
+#include "dhdebug.h"
 
 #define MAX_CONNECTIONS 2
 #define DNSD_PORT 53
@@ -115,11 +116,28 @@ LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_recv_cb(void *arg, char *data, unsigned s
 	unsigned int rlen = dnsd_answer(mDNSAnswerBuffer, len);
 	if(rlen) {
 		mSendingInProgress = 1;
-		if(espconn_send(conn, mDNSAnswerBuffer, rlen)) {
-			dhdebug("Failed to send response");
-			mSendingInProgress = 0;
-			if(conn->type & ESPCONN_TCP)
-				espconn_disconnect(conn);
+
+		remot_info *premot = NULL;
+		if(espconn_get_connection_info(conn, &premot, 0) == ESPCONN_OK) {
+			if(conn->type & ESPCONN_TCP) {
+				conn->proto.tcp->remote_port = premot->remote_port;
+				os_memcpy(conn->proto.tcp->remote_ip, premot->remote_ip,
+						sizeof(premot->remote_ip));
+			}
+			if(conn->type & ESPCONN_UDP) {
+				conn->proto.udp->remote_port = premot->remote_port;
+				os_memcpy(conn->proto.udp->remote_ip, premot->remote_ip,
+						sizeof(premot->remote_ip));
+			}
+
+			if(espconn_send(conn, mDNSAnswerBuffer, rlen)) {
+				dhdebug("Failed to send response");
+				mSendingInProgress = 0;
+				if(conn->type & ESPCONN_TCP)
+					espconn_disconnect(conn);
+			}
+		} else {
+			dhdebug("Failed to get connection info");
 		}
 	} else {
 		dhdebug("Wrong dns request");

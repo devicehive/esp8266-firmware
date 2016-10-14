@@ -99,7 +99,7 @@ LOCAL void ICACHE_FLASH_ATTR senderRecvCb(void *arg, char *data, unsigned short 
 			dhdebug("Sender received OK");
 		} else {
 			dhdebug("Sender HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
-			dhdebug(data);
+			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
 			dhstatistic_server_errors_count();
 		}
@@ -144,11 +144,11 @@ void ICACHE_FLASH_ATTR dhsender_stop_repeat() {
 	os_timer_disarm(&mRepeatTimer);
 }
 
-void ICACHE_FLASH_ATTR dhsender_response(unsigned int id, RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...) {
+void ICACHE_FLASH_ATTR dhsender_response(CommandResultArgument cid, RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...) {
 	va_list ap;
 	va_start(ap, data_type);
 	dhstatistic_inc_responces_count();
-	if(dhsender_queue_add(status == DHSTATUS_ERROR ? RT_RESPONCE_ERROR : RT_RESPONCE_OK, RNT_NOTIFICATION_NONE, data_type, id, ap)) {
+	if(dhsender_queue_add(status == DHSTATUS_ERROR ? RT_RESPONCE_ERROR : RT_RESPONCE_OK, RNT_NOTIFICATION_NONE, data_type, cid.id, ap)) {
 		dhsender_next(NULL);
 	} else {
 		dhstatistic_inc_responces_dropped_count();

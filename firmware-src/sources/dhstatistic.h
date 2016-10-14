@@ -14,6 +14,8 @@ typedef struct {
 		unsigned long long bytesSent;			///< Total bytes sent.
 		unsigned long long bytesReceived;		///< Total bytes received.
 		unsigned int networkErrors;				///< Number of network errors.
+		unsigned int httpdRequestsCount;			///< Number of REST requests.
+		unsigned int httpdErrorsCount;			///< Number of REST errors.
 		unsigned int wifiLosts;					///< Number of Wi-Fi disconnects.
 		unsigned int serverErrors;				///< Number of errors from server.
 		unsigned int notificationsTotal;		///< Attempts number of creating notifications.
@@ -38,6 +40,16 @@ void dhstatistic_add_bytes_received(unsigned int bytes);
  *	\brief				Increment number of network errors.
  */
 void dhstatistic_inc_network_errors_count();
+
+/**
+ *	\brief				Increment number of REST requests.
+ */
+void dhstatistic_inc_httpd_requests_count();
+
+/**
+ *	\brief				Increment number of REST errors.
+ */
+void dhstatistic_inc_httpd_errors_count();
 
 /**
  *	\brief				Increment number of Wi-Fi disconnections.

@@ -26,6 +26,14 @@ void ICACHE_FLASH_ATTR dhstatistic_inc_network_errors_count() {
 	mStatistic.networkErrors++;
 }
 
+void dhstatistic_inc_httpd_requests_count() {
+	mStatistic.httpdRequestsCount++;
+}
+
+void dhstatistic_inc_httpd_errors_count() {
+	mStatistic.httpdErrorsCount++;
+}
+
 void ICACHE_FLASH_ATTR dhstatistic_inc_wifi_lost_count() {
 	mStatistic.wifiLosts++;
 }

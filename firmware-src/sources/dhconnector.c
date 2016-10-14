@@ -34,8 +34,9 @@ LOCAL HTTP_REQUEST mPollRequest;
 LOCAL HTTP_REQUEST mInfoRequest;
 LOCAL os_timer_t mRetryTimer;
 LOCAL unsigned char mNeedRecover = 0;
+LOCAL struct mdns_info mMdnsinfo;
 
-LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state);
+LOCAL void set_state(CONNECTION_STATE state);
 
 LOCAL void retry(void *arg) {
 	set_state(mConnectionState);
@@ -47,22 +48,23 @@ LOCAL void arm_repeat_timer(unsigned int ms) {
 	os_timer_arm(&mRetryTimer, ms, 0);
 }
 
-LOCAL void network_error_cb(void *arg, sint8 err) {
+LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 	dhstatistic_inc_network_errors_count();
 }
 
-LOCAL void parse_json(struct jsonparse_state *jparser) {
+LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	int type;
 	unsigned int id;
 	char command[128] = "";
 	const char *params;
 	int paramslen = 0;
 	char timestamp[128] = "";
-	while ((type = jsonparse_next(jparser)) != JSON_TYPE_ERROR) {
-		if (type == JSON_TYPE_PAIR_NAME) {
+	while (jparser->pos < jparser->len) {
+		type = jsonparse_next(jparser);
+		if(type == JSON_TYPE_PAIR_NAME) {
 			if (jsonparse_strcmp_value(jparser, "serverTimestamp") == 0) {
 				jsonparse_next(jparser);
 				if (jsonparse_next(jparser) != JSON_TYPE_ERROR) {
@@ -97,6 +99,8 @@ LOCAL void parse_json(struct jsonparse_state *jparser) {
 				if(jsonparse_next(jparser) != JSON_TYPE_ERROR)
 					jsonparse_copy_value(jparser, timestamp, sizeof(timestamp));
 			}
+		} else if(type == JSON_TYPE_ERROR) {
+			break;
 		}
 	}
 	if (mConnectionState == CS_POLL) {
@@ -104,7 +108,10 @@ LOCAL void parse_json(struct jsonparse_state *jparser) {
 			dhdebug("Timestamp received %s", timestamp);
 			dhrequest_update_poll(&mPollRequest, timestamp);
 		}
-		mCommandCallback(id, command, params, paramslen);
+		COMMAND_RESULT cb;
+		cb.callback = dhsender_response;
+		cb.data.id = id;
+		mCommandCallback(&cb, command, params, paramslen);
 	}
 }
 
@@ -142,7 +149,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 		} else {
 			mConnectionState = CS_DISCONNECT;
 			dhdebug("Connector HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
-			dhdebug(data);
+			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
 			dhstatistic_server_errors_count();
 		}
@@ -294,7 +301,7 @@ LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server() {
 			arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		}
 	} else {
-		dhdebug("Can not find scheme in server url");
+		dhdebug("Can not find scheme in server url. Server connectivity is disabled.");
 	}
 }
 
@@ -305,7 +312,7 @@ void ICACHE_FLASH_ATTR dhmem_unblock_cb() {
 	}
 }
 
-LOCAL void set_state(CONNECTION_STATE state) {
+LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	mConnectionState = state;
 	if(state != CS_DISCONNECT) {
 		if(dhmem_isblock()) {
@@ -343,6 +350,15 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 			dhdebug("WiFi connected, ip: %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
 			mConnectionState = CS_DISCONNECT;
 			arm_repeat_timer(DHREQUEST_PAUSE_MS);
+
+			if(dhrequest_current_deviceid()[0]) {
+				os_memset(&mMdnsinfo, 0, sizeof(mMdnsinfo));
+				mMdnsinfo.host_name = (char *)dhrequest_current_deviceid();
+				mMdnsinfo.ipAddr = event->event_info.got_ip.ip.addr;
+				mMdnsinfo.server_name = "DeviceHive";
+				mMdnsinfo.server_port = 80;
+				espconn_mdns_init(&mMdnsinfo);
+			}
 		} else {
 			dhdebug("ERROR: WiFi reports STAMODE_GOT_IP, but no actual ip found");
 		}
@@ -351,6 +367,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 		dhsender_stop_repeat();
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
 		dhstatistic_inc_wifi_lost_count();
+		espconn_mdns_close();
 	} else {
 		dhesperrors_wifi_state("WiFi event", event->event);
 	}
@@ -371,6 +388,12 @@ void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
 	struct station_config stationConfig;
 	wifi_station_get_config(&stationConfig);
 	wifi_set_phy_mode(PHY_MODE_11N);
+	if(dhrequest_current_deviceid()[0]) {
+		char hostname[33];
+		// limit length to 32 chars
+		snprintf(hostname, sizeof(hostname), "%s", dhrequest_current_deviceid());
+		wifi_station_set_hostname(hostname);
+	}
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
 	snprintf(stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());

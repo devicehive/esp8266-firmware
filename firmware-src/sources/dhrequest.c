@@ -19,15 +19,16 @@
 #include "dhsettings.h"
 #include "dhmem.h"
 #include "snprintf.h"
+#include "irom.h"
 
-static const char REGISTER_JSON[] =
+RO_DATA char REGISTER_JSON[] =
 		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\""FIRMWARE_VERSION"\",\"offlineTimeout\":\"120\"}}";
-static const char UPDATE_JSON[] =
+RO_DATA char UPDATE_JSON[] =
 		"{\"status\":\"%s\",\"result\":%s%s%s}";
-static const char NOTIFICATION_JSON[] =
+RO_DATA char NOTIFICATION_JSON[] =
 		"{\"notification\":\"%s\",\"parameters\":%s%s%s}";
 
-static const char HTTP_REQUEST_PATTERN[] =
+RO_DATA char HTTP_REQUEST_PATTERN[] =
 		"%s %s%s%s%s%s HTTP/1.0\r\nAuthorization: Bearer %s\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: %s\r\n\r\n%s";
 
 LOCAL char mServer[DHSETTINGS_SERVER_MAX_LENGTH];
@@ -44,8 +45,16 @@ void ICACHE_FLASH_ATTR dhrequest_load_settings() {
 	mAccessKeyLen = snprintf(mAccessKey, sizeof(mAccessKey), "%s", dhsettings_get_devicehive_accesskey());
 }
 
-const char *dhrequest_current_server() {
+const char * ICACHE_FLASH_ATTR dhrequest_current_server() {
 	return mServer;
+}
+
+const char * ICACHE_FLASH_ATTR dhrequest_current_deviceid() {
+	return mDeviceId;
+}
+
+const char * ICACHE_FLASH_ATTR dhrequest_current_accesskey() {
+	return mAccessKey;
 }
 
 void ICACHE_FLASH_ATTR dhrequest_create_register(HTTP_REQUEST *buf) {

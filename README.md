@@ -3,7 +3,7 @@ Special firmware for usage ESP8266 in DeviceHive clouds.
 This repo consist of few parts of this project which can be used with
 other projects. Each project has dedicated readme file.
 
-![](demo-device.jpg?raw=true)
+![](images/demo-device.jpg?raw=true)
 Photo above is a real photo of the demo device contructed with esp8266. See
 http://youtu.be/hzi4djt-wdg
 
@@ -61,8 +61,8 @@ Pre built binaries of utils and released firmwares.
 SDK from chip manufactor. Included in this repo to make sure that we are
 using the same version of this SDK to avoid any surprises from changing APIs
 
-# DeviceHiveESP8266.pdf
-Document contains cloud commands specification for this firmware.
+# DeviceHiveESP8266.md
+Document contains cloud commands specification for this firmware. [Click here to open it.](DeviceHiveESP8266.md)
 
 # License
 The MIT License. See LICENSE file. Except sdk directory, it has ESPRSSIF MIT 

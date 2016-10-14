@@ -14,23 +14,27 @@
 #include "dhdebug.h"
 #include "dhutils.h"
 
-int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
+static int mAddress = BMP180_DEFAULT_ADDRESS;
+
+DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, float *temperature) {
 	char buf[22];
-	const int address = 0xEE;
 	unsigned int raw_temperature;
 	unsigned int raw_pressure;
-	if (dhi2c_init(sda, scl) != DHI2C_OK) {
-		dhdebug("bmp180: failed to set up pins");
-		return BMP180_ERROR;
+	DHI2C_STATUS status;
+	if(sda != BMP180_NO_PIN || scl != BMP180_NO_PIN) {
+		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
+			dhdebug("bmp180: failed to set up pins");
+			return status;
+		}
 	}
 	buf[0] = 0xAA; // get factory parameters
-	if (dhi2c_write(address, buf, 1, 0) != DHI2C_OK) {
-		dhdebug("bmp180: failed to write get coeficients command");
-		return BMP180_ERROR;
+	if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
+		dhdebug("bmp180: failed to write get coefficients command");
+		return status;
 	}
-	if (dhi2c_read(address, buf, sizeof(buf)) != DHI2C_OK) {
-		dhdebug("bmp180: failed to read coeficients");
-		return BMP180_ERROR;
+	if((status = dhi2c_read(mAddress, buf, sizeof(buf))) != DHI2C_OK) {
+		dhdebug("bmp180: failed to read coefficients");
+		return status;
 	}
 
 	int oss = 0;
@@ -48,37 +52,37 @@ int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 
     buf[0] = 0xF4; // measure temperature
     buf[1] = 0x2E;
-    if (dhi2c_write(address, buf, 2, 1) != DHI2C_OK) {
+    if((status = dhi2c_write(mAddress, buf, 2, 1)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to stare measure temperature");
-		return BMP180_ERROR;
+		return status;
 	}
     os_delay_us(50000);
     buf[0] = 0xF6; // get result
-    if (dhi2c_write(address, buf, 1, 0) != DHI2C_OK) {
+    if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to write get temperature command");
-		return BMP180_ERROR;
+		return status;
 	}
-	if (dhi2c_read(address, buf, 2) != DHI2C_OK) {
+	if((status = dhi2c_read(mAddress, buf, 2)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to read temperature");
-		return BMP180_ERROR;
+		return status;
 	}
 	raw_temperature = unsignedInt16(buf, 0);
 
     buf[0] = 0xF4; // measure pressure
     buf[1] = 0x34;
-    if (dhi2c_write(address, buf, 2, 1) != DHI2C_OK) {
+    if((status = dhi2c_write(mAddress, buf, 2, 1)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to stare measure pressure");
-		return BMP180_ERROR;
+		return status;
 	}
     os_delay_us(50000);
     buf[0] = 0xF6; // get result
-    if (dhi2c_write(address, buf, 1, 0) != DHI2C_OK) {
+    if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to write get pressure command");
-		return BMP180_ERROR;
+		return status;
 	}
-	if (dhi2c_read(address, buf, 2) != DHI2C_OK) {
+	if((status = dhi2c_read(mAddress, buf, 2)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to read pressure");
-		return BMP180_ERROR;
+		return status;
 	}
 	raw_pressure = unsignedInt16(buf, 0);
 
@@ -87,7 +91,7 @@ int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 	long x2 = (mc << 11) / (x1 + md);
 	long b5 = x1 + x2;
 	long t  = (b5 + 8) >> 4;
-	if (temperature) {
+	if(temperature) {
 		*temperature = (t / 10.0f);
 	}
 
@@ -107,5 +111,10 @@ int ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, float *temperature) {
 	x2 = (-7357 * p) >> 16;
 	p = p + ((x1 + x2 + 3791) >> 4);
 
-	return p;
+	*pressure = p;
+	return DHI2C_OK;
+}
+
+void ICACHE_FLASH_ATTR bmp180_set_address(int address) {
+	mAddress = address;
 }

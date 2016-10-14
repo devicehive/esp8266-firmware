@@ -1,21 +1,25 @@
-
 /*
- * custom_at.h
+ * ESPRSSIF MIT License
  *
- * This file is part of Espressif's AT+ command set program.
- * Copyright (C) 2013 - 2016, Espressif Systems
+ * Copyright (c) 2016 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of version 3 of the GNU General Public License as
- * published by the Free Software Foundation.
+ * Permission is hereby granted for use on ESPRESSIF SYSTEMS ESP8266 only, in which case,
+ * it is free of charge, to any person obtaining a copy of this software and associated
+ * documentation files (the "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the Software is furnished
+ * to do so, subject to the following conditions:
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * The above copyright notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software.
  *
- * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
 
 #ifndef CUSTOM_AT_H_
@@ -36,6 +40,8 @@ typedef struct
 typedef void (*at_custom_uart_rx_intr)(uint8* data,int32 len);
 
 typedef void (*at_custom_response_func_type)(const char *str);
+
+typedef void (*at_fake_uart_tx_func_type)(const uint8*data,uint32 length);
 
 extern uint8 at_customLinkMax;
 
@@ -140,4 +146,27 @@ uint32 at_get_version(void);
   * @retval None
   */
 void at_register_uart_rx_intr(at_custom_uart_rx_intr rx_func);
+/**
+  * @brief notify at module that has receive data
+  * @param  data: data buffer.
+  * @param  length: data length
+  * @retval data len,if ok len == length
+  */
+uint32 at_fake_uart_rx(uint8* data,uint32 length);
+
+/**
+  * @brief enable fake uart,and register fake uart tx
+  * @param  enable: enable fake uart.
+  * @param  at_fake_uart_tx_func: 
+  * @retval data len,if ok len == length
+  */
+bool at_fake_uart_enable(bool enable,at_fake_uart_tx_func_type at_fake_uart_tx_func);
+
+/**
+  * @brief set at escape character
+  * @param  ch: escape character.
+  * @retval TRUE,if set ok,otherwize FALSE.
+  */
+bool at_set_escape_character(uint8 ch);
+
 #endif

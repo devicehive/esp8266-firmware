@@ -71,11 +71,9 @@ LOCAL void ICACHE_FLASH_ATTR get_password_cb(const char *password) {
 	if(*password)
 		dhsettings_set_wifi_password(password);
 	dhuart_send_line("Enter DeviceHive API URL.");
+	dhuart_send_line("Example: "DEFAULT_SERVER);
 	dhterminal_set_mode(SM_INPUT_MODE, get_server_cb, 0, dhsettings_server_filter, DHSETTINGS_SERVER_MAX_LENGTH);
-	if(dhsettings_get_devicehive_server()[0] == 0)
-		dhterminal_set_input(DEFAULT_SERVER);
-	else
-		dhterminal_set_input(dhsettings_get_devicehive_server());
+	dhterminal_set_input(dhsettings_get_devicehive_server());
 }
 
 LOCAL void ICACHE_FLASH_ATTR get_ssid_cb(const char *ssid) {
