@@ -38,6 +38,15 @@ DHI2C_STATUS pcf8574_read(int sda, int scl, unsigned int *pins);
 DHI2C_STATUS pcf8574_write(int sda, int scl, unsigned int pins_to_set, unsigned int pins_to_clear);
 
 /**
+ *  \brief              Set all pins.
+ *  \param[in]  sda     Pin for I2C's SDA.
+ *  \param[in]  scl     Pin for I2C's SCL.
+ *  \param[in]  pins	Pin mask of pins state.
+ *  \return             Status value, one of DHI2C_STATUS enum.
+ */
+DHI2C_STATUS pcf8574_set(int sda, int scl, unsigned int pins);
+
+/**
  *	\brief					Set extender address which should be used while reading.
  *	\param[in]	address		Pin for I2C's SDA.
  */

@@ -22,7 +22,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR hmc5883l_read(int sda, int scl,
 		HMC5883L_XYZ *compass) {
 	char buf[7];
 	DHI2C_STATUS status;
-	if(sda != HMC5883L_NO_PIN || scl != HMC5883L_NO_PIN) {
+	if(sda != HMC5883L_NO_PIN && scl != HMC5883L_NO_PIN) {
 		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
 			dhdebug("hmc5883l: failed to set up pins");
 			return status;
