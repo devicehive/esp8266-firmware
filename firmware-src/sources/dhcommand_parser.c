@@ -73,6 +73,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 		return "No parameters specified";
 	int type;
 	int pinnum;
+	unsigned int pins_found = 0;
 	unsigned int pinmask;
 	*readedfields = 0;
 	load_defaults(out, timeout);
@@ -195,12 +196,16 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				}
 				continue;
 			} else if(strcmp_value(&jparser, "all") == 0) {
+				if(pins_found)
+					return "Wrong argument";
+				pins_found = ~1;
 				pinmask = all;
 				pinnum = -1;
 			} else {
 				const int res = strToUInt(&jparser.json[jparser.vstart], &pinnum);
-				if(!res || pinnum < 0 || pinnum > DHGPIO_MAXGPIONUM)
+				if(!res || pinnum < 0 || pinnum > DHGPIO_MAXGPIONUM || (pins_found & (1 << pinnum)))
 					return "Wrong argument";
+				pins_found |= (1 << pinnum);
 				pinmask =  (1 << pinnum);
 			}
 			jsonparse_next(&jparser);

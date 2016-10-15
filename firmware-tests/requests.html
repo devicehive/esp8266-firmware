@@ -55,6 +55,9 @@
   addtest("gpio/write", {"4":"x"}, false, "Dummy request");
   addtest("gpio/write", {"16":0}, false, "Wrong argument");
   addtest("gpio/write", {"4":22}, false, "Unsupported action");
+  addtest("gpio/write", {"all":"x"}, false, "Dummy request");
+  addtest("gpio/write", {"0":1, "all":1}, false, "Wrong argument");
+  addtest("gpio/write", {"all":1, "12":1}, false, "Wrong argument");
   addtest("gpio/read", null, true, null);
   addtest("gpio/read", {"4":"pullup"}, true, null);
   addtest("gpio/read", {"4":"nopull"}, true, null);
@@ -62,6 +65,7 @@
   addtest("gpio/read", {"4":"init"}, true, null);
   addtest("gpio/read", {"4":"disable"}, false, "Unexpected parameter");
   addtest("gpio/read", {"24":"init"}, false, "Wrong argument");
+  addtest("gpio/read", {"all":"init", "12":"nopull"}, false, "Wrong argument");
   addtest("gpio/int", {"4":"both", "timeout":500}, true, "");
   addtest("gpio/int", {"timeout":500}, true, "");
   addtest("gpio/int", {"timeout":5}, false, "Timeout is wrong");
