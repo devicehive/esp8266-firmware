@@ -198,7 +198,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 			} else if(strcmp_value(&jparser, "all") == 0) {
 				if(pins_found)
 					return "Wrong argument";
-				pins_found = ~1;
+				pins_found = ~0;
 				pinmask = all;
 				pinnum = -1;
 			} else {
