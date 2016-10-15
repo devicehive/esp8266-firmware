@@ -21,7 +21,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, floa
 	unsigned int raw_temperature;
 	unsigned int raw_pressure;
 	DHI2C_STATUS status;
-	if(sda != BMP180_NO_PIN || scl != BMP180_NO_PIN) {
+	if(sda != BMP180_NO_PIN && scl != BMP180_NO_PIN) {
 		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
 			dhdebug("bmp180: failed to set up pins");
 			return status;

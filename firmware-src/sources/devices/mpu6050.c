@@ -22,7 +22,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl,
 {
 	char buf[16];
 	DHI2C_STATUS status;
-	if(sda != MPU6050_NO_PIN || scl != MPU6050_NO_PIN) {
+	if(sda != MPU6050_NO_PIN && scl != MPU6050_NO_PIN) {
 		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
 			dhdebug("mpu6050: failed to set up pins");
 			return status;
