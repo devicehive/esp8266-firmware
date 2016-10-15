@@ -28,6 +28,7 @@ void ICACHE_FLASH_ATTR dhsender_data_parse_va(va_list ap,
 			data->gpio.caused = va_arg(ap, unsigned int);
 			data->gpio.state = va_arg(ap, unsigned int);
 			data->gpio.timestamp = va_arg(ap, unsigned int);
+			data->gpio.suitable = va_arg(ap, unsigned int);
 			*data_len = sizeof(GPIO_DATA);
 			break;
 		case RDT_FLOAT:
@@ -57,26 +58,28 @@ void ICACHE_FLASH_ATTR dhsender_data_parse_va(va_list ap,
 	}
 }
 
-LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf, unsigned int buflen, unsigned int state) {
+LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf,
+		unsigned int buflen, unsigned int state, unsigned int suitable) {
 	unsigned int len = snprintf(buf, buflen, "{");
 	unsigned int i;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		const unsigned int pin = 1 << i;
 		const pinvalue = (state & pin) ? 1 : 0;
-		if(DHGPIO_SUITABLE_PINS & pin) {
+		if(suitable & pin) {
 			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":\"%d\"" : ", \"%d\":\"%d\"", i, pinvalue);
 		}
 	}
 	return len + snprintf(&buf[len], buflen - len, "}");
 }
 
-LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf, unsigned int buflen, const GPIO_DATA *data) {
+LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf,
+		unsigned int buflen, const GPIO_DATA *data, unsigned int suitable) {
 	unsigned int len = snprintf(buf, buflen, "{\"caused\":[");
 	unsigned int i;
 	int comma = 0;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		const unsigned int pin = 1 << i;
-		if(DHGPIO_SUITABLE_PINS & pin == 0)
+		if(suitable & pin == 0)
 			continue;
 		if( pin & data->caused) {
 			len += snprintf(&buf[len], buflen - len, comma?", \"%d\"":"\"%d\"", i);
@@ -84,7 +87,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf, unsigned int b
 		}
 	}
 	len += snprintf(&buf[len], buflen - len, "], \"state\":");
-	len += gpio_state(&buf[len], buflen - len, data->state);
+	len += gpio_state(&buf[len], buflen - len, data->state, suitable);
 	return len + snprintf(&buf[len], buflen - len,
 			", \"tick\":%u}", data->timestamp);
 }
@@ -113,9 +116,9 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 			return snprintf(buf, buf_len, "{\"0\":%f}", data->adc);
 		case RDT_GPIO:
 			if(is_notification) {
-				return gpio_notification(buf, buf_len, &data->gpio);
+				return gpio_notification(buf, buf_len, &data->gpio, data->gpio.suitable);
 			} else {
-				return gpio_state(buf, buf_len, data->gpio.state);
+				return gpio_state(buf, buf_len, data->gpio.state, data->gpio.suitable);
 			}
 		case RDT_SEARCH64:
 		{

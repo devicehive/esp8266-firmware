@@ -31,6 +31,7 @@
 #include "devices/bh1750.h"
 #include "devices/mpu6050.h"
 #include "devices/hmc5883l.h"
+#include "devices/pcf8574.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -145,7 +146,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			}
 		}
 		if (init) {
-			cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dhgpio_read(), system_get_time());
+			cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dhgpio_read(), system_get_time(), DHGPIO_SUITABLE_PINS);
 		} else {
 			responce_error(cb, "Wrong initialization parameters");
 		}
@@ -484,7 +485,50 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
 			"{\"magnetometer\":{\"X\":%s, \"Y\":%s, \"Z\":%s}}",
 			floatbufx, floatbufy, floatbufz);
-	} else {
+	} else if( os_strcmp(command, "devices/pcf8574/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCF8574_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_PULLUP, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				pcf8574_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		if(fields & AF_PULLUP) {
+			char *res = i2c_status_tochar(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN, parse_pins.pins_to_pullup, 0));
+			if(responce_error(cb, res))
+				return;
+		}
+		unsigned int pins;
+		char *res = i2c_status_tochar(pcf8574_read(PCF8574_NO_PIN, PCF8574_NO_PIN, &pins));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, pins, system_get_time(), PCF8574_SUITABLE_PINS);
+    } else if( os_strcmp(command, "devices/pcf8574/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCF8574_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_SET | AF_CLEAR, &fields);
+		if (responce_error(cb, parse_res)) {
+			return;
+		} else if ( (fields & (AF_SET | AF_CLEAR | AF_PULLUP)) == 0) {
+			responce_error(cb, "Dummy request");
+			return;
+		} else if ( (parse_pins.pins_to_set | parse_pins.pins_to_clear | PCF8574_SUITABLE_PINS)
+				!= PCF8574_SUITABLE_PINS ) {
+			responce_error(cb, "Unsuitable pin");
+			return;
+		}
+		if(fields & AF_ADDRESS)
+			pcf8574_set_address(parse_pins.address);
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		char *res = i2c_status_tochar(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
+				parse_pins.pins_to_set, parse_pins.pins_to_clear));
+		if(responce_error(cb, res))
+			return;
+		responce_ok(cb);
+    } else {
 		responce_error(cb, "Unknown command");
 	}
 }

@@ -41,6 +41,8 @@ Table of contents
     * [devices/bh1750/read](#devicesbh1750read)
     * [devices/mpu6050/read](#devicesmpu6050read)
     * [devices/hmc5883l/read](#deviceshmc5883lread)
+    * [devices/pcf8574/read](#devicespcf8574read)
+    * [devices/pcf8574/write](#devicespcf8574write)
   * [License](#license)
 
 #Overview
@@ -188,13 +190,9 @@ JSON with a set of key-value pairs, where key is pin number and value '0' for LO
 *Example*:
 ```json
 { 
-	"command":"gpio/write",
-	"parameters":
-	{
-		"10":"0",
-		"11":"1",
-		"12":"x"
-	}
+	"10":"0",
+	"11":"1",
+	"12":"x"
 }
 ```
 
@@ -212,13 +210,9 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 *Example*:  
 ```json
 { 
-	"command":"gpio/read",
-	"parameters":
-	{
-		"10":"init",
-		"11":"pullup",
-		"12":"nopull"
-	}
+	"10":"init",
+	"11":"pullup",
+	"12":"nopull"
 }
 ```
 
@@ -786,17 +780,17 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"temperature":32.2947,
 	"acceleration":
-  {
-    "X":-0.8475,
-    "Y":-0.1748,
-    "Z":9.9623
-  },
-  "rotation":
-  {
-    "X":-0.4272,
-    "Y":0.4883,
-    "Z":3.3264
-  }
+	{
+		"X":-0.8475,
+		"Y":-0.1748,
+		"Z":9.9623
+	},
+	"rotation":
+	{
+		"X":-0.4272,
+		"Y":0.4883,
+		"Z":3.3264
+	}
 }
 ```
 Temperature unit in Celsius degrees. Acceleration unit is metre per second squared. Rotation unit is degree per second.
@@ -822,14 +816,66 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```json
 {
 	"magnetometer":
-  {
-	"X":-0.0603,
-	"Y":0.2203,
-	"Z":0.0755
-  }
+	{
+		"X":-0.0603,
+		"Y":0.2203,
+		"Z":0.0755
+	}
 }
 ```
 Data unit is gauss. Proportional to the magnetic field component along its axis. NaN value is possible for any axis on overflow.
+
+## devices/pcf8574/read
+Read GPIO extender pins state. All pins have pull up after powering on and this is the only one way to operate as inputs.
+
+*Parameters*:  
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x4E.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+Pin numbers-value pairs where value can be only "pullup". If pin was used as output, "pullup" sets it back to input before reading. "all" key for all pins are supported.
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x4E",
+	"0":"pullup"
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"0":"1",
+	"1":"1",
+	"2":"0",
+	...
+}
+```
+Chip has 8(0..7) ports.
+
+## devices/pcf8574/write
+Write GPIO extender pins state. HIGH level provides small limited(100 uA) current and actually that is the same as "pullup" from hardware side and this API. See chip datasheet for details.
+
+*Parameters*:  
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x4E.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface. 
+Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HGIH.
+ 
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x4E",
+	"0": "0",
+	"1": "1"
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
 
 # License
 The MIT License (MIT):
