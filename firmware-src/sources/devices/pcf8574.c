@@ -60,7 +60,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_set(int sda, int scl, unsigned int pins) 
 		}
 	}
 	buf = pins & PCF8574_SUITABLE_PINS;
-	if((status = dhi2c_read(mAddress, &buf, 1)) != DHI2C_OK) {
+	if((status = dhi2c_write(mAddress, &buf, 1, 1)) != DHI2C_OK) {
 		dhdebug("pcf8574: failed to write");
 		return status;
 	}

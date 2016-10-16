@@ -63,13 +63,14 @@ typedef enum {
 	AF_VALUES = 0x2000,		///< Read pins values.
 	AF_UARTMODE = 0x4000,	///< Read mode field for UART.
 	AF_DATA = 0x8000,		///< Read data field.
-	AF_TIMEOUT = 0x10000,	///< Read timeout field.
-	AF_ADDRESS = 0x20000,	///< Read address field.
-	AF_SDA = 0x40000,		///< Read SDA field.
-	AF_SCL = 0x80000,		///< Read SCL field.
-	AF_SPIMODE = 0x100000,	///< Read mode field for SPI.
-	AF_CS = 0x200000,		///< Read CS field.
-	AF_PIN = 0x400000		///< Read pin field.
+	AF_TEXT_DATA = 0x10000,	///< Read text field and store as data.
+	AF_TIMEOUT = 0x20000,	///< Read timeout field.
+	AF_ADDRESS = 0x40000,	///< Read address field.
+	AF_SDA = 0x80000,		///< Read SDA field.
+	AF_SCL = 0x100000,		///< Read SCL field.
+	AF_SPIMODE = 0x200000,	///< Read mode field for SPI.
+	AF_CS = 0x400000,		///< Read CS field.
+	AF_PIN = 0x800000,		///< Read pin field.
 } ALLOWED_FIELDS;
 
 /**

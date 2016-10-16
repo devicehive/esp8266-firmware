@@ -43,6 +43,7 @@ Table of contents
     * [devices/hmc5883l/read](#deviceshmc5883lread)
     * [devices/pcf8574/read](#devicespcf8574read)
     * [devices/pcf8574/write](#devicespcf8574write)
+    * [devices/pcf8574/hd44780/write](#devicespcf8574hd44780write)
   * [License](#license)
 
 #Overview
@@ -873,6 +874,28 @@ Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for H
 	"address":"0x4E",
 	"0": "0",
 	"1": "1"
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
+
+## devices/pcf8574/hd44780/write
+Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can have 16x2, 20x2, 20x4 or any other character array. Symbol "\n" (0x0A) for newline is supported. All display data erases on each command. PCF8574 should be connected to display with this pinmap: P0->RS, P1->RW, P2->E, P3->Backligth control or not connected, P4->D4, P5->D5, P6->D6 and P7->D7. 
+
+*Parameters*:  
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x4E.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface. 
+"data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.
+"text" - Plain text to set up. Cannot be combined with 'data' field in one command.
+ 
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x4E",
+	"text":"Hello!"
 }
 ```
 Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
