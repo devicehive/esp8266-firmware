@@ -182,6 +182,7 @@ bool flash_start(SerialPort *port, uint32_t blocks_count, uint32_t size, uint32_
 		fix = sectors_count;
 
 	pbody[0] = htole32(((sectors_count < 2 * fix) ? (sectors_count + 1) / 2 : (sectors_count - fix)) * ESP_SECTOR_SIZE);
+	printf("Erase %d\r\n", ((sectors_count < 2 * fix) ? (sectors_count + 1) / 2 : (sectors_count - fix)) * ESP_SECTOR_SIZE);
 	pbody[1] = htole32(blocks_count);
 	pbody[2] = htole32(ESP_BLOCK_SIZE);
 	pbody[3] = htole32(address);
@@ -296,6 +297,7 @@ bool flash_file(SerialPort *port, char *file, uint32_t address, char *incrementa
 	bool res = false;
 	if(incremental_data) {
 		uint32_t total = 0;
+		const uint32_t MIN_TO_WRITE = FLASH_ALIGN * 2;
 		for(uint32_t offset = 0; offset < size; offset += FLASH_ALIGN) {
 			uint32_t towrite = 0;
 			while(offset + towrite < size) {
@@ -304,10 +306,16 @@ bool flash_file(SerialPort *port, char *file, uint32_t address, char *incrementa
 				towrite += FLASH_ALIGN;
 			}
 			if(towrite) {
+				if(towrite < MIN_TO_WRITE) {
+					towrite = MIN_TO_WRITE;
+					// allow to write less at the end
+					if(towrite + offset > size)
+						towrite = size - offset;
+				}
 				res = flash_mem(port, &data[offset], towrite, address + offset);
 				if(!res)
 					return res;
-				offset += offset;
+				offset += towrite;
 				total += towrite;
 			}
 		}
@@ -363,6 +371,14 @@ int exit() {
 	printf("Press ENTER for exit.\r\n");
 	getchar();
 	return 1;
+}
+
+bool flash_default_config(SerialPort *port) {
+	printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
+	uint8_t data[4*1024];
+	memcpy(data, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT));
+	memset(&data[sizeof(ESP_INIT_DATA_DEAFULT)], 0xFF, sizeof(data) - sizeof(ESP_INIT_DATA_DEAFULT));
+	return flash_mem(port, data, sizeof(data), 0x7C000);
 }
 
 int main(int argc, char* argv[]) {
@@ -442,7 +458,6 @@ int main(int argc, char* argv[]) {
 						"0x00000 <- devicehive.bin, using devicehive.bin.prev as previously written data\r\n" \
 						"If chip was changed, please perform full flash first.\r\n"
 						);
-				isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000, (char*)"devicehive.bin.prev");
 		} else {
 			printf( "No image file were specified. You can specify it in args by pairs\r\n" \
 					"hex adress and image file name, for example:\r\n" \
@@ -451,15 +466,11 @@ int main(int argc, char* argv[]) {
 					"0x00000 <- devicehive.bin\r\n" \
 					"0x7C000 <- default configuration\r\n"
 					);
-			isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000, NULL);
-			if(isSuccess) {
-				printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
-				uint8_t data[4*1024];
-				memcpy(data, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT));
-				memset(&data[sizeof(ESP_INIT_DATA_DEAFULT)], 0xFF, sizeof(data) - sizeof(ESP_INIT_DATA_DEAFULT));
-				isSuccess = flash_mem(port, data, sizeof(data), 0x7C000);
-			}
 		}
+		isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000,
+				developerMode ? (char*)"devicehive.bin.prev" : NULL);
+		if(isSuccess && !developerMode)
+			isSuccess = flash_default_config(port);
 	} else {
 		if((argc - currentArg) % 2) {
 			delete port;
@@ -495,6 +506,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	if(isSuccess) {
+		flash_start(port, 0, 0, 0);
 		isSuccess = flash_done(port);
 	}
 
