@@ -25,7 +25,7 @@ AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
 PAGESH			= pages/pages.h
 
-.PHONY: all flash terminal clean
+.PHONY: all flash full_flash terminal clean
 
 all: $(FIRMWARE)
 
@@ -53,8 +53,13 @@ $(FIRMWARE): $(TARGETELF)
 	@stat -c '%s bytes' $(FIRMWARE)
 	
 flash: all
+	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher --developer)
+	@cp -f $(FIRMWARE) $(FIRMWARE).prev
+
+full_flash: all
 	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher)
-	
+	@cp -f $(FIRMWARE) $(FIRMWARE).prev
+
 terminal:
 	@./../esp-utils/build/esp-terminal
 
