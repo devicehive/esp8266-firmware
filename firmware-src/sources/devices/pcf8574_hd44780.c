@@ -112,16 +112,20 @@ DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_hd44780_write(int sda, int scl, const cha
 	int ch = 0;
 	// write text to display RAM
 	for(i = 0; i < len; i++) {
-		if(ch == 20 || text[i] == '\n') {
+		int nla = text[i] == '\n';
+		int nlc = (i + 1 < len) ? (text[i] == '\\' && text[i + 1] == 'n') : 0;
+		if(ch == 20 || nla || nlc) {
 			line++;
-			if(ch == 20 && text[i] == '\n')
+			if(ch == 20 && (nla || nlc))
 				line++;
 			if(line > 3)
 				break;
 			if((status = pcf8574_hd44780_set_line(sda, scl, line)) != DHI2C_OK)
 				return status;
 			ch = 0;
-			if(text[i] == '\n')
+			if(nlc)
+				i++;
+			if(nla || nlc)
 				continue;
 		}
 		if((status = pcf8574_hd44780_write_byte(sda, scl, text[i], 0)) != DHI2C_OK)
