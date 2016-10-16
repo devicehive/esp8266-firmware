@@ -43,6 +43,7 @@ LOCAL void ICACHE_FLASH_ATTR load_defaults(gpio_command_params *out, unsigned in
 	out->uart_partity = 'N';
 	out->uart_stopbits = 1;
 	out->timeout = timeout;
+	out->data_len = 0;
 }
 
 LOCAL char * ICACHE_FLASH_ATTR readUIntField(struct jsonparse_state *jparser, ALLOWED_FIELDS field, uint32_t *out, ALLOWED_FIELDS fields, ALLOWED_FIELDS *readedfields, unsigned int x) {
@@ -185,7 +186,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					return res;
 				continue;
 			} else if(strcmp_value(&jparser, "data") == 0) {
-				if((fields & AF_DATA) == 0)
+				if((fields & AF_DATA) == 0 || out->data_len)
 					return UNEXPECTED;
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
@@ -193,6 +194,19 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					if(out->data_len == 0)
 						return "Data is broken";
 					*readedfields |= AF_DATA;
+				}
+				continue;
+			}  else if(strcmp_value(&jparser, "text") == 0) {
+				if((fields & AF_TEXT_DATA) == 0 || out->data_len)
+					return UNEXPECTED;
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
+					if (jparser.vlen > sizeof(out->data) - 1)
+						return "Text is too long";
+					os_memcpy(out->data, &jparser.json[jparser.vstart], jparser.vlen);
+					out->data[jparser.vlen] = 0;
+					out->data_len = jparser.vlen;
+					*readedfields |= AF_TEXT_DATA;
 				}
 				continue;
 			} else if(strcmp_value(&jparser, "all") == 0) {
