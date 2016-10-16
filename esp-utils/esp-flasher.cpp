@@ -171,8 +171,7 @@ bool flash_send(SerialPort *port, ESP_REQUEST_HEADER *hdr, void *body, bool prin
 	return true;
 }
 
-bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address) {
-	uint32_t blocks_count = ceil((double) size / (double) ESP_BLOCK_SIZE);
+bool flash_start(SerialPort *port, uint32_t blocks_count, uint32_t size, uint32_t address) {
 	ESP_REQUEST_HEADER rh;
 	uint32_t pbody[4];
 
@@ -192,11 +191,25 @@ bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address)
 	rh.size = htole16(sizeof(pbody));
 	rh.cs = esp_checksum(pbody, sizeof(pbody));
 
-	if (!flash_send(port, &rh, &pbody, true)) {
+	if (!flash_send(port, &rh, &pbody, true))
+		return false;
+
+	return true;
+}
+
+/* Data should be aligned  per 4096 bytes */
+bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address) {
+	if (size % 4096 || address % 4096) {
+		printf("\r\nINTERNAL ERROR: data isn't align by 4096 bytes - %d\r\n", size);
+		return false;
+	}
+	uint32_t blocks_count = ceil((double) size / (double) ESP_BLOCK_SIZE);
+	ESP_REQUEST_HEADER rh;
+
+	if (!flash_start(port, blocks_count, size, address)) {
 		printf("\r\nFailed to enter flash mode\r\n");
 		return false;
 	}
-	printf("Total block count %d, block size %d\r\n", blocks_count, ESP_BLOCK_SIZE);
 
 	for (unsigned int seq = 0; seq < blocks_count; seq++) {
 		printf("\rWriting block %d/%d at 0x%08X        ", seq, blocks_count, address + ESP_BLOCK_SIZE * seq);
@@ -227,7 +240,8 @@ bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address)
 	return true;
 }
 
-bool flash_file(SerialPort *port, char *file, uint32_t address) {
+bool flash_file(SerialPort *port, char *file, uint32_t address, char *incremental) {
+	const uint32_t FLASH_ALIGN = 4096;
 	FILE* fd = fopen(file, "rb");
 	if (!fd) {
 		printf("\r\nFailed to open file %s\r\n", file);
@@ -237,7 +251,11 @@ bool flash_file(SerialPort *port, char *file, uint32_t address) {
 	uint32_t size = ftell(fd);
 	fseek(fd, 0, SEEK_SET);
 	printf("Flashing %s at 0x%08X\r\n", file, address);
-	uint8_t *data = new uint8_t[size];
+	uint32_t extra = FLASH_ALIGN * (uint32_t)ceil((double) size / (double) FLASH_ALIGN) - size;
+	printf("Align with extra %d bytes, total %d bytes\r\n", extra, extra + size);
+	uint8_t *data = new uint8_t[size + extra];
+	memset(&data[size], 0xFF, extra);
+	uint8_t *incremental_data = NULL;
 
 	unsigned int rb = fread(data, 1, size, fd);
 	fclose (fd);
@@ -246,9 +264,61 @@ bool flash_file(SerialPort *port, char *file, uint32_t address) {
 		printf("\r\nFailed to read image file\r\n");
 		return false;
 	}
-	bool res = flash_mem(port, data, size, address);
+	if(incremental) {
+	FILE* fdi = fopen(incremental, "rb");
+		if(fdi) {
+			incremental_data = new uint8_t[size + extra];
+			memset(&incremental_data[size], 0xFF, extra);
+			// read no more then data size
+			unsigned int rbi = fread(incremental_data, 1, size, fdi);
+			if(rbi) {
+				while(rbi < size) { // fill tail with anything but not data
+					incremental_data[rbi] = ~data[rbi];
+					rbi++;
+				}
+			} else {
+				delete [] incremental_data;
+				incremental_data = NULL;
+			}
+			fclose(fdi);
+		}
+		if(incremental_data == NULL) {
+			printf("Failed to open previous file to do incremental flash. Performing full flash.\r\n");
+		} else {
+			printf("Previously written data found, skipping the same sectors.\r\n");
+			if(memcmp(data, incremental_data, size) == 0) {
+				printf("Incremental data is the same.\r\n");
+				return true;
+			}
+		}
+	}
+	size += extra;
+	bool res = false;
+	if(incremental_data) {
+		uint32_t total = 0;
+		for(uint32_t offset = 0; offset < size; offset += FLASH_ALIGN) {
+			uint32_t towrite = 0;
+			while(offset + towrite < size) {
+				if(memcmp(&data[offset + towrite], &incremental_data[offset + towrite], FLASH_ALIGN) == 0)
+					break;
+				towrite += FLASH_ALIGN;
+			}
+			if(towrite) {
+				res = flash_mem(port, &data[offset], towrite, address + offset);
+				if(!res)
+					return res;
+				offset += offset;
+				total += towrite;
+			}
+		}
+		printf("Incremental flash wrote %d/%d bytes.\r\n", total, size);
+	} else {
+		res = flash_mem(port, data, size, address);
+	}
 
 	delete [] data;
+	if(incremental_data)
+		delete [] incremental_data;
 	return res;
 }
 
@@ -357,26 +427,39 @@ int main(int argc, char* argv[]) {
 	}
 	flash_sync(port, false);
 
+	bool developerMode = false;
+	if(argc > currentArg) {
+		if(strncmp(argv[1], "--developer", 5) == 0) {
+			currentArg++;
+			developerMode = true;
+		}
+	}
+
 	if(currentArg >= argc) {
-		printf( "No image file were specified. You can specify it in args by pairs\r\n" \
-				"hex adress and image file name, for example:\r\n" \
-				"esp-flasher 0x00000 image1.bin 0x40000 image2.bin\r\n"
-				"Trying to flash with defaults:\r\n" \
-				"0x00000 <- devicehive.bin\r\n" \
-				"0x7C000 <- default configuration\r\n" \
-				"0x7E000 <- 4K of 0xFF\r\n"
-				);
-				isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000);
-				if(isSuccess) {
-					printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
-					isSuccess = flash_mem(port, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT), 0x7C000);
-					if(isSuccess) {
-						uint8_t data[4*1024];
-						memset(data, 0xFF, sizeof(data));
-						printf("Flashing 4K of 0xFF at 0x%08X\r\n", 0x7E000);
-						isSuccess = flash_mem(port, data, sizeof(data), 0x7E000);
-					}
-				}
+		if(developerMode) {
+				printf( "Developer mode.\r\n"
+						"Flashing:\r\n" \
+						"0x00000 <- devicehive.bin, using devicehive.bin.prev as previously written data\r\n" \
+						"If chip was changed, please perform full flash first.\r\n"
+						);
+				isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000, (char*)"devicehive.bin.prev");
+		} else {
+			printf( "No image file were specified. You can specify it in args by pairs\r\n" \
+					"hex adress and image file name, for example:\r\n" \
+					"esp-flasher 0x00000 image1.bin 0x40000 image2.bin\r\n"
+					"Trying to flash with defaults:\r\n" \
+					"0x00000 <- devicehive.bin\r\n" \
+					"0x7C000 <- default configuration\r\n"
+					);
+			isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000, NULL);
+			if(isSuccess) {
+				printf("Flashing default configuration at 0x%08X\r\n", 0x7C000);
+				uint8_t data[4*1024];
+				memcpy(data, ESP_INIT_DATA_DEAFULT, sizeof(ESP_INIT_DATA_DEAFULT));
+				memset(&data[sizeof(ESP_INIT_DATA_DEAFULT)], 0xFF, sizeof(data) - sizeof(ESP_INIT_DATA_DEAFULT));
+				isSuccess = flash_mem(port, data, sizeof(data), 0x7C000);
+			}
+		}
 	} else {
 		if((argc - currentArg) % 2) {
 			delete port;
@@ -406,7 +489,7 @@ int main(int argc, char* argv[]) {
 		for( ; currentArg < argc - 1 && isSuccess; currentArg += 2) {
 			uint32_t address;
 			if(sscanf(argv[currentArg], "%x", &address)) {
-				isSuccess = flash_file(port, argv[currentArg + 1], address);
+				isSuccess = flash_file(port, argv[currentArg + 1], address, NULL);
 			}
 		}
 	}
@@ -421,5 +504,5 @@ int main(int argc, char* argv[]) {
 	else
 		printf("Flashing failed.\r\n");
 	exit();
-	return 0;
+	return isSuccess? 0 : 1;
 }
