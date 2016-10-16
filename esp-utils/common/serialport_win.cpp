@@ -136,4 +136,12 @@ unsigned int SerialPort::getTick() {
 	return GetTickCount();
 }
 
+void SerialPort::setRts(bool val) {
+	// TODO
+}
+
+void SerialPort::setDtr(bool val) {
+	// TODO
+}
+
 #endif

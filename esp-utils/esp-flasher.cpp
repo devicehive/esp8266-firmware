@@ -182,7 +182,6 @@ bool flash_start(SerialPort *port, uint32_t blocks_count, uint32_t size, uint32_
 		fix = sectors_count;
 
 	pbody[0] = htole32(((sectors_count < 2 * fix) ? (sectors_count + 1) / 2 : (sectors_count - fix)) * ESP_SECTOR_SIZE);
-	printf("Erase %d\r\n", ((sectors_count < 2 * fix) ? (sectors_count + 1) / 2 : (sectors_count - fix)) * ESP_SECTOR_SIZE);
 	pbody[1] = htole32(blocks_count);
 	pbody[2] = htole32(ESP_BLOCK_SIZE);
 	pbody[3] = htole32(address);
@@ -381,6 +380,19 @@ bool flash_default_config(SerialPort *port) {
 	return flash_mem(port, data, sizeof(data), 0x7C000);
 }
 
+void force_flash_mode(SerialPort *port) {
+	// Typically dev boards have:
+	// RTS is connected to GPIO0
+	// DTR is connected to RTS
+    port->setDtr(false);
+    port->setRts(true);
+    port->sleep(50);
+    port->setDtr(true);
+    port->setRts(false);
+    port->sleep(50);
+    port->setDtr(false);
+}
+
 int main(int argc, char* argv[]) {
 	setbuf(stdout, NULL);
 	int currentArg = 1;
@@ -426,6 +438,8 @@ int main(int argc, char* argv[]) {
 						SerialPort::findNextPort(true);
 						goto portfound;
 					}
+					if(j == 0)
+						force_flash_mode(port);
 					delete port;
 					port = NULL;
 				}

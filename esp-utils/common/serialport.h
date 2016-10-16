@@ -39,6 +39,9 @@ public:
     void waitTransmitionEnd(unsigned int timeOutMs);
     bool isReadError();
     static const char *findNextPort(bool finish);
+    void setRts(bool val);
+    void setDtr(bool val);
+    void sleep(unsigned int ms);
 private:
 #ifdef COMWINDOWS
     static DWORD ThreadProc (LPVOID lpdwThreadParam);
@@ -48,7 +51,6 @@ private:
     SerialPort(COM comport);
     unsigned int write_native(const void *data, unsigned int len);
     bool read_native(const void *data, unsigned int len, unsigned int *rb);
-    void sleep(unsigned int ms);
     static unsigned int getTick();
     COM get_com();
     COM mCom;
