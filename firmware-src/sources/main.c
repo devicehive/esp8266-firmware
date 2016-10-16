@@ -76,20 +76,24 @@ extern int rtc_mem_check(int f);
 
 void user_rf_pre_init(void) {
 	RESET_COUNTER counter;
-	system_rtc_mem_read(64, &counter, sizeof(counter));
-	if(counter.magic == RESET_COUNTER_MAGIC && counter.resetCounter <= RESET_NUM) {
-		counter.resetCounter++;
-		if(counter.resetCounter == RESET_NUM) {
-			reset_counter(0);
-			mSpecialMode = 1;
-		} else {
-			system_rtc_mem_write(RESET_COUNTER_RTC_ADDRESS, &counter, sizeof(counter));
-			os_timer_disarm(&mResetTimer);
-			os_timer_setfn(&mResetTimer, (os_timer_func_t *)reset_counter, NULL);
-			os_timer_arm(&mResetTimer, 3000, 0);
-		}
-	} else {
+	if(system_get_rst_info()->reason != REASON_EXT_SYS_RST) {
 		reset_counter(0);
+	} else {
+		system_rtc_mem_read(64, &counter, sizeof(counter));
+		if(counter.magic == RESET_COUNTER_MAGIC && counter.resetCounter <= RESET_NUM) {
+			counter.resetCounter++;
+			if(counter.resetCounter == RESET_NUM) {
+				reset_counter(0);
+				mSpecialMode = 1;
+			} else {
+				system_rtc_mem_write(RESET_COUNTER_RTC_ADDRESS, &counter, sizeof(counter));
+				os_timer_disarm(&mResetTimer);
+				os_timer_setfn(&mResetTimer, (os_timer_func_t *)reset_counter, NULL);
+				os_timer_arm(&mResetTimer, 3000, 0);
+			}
+		} else {
+			reset_counter(0);
+		}
 	}
 
 	system_restore();
