@@ -137,11 +137,11 @@ unsigned int SerialPort::getTick() {
 }
 
 void SerialPort::setRts(bool val) {
-	// TODO
+	EscapeCommFunction(mCom, val ? SETRTS : CLRRTS);
 }
 
 void SerialPort::setDtr(bool val) {
-	// TODO
+	EscapeCommFunction(mCom, val ? SETDTR : CLRDTR);
 }
 
 #endif
