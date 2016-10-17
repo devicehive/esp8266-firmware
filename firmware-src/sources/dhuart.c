@@ -69,12 +69,11 @@ LOCAL void dhuart_intr_handler(void *arg) {
 			dhuart_char_rcv(rcvChar);
 			break;
 		case DUM_PER_BUF:
+			if(mUartBufPos >= sizeof(mUartBuf)) {
+				return;
+			}
+			mUartBuf[mUartBufPos++] = rcvChar;
 			if(mBufInterrupt) {
-				if(mUartBufPos >= sizeof(mUartBuf)) {
-					dhdebug("ERROR: UART buffer overflow");
-					return;
-				}
-				mUartBuf[mUartBufPos++] = rcvChar;
 				if(mUartBufPos <= INTERFACES_BUF_SIZE) {
 					arm_buf_timer();
 				}
@@ -138,16 +137,30 @@ void ICACHE_FLASH_ATTR dhuart_send_buf(const char *buf, unsigned int len) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhuart_set_mode(DHUART_DATA_MODE mode, unsigned int timeout) {
+void ICACHE_FLASH_ATTR dhuart_set_mode(DHUART_DATA_MODE mode) {
 	mDataMode = mode;
-	if(mode == DUM_PER_BUF)
-		mUartTimerTimeout = timeout;
-	else if(mode == DUM_PER_BYTE)
+	if(mode == DUM_PER_BUF) {
+		mUartBufPos = 0;
+	} else if(mode == DUM_PER_BYTE) {
 		mBufInterrupt = 0;
+	}
 }
 
-unsigned int ICACHE_FLASH_ATTR dhuart_get_timeout() {
+unsigned int ICACHE_FLASH_ATTR dhuart_get_callback_timeout() {
 	return mUartTimerTimeout;
+}
+
+void ICACHE_FLASH_ATTR dhuart_set_callback_timeout(unsigned int timeout) {
+	mUartTimerTimeout = timeout;
+}
+
+unsigned int ICACHE_FLASH_ATTR dhuart_get_buf(char ** buf) {
+	*buf = mUartBuf;
+	return mUartBufPos;
+}
+
+void ICACHE_FLASH_ATTR dhuart_reset_buf() {
+	mUartBufPos = 0;
 }
 
 void ICACHE_FLASH_ATTR dhuart_enable_buf_interrupt(int enable) {

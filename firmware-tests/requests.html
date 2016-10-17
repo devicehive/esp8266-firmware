@@ -108,6 +108,7 @@
   addtest("uart/int", {"mode":"57600 G3F", "timeout":2000}, false, "Wrong mode framing");
   addtest("uart/int", {"mode":"57600 8E3"}, false, "Wrong UART mode");
   addtest("uart/int", {"mode":"9600 7O2", "timeout":2000}, true, "");
+  addtest("uart/int", {"mode":"9600 7O2", "timeout":5001}, false, "Timeout is too long");
   addtest("uart/int", {"mode":"115200 8N1"}, true, "");
   addtest("uart/int", {"mode":"disable"}, true, "");
   addtest("uart/int", {"mode":"0"}, true, "");
@@ -115,6 +116,11 @@
   addtest("uart/write", {"data":"SGVsbG8sIHdvcmxkIQ==", "timeout":300}, false, "Unexpected parameter");
   addtest("uart/write", {"data":"SGVsbG8sIHdvcmxkIQ="}, false, "Data is broken");
   addtest("uart/write", {"data":"SGVsbG8sIHdv^mxkIQ=="}, false, "Data is broken");
+  addtest("uart/read", null, true, null);
+  addtest("uart/read", {"data":"SGVsbG8sIHdvcmxkIQ=="}, true, null);
+  addtest("uart/read", {"mode":"115200 8N1", "data":"SGVsbG8sIHdvcmxkIQ==", "timeout":100}, true, null);
+  addtest("uart/read", {"mode":"115200 8N1", "timeout":100}, false, "Timeout can be specified only with data");
+  addtest("uart/read", {"mode":"115200 8N1", "data":"AA==", "timeout":1001}, false, "Timeout is too long");
   addtest("uart/terminal", {"4":"disable"}, false, "Command does not have parameters");
   addtest("uart/terminal", null, true, "");
   addtest("i2c/master/read", null, false, "No parameters specified");

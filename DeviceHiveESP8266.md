@@ -17,6 +17,7 @@ Table of contents
   * [PWM](#pwm)
     * [pwm/control](#pwmcontrol)
   * [UART](#uart)
+    * [uart/read](#uartread)
     * [uart/write](#uartwrite)
     * [uart/int](#uartint)
     * [uart/terminal](#uartterminal)
@@ -349,7 +350,30 @@ PWM is can be used to generate single or multiple pulses with specific length:
 { "0":"30",  "frequency":"0.1", "count":"4"} - generate 4 pulses 3 seconds length, 7 seconds interval between pulses.*
 
 # UART
-ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1). All read operations have to be done with notifications.
+ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1).
+
+## uart/read
+Read data from UART interface. Receing buffer resets on each read or write command and main contain up to 264 bytes.
+
+*Parameters*:  
+"mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing *Parameters*:   number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings("115200 8N1" by default) and will not reinit port.  
+"data" - data string encoded with base64 which would be sent before reading. Reading buffer will be cleared and will contain data which is received during "timeout" time only otherwise data will be since last read, write command or since last notification sent. Data size have to be equal or less than 264 bytes.  
+"timeout" - Can be used only with "data" field. Delay in ms for collecting answer after transmitting data. Maximum 1000ms, if not specified 250 ms is used.   
+
+*Example*:  
+```json
+{
+	"mode":"115200",
+	"data":"SGVsbG8sIHdvcmxkIQ=="
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"data":"SGkh"
+}
+```
+"data" field is base64 encoded data that was read from the interface.
 
 ## uart/write
 Send data via UART.
@@ -365,12 +389,13 @@ Send data via UART.
 }
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+
 ## uart/int
 Subscribe on notification which contains data that was read from UART. Firmware starts wait for data from and each time when byte is received byte puts into buffer (264 bytes len), then firmware starts wait for the next byte with some timeout. When timeout reached or buffer is full firmware sends notification.
 
 *Parameters*:  
 "mode" - the same "mode" parameter as in "uart/write"command, see description there. It also can be omitted to keep current parameters. Additionally this parameter can be "disable" or "0" for disabling notifications. 
-"timeout" - timeout for notifications. Default is 250 ms. 
+"timeout" - timeout for notifications in miliseconds. If internal buffer received something, notification will be sent with this timeout after last byte. Default is 250 ms. Maximum 5000 ms. 
 
 *Example*:  
 ```json
@@ -387,6 +412,7 @@ Return ‘OK’ in status. Or ‘Error’ and description in result on error. No
 ```
 
 Where "data" key name is always used and value is string with base64 encoded data(264 or less bytes).
+
 ## uart/terminal
 Resume terminal on UART interface. If UART’s pins were used by another feature(i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with 115200 8N1.
 

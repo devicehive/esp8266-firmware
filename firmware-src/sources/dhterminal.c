@@ -337,7 +337,7 @@ void dhterminal_debug(const char *pFormat, va_list ap) {
 
 void ICACHE_FLASH_ATTR dhterminal_init() {
 	dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-	dhuart_set_mode(DUM_PER_BYTE, 0);
+	dhuart_set_mode(DUM_PER_BYTE);
 	dhuart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
 	dhterminal_reset();
 	dhdebug_terminal();

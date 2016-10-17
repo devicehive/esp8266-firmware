@@ -96,7 +96,7 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 	cb.data.arg = (void*)answer;
 	dhcommands_do(&cb, path, content_in->data, content_in->len);
 	if(answer->content.data && answer->content.len) {
-		if(answer->content.data[0] == '{') {
+		if(irom_char(answer->content.data) == '{') {
 			return HRCS_ANSWERED_JSON;
 		}
 	}
