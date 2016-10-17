@@ -17,8 +17,9 @@
 
 /** UART mode. */
 typedef enum {
-	DUM_PER_BYTE,	///< Receive data byte by byte.
-	DUM_PER_BUF		///< Receive data per buffer.
+	DUM_IGNORE,		///< Ignore input data, can print everythin.
+	DUM_PER_BYTE,	///< Receive data byte by byte, dedicated callback on each byte, some send data function is disabled.
+	DUM_PER_BUF		///< Receive data per buffer, dedicated callback with buffer with some timeout which disabled by default, some send data function is disabled.
 } DHUART_DATA_MODE;
 
 /**
@@ -33,21 +34,21 @@ int dhuart_init(unsigned int speed, unsigned int databits, char parity, unsigned
 
 /**
  *	\brief				Write string to UART.
- *	\details			Works only in DUM_PER_BYTE mode.
+ *	\details			Doesn't works only in DUM_PER_BUF mode.
  *	\param[in]	str		String, ie bytes array that should be written. Will transmit buffer until first null char.
  */
 void dhuart_send_str(const char *str);
 
 /**
  *	\brief				Write string to UART and add "\r\n" to the end of string.
- *	\details			Works only in DUM_PER_BYTE mode.
+ *	\details			Doesn't work in DUM_PER_BUF mode.
  *	\param[in]	str		String, ie bytes array that should be written. Will transmit buffer until first null char.
  */
 void dhuart_send_line(const char *str);
 
 /**
  *	\brief				Write char array with specified size to UART.
- *	\details			Works only in DUM_PER_BUF mode.
+ *	\details			Doesn't works only in DUM_PER_BYTE mode.
  *	\param[in]	buf		Chars array.
  *	\param[in]	len		Number of chars in buf.
  */

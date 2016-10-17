@@ -28,7 +28,7 @@
 #define UART_CONFIGURATION_REGISTER1 (UART_BASE + 0x24)
 
 #define DHUART_BUFFER_OVERFLOW_RESERVE INTERFACES_BUF_SIZE
-LOCAL DHUART_DATA_MODE mDataMode = DUM_PER_BYTE;
+LOCAL DHUART_DATA_MODE mDataMode = DUM_IGNORE;
 LOCAL char mUartBuf[INTERFACES_BUF_SIZE + DHUART_BUFFER_OVERFLOW_RESERVE];
 LOCAL unsigned int mUartBufPos = 0;
 LOCAL os_timer_t mUartTimer;
@@ -79,6 +79,8 @@ LOCAL void dhuart_intr_handler(void *arg) {
 				}
 			}
 			break;
+		case DUM_IGNORE:
+			break;
 		}
 	}
 }
@@ -117,7 +119,7 @@ LOCAL void ICACHE_FLASH_ATTR dhuart_send_char(char c) {
 }
 
 void ICACHE_FLASH_ATTR dhuart_send_str(const char *str) {
-	if(mDataMode != DUM_PER_BYTE)
+	if(mDataMode == DUM_PER_BUF)
 		return;
 	while(*str)
 		dhuart_send_char(*str++);
@@ -129,7 +131,7 @@ void ICACHE_FLASH_ATTR dhuart_send_line(const char *str) {
 }
 
 void ICACHE_FLASH_ATTR dhuart_send_buf(const char *buf, unsigned int len) {
-	if(mDataMode != DUM_PER_BUF)
+	if(mDataMode == DUM_PER_BYTE)
 		return;
 	while(len--) {
 		system_soft_wdt_feed();

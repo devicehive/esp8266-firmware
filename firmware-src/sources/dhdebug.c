@@ -48,7 +48,7 @@ void ICACHE_FLASH_ATTR dhdebug_terminal() {
 
 void ICACHE_FLASH_ATTR dhdebug_direct() {
 	dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-	dhuart_set_mode(DUM_PER_BYTE);
+	dhuart_set_mode(DUM_IGNORE);
 	isDirect = 1;
 }
 
