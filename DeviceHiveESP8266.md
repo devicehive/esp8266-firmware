@@ -134,6 +134,9 @@ http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
 Chip answers on this request '204 No content' which means that operation successfully completed.
 
+#Local web server
+Firmware includes local web server with tools for playing with API and some sample for some sensor. Web server aviliable at chip's 80 port. Having deviceId configured and mDNS compatible OS, it is possible to to open web page at http://your-device-id.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
+
 #Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
 

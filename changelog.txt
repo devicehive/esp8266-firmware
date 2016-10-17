@@ -22,6 +22,7 @@ v0.4
 - new playgrounds support
 
 v0.5
+- local embedded web server with tools and samples
 - local RESTful API
 - support for some popular sensor devices
 - bug fixes
