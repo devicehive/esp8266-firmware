@@ -69,7 +69,7 @@
  </head>
  <body onload="init()">
   <label>AccesKey: </label><input type="password" id="accesskey"><br>
-  <p>This sample allows to send an arbitrary request and observe a response. Enter command name and parameters which should be valid JSON and click 'Run' button.</p>
+  <p>This sample allows to send an arbitrary request and observe a response. Enter command name and parameters which should be valid JSON and click 'Run' button. Some commands use base64 encoding. There is a simple converter <a href='./base64.html' target='_blank'>base64.html</a>.</p>
   <label>Command: </label><input type="text" id="command" value="gpio/read"><br>
   <br><label>Parameters: </label><textarea id="parameters" rows="10"></textarea><br>
   <br><input type="button" value="Run" onclick="run();"><br>
