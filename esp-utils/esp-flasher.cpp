@@ -265,7 +265,7 @@ bool flash_file(SerialPort *port, char *file, uint32_t address, char *incrementa
 		return false;
 	}
 	if(incremental) {
-	FILE* fdi = fopen(incremental, "rb");
+		FILE* fdi = fopen(incremental, "rb");
 		if(fdi) {
 			incremental_data = new uint8_t[size + extra];
 			memset(&incremental_data[size], 0xFF, extra);
@@ -295,30 +295,44 @@ bool flash_file(SerialPort *port, char *file, uint32_t address, char *incrementa
 	size += extra;
 	bool res = false;
 	if(incremental_data) {
-		uint32_t total = 0;
-		const uint32_t MIN_TO_WRITE = FLASH_ALIGN * 4;
-		for(uint32_t offset = 0; offset < size; offset += FLASH_ALIGN) {
-			uint32_t towrite = 0;
-			while(offset + towrite < size) {
-				if(memcmp(&data[offset + towrite], &incremental_data[offset + towrite], FLASH_ALIGN) == 0)
-					break;
-				towrite += FLASH_ALIGN;
-			}
-			if(towrite) {
-				if(towrite < MIN_TO_WRITE) {
-					towrite = MIN_TO_WRITE;
+		for(int i = 0; i < 2; i++) {
+			uint32_t total = 0;
+			uint32_t blocks = 0;
+			const uint32_t ERASE_AREA_ALIG = FLASH_ALIGN * 4;
+			for(uint32_t offset = 0; offset < size; offset += FLASH_ALIGN) {
+				uint32_t towrite = 0;
+				while(offset + towrite < size) {
+					if(memcmp(&data[offset + towrite], &incremental_data[offset + towrite], FLASH_ALIGN) == 0)
+						break;
+					towrite += FLASH_ALIGN;
+				}
+				if(towrite) {
+					// esp erases some more data then specified due SPIEraseArea issue, 16 kb blocks work normally
+					if(towrite % ERASE_AREA_ALIG) {
+						towrite = (towrite / ERASE_AREA_ALIG + 1) * ERASE_AREA_ALIG;
+					}
 					// allow to write less at the end
 					if(towrite + offset > size)
 						towrite = size - offset;
+
+					blocks++;
+					if(i != 0) { // first run is dry
+						res = flash_mem(port, &data[offset], towrite, address + offset);
+						if(!res)
+							return res;
+					}
+					offset += towrite;
+					total += towrite;
 				}
-				res = flash_mem(port, &data[offset], towrite, address + offset);
-				if(!res)
-					return res;
-				offset += towrite;
-				total += towrite;
+			}
+			if(i == 0 && blocks > 3) {
+				printf("Too many difference, performing full flash\r\n");
+				res = flash_mem(port, data, size, address);
+				break;
+			} else if(blocks > 3) {
+				printf("Incremental flash wrote %d/%d bytes in %d blocks.\r\n", total, size, blocks);
 			}
 		}
-		printf("Incremental flash wrote %d/%d bytes.\r\n", total, size);
 	} else {
 		res = flash_mem(port, data, size, address);
 	}
