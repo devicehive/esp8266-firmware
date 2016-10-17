@@ -29,9 +29,7 @@ char * ICACHE_FLASH_ATTR mhz19_read(int *co2) {
 	if(len != 9){
 		if(len)
 			return "Response length mismatch";
-		else
-			return "No response";
-		return "Response length mismatch";
+		return "No response";
 	}
 	for(i = 1; i < 8; i++) {
 		cs += result[i];
