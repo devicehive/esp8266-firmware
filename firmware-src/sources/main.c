@@ -89,7 +89,7 @@ void user_rf_pre_init(void) {
 				system_rtc_mem_write(RESET_COUNTER_RTC_ADDRESS, &counter, sizeof(counter));
 				os_timer_disarm(&mResetTimer);
 				os_timer_setfn(&mResetTimer, (os_timer_func_t *)reset_counter, NULL);
-				os_timer_arm(&mResetTimer, 3000, 0);
+				os_timer_arm(&mResetTimer, 1000, 0);
 			}
 		} else {
 			reset_counter(0);
@@ -106,7 +106,6 @@ void user_init(void) {
 		dhsettings_init();
 		dhap_init();
 	} else {
-		dhterminal_init();
 		dhdebug("*****************************");
 		dhsettings_init();
 		dhsender_queue_init();
@@ -114,5 +113,6 @@ void user_init(void) {
 		dhgpio_init();
 		webserver_init();
 		dhdebug("Initialization completed");
+		dhterminal_init();
 	}
 }
