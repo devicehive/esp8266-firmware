@@ -203,22 +203,59 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			responce_error(cb, "Wrong parameters");
 	} else if( os_strcmp(command, "uart/write") == 0 ) {
 		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_UARTMODE | AF_DATA, &fields);
-		if (responce_error(cb, parse_res))
+		if(responce_error(cb, parse_res))
 			return;
 		if(uart_init(cb, fields, &parse_pins, 0))
 			return;
-		dhuart_set_mode(DUM_PER_BUF, dhuart_get_timeout());
+		dhuart_set_mode(DUM_PER_BUF);
 		dhuart_send_buf(parse_pins.data, parse_pins.data_len);
 		responce_ok(cb);
+	} else if( os_strcmp(command, "uart/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_UARTMODE | AF_DATA | AF_TIMEOUT, &fields);
+			if(responce_error(cb, parse_res))
+				return;
+			if(uart_init(cb, fields, &parse_pins, 0))
+				return;
+			if(fields & AF_TIMEOUT) {
+				if(parse_pins.timeout > 1000) {
+					responce_error(cb, "Timeout is too long");
+					return;
+				}
+				if((fields & AF_DATA) == 0) {
+					responce_error(cb, "Timeout can be specified only with data");
+					return;
+				}
+			}
+		}
+		if(fields & AF_DATA) {
+			dhuart_set_mode(DUM_PER_BUF);
+			dhuart_send_buf(parse_pins.data, parse_pins.data_len);
+			system_soft_wdt_feed();
+			os_delay_us(((fields & AF_TIMEOUT) ? parse_pins.timeout : 250) * 1000);
+			system_soft_wdt_feed();
+		}
+		char *buf;
+		int len = dhuart_get_buf(&buf);
+		if(len > INTERFACES_BUF_SIZE)
+			len = INTERFACES_BUF_SIZE;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, buf, len);
+		dhuart_set_mode(DUM_PER_BUF);
 	} else if( os_strcmp(command, "uart/int") == 0 ) {
 		if(paramslen) {
-			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, dhuart_get_timeout(), AF_UARTMODE | AF_TIMEOUT, &fields);
-			if (responce_error(cb, parse_res))
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, dhuart_get_callback_timeout(), AF_UARTMODE | AF_TIMEOUT, &fields);
+			if(responce_error(cb, parse_res))
 				return;
+			if((fields & AF_TIMEOUT) && parse_pins.timeout > 5000) {
+				responce_error(cb, "Timeout is too long");
+				return;
+			}
 			if(uart_init(cb, fields, &parse_pins, 1))
 				return;
+			if(fields & AF_TIMEOUT)
+				dhuart_set_callback_timeout(parse_pins.timeout);
 		}
-		dhuart_set_mode(DUM_PER_BUF, (fields & AF_TIMEOUT) ? parse_pins.timeout : dhuart_get_timeout());
+		dhuart_set_mode(DUM_PER_BUF);
 		dhuart_enable_buf_interrupt(1);
 		responce_ok(cb);
 	} else if( os_strcmp(command, "uart/terminal") == 0 ) {

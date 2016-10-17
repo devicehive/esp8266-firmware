@@ -55,10 +55,30 @@ void dhuart_send_buf(const char *buf, unsigned int len);
 
 /**
  *	\brief				Set current operating mode.
+ *	\details			Buffer is cleaned up on setting DUM_PER_BUF mode.
  *	\param[in]	mode	New operating mode.
- *	\param[in]	timeout	Timeout in ms which should pass without receiving to generate callback with read bytes. Can be set only with DUM_PER_BUF mode.
  */
-void dhuart_set_mode(DHUART_DATA_MODE mode, unsigned int timeout);
+void dhuart_set_mode(DHUART_DATA_MODE mode);
+
+/**
+ *	\brief				Set timeout for callback.
+ *	\details			This timeout means how many ms without receiving bytes should pass before calling callback.
+ *						Make sense only when mode is DUM_PER_BUF and callback is enabled.
+ *	\param[in]	timeout	Timeout in ms.
+ */
+void dhuart_set_callback_timeout(unsigned int timeout);
+
+/**
+ *	\brief				Get receiving buffer.
+ *	\param[out]	buf		Pointer where pointer to buffer should be stored.
+ *	\return				Number of bytes in buffer.
+ */
+unsigned int dhuart_get_buf(char ** buf);
+
+/**
+ *	\brief				Clean up buffer.
+ */
+void dhuart_reset_buf();
 
 /**
  *	\brief				Enable or disable DUM_PER_BUF callbacks.
@@ -71,7 +91,7 @@ void dhuart_enable_buf_interrupt(int enable);
  *	\brief		Get current timeout value.
  *	\return		Timeout value in milliseconds.
  */
-unsigned int dhuart_get_timeout();
+unsigned int dhuart_get_callback_timeout();
 
 /**
  *	\brief			Callback declaration for DUM_PER_BYTE mode.

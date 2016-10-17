@@ -105,7 +105,7 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 			const unsigned int pos = snprintf(buf, buf_len, "{\"data\":\"");
 			const unsigned int res = dhdata_encode(data->array, data_len,
 					&buf[pos], buf_len - pos - 3);
-			if(res == 0) {
+			if(res == 0 && data_len != 0) {
 				return -1;
 			} else {
 				return pos + res + snprintf(&buf[pos + res], buf_len - pos,
