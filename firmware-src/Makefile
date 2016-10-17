@@ -56,7 +56,7 @@ flash: all
 	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher --developer)
 	@cp -f $(FIRMWARE) $(FIRMWARE).prev
 
-full_flash: all
+full_flash: rebuild
 	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher)
 	@cp -f $(FIRMWARE) $(FIRMWARE).prev
 
