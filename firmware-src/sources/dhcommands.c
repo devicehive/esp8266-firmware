@@ -32,6 +32,8 @@
 #include "devices/mpu6050.h"
 #include "devices/hmc5883l.h"
 #include "devices/pcf8574.h"
+#include "devices/pcf8574_hd44780.h"
+#include "devices/mhz19.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -565,7 +567,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		responce_ok(cb);
-    }  else if( os_strcmp(command, "devices/pcf8574/hd44780/write") == 0 ) {
+    } else if( os_strcmp(command, "devices/pcf8574/hd44780/write") == 0 ) {
 		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCF8574_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_DATA | AF_TEXT_DATA, &fields);
 		if (responce_error(cb, parse_res))
 			return;
@@ -583,6 +585,16 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		responce_ok(cb);
+    } else if( os_strcmp(command, "devices/mhz19/read") == 0 ) {
+    	if(paramslen) {
+			responce_error(cb, "Command does not have parameters");
+			return;
+		}
+		int co2;
+		char *res = mhz19_read(&co2);
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
     } else {
 		responce_error(cb, "Unknown command");
 	}

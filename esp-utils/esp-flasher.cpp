@@ -296,7 +296,7 @@ bool flash_file(SerialPort *port, char *file, uint32_t address, char *incrementa
 	bool res = false;
 	if(incremental_data) {
 		uint32_t total = 0;
-		const uint32_t MIN_TO_WRITE = FLASH_ALIGN * 2;
+		const uint32_t MIN_TO_WRITE = FLASH_ALIGN * 4;
 		for(uint32_t offset = 0; offset < size; offset += FLASH_ALIGN) {
 			uint32_t towrite = 0;
 			while(offset + towrite < size) {
