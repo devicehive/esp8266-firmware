@@ -33,7 +33,6 @@ char * ICACHE_FLASH_ATTR mhz19_read(int *co2) {
 			return "No response";
 		return "Response length mismatch";
 	}
-	dhdebug_dump(result, len);
 	for(i = 1; i < 8; i++) {
 		cs += result[i];
 	}
