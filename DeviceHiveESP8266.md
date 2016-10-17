@@ -938,7 +938,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"co2":384
 }
-co2 unit is ppm()
+co2 unit is ppm(parts-per-million).
 
 # License
 The MIT License (MIT):
