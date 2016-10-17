@@ -938,6 +938,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"co2":384
 }
+```
 co2 unit is ppm(parts-per-million).
 
 # License
