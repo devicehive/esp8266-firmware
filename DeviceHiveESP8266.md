@@ -45,6 +45,7 @@ Table of contents
     * [devices/pcf8574/read](#devicespcf8574read)
     * [devices/pcf8574/write](#devicespcf8574write)
     * [devices/pcf8574/hd44780/write](#devicespcf8574hd44780write)
+    * [devices/mhz19/read](#devicesmhz19read)
   * [License](#license)
 
 #Overview
@@ -420,7 +421,7 @@ Resume terminal on UART interface. If UART’s pins were used by another feature
 No parameters.  
 
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-s
+
 # I2C
 There is software implementation of I2C protocol. Any GPIO pin can be SDA or SCL.
 
@@ -925,6 +926,19 @@ Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can hav
 }
 ```
 Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
+
+## devices/mhz19/read
+Read data from MH-Z19 CO2 sensor via UART.
+
+*Parameters*:  
+No parameters.  
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"co2":384
+}
+co2 unit is ppm()
 
 # License
 The MIT License (MIT):
