@@ -4,7 +4,8 @@ Table of contents
 =================
   * [Overview](#overview)
   * [Getting started](#getting-started)
-  * [Local RESTful API](#local-restful-api)  
+  * [Local RESTful API](#local-restful-api)
+  * [Local web server](#local-web-server)
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
   * [GPIO](#gpio)
