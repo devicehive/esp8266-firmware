@@ -68,4 +68,5 @@ rebuild: clean all
 clean:
 	@rm -rf $(OBJDIR)
 	@rm -f $(PAGESH)
+	@rm -f $(FIRMWARE).prev
 
