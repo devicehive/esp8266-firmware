@@ -64,8 +64,6 @@ void SerialPortRecieved(SerialPort *port, const char *text, unsigned int len) {
 				recivedBuf[recivedPos++] = 0xc0;
 			} else if (c == 0xdd) {
 				recivedBuf[recivedPos++] = 0xdb;
-			} else {
-				SerialPortError(port, (char*) "Invalid escape uint8_t");
 			}
 			recivedEscape = false;
 		} else if (c == 0xdb) {
