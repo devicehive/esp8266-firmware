@@ -25,6 +25,7 @@
 #include "user_config.h"
 #include "snprintf.h"
 #include "dhstatistic.h"
+#include "mdnsd.h"
 
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
@@ -34,7 +35,6 @@ LOCAL HTTP_REQUEST mPollRequest;
 LOCAL HTTP_REQUEST mInfoRequest;
 LOCAL os_timer_t mRetryTimer;
 LOCAL unsigned char mNeedRecover = 0;
-LOCAL struct mdns_info mMdnsinfo;
 
 LOCAL void set_state(CONNECTION_STATE state);
 
@@ -352,12 +352,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 			arm_repeat_timer(DHREQUEST_PAUSE_MS);
 
 			if(dhrequest_current_deviceid()[0]) {
-				os_memset(&mMdnsinfo, 0, sizeof(mMdnsinfo));
-				mMdnsinfo.host_name = (char *)dhrequest_current_deviceid();
-				mMdnsinfo.ipAddr = event->event_info.got_ip.ip.addr;
-				mMdnsinfo.server_name = "DeviceHive";
-				mMdnsinfo.server_port = 80;
-				espconn_mdns_init(&mMdnsinfo);
+				mdnsd_start(dhrequest_current_deviceid(), event->event_info.got_ip.ip.addr);
 			}
 		} else {
 			dhdebug("ERROR: WiFi reports STAMODE_GOT_IP, but no actual ip found");
@@ -367,7 +362,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 		dhsender_stop_repeat();
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
 		dhstatistic_inc_wifi_lost_count();
-		espconn_mdns_close();
+		mdnsd_stop();
 	} else {
 		dhesperrors_wifi_state("WiFi event", event->event);
 	}
