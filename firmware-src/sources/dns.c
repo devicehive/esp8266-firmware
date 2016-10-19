@@ -47,14 +47,14 @@ LOCAL uint32_t to_fqdn(uint8_t *buf, const uint8_t *d) {
 	char *sp = buf;
 	uint32_t len = 0;
 	while(*d) {
-		if(pos >= DNS_MAX_DOMAIN_LENGTH)
-			return 0;
 		if(*d == '.') {
 			*sp = len;
 			len = 0;
 			sp = &buf[pos];
 		} else {
 			buf[pos] = *d;
+			if(len >= DNS_MAX_OCTET_LEN)
+				break;
 			len++;
 		}
 		pos++;
@@ -80,20 +80,19 @@ LOCAL uint32_t to_fqdn_local(uint8_t *buf, const uint8_t *d) {
 
 uint32_t ICACHE_FLASH_ATTR dns_add_answer(uint8_t *buf, const uint8_t *name1,
 		const uint8_t *name2, DNS_TYPE type, uint32_t ttl, uint32_t size1,
-		const uint8_t *data1, const uint8_t *data2) {
-	uint32_t pos;
-	if(name1) {
-		if(name2) {
-			pos = to_fqdn(buf, name1);
-			pos--;
-			pos += to_fqdn_local(&buf[pos], name2);
-		} else {
-			pos = to_fqdn_local(buf, name1);
-		}
-
-	} else {
+		const uint8_t *data1, const uint8_t *data2, const uint8_t *data3) {
+	uint32_t pos = 0;
+	if(name1 == NULL && name2 == NULL) {
 		buf[pos++] = 0xC0;
 		buf[pos++] = sizeof(DNS_HEADER);
+	} else {
+		if(name1)
+			pos = to_fqdn(&buf[pos], name1);
+		if(name2) {
+			if(name1)
+				pos--;
+			pos += to_fqdn_local(&buf[pos], name2);
+		}
 	}
 	DNS_ANSWER *resp = (DNS_ANSWER *)&buf[pos];
 	resp->type = htobe_16(type);
@@ -101,49 +100,59 @@ uint32_t ICACHE_FLASH_ATTR dns_add_answer(uint8_t *buf, const uint8_t *name1,
 	resp->ttl = htobe_32(ttl);
 	// resp->size see below
 	pos += sizeof(DNS_ANSWER);
-	uint32_t dl;
+	uint32_t datapos = pos;
 	if(data1) {
-		dl = size1;
-		while(dl--) {
+		while(size1--) {
 			buf[pos] = *data1;
 			pos++;
 			data1++;
 		}
 	}
-	if(data2 == NULL) {
-		resp->size = htobe_16(size1);
-		return pos;
+	if(data2)
+		pos += to_fqdn(&buf[pos], data2);
+	if(data3) {
+		if(data2)
+			pos--;
+		pos += to_fqdn_local(&buf[pos], data3);
 	}
-	dl = to_fqdn_local(&buf[pos], data2);
-	resp->size = htobe_16(dl + size1);
-	pos += dl;
+	resp->size = htobe_16(pos - datapos);
 	return pos;
 }
 
-int ICACHE_FLASH_ATTR dns_cmp_fqdn_str(const uint8_t *fqdn, const uint8_t *str) {
+int ICACHE_FLASH_ATTR dns_cmp_fqdn_str(const uint8_t *fqdn,
+		const uint8_t *str1, const uint8_t *str2) {
 	uint8_t dl = *fqdn++;
+	const uint8_t *str1begin = str1;
 	if(dl == 0)
 		return 0;
-	while(*fqdn && *str) {
-		if(*fqdn != *str)
+	while(*fqdn && *str1) {
+		if(*fqdn != *str1)
 			return 0;
 		dl--;
 		fqdn++;
-		str++;
+		str1++;
 		if(dl == 0) {
-			if(*str == 0) {
-				if(*fqdn == 5) {
-					if(fqdn[1] == 'l' && fqdn[2] == 'o' &&
-							fqdn[3] == 'c' && fqdn[4] == 'a' && fqdn[5] == 'l')
-						return 1;
+			if(*str1 == 0 || (str1 - str1begin) >= DNS_MAX_OCTET_LEN) {
+				if(str2) {
+					str1 = str2;
+					str2 = NULL;
+					dl = *fqdn;
+					fqdn++;
+					continue;
+				} else {
+					if(*fqdn == 5) {
+						if(fqdn[1] == 'l' && fqdn[2] == 'o' &&
+								fqdn[3] == 'c' && fqdn[4] == 'a' && fqdn[5] == 'l')
+							return 1;
+					}
+					return 0;
 				}
-				return 0;
-			} else if(*str != '.') {
+			} else if(*str1 != '.') {
 				return 0;
 			}
 			dl = *fqdn;
 			fqdn++;
-			str++;
+			str1++;
 		}
 	}
 	return 0;
