@@ -23,9 +23,9 @@
 #include "snprintf.h"
 #include "dhsettings.h"
 #include "irom.h"
+#include "user_config.h"
 
 #define MAX_CONNECTIONS 5
-#define HTTPD_PORT 80
 #define POST_BUF_SIZE 2048
 #define MAX_SINGLE_PACKET 2048
 #define MAX_PATH 64
