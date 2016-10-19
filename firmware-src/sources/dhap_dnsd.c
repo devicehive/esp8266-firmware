@@ -38,8 +38,8 @@ LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 	struct ip_info info;
 	if(wifi_get_ip_info(SOFTAP_IF, &info) == 0)
 		info.ip.addr = 0;
-	return len + dns_add_answer(&data[len], NULL, DNS_TYPE_A, 60,
-			sizeof(info.ip.addr), (uint8_t *)&info.ip.addr);
+	return len + dns_add_answer(&data[len], NULL, NULL, DNS_TYPE_A, 60,
+			sizeof(info.ip.addr), (uint8_t *)&info.ip.addr, NULL);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_disconnect_cb(void *arg) {

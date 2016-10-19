@@ -58,6 +58,15 @@ typedef struct __attribute__((packed)) {
 	uint8_t data[];
 } DNS_ANSWER;
 
+/** DNS data for SRV record. */
+typedef struct __attribute__((packed)) {
+	uint16_t priority;
+	uint16_t weigth;
+	uint16_t port;
+	uint8_t target[];
+} SRV_DATA;
+
+/** DNS record types enumeration. */
 typedef enum {
 	DNS_TYPE_A = 0x01,
 	DNS_TYPE_NS = 0x02,
@@ -92,24 +101,27 @@ uint16_t betoh_16(uint16_t n);
 
 /**
  *	\brief				Fill response with one record.
+ *	\details			name1, name2 and data2 encodes in QFDN with '.local' at the end.
  *	\param[out]	buf		Pointer to store record.
- *	\param[in]	name	Name field. Can be NULL, default offset (0x0C, to first name in response) will be written then.
- *						If specified, '.local' domain will be added at tail and saved as QFDN. Can not be more then DNS_MAX_DOMAIN_LENGTH.
+ *	\param[in]	name1	Name field. Can be NULL, default offset (0x0C, to first name in response) will be written then and name2 ignored.
+ *	\param[in]	name2	Name field.
  *	\param[in]	type	One of DNS_TYPE enum.
  *	\param[in]	ttl		Time to live in seconds.
- *	\param[in]	size	Length of data in bytes.
- *	\param[in]	data	Data.
+ *	\param[in]	size1	Length of data in bytes.
+ *	\param[in]	data1	First peace of data. Can be NULL.
+ *	\param[in]	data2	Second piece of data data, url which be treated in the same way as 'name' fields. Can be NULL.
  *	\return				Number of bytes written to buf.
  */
-uint32_t dns_add_answer(uint8_t *buf, const uint8_t *name, DNS_TYPE type,
-		uint32_t ttl, uint32_t size, const uint8_t *data);
+uint32_t dns_add_answer(uint8_t *buf, const uint8_t *name1,
+		const uint8_t *name2, DNS_TYPE type, uint32_t ttl, uint32_t size1,
+		const uint8_t *data1, const uint8_t *data2);
 
 /**
- *	\brief				Compare two QFDN.
- *	\param[in]	a		Pointer to one QFDN string.
- *	\param[in]	b		Pointer to another QFDN string.
- *	\return				Zero if strings are equal, non zero otherwise.
+ *	\brief				Compare FQDN with domain name.
+ *	\param[in]	fqdn	Pointer to FQDN string.
+ *	\param[in]	str		Pointer to domain name to compare. Should be without '.local' top level domain.
+ *	\return				Non zero if equal, zero otherwise.
  */
-uint32_t dns_cmp_qfdn(const uint8_t *a, const uint8_t *b);
+int dns_cmp_fqdn_str(const uint8_t *fqdn, const uint8_t *str);
 
 #endif /* _DNS_H_ */
