@@ -26,8 +26,7 @@ LOCAL char *mDNSAnswerBuffer;
 
 LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 	// always add response with host address data to the end
-	DNS_REQUEST *header = (DNS_REQUEST *)data;
-	DNS_RESPONSE *response = (DNS_RESPONSE *)(&data[len]);
+	DNS_HEADER *header = (DNS_HEADER *)data;
 	header->answersNumber = htobe_16(1);
 	header->authoritiesNumber = 0;
 	header->resourcesNumber = 0;
@@ -36,18 +35,11 @@ LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 	header->flags.recursionAvailable = 1;
 	header->flags.rcode = 0;
 
-	response->nameOffset = htobe_16(0xC000 | sizeof(DNS_REQUEST));
-	response->type = htobe_16(1);  // A - host address
-	response->class = htobe_16(1); // IN - class
-	response->ttl = htobe_32(60);
-	response->ipSize = htobe_16(sizeof(response->ip));
-	response->ip = 0;
-
 	struct ip_info info;
-	if(wifi_get_ip_info(SOFTAP_IF, &info))
-		response->ip = info.ip.addr;
-
-	return len + sizeof(DNS_RESPONSE);
+	if(wifi_get_ip_info(SOFTAP_IF, &info) == 0)
+		info.ip.addr = 0;
+	return len + dns_add_answer(&data[len], NULL, DNS_TYPE_A, 60,
+			sizeof(info.ip.addr), (uint8_t *)&info.ip.addr);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_disconnect_cb(void *arg) {
@@ -65,7 +57,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_sent_cb(void *arg) {
 
 LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_recv_cb(void *arg, char *data, unsigned short len) {
 	struct espconn *conn = arg;
-	if(mSendingInProgress || len + sizeof(DNS_RESPONSE) > DNS_ANSWER_BUF_SIZE) {
+	if(mSendingInProgress || len + sizeof(DNS_ANSWER) > DNS_ANSWER_BUF_SIZE) {
 		if(mSendingInProgress)
 			dhdebug("Got %u bytes, but dnsd is busy, drop", len);
 		else
