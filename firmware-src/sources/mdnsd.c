@@ -15,18 +15,19 @@
 #include <ip_addr.h>
 #include "mdnsd.h"
 #include "dns.h"
+#include "snprintf.h"
 #include "dhdebug.h"
 
 #define MDNS_TTL (60 * 60)
 
-LOCAL const  uint8_t SERVICE_DISCOVERY_QFDN[] = "\x09_services\x07_dns-sd\x04_udp\x05local";
-
+LOCAL const  uint8_t MDNS_SERVICE[] = "_esp8266-devicehive._tcp";
+LOCAL const  uint8_t MDNS_DISCOVERY[] = "_services._dns-sd._udp";
+LOCAL const uint8_t *mName;
+LOCAL unsigned long mAddr;
 LOCAL struct espconn mMDNSdConn = { 0 };
 LOCAL struct ip_addr mMDNSAddr = { 0 };
 LOCAL mSendingInProgress = 0;
 LOCAL struct ip_addr mMulticastIP = { MDNS_IP };
-LOCAL uint8_t mAnnounce[DNS_MAX_DOMAIN_LENGTH + 7 + sizeof(DNS_HEADER) + sizeof(DNS_ANSWER)];
-LOCAL uint32_t mAnnounceLength = 0;
 
 LOCAL void ICACHE_FLASH_ATTR announce(const uint8_t *data, uint32_t len) {
 	mSendingInProgress = 1;
@@ -42,26 +43,60 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 	if(len > 1024 || len < sizeof(DNS_HEADER) || mSendingInProgress)
 		return;
 
-	DNS_HEADER *req = (DNS_HEADER *)data;
-	if(req->id != 0 || req->all_flags !=0 )
+	DNS_HEADER *request = (DNS_HEADER *)data;
+	if(request->id != 0 || request->all_flags !=0 )
 		return;
 
-	uint16_t qd = betoh_16(req->questionsNumber);
+	uint8_t responsebuff[512];
+	DNS_HEADER *response = (DNS_HEADER *)responsebuff;
+	os_memset(response, 0, sizeof(DNS_HEADER));
+	response->flags.authoritiveAnswer = 1;
+	response->flags.responseFlag = 1;
+	response->answersNumber = htobe_16( 1 );
+
+	uint16_t qd = betoh_16(request->questionsNumber);
 	uint32_t i;
 	uint32_t offset = 0;
 	uint32_t data_len = len - sizeof(DNS_HEADER);
 	for(i = 0; i < qd && offset < data_len; i++) {
 		uint32_t qdend = offset;
-		while(req->data[qdend]) {
-			qdend += req->data[qdend] + 1;
+		while(request->data[qdend]) {
+			qdend += request->data[qdend] + 1;
 			if(qdend > data_len) // bad request
 				return;
 		}
 		qdend++;
+dhdebug("mdns got %s", &request->data[offset]);
+		if(dns_cmp_fqdn_str(&request->data[offset], mName)) {
+			uint32_t alen = dns_add_answer(response->data, mName, NULL,
+					DNS_TYPE_A,	MDNS_TTL, sizeof(mAddr), (uint8_t *) &mAddr,
+					NULL);
+			announce(responsebuff, alen + sizeof(DNS_HEADER));
+			return;
+		}
+		if(request->data[qdend] == 0 && request->data[qdend + 1] == DNS_TYPE_PTR) {
+			if(dns_cmp_fqdn_str(&request->data[offset], MDNS_DISCOVERY)) {
+				uint32_t alen = dns_add_answer(response->data, MDNS_DISCOVERY,
+						NULL, DNS_TYPE_PTR, MDNS_TTL, 0, NULL, MDNS_SERVICE);
+				announce(responsebuff, alen + sizeof(DNS_HEADER));
+				return;
+			}
 
-		if(dns_cmp_qfdn(((DNS_HEADER*)&mAnnounce)->data, &req->data[offset]) == 0) {
-			announce(mAnnounce, mAnnounceLength);
-			continue;
+			if(dns_cmp_fqdn_str(&request->data[offset], MDNS_SERVICE)) {
+				SRV_DATA srv;
+				srv.port = htobe_16( 80 );
+				srv.priority = 0;
+				srv.weigth = 0;
+				uint32_t alen = dns_add_answer(response->data, mName,
+						MDNS_SERVICE, DNS_TYPE_SRV, MDNS_TTL, sizeof(SRV_DATA),
+						(uint8_t *)&srv, mName);
+				response->resourcesNumber = htobe_16( 1 );
+				alen += dns_add_answer(&response->data[alen], mName, NULL,
+						DNS_TYPE_A,	MDNS_TTL, sizeof(mAddr), (uint8_t *)&mAddr,
+						NULL);
+				announce(responsebuff, alen + sizeof(DNS_HEADER));
+				return;
+			}
 		}
 
 		offset = qdend + 4; // four bytes for QTYPE and QCLASS
@@ -74,21 +109,11 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_sent_cb(void *arg) {
 
 int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
 	static esp_udp mDNSdUdp;
-
-	// generate mDNS response packet
-	os_memset(&mAnnounce, 0, sizeof(mAnnounce));
-	DNS_HEADER *req = (DNS_HEADER *)mAnnounce;
-	req->flags.authoritiveAnswer = 1;
-	req->flags.responseFlag = 1;
-	req->answersNumber = htobe_16( 1 );
-
-	mAnnounceLength = dns_add_answer(req->data, name,
-			DNS_TYPE_A, MDNS_TTL, sizeof(addr), (uint8_t *)&addr);
-	if(mAnnounceLength == 0) {
-		dhdebug("Name is too long");
+	if(os_strlen(name) >= DNS_MAX_DOMAIN_LENGTH)
 		return 0;
-	}
-	mAnnounceLength += sizeof(DNS_HEADER);
+
+	mName = name;
+	mAddr = addr;
 
 	mMDNSAddr.addr = addr;
 	mDNSdUdp.local_port = MDNS_PORT;
