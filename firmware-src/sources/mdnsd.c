@@ -187,6 +187,6 @@ void ICACHE_FLASH_ATTR mdnsd_stop() {
 		espconn_delete(&mMDNSdConn);
 		espconn_igmp_leave(&mMDNSAddr, &mMulticastIP);
 		mMDNSdConn.proto.udp = NULL;
+		dhdebug("mDNSd is stopped");
 	}
-	dhdebug("mDNSd is stopped");
 }
