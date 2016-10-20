@@ -11,6 +11,8 @@
 #include "dns.h"
 #include <c_types.h>
 
+const uint8_t LOCAL_DOMAIN[] = "local";
+
 uint32_t ICACHE_FLASH_ATTR htobe_32(uint32_t n) {
 	uint32_t res;
 	uint8_t *p = (uint8_t *)&res;
@@ -67,13 +69,11 @@ LOCAL uint32_t to_fqdn(uint8_t *buf, const uint8_t *d) {
 
 LOCAL uint32_t to_fqdn_local(uint8_t *buf, const uint8_t *d) {
 	uint32_t pos = to_fqdn(buf, d);
+	uint8_t i;
 	pos--;
-	buf[pos++] = 0x05;
-	buf[pos++] = 'l';
-	buf[pos++] = 'o';
-	buf[pos++] = 'c';
-	buf[pos++] = 'a';
-	buf[pos++] = 'l';
+	buf[pos++] = sizeof(LOCAL_DOMAIN) - 1;
+	for(i = 0; i < sizeof(LOCAL_DOMAIN) - 1; i++)
+		buf[pos++] = LOCAL_DOMAIN[i];
 	buf[pos++] = 0x00;
 	return pos;
 }
@@ -140,10 +140,13 @@ int ICACHE_FLASH_ATTR dns_cmp_fqdn_str(const uint8_t *fqdn,
 					fqdn++;
 					continue;
 				} else {
-					if(*fqdn == 5) {
-						if(fqdn[1] == 'l' && fqdn[2] == 'o' &&
-								fqdn[3] == 'c' && fqdn[4] == 'a' && fqdn[5] == 'l')
-							return 1;
+					if(*fqdn == sizeof(LOCAL_DOMAIN) - 1) {
+						fqdn++;
+						for(dl = 0; dl < sizeof(LOCAL_DOMAIN) - 1; dl++) {
+							if(fqdn[dl] != LOCAL_DOMAIN[dl])
+								return 0;
+						}
+						return 1;
 					}
 					return 0;
 				}
