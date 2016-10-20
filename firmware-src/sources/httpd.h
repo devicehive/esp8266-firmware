@@ -20,6 +20,7 @@ typedef enum {
 	HRCS_BAD_REQUEST,		///< Request is not correct.
 	HRCS_NOT_IMPLEMENTED,	///< Method is not implemented.
 	HRCS_UNAUTHORIZED,		///< Unauthorized.
+	HRCS_TOO_MANY_REQUESTS,	///< Unauthorized.
 	HRCS_OPTIONS			///< Options.
 } HTTP_RESPONSE_STATUS;
 
