@@ -125,6 +125,6 @@ uint32_t dns_add_answer(uint8_t *buf, const uint8_t *name1,
  *	\param[in]	str2	Pointer to domain name to compare. Can be NULL.
  *	\return				Non zero if equal, zero otherwise.
  */
-int dns_cmp_fqdn_strs(const uint8_t *fqdn, const uint8_t *prefix, const uint8_t *str);
+int dns_cmp_fqdn_str(const uint8_t *fqdn, const uint8_t *prefix, const uint8_t *str);
 
 #endif /* _DNS_H_ */

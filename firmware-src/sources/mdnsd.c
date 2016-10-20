@@ -22,9 +22,9 @@
 #define MDNS_TTL (60 * 60)
 #define MDNS_MAX_PACKET_LENGTH 1024
 
-LOCAL const  uint8_t MDNS_SERVICE[] = MDNS_SERVICE_NAME;
-LOCAL const  uint16_t MDNS_SERVICE_PORT = HTTPD_PORT;
-LOCAL const  uint8_t MDNS_DISCOVERY[] = "_services._dns-sd._udp";
+LOCAL const uint8_t MDNS_SERVICE[] = MDNS_SERVICE_NAME;
+LOCAL const uint16_t MDNS_SERVICE_PORT = HTTPD_PORT;
+LOCAL const uint8_t MDNS_DISCOVERY[] = "_services._dns-sd._udp";
 LOCAL const uint8_t *mName;
 LOCAL unsigned long mAddr;
 LOCAL struct espconn mMDNSdConn = { 0 };
