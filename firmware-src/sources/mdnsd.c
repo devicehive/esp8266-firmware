@@ -20,6 +20,7 @@
 #include "user_config.h"
 
 #define MDNS_TTL (60 * 60)
+#define MDNS_MAX_PACKET_LENGTH 1024
 
 LOCAL const  uint8_t MDNS_SERVICE[] = MDNS_SERVICE_NAME;
 LOCAL const  uint16_t MDNS_SERVICE_PORT = HTTPD_PORT;
@@ -42,18 +43,15 @@ LOCAL void ICACHE_FLASH_ATTR announce(const uint8_t *data, uint32_t len) {
 }
 
 LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short len) {
-	if(len > 1024 || len < sizeof(DNS_HEADER) || mSendingInProgress)
+	if(len > MDNS_MAX_PACKET_LENGTH || len < sizeof(DNS_HEADER) || mSendingInProgress)
 		return;
 
 	DNS_HEADER *request = (DNS_HEADER *)data;
 	if(request->id != 0 || request->all_flags !=0 )
 		return;
 
-	uint8_t responsebuff[1024];
+	uint8_t responsebuff[MDNS_MAX_PACKET_LENGTH];
 	DNS_HEADER *response = (DNS_HEADER *)responsebuff;
-	os_memset(response, 0, sizeof(DNS_HEADER));
-	response->flags.authoritiveAnswer = 1;
-	response->flags.responseFlag = 1;
 
 	uint16_t qd = betoh_16(request->questionsNumber);
 	uint32_t i;
@@ -77,47 +75,55 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 				return;
 		}
 		qdend++;
-
-		if(request->data[qdend] == 0 && request->data[qdend + 1] == DNS_TYPE_A) {
-			if(dns_cmp_fqdn_str(&request->data[offset], mName, NULL)) {
-				alen += dns_add_answer(&response->data[alen], NULL, mName,
-						DNS_TYPE_A,	MDNS_TTL, sizeof(mAddr), (uint8_t *) &mAddr,
-						NULL, NULL);
-				answersNumber++;
-			}
-		} else if(request->data[qdend] == 0 && request->data[qdend + 1] == DNS_TYPE_PTR) {
-			if(dns_cmp_fqdn_str(&request->data[offset], MDNS_DISCOVERY, NULL)) {
-				alen += dns_add_answer(&response->data[alen], NULL,
-						MDNS_DISCOVERY, DNS_TYPE_PTR, MDNS_TTL, 0, NULL, NULL,
-						MDNS_SERVICE);
-				answersNumber++;
-			}
-
-			if(dns_cmp_fqdn_str(&request->data[offset], MDNS_SERVICE, NULL)) {
-				alen += dns_add_answer(&response->data[alen], NULL,
-						MDNS_SERVICE, DNS_TYPE_PTR, MDNS_TTL, 0, NULL, mName,
-						MDNS_SERVICE);
-				answersNumber++;
-			}
-		} else if(request->data[qdend] == 0 && request->data[qdend + 1] == DNS_TYPE_SRV) {
-			if(dns_cmp_fqdn_str(&request->data[offset], mName, MDNS_SERVICE)) {
-				SRV_DATA srv;
-				srv.port = htobe_16( MDNS_SERVICE_PORT );
-				srv.priority = 0;
-				srv.weigth = 0;
-				alen += dns_add_answer(&response->data[alen], mName,
-						MDNS_SERVICE, DNS_TYPE_SRV, MDNS_TTL, sizeof(SRV_DATA),
-						(uint8_t *)&srv, NULL, mName);
-				answersNumber++;
-			}
-		} else if(request->data[qdend] == 0 && request->data[qdend + 1] == DNS_TYPE_TXT) {
-			if(dns_cmp_fqdn_str(&request->data[offset], mName, MDNS_SERVICE)) {
-				static uint8_t txt[] = "\x00version = "FIRMWARE_VERSION;
-				txt[0] = sizeof(txt) - 1;
-				alen += dns_add_answer(&response->data[alen], mName,
-						MDNS_SERVICE, DNS_TYPE_TXT, MDNS_TTL, sizeof(txt),
-						txt, NULL, NULL);
-				answersNumber++;
+		// check first byte of class and if FQDN was given by offset due wrong packet,
+		// it makes sure that string is null terminated.
+		if(request->data[qdend] == 0) {
+			switch(request->data[qdend + 1]) {
+			case DNS_TYPE_A:
+				if(dns_cmp_fqdn_str(&request->data[offset], mName, NULL)) {
+					alen += dns_add_answer(&response->data[alen], NULL, mName,
+							DNS_TYPE_A,	MDNS_TTL, sizeof(mAddr), (uint8_t *) &mAddr,
+							NULL, NULL);
+					answersNumber++;
+				}
+				break;
+			case DNS_TYPE_PTR:
+				if(dns_cmp_fqdn_str(&request->data[offset], MDNS_DISCOVERY, NULL)) {
+					alen += dns_add_answer(&response->data[alen], NULL,
+							MDNS_DISCOVERY, DNS_TYPE_PTR, MDNS_TTL, 0, NULL, NULL,
+							MDNS_SERVICE);
+					answersNumber++;
+				}else if(dns_cmp_fqdn_str(&request->data[offset], MDNS_SERVICE, NULL)) {
+					alen += dns_add_answer(&response->data[alen], NULL,
+							MDNS_SERVICE, DNS_TYPE_PTR, MDNS_TTL, 0, NULL, mName,
+							MDNS_SERVICE);
+					answersNumber++;
+				}
+				break;
+			case DNS_TYPE_SRV:
+				if(dns_cmp_fqdn_str(&request->data[offset], mName, MDNS_SERVICE)) {
+					SRV_DATA srv;
+					srv.port = htobe_16( MDNS_SERVICE_PORT );
+					srv.priority = 0;
+					srv.weigth = 0;
+					alen += dns_add_answer(&response->data[alen], mName,
+							MDNS_SERVICE, DNS_TYPE_SRV, MDNS_TTL, sizeof(SRV_DATA),
+							(uint8_t *)&srv, NULL, mName);
+					answersNumber++;
+				}
+				break;
+			case DNS_TYPE_TXT:
+				if(dns_cmp_fqdn_str(&request->data[offset], mName, MDNS_SERVICE)) {
+					static uint8_t txt[] = "\x00version = "FIRMWARE_VERSION;
+					txt[0] = sizeof(txt) - 1;
+					alen += dns_add_answer(&response->data[alen], mName,
+							MDNS_SERVICE, DNS_TYPE_TXT, MDNS_TTL, sizeof(txt),
+							txt, NULL, NULL);
+					answersNumber++;
+				}
+				break;
+			default:
+				break;
 			}
 		}
 
@@ -131,6 +137,10 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 	}
 
 	if(answersNumber) {
+		// if we have answer(s), fill dns header and send
+		os_memset(response, 0, sizeof(DNS_HEADER));
+		response->flags.authoritiveAnswer = 1;
+		response->flags.responseFlag = 1;
 		response->answersNumber = htobe_16(answersNumber);
 		announce(responsebuff, alen + sizeof(DNS_HEADER));
 	}
