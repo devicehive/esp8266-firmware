@@ -29,6 +29,7 @@ LOCAL const uint8_t *mName;
 LOCAL unsigned long mAddr;
 LOCAL struct espconn mMDNSdConn = { 0 };
 LOCAL struct ip_addr mMDNSAddr = { 0 };
+LOCAL esp_udp mDNSdUdp;
 LOCAL mSendingInProgress = 0;
 LOCAL struct ip_addr mMulticastIP = { MDNS_IP };
 
@@ -151,7 +152,8 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_sent_cb(void *arg) {
 }
 
 int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
-	static esp_udp mDNSdUdp;
+	if(mMDNSdConn.proto.udp)
+		mdnsd_stop();
 
 	mName = name;
 	mAddr = addr;
@@ -164,19 +166,23 @@ int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
 	mMDNSdConn.reverse = NULL;
 	mSendingInProgress = 0;
 
-	if(espconn_regist_recvcb(&mMDNSdConn, mdnsd_recv_cb) == 0) {
-		if(espconn_regist_sentcb(&mMDNSdConn, mdnsd_sent_cb) == 0) {
-			if(espconn_igmp_join(&mMDNSAddr, &mMulticastIP) == 0) {
-				if(espconn_create(&mMDNSdConn)) {
-					espconn_igmp_leave(&mMDNSAddr, &mMulticastIP);
-					mMDNSdConn.proto.udp = NULL;
-					dhdebug("mDNS failed to UDP listen socket");
-					return 0;
-				}
-			}
-		}
+	if(espconn_regist_recvcb(&mMDNSdConn, mdnsd_recv_cb) ||
+		espconn_regist_sentcb(&mMDNSdConn, mdnsd_sent_cb)) {
+		mMDNSdConn.proto.udp = NULL;
+		dhdebug("mDNSd failed to start");
+		return 0;
 	}
-
+	if(espconn_igmp_join(&mMDNSAddr, &mMulticastIP)) {
+		mMDNSdConn.proto.udp = NULL;
+		dhdebug("mDNSd failed to join igmp group");
+		return 0;
+	}
+	if(espconn_create(&mMDNSdConn)) {
+		espconn_igmp_leave(&mMDNSAddr, &mMulticastIP);
+		mMDNSdConn.proto.udp = NULL;
+		dhdebug("mDNS failed to listen UDP socket");
+		return 0;
+	}
 	dhdebug("mDNSd is started");
 	return 1;
 }
