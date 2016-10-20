@@ -25,7 +25,7 @@ AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
 PAGESH			= pages/pages.h
 
-.PHONY: all flash full_flash terminal clean
+.PHONY: all flash full_flash terminal clean disassemble
 
 all: $(FIRMWARE)
 
@@ -70,3 +70,5 @@ clean:
 	@rm -f $(PAGESH)
 	@rm -f $(FIRMWARE).prev
 
+disassemble:
+	@$(CROSS_COMPILE)objdump -d $(TARGETELF) > $(OBJDIR)/disassemble.txt
