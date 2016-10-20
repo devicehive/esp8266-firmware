@@ -4,8 +4,10 @@ Table of contents
 =================
   * [Overview](#overview)
   * [Getting started](#getting-started)
-  * [Local RESTful API](#local-restful-api)
-  * [Local web server](#local-web-server)
+  * [Local services ](#local-services)
+    * [mDNS](#mdns)  
+    * [RESTful API](#restful-api)
+    * [Web server](#web-server)
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
   * [GPIO](#gpio)
@@ -125,8 +127,14 @@ After rebooting you can send commands to DeviceHive server or local RESTful API 
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks usigng DeviceHive RESTfull API: http://devicehive.com/restful which you can transmited with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
-#Local RESTful API
-Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. There is a tiny web server on chip port 80. It provides local RESTful API. API endpoint is `http://device-id.local/api/`. Firmware commands are available as subpaths of API endpoint. For example command `spi/master/read` available at `http://device-id.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
+#Local services
+Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are ommited.
+
+##mDNS
+mDNS name is limited with 60 chars excluding top level domain .local which is always '.local'. mDNS-SD (service discovery) is supported. Service name is '_esp8266-devicehive._tcp.local'. This service points to local web server with RESTful API.
+
+##RESTful API
+There is a tiny web server on chip port 80. It provides local RESTful API. API endpoint is `http://device-id.local/api/`. Firmware commands are available as subpaths of API endpoint. For example command `spi/master/read` available at `http://device-id.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
 
 For example, we would like to set up pin GPIO1 to high state and chip has AccessKey configured. `curl` request is:
 ```shell
@@ -135,8 +143,8 @@ http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
 Chip answers on this request '204 No content' which means that operation successfully completed.
 
-#Local web server
-Firmware includes local web server with tools for playing with API and some sample for some sensor. Web server aviliable at chip's 80 port. Having deviceId configured and mDNS compatible OS, it is possible to to open web page at http://your-device-id.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
+##Web server
+Firmware includes local web server with tools for playing with API and some sample for some sensor. Web server aviliable at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
 
 #Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
