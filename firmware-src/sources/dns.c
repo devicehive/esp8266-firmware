@@ -119,6 +119,14 @@ uint32_t ICACHE_FLASH_ATTR dns_add_answer(uint8_t *buf, const uint8_t *name1,
 	return pos;
 }
 
+LOCAL uint8_t inline to_lower(uint8_t c) {
+	if(c > 'Z')
+		return c;
+	if(c < 'A')
+		return c;
+	return (c | 0x20);
+}
+
 int ICACHE_FLASH_ATTR dns_cmp_fqdn_str(const uint8_t *fqdn,
 		const uint8_t *str1, const uint8_t *str2) {
 	uint8_t dl = *fqdn++;
@@ -126,7 +134,7 @@ int ICACHE_FLASH_ATTR dns_cmp_fqdn_str(const uint8_t *fqdn,
 	if(dl == 0)
 		return 0;
 	while(*fqdn && *str1) {
-		if(*fqdn != *str1)
+		if(to_lower(*fqdn) != to_lower(*str1))
 			return 0;
 		dl--;
 		fqdn++;
