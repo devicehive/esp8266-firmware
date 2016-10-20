@@ -385,7 +385,7 @@ void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
 	wifi_set_phy_mode(PHY_MODE_11N);
 	if(dhrequest_current_deviceid()[0]) {
 		char hostname[33];
-		// limit length to 32 chars
+		// limit length to 32 chars due to the sdk limit
 		snprintf(hostname, sizeof(hostname), "%s", dhrequest_current_deviceid());
 		wifi_station_set_hostname(hostname);
 	}

@@ -177,7 +177,7 @@ void ICACHE_FLASH_ATTR dhsettings_set_devicehive_accesskey(const char *key) {
 }
 
 int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
-	if(c == '-' || c == '_' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+	if(c == '-' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
 		return 1;
 	return 0;
 }
