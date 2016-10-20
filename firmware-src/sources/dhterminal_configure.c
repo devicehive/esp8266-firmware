@@ -59,7 +59,7 @@ LOCAL void ICACHE_FLASH_ATTR get_server_cb(const char *server) {
 
 	dhsettings_set_devicehive_server(buf);
 	dhuart_send_line("Enter DeviceHive DeviceId. Press Tab button to generate random.");
-	dhuart_send_line("Allowed chars are A-Za-z0-9_-");
+	dhuart_send_line("Allowed chars are A-Za-z0-9-");
 	dhterminal_set_mode(SM_INPUT_MODE, get_deviceid_cb, generate_deviceid, dhsettings_deviceid_filter, DHSETTINGS_DEVICEID_MAX_LENGTH);
 	if(dhsettings_get_devicehive_deviceid()[0] == 0)
 		dhterminal_set_input(generate_deviceid(""));
