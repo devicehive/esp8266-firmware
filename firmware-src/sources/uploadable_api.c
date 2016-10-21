@@ -28,7 +28,7 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR uploadable_api_handle(const char *path, c
 			}
 		}
 		const char *p = &path[sizeof(flash) - 1];
-		int res = 0;
+		UP_STATUS res = UP_STATUS_WRONG_CALL;
 		if(os_strcmp(p, "begin") == 0) {
 			if(content_in->len == 0)
 				res = uploadable_page_begin();
@@ -41,7 +41,18 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR uploadable_api_handle(const char *path, c
 		} else {
 			return HRCS_NOT_FOUND;
 		}
-		return res ? HRCS_ANSWERED_PLAIN : HRCS_INTERNAL_ERROR;
+		switch(res) {
+			case UP_STATUS_OK:
+				return HRCS_ANSWERED_PLAIN;
+			case UP_STATUS_INTERNAL_ERROR:
+				return HRCS_INTERNAL_ERROR;
+			case UP_STATUS_WRONG_CALL:
+				answer->ok = 0;
+				return HRCS_ANSWERED_PLAIN;
+			case UP_STATUS_OVERFLOW:
+				return HRCS_TOO_MANY_REQUESTS;
+		}
+		return HRCS_ANSWERED_PLAIN;
 	}
 	return HRCS_NOT_FOUND;
 }

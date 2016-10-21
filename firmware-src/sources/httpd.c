@@ -307,7 +307,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			if(answer.ok) {
 				send_res(conn, no_content, sizeof(no_content) - 1);
 			} else {
-				response_len = snprintf(response, sizeof(response), forbidden, 0);
+				response_len = snprintf(response, sizeof(response), forbidden, plain, 0);
 				send_res(conn, response, response_len);
 			}
 			return;
