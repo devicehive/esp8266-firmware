@@ -44,7 +44,8 @@ LOCAL uint32_t ICACHE_FLASH_ATTR getStorageCrc(DH_SETTINGS *storage) {
 	return crc32(storage->storage, sizeof(storage->storage));
 }
 
-int ICACHE_FLASH_ATTR dhsettings_init() {
+int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
+	*exist = 1;
 	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
 	if(settings == NULL) {
 		dhdebug("Failed to read settings, no RAM.");
@@ -67,6 +68,7 @@ int ICACHE_FLASH_ATTR dhsettings_init() {
 		} else if(getStorageCrc(settings) != settings->crc) {
 			dhdebug("Backup storage data corrupted or never saved, using empty settings");
 			os_memset(settings, 0, sizeof(DH_SETTINGS));
+			*exist = 0;
 		} else {
 			read = 1;
 			dhdebug("Settings successfully loaded from backup storage");
@@ -86,7 +88,7 @@ int ICACHE_FLASH_ATTR dhsettings_commit() {
 		dhdebug("Failed to write settings, no RAM.");
 		return 0;
 	}
-	os_memset(settings, 0, sizeof(DH_SETTINGS));
+	os_memset(settings, 0xFF, sizeof(DH_SETTINGS));
 	os_memcpy(&settings->data, &mSettingsData, sizeof(DH_SETTINGS_DATA));
 	settings->crc = getStorageCrc(settings);
 	if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK) {
@@ -114,20 +116,8 @@ int ICACHE_FLASH_ATTR dhsettings_commit() {
 }
 
 int ICACHE_FLASH_ATTR dhsettings_clear() {
-	int res = 1;
-	if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) != SPI_FLASH_RESULT_OK) {
-		dhdebug("Erasing of main storage failed");
-		res = 0;
-	}
-	if(spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) != SPI_FLASH_RESULT_OK) {
-		dhdebug("Erasing of backup storage failed");
-		res = 0;
-	}
-	if(res) {
-		os_memset(&mSettingsData, 0, sizeof(DH_SETTINGS_DATA));
-		dhdebug("Settings successfully cleared");
-	}
-	return res;
+	os_memset(&mSettingsData, 0xFF, sizeof(DH_SETTINGS_DATA));
+	return dhsettings_commit();
 }
 
 const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {
@@ -153,7 +143,7 @@ const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey() {
 LOCAL void ICACHE_FLASH_ATTR set_arg(char *arg, size_t argSize, const char *value) {
 	const int len = snprintf(arg, argSize, "%s", value) + 1;
 	if(len < argSize)
-		os_memset(&arg[len], 0, argSize - len);
+		os_memset(&arg[len], 0xFF, argSize - len);
 }
 
 void ICACHE_FLASH_ATTR dhsettings_set_wifi_ssid(const char *ssid) {

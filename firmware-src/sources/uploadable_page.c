@@ -12,6 +12,7 @@
 #include <irom.h>
 #include <osapi.h>
 #include <os_type.h>
+#include <mem.h>
 #include "uploadable_page.h"
 #include "dhdebug.h"
 
@@ -39,18 +40,50 @@ LOCAL void ICACHE_FLASH_ATTR reset_timer() {
 
 const char *ICACHE_FLASH_ATTR uploadable_page_get(unsigned int *len) {
 	RO_DATA char flashing[] = "<html><body><h1>Flashing is in process...</h1></body></html>";
+	const void *data = (void *)(SPI_FLASH_BASE_ADDRESS + UPLOADABLE_PAGE_START_SECTOR * SPI_FLASH_SEC_SIZE);
 	if(mFlashingSector) {
 		*len = sizeof(flashing) - 1;
 		return flashing;
 	}
 	if(mPageLength == 0) {
-		//TODO calc page size
+		const uint32_t *dwdata = (const uint32_t*)data;
+		unsigned int i;
+		for(i = 0; i < UPLOADABLE_PAGE_MAX_SIZE; i += sizeof(uint32_t)) {
+			uint32_t b = dwdata[i / sizeof(uint32_t)];
+			if((b & 0x000000FF) == 0) {
+				break;
+			} else if((b & 0x0000FF00) == 0) {
+				i++;
+				break;
+			} else if((b & 0x00FF0000) == 0) {
+				i += 2;
+				break;
+			} else if((b & 0xFF000000) == 0) {
+				i += 3;
+				break;
+			}
+		}
+		mPageLength = i;
 	}
 	*len = mPageLength;
-	return (char *)(SPI_FLASH_BASE_ADDRESS + UPLOADABLE_PAGE_START_SECTOR * SPI_FLASH_SEC_SIZE);
+	return (const char *)data;
 }
 
-int ICACHE_FLASH_ATTR uploadable_page_prepare() {
+int ICACHE_FLASH_ATTR uploadable_page_delete() {
+	// set first byte to zero
+	SpiFlashOpResult res;
+	uint8_t *data = (uint8_t *)os_malloc(SPI_FLASH_SEC_SIZE);
+	res = spi_flash_read(UPLOADABLE_PAGE_START_SECTOR * SPI_FLASH_SEC_SIZE, (uint32 *)data, SPI_FLASH_SEC_SIZE);
+	if (res == SPI_FLASH_RESULT_OK) {
+		data[0] = 0;
+		// no need to erase data, since here writes just zero byte
+		res = spi_flash_write(UPLOADABLE_PAGE_START_SECTOR * SPI_FLASH_SEC_SIZE, (uint32 *)data, SPI_FLASH_SEC_SIZE);
+	}
+	os_free(data);
+	return (res == SPI_FLASH_RESULT_OK) ? 1 : 0;
+}
+
+int ICACHE_FLASH_ATTR uploadable_page_begin() {
 	mFlashingSector = UPLOADABLE_PAGE_START_SECTOR;
 	reset_timer();
 }

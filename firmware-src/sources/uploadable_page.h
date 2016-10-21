@@ -18,13 +18,20 @@
 const char *uploadable_page_get(unsigned int *len);
 
 /**
+ *	\brief				Destroy page data.
+ *	\details			Physically page will be kept without first byte.
+ *	\return				Pointer in ROM memory.
+ */
+int uploadable_page_delete();
+
+/**
  *	\brief				Initialize flashing new web page procedure.
  *	\details			Pointer for writing will be moved to very beginning. This
  *						mode will be exited	if no writes operation happen in last
  *						UPLOADABLE_PAGE_TIMEOUT_MS.
  *	\return				Zero on error, non zero on success.
  */
-int uploadable_page_prepare();
+int uploadable_page_begin();
 
 /**
  *	\brief					Write piece of data. Address increments internally.

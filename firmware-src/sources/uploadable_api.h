@@ -1,13 +1,12 @@
 /**
- *	\file		rest.h
- *	\brief		Local RESTful service
+ *	\file		httpd.h
+ *	\brief		Module for handling uploadable HTTP API calls.
  *	\author		Nikolay Khabarov
  *	\date		2016
  *	\copyright	DeviceHive MIT
  */
-
-#ifndef _REST_H_
-#define _REST_H_
+#ifndef _UPLOADABLE_API_H_
+#define _UPLOADABLE_API_H_
 
 #include "httpd.h"
 
@@ -16,11 +15,10 @@
  *	\param[in]	path			Url path.
  *	\param[in]	key				Access key for API which was given in request.
  *	\param[in]	content_in		Request body, typically json.
- *	\param[out]	answer			Data for response.
  *	\return						One of httpd statuses.
  */
 
-HTTP_RESPONSE_STATUS rest_handle(const char *path, const char *key,
+HTTP_RESPONSE_STATUS uploadable_api_handle(const char *path, const char *key,
 		HTTP_CONTENT *content_in, HTTP_ANSWER *answer);
 
-#endif /* _REST_H_ */
+#endif /* _UPLOADABLE_API_H_ */

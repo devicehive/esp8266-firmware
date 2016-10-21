@@ -22,6 +22,7 @@
 #include "dhap.h"
 #include "webserver.h"
 #include "irom.h"
+#include "uploadable_page.h"
 
 typedef struct {
 	unsigned int magic;
@@ -101,13 +102,17 @@ void user_rf_pre_init(void) {
 }
 
 void user_init(void) {
+	int ever_saved;
 	if(mSpecialMode) {
 		system_set_os_print(0);
-		dhsettings_init();
+		dhsettings_init(&ever_saved);
 		dhap_init();
 	} else {
 		dhdebug("*****************************");
-		dhsettings_init();
+		dhsettings_init(&ever_saved);
+		if(ever_saved == 0) { // if first run on this chip
+			uploadable_page_delete();
+		}
 		dhsender_queue_init();
 		dhconnector_init(dhcommands_do);
 		dhgpio_init();
