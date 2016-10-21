@@ -13,6 +13,8 @@
 #include "httpd.h"
 #include "rest.h"
 #include "../pages/pages.h"
+#include "uploadable_page.h"
+#include "uploadable_api.h"
 
 LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
@@ -38,19 +40,22 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 	}
 	if(path[0]=='/') {
 		if(path[1]==0) {
-			// index page
-			answer->content.data = help_html;
-			answer->content.len = sizeof(help_html) - 1;
+			answer->content.data = uploadable_page_get(&answer->content.len);
+			if(answer->content.len == 0) {
+				// default page
+				answer->content.data = help_html;
+				answer->content.len = sizeof(help_html) - 1;
+			}
 			return HRCS_ANSWERED_HTML;
 		}
-	}
 
-	int i;
-	for(i = 0; i < sizeof(web_pages) / sizeof(WEBPAGE); i++) {
-		if(os_strcmp(web_pages[i].path, path) == 0) {
-			answer->content.data = web_pages[i].data;
-			answer->content.len = web_pages[i].data_len;
-			return HRCS_ANSWERED_HTML;
+		int i;
+		for(i = 0; i < sizeof(web_pages) / sizeof(WEBPAGE); i++) {
+			if(os_strcmp(web_pages[i].path, &path[1]) == 0) {
+				answer->content.data = web_pages[i].data;
+				answer->content.len = web_pages[i].data_len;
+				return HRCS_ANSWERED_HTML;
+			}
 		}
 	}
 
@@ -63,7 +68,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	if(check_rest(&res, path, key, content_in, answer)) {
 		return res;
 	}
-	return HRCS_NOT_FOUND;
+	return uploadable_api_handle(path, key, content_in, answer);
 }
 
 void ICACHE_FLASH_ATTR webserver_init() {
