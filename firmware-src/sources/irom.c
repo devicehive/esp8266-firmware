@@ -37,3 +37,22 @@ void ICACHE_FLASH_ATTR irom_read(char *buf, const char *addr, unsigned int len) 
 		}
 	}
 }
+
+int ICACHE_FLASH_ATTR irom_cmp(char *buf, const char *addr, unsigned int len) {
+	while(len) {
+		if(((uint32_t)addr & 0b11) || len < 4) {
+			if(*buf != irom_char(addr))
+				return 1;
+			buf++;
+			addr++;
+			len--;
+		} else {
+			if(*((uint32_t *)buf) != *((uint32_t *)addr))
+				return 1;
+			buf += 4;
+			addr += 4;
+			len -= 4;
+		}
+	}
+	return 0;
+}
