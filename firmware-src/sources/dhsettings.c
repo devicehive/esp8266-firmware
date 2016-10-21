@@ -81,7 +81,7 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 	return read;
 }
 
-int ICACHE_FLASH_ATTR dhsettings_commit() {
+LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 	int res = 1;
 	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
 	if(settings == NULL) {
@@ -89,7 +89,8 @@ int ICACHE_FLASH_ATTR dhsettings_commit() {
 		return 0;
 	}
 	os_memset(settings, 0xFF, sizeof(DH_SETTINGS));
-	os_memcpy(&settings->data, &mSettingsData, sizeof(DH_SETTINGS_DATA));
+	if(data)
+		os_memcpy(&settings->data, data, sizeof(DH_SETTINGS_DATA));
 	settings->crc = getStorageCrc(settings);
 	if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK) {
 		if(spi_flash_write(ESP_SETTINGS_MAIN_SEC* SPI_FLASH_SEC_SIZE, (uint32 *)settings, sizeof(DH_SETTINGS)) != SPI_FLASH_RESULT_OK) {
@@ -115,9 +116,13 @@ int ICACHE_FLASH_ATTR dhsettings_commit() {
 	return res;
 }
 
+
+int ICACHE_FLASH_ATTR dhsettings_commit() {
+	return dhsettings_write(&mSettingsData);
+}
+
 int ICACHE_FLASH_ATTR dhsettings_clear() {
-	os_memset(&mSettingsData, 0xFF, sizeof(DH_SETTINGS_DATA));
-	return dhsettings_commit();
+	return dhsettings_write(NULL);
 }
 
 const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {
@@ -143,7 +148,7 @@ const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey() {
 LOCAL void ICACHE_FLASH_ATTR set_arg(char *arg, size_t argSize, const char *value) {
 	const int len = snprintf(arg, argSize, "%s", value) + 1;
 	if(len < argSize)
-		os_memset(&arg[len], 0xFF, argSize - len);
+		os_memset(&arg[len], 0, argSize - len);
 }
 
 void ICACHE_FLASH_ATTR dhsettings_set_wifi_ssid(const char *ssid) {
