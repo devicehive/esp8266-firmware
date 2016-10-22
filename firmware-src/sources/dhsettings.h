@@ -36,10 +36,11 @@ int dhsettings_init(int *saved);
 int dhsettings_commit();
 
 /**
- *	\brief			Destroy data in permanent storage.
- *	\return 		Non zero value on success. Zero on error.
+ *	\brief				Destroy data in permanent storage.
+ *	\param[in] force	If zero, just delete data, non zero means destroy mark that setting was ever saved.
+ *	\return 			Non zero value on success. Zero on error.
  */
-int dhsettings_clear();
+int dhsettings_clear(int force);
 
 /**
  *	\brief			Get Wi-Fi SSID.
