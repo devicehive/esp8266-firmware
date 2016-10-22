@@ -121,7 +121,15 @@ int ICACHE_FLASH_ATTR dhsettings_commit() {
 	return dhsettings_write(&mSettingsData);
 }
 
-int ICACHE_FLASH_ATTR dhsettings_clear() {
+int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
+	os_memset(mSettingsData, 0, sizeof(mSettingsData));
+	if(force) {
+		if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK &&
+				spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) == SPI_FLASH_RESULT_OK) {
+			return 1;
+		}
+		return 0;
+	}
 	return dhsettings_write(NULL);
 }
 
