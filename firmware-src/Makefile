@@ -25,7 +25,7 @@ AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
 PAGESH			= pages/pages.h
 
-.PHONY: all flash full_flash terminal clean disassemble
+.PHONY: all flash full_flash terminal clean disassemble reboot
 
 all: $(FIRMWARE)
 
@@ -72,3 +72,6 @@ clean:
 
 disassemble:
 	@$(CROSS_COMPILE)objdump -d $(TARGETELF) > $(OBJDIR)/disassemble.txt
+
+reboot:
+	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher --reboot)

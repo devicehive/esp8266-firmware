@@ -405,6 +405,17 @@ void force_flash_mode(SerialPort *port) {
     port->setDtr(false);
 }
 
+void reboot(SerialPort *port) {
+	// Typically dev boards have:
+	// RTS is connected to GPIO0
+	// DTR is connected to RTS
+    port->setDtr(false);
+    port->sleep(50);
+    port->setDtr(true);
+    port->sleep(50);
+    port->setDtr(false);
+}
+
 int main(int argc, char* argv[]) {
 	setbuf(stdout, NULL);
 	int currentArg = 1;
@@ -471,9 +482,12 @@ int main(int argc, char* argv[]) {
 
 	bool developerMode = false;
 	if(argc > currentArg) {
-		if(strncmp(argv[1], "--developer", 5) == 0) {
+		if(strncmp(argv[currentArg], "--developer", 5) == 0) {
 			currentArg++;
 			developerMode = true;
+		} else if(strncmp(argv[currentArg], "--reboot", 5) == 0) {
+			reboot(port);
+			return 0;
 		}
 	}
 
