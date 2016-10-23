@@ -121,6 +121,7 @@ LOCAL UP_STATUS ICACHE_FLASH_ATTR flash_data() {
 	if(irom_cmp(mBuffer, (const char *)
 			(mFlashingSector * SPI_FLASH_SEC_SIZE + IROM_FLASH_BASE_ADDRESS),
 			SPI_FLASH_SEC_SIZE) == 0) {
+		mFlashingSector++;
 		return UP_STATUS_OK;
 	}
 
