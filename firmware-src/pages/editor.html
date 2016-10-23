@@ -31,10 +31,12 @@
 
   function send(url, data, cb, method = 'POST') {
    var xmlhttp = new XMLHttpRequest();  
-   xmlhttp.open(method, "http://" + window.location.hostname + "/" + url, true);
+   xmlhttp.open(method, "http://esp-demo.local" + window.location.hostname + "/" + url, true);
    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
    xmlhttp.onreadystatechange = function() {
     if(xmlhttp.readyState == 4){
+     if(xmlhttp.status == 401)
+      alert("Wrong access key");
      cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);
     }
    }
