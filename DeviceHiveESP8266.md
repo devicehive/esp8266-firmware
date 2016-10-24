@@ -1,11 +1,13 @@
-#DeviceHive ESP8266 Firmware User Guide.
-![](images/dh-logo.png?raw=true)  
-Table of contents
-=================
+# DeviceHive ESP8266 Firmware User Guide.
+
+![](images/dh-logo.png?raw=true)
+
+# Table of contents
+=================  
   * [Overview](#overview)
   * [Getting started](#getting-started)
   * [Local services ](#local-services)
-    * [mDNS](#mdns)  
+    * [mDNS](#mdns)
     * [RESTful API](#restful-api)
     * [Web server](#web-server)
   * [Wireless configuring](#wireless-configuring)
@@ -51,7 +53,7 @@ Table of contents
     * [devices/mhz19/read](#devicesmhz19read)
   * [License](#license)
 
-#Overview
+# Overview
 This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
 
 Once ESP8266 device is connected you can issue commands using DeviceHive's REST API or local REST API hosted rigth on the chip. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
@@ -78,7 +80,7 @@ The latest version can be found in git project repository. There are sources cod
 
 The purpose of this firmware is to provide easy tool for building IoT solutions for developers which used to program on unsuitable for microcontroller programming languages. You can easily use AngularJS framework for example to implement your idea. Also, considering chip price, DeviceHive usability and plenty modules on market which are not require soldering, it looks like perfect tool for prototyping. DIY developers also may find this firmware very useful for their project.
 
-#Getting started
+# Getting started
 First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.
 
 For flashing chip needs to be connected to computer via USB-UART converter, CH_PD pin have to be connected to Vcc, GPIO15 and GPIO0 have to be connected to ground and 3.3 power supply should be used. Sample for most popular pre soldered modules connection is below:
@@ -127,13 +129,13 @@ After rebooting you can send commands to DeviceHive server or local RESTful API 
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks usigng DeviceHive RESTfull API: http://devicehive.com/restful which you can transmited with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
-#Local services
+# Local services
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are ommited.
 
-##mDNS
+## mDNS
 mDNS(multicast Domain Name System) can resolve local domain names to IP address. Firmware anounce itself in mDNS using DeiviceId. mDNS 2nd level domain is limited with 60 chars, so any subsequent chars of DeviceId are omitted. Top level domain is always '.local'. mDNS-SD (service discovery) is supported. Service name is '_esp8266-devicehive._tcp.local'. This service points to local web server with RESTful API. One TXT record with firmware version is present.
 
-##RESTful API
+## RESTful API
 A RESTful API is an application program interface(API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port 80 which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as subpaths of API endpoint. For example command `spi/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
 
 For example, we would like to set up pin GPIO1 to high state and chip has AccessKey configured. `curl` request is:
@@ -143,10 +145,10 @@ http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
 Chip answers on this request '204 No content' which means that operation successfully completed.
 
-##Web server
+## Web server
 Firmware includes local HTTP server with tools for playing with API and some samples for some sensor. Web server aviliable at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
 
-#Wireless configuring
+# Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
 
 ![](images/phone1.jpg?raw=true)
@@ -170,7 +172,7 @@ Content-Length: 80
 ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=accesskey
 ```
 
-#Pin definition
+# Pin definition
 
  Pin name in commands |  Function        |ESP8266 pin number |NodeMCU board pin
 ----------------------|------------------|-------------------|------------------
@@ -193,10 +195,10 @@ Common                |                  |                   |
 _Notes:  
 GPIO6-GPIO11 usually connected to on-module EEPROM, that is why no API for this pins._
 
-#GPIO
+# GPIO
 Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and reverse current protection.
 
-##gpio/write
+## gpio/write
 Sets gpio pins according to parameters specified. Pins will be automatically initialized as output when command is received. All pins will be set up simultaneously. Unlisted pins will remain unaffected.
 
 *Parameters*:    
@@ -213,7 +215,7 @@ JSON with a set of key-value pairs, where key is pin number and value '0' for LO
 
 Returns 'OK' on success or 'Error' with description in result.
 
-##gpio/read
+## gpio/read
 Reads the state of all GPIO pins. Only pins specified in the request will be initialized as input.
 
 *Parameters*:  
@@ -244,7 +246,7 @@ Returns 'OK' on success with result or 'Error' with description in result.
 }
 ```
 
-##gpio/int
+## gpio/int
 Allows you to subscribe to notifications (interrupts) on pin state change.
 
 *Parameters*:  
@@ -258,7 +260,7 @@ JSON with a set of key-value pairs. Where key is pin number and value is one of 
 Mnemonic "all" can be used to set value for all pins.
 
 *Note: Timeout feature shall be used whenever is practicle to avoid flooding with notifications.*
-![](images/edge.jpg?raw=true)
+![](images/edge.png?raw=true)
 *Example*:  
 ```json
 {
@@ -284,10 +286,10 @@ Notifications will be generated with the name 'gpio/int'. Each notification will
 	"tick":123456
 }
 ```
-#ADC
+# ADC
 ESP8266 has just one ADC channel. This channel is connected to a dedicated pin 6 - ‘TOUT’. ADC can measure voltage in range from 0.0V to 1.0V with 10 bit resolution. 
 
-##adc/read
+## adc/read
 Reads ADC channels values. ESP8266 has just one channel - ‘0’.
 
 *Parameters*:  
@@ -310,7 +312,7 @@ Returns 'OK' on success with result or 'Error' with description in result. Each 
 }
 ```
 
-##adc/int
+## adc/int
 Subscribes on notifications with ADC value with some period.
 
 *Parameters*:  
@@ -889,8 +891,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"0":"1",
 	"1":"1",
-	"2":"0",
-	...
+	"2":"0"
 }
 ```
 Chip has 8(0..7) ports.

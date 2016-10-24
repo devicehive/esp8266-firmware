@@ -3,17 +3,27 @@
 set -e
 
 DIR=$(realpath $(dirname $0))
-VER=$(grep FIRMWARE_VERSION firmware-src/sources/user_config.h | cut -d'"' -f2)
-DSTDIR=$DIR/../dh-esp-firmware-v$VER
+BUILD=$DIR/build
+VER=$(grep FIRMWARE_VERSION $DIR/../firmware-src/sources/user_config.h | cut -d'"' -f2)
 
-mkdir -p $DSTDIR
-rm -rf $DSTDIR/*
+mkdir -p $BUILD
+rm -rf $BUILD/*
+rm -f $BUILD/../dh-esp-firmware-v$VER.zip
+rm -f $BUILD/../dh-esp-firmware-v$VER.tar.gz
+(cd $DIR/../esp-utils && make rebuild)
+cp $DIR/../esp-utils/build/esp-terminal $BUILD/esp-terminal-linux
+cp $DIR/../esp-utils/build/esp-flasher $BUILD/esp-flasher-linux
+(cd $DIR/../esp-utils && CXX=i686-apple-darwin10-g++ make rebuild)
+cp $DIR/../esp-utils/build/esp-terminal $BUILD/esp-terminal-osx
+cp $DIR/../esp-utils/build/esp-flasher $BUILD/esp-flasher-osx
+(cd $DIR/../esp-utils && CXX=i686-w64-mingw32-g++ LDFLAGS=-static make rebuild)
+cp $DIR/../esp-utils/build/esp-terminal $BUILD/esp-terminal-win.exe
+cp $DIR/../esp-utils/build/esp-flasher $BUILD/esp-flasher-win.exe
+cp  $DIR/utils/* $BUILD/
+(cd $DIR/.. && markdown-pdf DeviceHiveESP8266.md -o $BUILD/DeviceHiveESP8266.pdf)
+(cd $DIR/../firmware-src && make rebuild) && cp $DIR/../firmware-src/firmware/* $BUILD
 
-cp $DIR/examples $DSTDIR -r
-cp $DIR/release/utils/* $DSTDIR
-cp $DIR/*.pdf $DSTDIR
-(cd $DIR/firmware-src && make clean all) && cp $DIR/firmware-src/firmware/* $DSTDIR
-zip -r -q $DSTDIR/../dh-esp-firmware-v$VER.zip $DSTDIR
-tar -czf $DSTDIR/../dh-esp-firmware-v$VER.tar.gz $DSTDIR
+(cd $BUILD && zip -r -q ../dh-esp-firmware-v$VER.zip *)
+(cd $BUILD && tar -czf ../dh-esp-firmware-v$VER.tar.gz *)
 
 
