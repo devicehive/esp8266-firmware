@@ -5,3 +5,6 @@ firmware-src/pages/pages.h
 esp-utils/build
 esp-utils/.settings
 sdk/lib/libc.a
+release/build
+release/*.zip
+release/*.tar.gz
