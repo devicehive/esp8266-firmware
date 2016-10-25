@@ -8,3 +8,4 @@ sdk/lib/libc.a
 release/build
 release/*.zip
 release/*.tar.gz
+firmware-src/pages/debug.log

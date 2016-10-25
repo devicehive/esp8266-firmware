@@ -23,8 +23,12 @@ sudo dpkg -i apple-x86-gcc_4.2.1~5646.1flosoft2_amd64.deb
 ```
 
 # linux build tools
+```
 sudo apt install linux-libc-dev:i386
+```
 
-# converting md to pdf
+# converting markdown to pdf
+```
 sudo apt install npm nodejs-legacy
 sudo npm install -g markdown-pdf
+```
