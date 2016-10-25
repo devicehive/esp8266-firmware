@@ -1,4 +1,4 @@
-﻿# DeviceHive ESP8266 Firmware User Guide.
+# DeviceHive ESP8266 Firmware User Guide.
 
 ![](images/dh-logo.png?raw=true)
 
@@ -101,10 +101,10 @@ Also, it's possible to use NodeMCU boards. It already has UART converter, reset 
 ![](images/sample5.jpg?raw=true)
 
 After assembling, connect it to computer. Install driver for your USB->UART converter. The most popular chip and official sites with drivers below:
-* CP210x: http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx
-* PL230x: http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41
-* FTDI: http://www.ftdichip.com/Drivers/VCP.htm
-* CH341: http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html
+* CP210x: [http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx](http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx)
+* PL230x: [http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41](http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41)
+* FTDI: [http://www.ftdichip.com/Drivers/VCP.htm](http://www.ftdichip.com/Drivers/VCP.htm)
+* CH341: [http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html](http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html)
 
 Make sure that virtual serial port is available in your system (virtual COM is present on Windows OS, '/dev/ttyUSB*' on Linux, '/dev/tty.*' on OS X). Unpack archive with firmware and flash it running 'esp-flasher' in terminal. Flasher automatically detects serial port and use 'devicehive.bin' file for flashing. Successful flasher output is below:
 
