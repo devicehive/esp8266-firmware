@@ -22,6 +22,9 @@ sudo dpkg -i apple-uni-sdk-10.5_20110407-0.flosoft1_amd64.deb
 sudo dpkg -i apple-x86-gcc_4.2.1~5646.1flosoft2_amd64.deb
 ```
 
-#converting md to pdf
+# linux build tools
+sudo apt install linux-libc-dev:i386
+
+# converting md to pdf
 sudo apt install npm nodejs-legacy
 sudo npm install -g markdown-pdf

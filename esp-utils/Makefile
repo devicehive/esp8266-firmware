@@ -1,6 +1,6 @@
 CXX				?= g++
-CFLAGS			?= -c -Wall
-LDFLAGS			?= -s -Os
+CFLAGS			+= -c -Wall
+LDFLAGS			+= -s -Os
 LIBS			=
 OBJDIR			= build
 SOURCES			= $(wildcard common/*.cpp)
