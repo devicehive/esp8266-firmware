@@ -24,6 +24,7 @@
   var flashPos = 0;
   var flashLen = 1024;
   var flashData;
+  var flashLimit = 65536; 
   function print(text, err = false) {
    document.getElementById('output').style.color = err ? 'red' : 'green';
    document.getElementById('output').innerHTML = text;
@@ -76,8 +77,8 @@
     return;
    localStorage['accesskey'] = document.getElementById('accesskey').value;
    print("");
-   if(document.getElementById('page').value.length > 65536) {
-    alert("Page is too big. Limit is 65536 bytes. Your size " + document.getElementById('page').value.length);
+   if(document.getElementById('page').value.length > flashLimit) {
+    alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + document.getElementById('page').value.length + " bytes.");
     return;
    }
    if(document.getElementById('page').value.length == 0) {
