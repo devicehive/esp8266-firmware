@@ -3,7 +3,6 @@
 ![](images/dh-logo.png?raw=true)
 
 # Table of contents
----------------------------
   * [Overview](#overview)
   * [Getting started](#getting-started)
   * [Local services ](#local-services)
