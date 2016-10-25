@@ -10,6 +10,7 @@
     * [mDNS](#mdns)
     * [RESTful API](#restful-api)
     * [Web server](#web-server)
+    * [Uploadable page](#uploadable-page)
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
   * [GPIO](#gpio)
@@ -147,6 +148,11 @@ Chip answers on this request '204 No content' which means that operation success
 
 ## Web server
 Firmware includes local HTTP server with tools for playing with API and some samples for some sensor. Web server aviliable at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
+
+## Uploadable page
+The original main page can be replaced with any other up to 65536 bytes. Only main page can be replaced, there is no way to add more pages. There is a tiny text editor at `http://device-id-or-ip.local/editor.html` which allows to edit page content in web browser and download/upload file. If page was changed, original page is always available at `http://device-id-or-ip.local/help.html`. Do not edit web page simultaneously from different tabs/browsers/computers. 
+
+This feature can be used for creating web enabled IoT devices. Any HTML, CSS, JS or anything else can be saved there. Local web server provides this page as is, without any modifications. Embedded JS in web browser can be used for communicating with RESTful API. As an example, it's possible to build some sensor with web interface. A couple of such samples can found on the local web server. `http://device-id-or-ip.local/help.html` page contains a list of them. 
 
 # Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
