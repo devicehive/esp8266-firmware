@@ -3,7 +3,7 @@
 ![](images/dh-logo.png?raw=true)
 
 # Table of contents
-=================  
+---------------------------
   * [Overview](#overview)
   * [Getting started](#getting-started)
   * [Local services ](#local-services)
@@ -57,7 +57,7 @@
 # Overview
 This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
 
-Once ESP8266 device is connected you can issue commands using DeviceHive's REST API or local REST API hosted right on the chip. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
+Once ESP8266 device is connected you can issue commands using DeviceHive's RESTful API or local REST API hosted right on the chip. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
 
 *Example using curl on Mac or Linux:*
 ```shell
@@ -68,12 +68,12 @@ http://nn8571.pg.devicehive.com/api/device/astaff/command
 ```
 This would set pin GPIO1 to 0. For example on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.
 
-In the same way local REST API can be used. Just run:
+In the same way local RESTful API can be used. Just run:
 ```shell
 curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
 http://eps-device-id.local/api/gpio/read
 ```
-This would print input state of all GPIO pins with json format.
+This command prints input state of all GPIO pins with json format.
 
 The same idea with other interfaces. To check if your hardware device is suitable with firmware check which interface your devices has and then check if this interface is supported by DeviceHive ESP8266 firmware.
 
@@ -82,7 +82,7 @@ The latest version can be found in git project repository. There are sources cod
 The purpose of this firmware is to provide easy tool for building IoT solutions for developers which used to program on unsuitable for microcontroller programming languages. You can easily use AngularJS framework for example to implement your idea. Also, considering chip price, DeviceHive usability and plenty modules on market which are not require soldering, it looks like perfect tool for prototyping. DIY developers also may find this firmware very useful for their project.
 
 # Getting started
-First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.
+First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server(can be omitted for local usage). Board should have at least 512KiB of ROM memory. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.
 
 For flashing chip needs to be connected to computer via USB-UART converter, CH_PD pin have to be connected to Vcc, GPIO15 and GPIO0 have to be connected to ground and 3.3 power supply should be used. Sample for most popular pre soldered modules connection is below:
 
@@ -112,7 +112,7 @@ Make sure that virtual serial port is available in your system (virtual COM is p
 
 Now remove wire from GPIO0(live it float or connect to high), reboot device and connect to firmware with 'esp-terminal' util. You can also use any other tool that can connect to terminal via UART and support escape sequences, PuTTY or GNU 'screen' for example. Port parameters are: 115200 8N1.
 
-_Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in paragraph 3 instead. Wireless configuring procedure also can be used for end-user devices with this firmware._
+_Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in [wireless configuring section](#wireless-configuring) instead. Wireless configuring procedure also can be used for end-user devices with this firmware._
 
 Firmware terminal is a UNIX like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring for working with cloud services.  
 
@@ -122,7 +122,7 @@ Configuring sample is below:
 
 ![](images/conf.png?raw=true)
 
-_If DeviceHive API URL isn't specified, chip will work only as local RESTful server. AccessKey is used for local RESTful API and remote DeviceHive server. See [Local RESTful API](#local-restful-api) for details._
+_If DeviceHive API URL isn't specified, chip will work only as local RESTful server. AccessKey is used for local RESTful API and remote DeviceHive server. See [Local RESTful API](#restful-api) for details._
 
 After rebooting you can send commands to DeviceHive server or local RESTful API and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go in web admin, 'Devices' tab, 'commands' subtab, 'enter new command'. Type command and parameters and press 'push'. After ESP8266 perform your command you can press 'refresh' button to see result. For example 'gpio/read' command would look in admin control panel as below:
 
@@ -134,7 +134,7 @@ Now you can start writing your own program to create your own IoT devices with y
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are omitted.
 
 ## mDNS
-mDNS(multicast Domain Name System) can resolve local domain names to IP address. Firmware announce itself in mDNS using DeiviceId. mDNS 2nd level domain is limited with 60 chars, so any subsequent chars of DeviceId are omitted. Top level domain is always '.local'. mDNS-SD (service discovery) is supported. Service name is '_esp8266-devicehive._tcp.local'. This service points to local web server with RESTful API. One TXT record with firmware version is present.
+mDNS(multicast Domain Name System) can resolve local domain names to IP address. Firmware announce itself in mDNS using DeiviceId. mDNS 2nd level domain is limited with 60 chars, so any subsequent chars of DeviceId are omitted. Top level domain is always `.local`. mDNS-SD (service discovery) is supported. Service name is `_esp8266-devicehive._tcp.local`. This service points to local web server with RESTful API. One TXT record with firmware version is present.
 
 ## RESTful API
 A RESTful API is an application program interface(API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port 80 which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as sub paths of API endpoint. For example command `api/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
@@ -147,7 +147,7 @@ http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 Chip answers on this request '204 No content' which means that operation successfully completed.
 
 ## Web server
-Firmware includes local HTTP server with tools for playing with API and some samples for some sensor. Web server available at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
+Firmware includes local HTTP server with tools for playing with API and some samples for some sensors. Web server available at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id-or-chip-ip.local/tryapi.html where any command can be tried and command's output can be observed. 
 
 ## Uploadable page
 The original main page can be replaced with any other up to 65536 bytes. Only main page can be replaced, there is no way to add more pages. There is a tiny text editor at `http://device-id-or-ip.local/editor.html` which allows to edit page content in web browser and download/upload file. If page was changed, original page is always available at `http://device-id-or-ip.local/help.html`. Do not edit web page simultaneously from different tabs/browsers/computers. 
@@ -600,7 +600,7 @@ Read specified data to onewire bus. Onewire pin can also be specified with this 
 ```json
 {
 	"data":"YWI=",
-	"pin": "2",
+	"pin": "2"
 }
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
@@ -617,7 +617,7 @@ Mnemonic "all" can be used as key to set up something for all pins.
 *Example*:  
 ```json
 {
-	"2":"presence",
+	"2":"presence"
 }
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
@@ -637,7 +637,7 @@ Search bus for serial numbers of all attached devices.
 *Example*:  
 ```json
 {
-	"pin":"2",
+	"pin":"2"
 }
 ```
 Return ‘OK’ in status and result with list as below. Or ‘Error’ and description in result on error.
@@ -657,7 +657,7 @@ Search bus for serial numbers of attached devices which are in alarm state.
 *Example*:  
 ```json
 {
-	"pin":"0",
+	"pin":"0"
 }
 ```
 
@@ -679,7 +679,7 @@ Read data from DHT11/DHT22/AM2302 or device with the same protocol. Number of by
 *Example*:  
 ```json
 {
-	"pin":"0",
+	"pin":"0"
 }
 ```
 Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
@@ -759,8 +759,8 @@ Temperature unit in Celsius degrees. Humidity unit is percent.
 Read temperature and pressure from BMP180 sensor.
 
 *Parameters*:  
-"address" - I2C BMP180 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xEE.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"address" - I2C BMP180 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xEE.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
 *Example*:  
@@ -768,7 +768,7 @@ Read temperature and pressure from BMP180 sensor.
 {
 	"SDA":"4",
 	"SCL":"5",
-	"address":"0xEE",
+	"address":"0xEE"
 }
 ```
 
@@ -785,8 +785,8 @@ Temperature unit in Celsius degrees. Pressure unit is pascal.
 Read illuminance from BH1750 sensor. Mode is 'High Resolution2'.
 
 *Parameters*:  
-"address" - I2C BH1750 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x46.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"address" - I2C BH1750 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x46.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
 *Example*:  
@@ -794,7 +794,7 @@ Read illuminance from BH1750 sensor. Mode is 'High Resolution2'.
 {
 	"SDA":"4",
 	"SCL":"5",
-	"address":"0x46",
+	"address":"0x46"
 }
 ```
 
@@ -810,8 +810,8 @@ Illuminance unit in lux(lumens per square meter).
 Read accelerometer, gyroscope and temperature data from MPU6050 sensor. Accelerometer is configured -8g...+8g values, gyroscope -1000...+1000 dps.
 
 *Parameters*:  
-"address" - I2C MPU6050 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xD0.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"address" - I2C MPU6050 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xD0.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
 *Example*:  
@@ -819,7 +819,7 @@ Read accelerometer, gyroscope and temperature data from MPU6050 sensor. Accelero
 {
 	"SDA":"4",
 	"SCL":"5",
-	"address":"0xD0",
+	"address":"0xD0"
 }
 ```
 
@@ -847,8 +847,8 @@ Temperature unit in Celsius degrees. Acceleration unit is meter per second squar
 Read magnetometer, i.e. compass data. All configs are default, sensor field range is 1.3 gauss.
 
 *Parameters*:  
-"address" - I2C HMC5883L device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x3C.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"address" - I2C HMC5883L device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x3C.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
 *Example*:  
@@ -856,7 +856,7 @@ Read magnetometer, i.e. compass data. All configs are default, sensor field rang
 {
 	"SDA":"4",
 	"SCL":"5",
-	"address":"0x3C",
+	"address":"0x3C"
 }
 ```
 
@@ -877,10 +877,10 @@ Data unit is gauss. Proportional to the magnetic field component along its axis.
 Read GPIO extender pins state. All pins have pull up after powering on and this is the only one way to operate as inputs.
 
 *Parameters*:  
-"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-Pin numbers-value pairs where value can be only "pullup". If pin was used as output, "pullup" sets it back to input before reading. "all" key for all pins are supported.
+Pin numbers-value pairs where value can be only "pullup". If pin was used as output, "pullup" sets it back to input before reading. "all" key for all pins are supported.  
 
 *Example*:  
 ```json
@@ -906,11 +906,10 @@ Chip has 8(0..7) ports.
 Write GPIO extender pins state. HIGH level provides small limited(100 uA) current and actually that is the same as "pullup" from hardware side and this API. See chip datasheet for details.
 
 *Parameters*:  
-"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface. 
-Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HGIH.
- 
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HIGH.  
 
 *Example*:  
 ```json
@@ -928,12 +927,11 @@ Return ‘OK’ in status on success. Or ‘Error’ and description in result o
 Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can have 16x2, 20x2, 20x4 or any other character array. Symbol "\n" (0x0A) for newline is supported. All display data erases on each command. PCF8574 should be connected to display with this pinmap: P0->RS, P1->RW, P2->E, P3->Backlight control or not connected, P4->D4, P5->D5, P6->D6 and P7->D7. 
 
 *Parameters*:  
-"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface. 
-"data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.
-"text" - Plain text to set up. Cannot be combined with 'data' field in one command.
- 
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+"data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.  
+"text" - Plain text to set up. Cannot be combined with 'data' field in one command.  
 
 *Example*:  
 ```json

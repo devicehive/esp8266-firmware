@@ -1,5 +1,5 @@
 # DeviceHive ESP8266 Firmware
-Special firmware for usage ESP8266 in DeviceHive clouds.
+Special firmware for usage ESP8266 as local web server with RESTful API and as DeviceHive clouds client.
 This repo consist of few parts of this project which can be used with
 other projects. Each project has dedicated readme file.
 
@@ -7,8 +7,14 @@ other projects. Each project has dedicated readme file.
 Photo above is a real photo of the demo device contructed with esp8266. See
 http://youtu.be/hzi4djt-wdg
 
+# [DeviceHiveESP8266.md](DeviceHiveESP8266.md)
+This is the main documentation file for this firmware. Document contains
+commands specification, describes  all features and firmware usage.
+[Click here to open it.](DeviceHiveESP8266.md)
+
 # Demo videos
 Zero wireless configuring with Android http://youtu.be/2J98YDpbJKo  
+DeviceHive clouds demos:    
 BH1750 Ambient light http://youtu.be/AkSFdO0soyo  
 DS18B20 + iButton + DHT11 http://youtu.be/IuvxwCPNZCc  
 Muscle connected to the cloud http://youtu.be/8L96nBNHE14  
@@ -20,11 +26,6 @@ BMP180 Atmospheric pressure http://youtu.be/P2rxnVjRPyc
 MPU6050 Accelerometer + Gyroscope http://youtu.be/IRj4tOfLTAM  
 MFRC522 RFID Reader http://youtu.be/VMT3v49d57g  
 Simple relay http://youtu.be/ZLq2X2n_wR0  
-
-# [DeviceHiveESP8266.md](DeviceHiveESP8266.md)
-This is the main documentation file for this firmware. Document contains
-commands specification, describes  all features and firmware usage.
-[Click here to open it.](DeviceHiveESP8266.md)
 
 # custom firmwares
 There is a possibility to build custom firmware on top of this which sends some
