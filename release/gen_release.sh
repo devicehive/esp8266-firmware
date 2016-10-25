@@ -10,7 +10,7 @@ mkdir -p $BUILD
 rm -rf $BUILD/*
 rm -f $BUILD/../dh-esp-firmware-v$VER.zip
 rm -f $BUILD/../dh-esp-firmware-v$VER.tar.gz
-(cd $DIR/../esp-utils && make rebuild)
+(cd $DIR/../esp-utils && CXX=x86_64-linux-gnu-g++ CFLAGS=-m32 LDFLAGS=-m32 make rebuild)
 cp $DIR/../esp-utils/build/esp-terminal $BUILD/esp-terminal-linux
 cp $DIR/../esp-utils/build/esp-flasher $BUILD/esp-flasher-linux
 (cd $DIR/../esp-utils && CXX=i686-apple-darwin10-g++ make rebuild)

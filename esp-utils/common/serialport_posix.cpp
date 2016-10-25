@@ -104,7 +104,7 @@ SerialPort::~SerialPort() {
 
 unsigned int SerialPort::write_native(const void *data, unsigned int len) {
 	ssize_t bw;
-	ssize_t total = 0;
+	size_t total = 0;
 	do {
 		bw = write(mCom, (char *)data + total, len - total);
 		total += bw;
