@@ -16,13 +16,19 @@ To quit from terminal press Ctrl+Q
 
 # esp-flasher usage
 Run application and it will try to detect device automatically. If no parameters
-were specified it also will try to open files 0x00000.bin and 0x40000.bin in
-current directory and flash them to corresponding addresses.
+were specified it also will try to open files devicehive.bin in current directory
+and directory with its binary and flash them to corresponding addresses.
 You can specify port name in first argument if you want to specify it manually.
 You also can specify which files have to be written in devices in arguments by
 pairs hex address <space> file name. For exmaple:
 esp-flasher COM2 0x00000 boot.img 0x40000 spi.img
 esp-flasher 0x40000 myimagefile.bin
+There also `--developer` and `--reboot` arguments which supposed to be used by
+developers only. First enables incremental flash mode, it compares previosuly
+flashed file (should be saved as `devicehive.bin.prev`) and if differences are
+minimal it will flash only them to save time on flashing. `--reboot` argument
+simply reboot chip (serial adapter RTS should connected to GPIO0, DTR to RTS
+pin).
 
 # License
 see LICENSE file

@@ -21,6 +21,11 @@ MPU6050 Accelerometer + Gyroscope http://youtu.be/IRj4tOfLTAM
 MFRC522 RFID Reader http://youtu.be/VMT3v49d57g  
 Simple relay http://youtu.be/ZLq2X2n_wR0  
 
+# [DeviceHiveESP8266.md](DeviceHiveESP8266.md)
+This is the main documentation file for this firmware. Document contains
+commands specification, describes  all features and firmware usage.
+[Click here to open it.](DeviceHiveESP8266.md)
+
 # custom firmwares
 There is a possibility to build custom firmware on top of this which sends some
 notifications to DeviceHive server periodically. In pauses firmware goes to deep
@@ -58,14 +63,11 @@ means that command and parameters is written correctly and you can use it as
 a sample.
 
 # release
-Pre built binaries of utils and released firmwares.
+Scripts for generating binary releases.
 
 # sdk
 SDK from chip manufactor. Included in this repo to make sure that we are
 using the same version of this SDK to avoid any surprises from changing APIs
-
-# DeviceHiveESP8266.md
-Document contains cloud commands specification for this firmware. [Click here to open it.](DeviceHiveESP8266.md)
 
 # License
 The MIT License. See LICENSE file. Except sdk directory, it has ESPRSSIF MIT 
