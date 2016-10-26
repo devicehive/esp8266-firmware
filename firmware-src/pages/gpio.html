@@ -1,0 +1,79 @@
+<html>
+ <head>
+ <style type="text/css">
+  html * {
+   font-family: sans-serif;
+  }
+  input[type=password] {
+   width: 40%;
+   display: inline-block; 
+  }
+  input[type=button] {
+   width: 10%;
+   display: inline-block; 
+  }
+  label {
+   width: 10%;
+   display: inline-block; 
+  }
+  div {
+   color: green;
+  }
+ </style>
+ <title>GPIO</title>
+ <script type="text/javascript">
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
+   document.getElementById('output').innerHTML = text;
+  }
+  function send(command, data, cb) {
+   print('');
+   localStorage['accesskey'] = document.getElementById('accesskey').value;
+    var xmlhttp = new XMLHttpRequest();  
+    xmlhttp.open('POST', "http://" + window.location.hostname + '/api/gpio/' + command, true);
+    xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
+    xmlhttp.onreadystatechange = function() {
+     if(xmlhttp.readyState == 4){
+      if(xmlhttp.status < 200 || xmlhttp.status > 299) {
+       print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
+      } else {
+       cb(xmlhttp.responseText);
+      }
+     }
+    }
+    xmlhttp.send(data);
+  }
+  function get(pin) {
+    send('read', null, function(text) {
+      json = JSON.parse(text);
+      print('GPIO' + pin + ': ' + json[pin.toString()]);
+     });
+  }
+  function set(pin, val) {
+    var json = {}
+    json[String(pin)] = val;
+    send('write', JSON.stringify(json), function(text) {
+      print('Value ' + val + ' was written to GPIO' + pin);
+     });
+  }
+  function init() {
+    document.getElementById('accesskey').value = localStorage['accesskey'];
+  }
+ </script>
+ </head>
+ <body onload="init()">
+  <label>AccesKey: </label><input type="password" id="accesskey"><br>
+  <p>This sample can read and write to GPIO ports.</p>
+  <label>GPIO0</label> <input type="button" value="Read" onclick="get(0);"> <input type="button" value="Set 1" onclick="set(0, 1);"> <input type="button" value="Set 0" onclick="set(0, 0);"><br><br>
+  <label>GPIO1</label> <input type="button" value="Read" onclick="get(1);"> <input type="button" value="Set 1" onclick="set(1, 1);"> <input type="button" value="Set 0" onclick="set(1, 0);"><br><br>
+  <label>GPIO2</label> <input type="button" value="Read" onclick="get(2);"> <input type="button" value="Set 1" onclick="set(2, 1);"> <input type="button" value="Set 0" onclick="set(2, 0);"><br><br>
+  <label>GPIO3</label> <input type="button" value="Read" onclick="get(3);"> <input type="button" value="Set 1" onclick="set(3, 1);"> <input type="button" value="Set 0" onclick="set(3, 0);"><br><br>
+  <label>GPIO4</label> <input type="button" value="Read" onclick="get(4);"> <input type="button" value="Set 1" onclick="set(4, 1);"> <input type="button" value="Set 0" onclick="set(4, 0);"><br><br>
+  <label>GPIO5</label> <input type="button" value="Read" onclick="get(5);"> <input type="button" value="Set 1" onclick="set(5, 1);"> <input type="button" value="Set 0" onclick="set(5, 0);"><br><br>
+  <label>GPIO12</label> <input type="button" value="Read" onclick="get(12);"> <input type="button" value="Set 1" onclick="set(12, 1);"> <input type="button" value="Set 0" onclick="set(12, 0);"><br><br>
+  <label>GPIO13</label> <input type="button" value="Read" onclick="get(13);"> <input type="button" value="Set 1" onclick="set(13, 1);"> <input type="button" value="Set 0" onclick="set(13, 0);"><br><br>
+  <label>GPIO14</label> <input type="button" value="Read" onclick="get(14);"> <input type="button" value="Set 1" onclick="set(14, 1);"> <input type="button" value="Set 0" onclick="set(14, 0);"><br><br>
+  <label>GPIO15</label> <input type="button" value="Read" onclick="get(15);"> <input type="button" value="Set 1" onclick="set(15, 1);"> <input type="button" value="Set 0" onclick="set(15, 0);"><br><br>
+  <br><div id="output"></div>
+ </body>
+</html>

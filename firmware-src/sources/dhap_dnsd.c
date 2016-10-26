@@ -14,77 +14,32 @@
 #include <espconn.h>
 #include <mem.h>
 #include "dhap_dnsd.h"
+#include "dns.h"
 #include "dhdebug.h"
 
 #define MAX_CONNECTIONS 2
-#define DNSD_PORT 53
 
 LOCAL unsigned int mDNSdConnected = 0;
 LOCAL unsigned char mSendingInProgress = 0;
 #define DNS_ANSWER_BUF_SIZE 1024
 LOCAL char *mDNSAnswerBuffer;
 
-// struct declaration for little endian systems
-// all fields should be filled with big endian
-typedef struct __attribute__((packed)) {
-	uint16_t id;
-	unsigned recursionDesired : 1;
-	unsigned truncatedMessage : 1;
-	unsigned authoritiveAnswer : 1;
-	unsigned opcode : 4;
-	unsigned responseFlag : 1;
-	unsigned rcode : 4;
-	unsigned resevered : 2;
-	unsigned primaryServer : 1;
-	unsigned recursionAvailable : 1;
-	uint16_t questionsNumber;
-	uint16_t answersNumber;
-	uint16_t authoritiesNumber;
-	uint16_t resourcesNumber;
-} DNS_HEADER;
-
-typedef struct __attribute__((packed)) {
-	uint16_t nameOffset;
-	uint16_t type;
-	uint16_t class;
-	uint32_t ttl;
-	uint16_t ipSize;
-	uint32_t ip;
-} DNS_ANSWER;
-
-LOCAL uint16_t ICACHE_FLASH_ATTR htobe_16(uint16_t n) {
-	uint32_t res;
-	uint8_t *p = (uint8_t *) &res;
-	p[1] = n % 0x100;
-	n /= 0x100;
-	p[0] = n % 0x100;
-	return res;
-}
-
 LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 	// always add response with host address data to the end
 	DNS_HEADER *header = (DNS_HEADER *)data;
-	DNS_ANSWER *answer = (DNS_ANSWER *)(&data[len]);
 	header->answersNumber = htobe_16(1);
 	header->authoritiesNumber = 0;
 	header->resourcesNumber = 0;
-	header->responseFlag = 1;
-	header->authoritiveAnswer = 0;
-	header->recursionAvailable = 1;
-	header->rcode = 0;
-
-	answer->nameOffset = htobe_16(0xC000 | sizeof(DNS_HEADER));
-	answer->type = htobe_16(1);  // A - host address
-	answer->class = htobe_16(1); // IN - class
-	answer->ttl = 0;
-	answer->ipSize = htobe_16(sizeof(answer->ip));
-	answer->ip = 0;
+	header->flags.responseFlag = 1;
+	header->flags.authoritiveAnswer = 0;
+	header->flags.recursionAvailable = 1;
+	header->flags.rcode = 0;
 
 	struct ip_info info;
-	if(wifi_get_ip_info(SOFTAP_IF, &info))
-		answer->ip = info.ip.addr;
-
-	return len + sizeof(DNS_ANSWER);
+	if(wifi_get_ip_info(SOFTAP_IF, &info) == 0)
+		info.ip.addr = 0;
+	return len + dns_add_answer(&data[len], NULL, NULL, DNS_TYPE_A, 60,
+			sizeof(info.ip.addr), (uint8_t *)&info.ip.addr, NULL, NULL);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_disconnect_cb(void *arg) {
@@ -169,7 +124,7 @@ void ICACHE_FLASH_ATTR dhap_dnsd_init() {
 	mDNSAnswerBuffer = (char *)os_malloc(DNS_ANSWER_BUF_SIZE);
 
 	esp_tcp *dnsdTcp = (esp_tcp *)os_zalloc(sizeof(esp_tcp));
-	dnsdTcp->local_port = DNSD_PORT;
+	dnsdTcp->local_port = DNS_PORT;
 	struct espconn *dnsdConnTCP = (struct espconn *)os_zalloc(sizeof(struct espconn ));
 	dnsdConnTCP->type = ESPCONN_TCP;
 	dnsdConnTCP->state = ESPCONN_NONE;
@@ -180,7 +135,7 @@ void ICACHE_FLASH_ATTR dhap_dnsd_init() {
 	espconn_accept(dnsdConnTCP);
 
 	esp_udp *dnsdUdp = (esp_udp *)os_zalloc(sizeof(esp_tcp));
-	dnsdUdp->local_port = DNSD_PORT;
+	dnsdUdp->local_port = DNS_PORT;
 	struct espconn *dnsdConnUDP = (struct espconn *)os_zalloc(sizeof(struct espconn ));
 	dnsdConnUDP->type = ESPCONN_UDP;
 	dnsdConnUDP->state = ESPCONN_NONE;

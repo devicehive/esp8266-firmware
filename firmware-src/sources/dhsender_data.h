@@ -17,7 +17,7 @@ typedef enum {
 	RDT_CONST_STRING,	///< Constant pointer to char should be passed. Will be formatted as string.
 	RDT_DATA_WITH_LEN,	///< Pointer to data and integer length of data should be passed. Will be formatted as json with current data encoded method.
 	RDT_FLOAT,			///< Float should be passed. Will be formatted as json with this value.
-	RDT_GPIO,			///< Three 32bit value should be passed(caused, state, tick). Will be formatted as json.
+	RDT_GPIO,			///< Four 32bit value should be passed(caused, state, tick, suitable). Will be formatted as json.
 	RDT_SEARCH64,		///< Data with groups of 64bit addresses. Pin number, pointer to data and integer length of data should be passed.
 	RDT_FORMAT_STRING	///< Formated string, like sprintf. Text should be valid json.
 } REQUEST_DATA_TYPE;
@@ -65,6 +65,7 @@ typedef struct {
 	unsigned int caused;	///< Which pins caused interruption.
 	unsigned int state;		///< Current pins state.
 	unsigned int timestamp;	///< Current internal time in microseconds.
+	unsigned int suitable;	///< Which pins should be included in answer.
 } GPIO_DATA;
 
 /** Struct for storing command result. */

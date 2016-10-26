@@ -32,7 +32,7 @@ RO_DATA char DHAP_PAGE_FORM[] =  "<html>" \
 								"<input type='password' name='pass'><br><br>"\
 								"DeviceHive API Url (Example "DEFAULT_SERVER"):<br>"\
 								"<input type='text' name='url' value='%s'><br><br>"\
-								"DeviceId (allowed chars are A-Za-z0-9_- ):<br>"\
+								"DeviceId (allowed chars are A-Za-z0-9- ):<br>"\
 								"<input type='text' name='id' value='%s'><br><br>"\
 								"AccessKey (leave empty to keep current, allowed chars are A-Za-z0-9/+= ):<br>"\
 								"<input type='password' name='key'><br><br>"\

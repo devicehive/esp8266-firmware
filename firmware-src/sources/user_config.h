@@ -27,5 +27,9 @@
 #define DEFAULT_SERVER "http://playground.devicehive.com/api/rest"
 /** Interval of notification for. */
 #define CUSTOM_NOTIFICATION_INTERVAL_MS 180000
+/** Name for discovering in mDNS. Not more then 60 chars*/
+#define MDNS_SERVICE_NAME "_esp8266-devicehive._tcp"
+/** HTTP webserver and RESTful service port. */
+#define HTTPD_PORT 80
 
 #endif /* _USER_CONFIG_H_ */

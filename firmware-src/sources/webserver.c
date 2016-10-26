@@ -38,10 +38,10 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 	}
 	if(path[0]=='/') {
 		if(path[1]==0) {
-			static const char hw[] = "Hello, world!";
-			answer->content.data = hw;
-			answer->content.len = sizeof(hw) - 1;
-			return HRCS_ANSWERED_PLAIN;
+			// index page
+			answer->content.data = help_html;
+			answer->content.len = sizeof(help_html) - 1;
+			return HRCS_ANSWERED_HTML;
 		}
 	}
 

@@ -23,9 +23,9 @@
 #include "snprintf.h"
 #include "dhsettings.h"
 #include "irom.h"
+#include "user_config.h"
 
 #define MAX_CONNECTIONS 5
-#define HTTPD_PORT 80
 #define POST_BUF_SIZE 2048
 #define MAX_SINGLE_PACKET 2048
 #define MAX_PATH 64
@@ -136,7 +136,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 	while(data[i] == ' ')
 		i++;
 	j = i;
-	while(data[j] != ' ') // find end of path
+	while(data[j] != ' ' && data[j] != '?') // find end of path
 		j++;
 	if(j - i >= MAX_PATH)
 		return HRCS_NOT_FOUND;
@@ -221,6 +221,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	RO_DATA char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
 	RO_DATA char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";
 	RO_DATA char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:11\r\n\r\nBad Request";
+	RO_DATA char toomany[] = "HTTP/1.0 429 Too Many Requests\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 17\r\n\r\nToo Many Requests";
 	RO_DATA char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
 	RO_DATA char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	RO_DATA char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
@@ -267,12 +268,12 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			res = HRCS_BAD_REQUEST;
 		} else if(os_strncmp(data, post, sizeof(post) - 1) == 0) {
 			if(mCurrentPost) {
-				espconn_disconnect(mCurrentPost);
-				dhdebug("Httpd new POST sender, refuse old");
+				res = HRCS_TOO_MANY_REQUESTS;
+			} else {
+				mCurrentPost = conn;
+				mPostBufPos = 0;
+				res = receive_post(data, len, &answer);
 			}
-			mCurrentPost = conn;
-			mPostBufPos = 0;
-			res = receive_post(data, len, &answer);
 		} else if(os_strncmp(data, get, sizeof(get) - 1) == 0) {
 			res = parse_request(data, len, mGetHttpRequestCb, &answer);
 		} else if(os_strncmp(data, options, sizeof(options) - 1) == 0) {
@@ -342,6 +343,10 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	case HRCS_OPTIONS:
 		dhdebug("Httpd options request");
 		send_res(conn, options_response, sizeof(options_response) - 1);
+		break;
+	case HRCS_TOO_MANY_REQUESTS:
+		dhdebug("Httpd too many requests");
+		send_res(conn, toomany, sizeof(toomany) - 1);
 		break;
 	case HRCS_BAD_REQUEST:
 		dhdebug("Httpd bad request");

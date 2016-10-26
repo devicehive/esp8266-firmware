@@ -28,7 +28,7 @@ void ICACHE_FLASH_ATTR dhgpio_int_timeout(unsigned int caused_pins) {
 		dhstatistic_inc_notifications_dropped_count();
 		return;
 	}
-	dhsender_notification(RNT_NOTIFICATION_GPIO, RDT_GPIO, caused_pins, dhgpio_read(), system_get_time());
+	dhsender_notification(RNT_NOTIFICATION_GPIO, RDT_GPIO, caused_pins, dhgpio_read(), system_get_time(), DHGPIO_SUITABLE_PINS);
 }
 
 void ICACHE_FLASH_ATTR dhadc_loop_value(float value){

@@ -136,4 +136,12 @@ unsigned int SerialPort::getTick() {
 	return GetTickCount();
 }
 
+void SerialPort::setRts(bool val) {
+	EscapeCommFunction(mCom, val ? SETRTS : CLRRTS);
+}
+
+void SerialPort::setDtr(bool val) {
+	EscapeCommFunction(mCom, val ? SETDTR : CLRDTR);
+}
+
 #endif

@@ -31,6 +31,9 @@
 #include "devices/bh1750.h"
 #include "devices/mpu6050.h"
 #include "devices/hmc5883l.h"
+#include "devices/pcf8574.h"
+#include "devices/pcf8574_hd44780.h"
+#include "devices/mhz19.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -145,7 +148,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			}
 		}
 		if (init) {
-			cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dhgpio_read(), system_get_time());
+			cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dhgpio_read(), system_get_time(), DHGPIO_SUITABLE_PINS);
 		} else {
 			responce_error(cb, "Wrong initialization parameters");
 		}
@@ -202,22 +205,59 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			responce_error(cb, "Wrong parameters");
 	} else if( os_strcmp(command, "uart/write") == 0 ) {
 		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_UARTMODE | AF_DATA, &fields);
-		if (responce_error(cb, parse_res))
+		if(responce_error(cb, parse_res))
 			return;
 		if(uart_init(cb, fields, &parse_pins, 0))
 			return;
-		dhuart_set_mode(DUM_PER_BUF, dhuart_get_timeout());
+		dhuart_set_mode(DUM_PER_BUF);
 		dhuart_send_buf(parse_pins.data, parse_pins.data_len);
 		responce_ok(cb);
+	} else if( os_strcmp(command, "uart/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_UARTMODE | AF_DATA | AF_TIMEOUT, &fields);
+			if(responce_error(cb, parse_res))
+				return;
+			if(uart_init(cb, fields, &parse_pins, 0))
+				return;
+			if(fields & AF_TIMEOUT) {
+				if(parse_pins.timeout > 1000) {
+					responce_error(cb, "Timeout is too long");
+					return;
+				}
+				if((fields & AF_DATA) == 0) {
+					responce_error(cb, "Timeout can be specified only with data");
+					return;
+				}
+			}
+		}
+		if(fields & AF_DATA) {
+			dhuart_set_mode(DUM_PER_BUF);
+			dhuart_send_buf(parse_pins.data, parse_pins.data_len);
+			system_soft_wdt_feed();
+			os_delay_us(((fields & AF_TIMEOUT) ? parse_pins.timeout : 250) * 1000);
+			system_soft_wdt_feed();
+		}
+		char *buf;
+		int len = dhuart_get_buf(&buf);
+		if(len > INTERFACES_BUF_SIZE)
+			len = INTERFACES_BUF_SIZE;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, buf, len);
+		dhuart_set_mode(DUM_PER_BUF);
 	} else if( os_strcmp(command, "uart/int") == 0 ) {
 		if(paramslen) {
-			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, dhuart_get_timeout(), AF_UARTMODE | AF_TIMEOUT, &fields);
-			if (responce_error(cb, parse_res))
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, dhuart_get_callback_timeout(), AF_UARTMODE | AF_TIMEOUT, &fields);
+			if(responce_error(cb, parse_res))
 				return;
+			if((fields & AF_TIMEOUT) && parse_pins.timeout > 5000) {
+				responce_error(cb, "Timeout is too long");
+				return;
+			}
 			if(uart_init(cb, fields, &parse_pins, 1))
 				return;
+			if(fields & AF_TIMEOUT)
+				dhuart_set_callback_timeout(parse_pins.timeout);
 		}
-		dhuart_set_mode(DUM_PER_BUF, (fields & AF_TIMEOUT) ? parse_pins.timeout : dhuart_get_timeout());
+		dhuart_set_mode(DUM_PER_BUF);
 		dhuart_enable_buf_interrupt(1);
 		responce_ok(cb);
 	} else if( os_strcmp(command, "uart/terminal") == 0 ) {
@@ -484,7 +524,78 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
 			"{\"magnetometer\":{\"X\":%s, \"Y\":%s, \"Z\":%s}}",
 			floatbufx, floatbufy, floatbufz);
-	} else {
+	} else if( os_strcmp(command, "devices/pcf8574/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCF8574_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_PULLUP, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				pcf8574_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		if(fields & AF_PULLUP) {
+			char *res = i2c_status_tochar(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN, parse_pins.pins_to_pullup, 0));
+			if(responce_error(cb, res))
+				return;
+		}
+		unsigned int pins;
+		char *res = i2c_status_tochar(pcf8574_read(PCF8574_NO_PIN, PCF8574_NO_PIN, &pins));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, pins, system_get_time(), PCF8574_SUITABLE_PINS);
+    } else if( os_strcmp(command, "devices/pcf8574/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCF8574_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_SET | AF_CLEAR, &fields);
+		if (responce_error(cb, parse_res)) {
+			return;
+		} else if ( (fields & (AF_SET | AF_CLEAR | AF_PULLUP)) == 0) {
+			responce_error(cb, "Dummy request");
+			return;
+		} else if ( (parse_pins.pins_to_set | parse_pins.pins_to_clear | PCF8574_SUITABLE_PINS)
+				!= PCF8574_SUITABLE_PINS ) {
+			responce_error(cb, "Unsuitable pin");
+			return;
+		}
+		if(fields & AF_ADDRESS)
+			pcf8574_set_address(parse_pins.address);
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		char *res = i2c_status_tochar(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
+				parse_pins.pins_to_set, parse_pins.pins_to_clear));
+		if(responce_error(cb, res))
+			return;
+		responce_ok(cb);
+    } else if( os_strcmp(command, "devices/pcf8574/hd44780/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCF8574_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_DATA | AF_TEXT_DATA, &fields);
+		if (responce_error(cb, parse_res))
+			return;
+		if((fields & (AF_DATA | AF_TEXT_DATA)) == 0 || parse_pins.data_len == 0) {
+			responce_error(cb, "Text not specified");
+			return;
+		}
+		if(fields & AF_ADDRESS)
+			pcf8574_set_address(parse_pins.address);
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		char *res = i2c_status_tochar(pcf8574_hd44780_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
+				parse_pins.data, parse_pins.data_len));
+		if(responce_error(cb, res))
+			return;
+		responce_ok(cb);
+    } else if( os_strcmp(command, "devices/mhz19/read") == 0 ) {
+    	if(paramslen) {
+			responce_error(cb, "Command does not have parameters");
+			return;
+		}
+		int co2;
+		char *res = mhz19_read(&co2);
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
+    } else {
 		responce_error(cb, "Unknown command");
 	}
 }

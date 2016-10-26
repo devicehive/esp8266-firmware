@@ -1,0 +1,67 @@
+<html>
+ <head>
+ <style type="text/css">
+  html * {
+   font-family: sans-serif;
+  }
+  label {
+   width: 10%;
+   display: inline-block;
+   vertical-align: top;
+  }
+  input, textarea {
+   width: 40%;
+   display: inline-block;
+  }
+  input[type=button] {
+   width: 10%;
+   display: inline-block;
+  }
+  div {
+   color: green;
+  }
+ </style>
+ <title>LCD 1602A, 2004A etc</title>
+ <script type="text/javascript">
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
+   document.getElementById('output').innerHTML = text;
+  }
+  function send() {
+   print('');
+   localStorage['accesskey'] = document.getElementById('accesskey').value;
+   parameters = {"SDA": document.getElementById('sda').value,
+    "SCL": document.getElementById('scl').value,
+    "address": document.getElementById('address').value,
+    "text":document.getElementById('text').value };
+
+   var xmlhttp = new XMLHttpRequest();
+   xmlhttp.open('POST', "http://" + window.location.hostname + '/api/devices/pcf8574/hd44780/write', true);
+   xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
+   xmlhttp.onreadystatechange = function() {
+    if(xmlhttp.readyState == 4){
+     if(xmlhttp.status < 200 || xmlhttp.status > 299) {
+      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
+     } else {
+      print('OK');
+     }
+    }
+   }
+   xmlhttp.send(JSON.stringify(parameters));
+  }
+  function init() {
+   document.getElementById('accesskey').value = localStorage['accesskey'];
+  }
+ </script>
+ </head>
+ <body onload="init()">
+  <label>AccesKey: </label><input type="password" id="accesskey"><br>
+  <p>This sample displays text on connected via PCF8574 adapter HD44870 screen like 1602A, 2004A etc. Pinmap for adapter should be (PCF8574 pin -> Display pin): P0->RS, P1->RW, P2->E, P3->Backligth control or not connected, P4->D4, P5->D5, P6->D6 and P7->D7.</p>
+  <label>SDA Pin: </label><input type="text" id="sda" value="0"><br>
+  <label>SCL Pin: </label><input type="text" id="scl" value="2"><br>
+  <label>I2C address: </label><input type="text" id="address" value="0x4E"><br>
+  <br><label>Text: </label><textarea id="text" rows="5">DeviceHive</textarea><br>
+  <br><input type="button" value="Set" onclick="send();"><br>
+  <br><div id="output"></div>
+ </body>
+</html>

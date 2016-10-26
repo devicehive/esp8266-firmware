@@ -4,7 +4,10 @@ Table of contents
 =================
   * [Overview](#overview)
   * [Getting started](#getting-started)
-  * [Local RESTful API](#local-restful-api)  
+  * [Local services ](#local-services)
+    * [mDNS](#mdns)  
+    * [RESTful API](#restful-api)
+    * [Web server](#web-server)
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
   * [GPIO](#gpio)
@@ -17,6 +20,7 @@ Table of contents
   * [PWM](#pwm)
     * [pwm/control](#pwmcontrol)
   * [UART](#uart)
+    * [uart/read](#uartread)
     * [uart/write](#uartwrite)
     * [uart/int](#uartint)
     * [uart/terminal](#uartterminal)
@@ -41,6 +45,10 @@ Table of contents
     * [devices/bh1750/read](#devicesbh1750read)
     * [devices/mpu6050/read](#devicesmpu6050read)
     * [devices/hmc5883l/read](#deviceshmc5883lread)
+    * [devices/pcf8574/read](#devicespcf8574read)
+    * [devices/pcf8574/write](#devicespcf8574write)
+    * [devices/pcf8574/hd44780/write](#devicespcf8574hd44780write)
+    * [devices/mhz19/read](#devicesmhz19read)
   * [License](#license)
 
 #Overview
@@ -119,8 +127,14 @@ After rebooting you can send commands to DeviceHive server or local RESTful API 
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks usigng DeviceHive RESTfull API: http://devicehive.com/restful which you can transmited with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
-#Local RESTful API
-Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. There is a tiny web server on chip port 80. It provides local RESTful API. API endpoint is `http://device-id.local/api/`. Firmware commands are available as subpaths of API endpoint. For example command `spi/master/read` available at `http://device-id.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
+#Local services
+Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are ommited.
+
+##mDNS
+mDNS(multicast Domain Name System) can resolve local domain names to IP address. Firmware anounce itself in mDNS using DeiviceId. mDNS 2nd level domain is limited with 60 chars, so any subsequent chars of DeviceId are omitted. Top level domain is always '.local'. mDNS-SD (service discovery) is supported. Service name is '_esp8266-devicehive._tcp.local'. This service points to local web server with RESTful API. One TXT record with firmware version is present.
+
+##RESTful API
+A RESTful API is an application program interface(API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port 80 which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as subpaths of API endpoint. For example command `spi/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
 
 For example, we would like to set up pin GPIO1 to high state and chip has AccessKey configured. `curl` request is:
 ```shell
@@ -128,6 +142,9 @@ curl -i -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' 
 http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
 Chip answers on this request '204 No content' which means that operation successfully completed.
+
+##Web server
+Firmware includes local HTTP server with tools for playing with API and some samples for some sensor. Web server aviliable at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id.local/tryapi.html where any command can be tried and command's output can be observed. 
 
 #Wireless configuring
 Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
@@ -188,13 +205,9 @@ JSON with a set of key-value pairs, where key is pin number and value '0' for LO
 *Example*:
 ```json
 { 
-	"command":"gpio/write",
-	"parameters":
-	{
-		"10":"0",
-		"11":"1",
-		"12":"x"
-	}
+	"10":"0",
+	"11":"1",
+	"12":"x"
 }
 ```
 
@@ -212,13 +225,9 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 *Example*:  
 ```json
 { 
-	"command":"gpio/read",
-	"parameters":
-	{
-		"10":"init",
-		"11":"pullup",
-		"12":"nopull"
-	}
+	"10":"init",
+	"11":"pullup",
+	"12":"nopull"
 }
 ```
 
@@ -272,7 +281,7 @@ Notifications will be generated with the name 'gpio/int'. Each notification will
 		"1":"1",
 		"16":"0"
 	},
-	"tick":"123456"
+	"tick":123456
 }
 ```
 #ADC
@@ -297,7 +306,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 Returns 'OK' on success with result or 'Error' with description in result. Each entry contains channel number and value in volts. 
 ```json
 {
-	"0":"0.6"
+	"0":0.6
 }
 ```
 
@@ -354,7 +363,30 @@ PWM is can be used to generate single or multiple pulses with specific length:
 { "0":"30",  "frequency":"0.1", "count":"4"} - generate 4 pulses 3 seconds length, 7 seconds interval between pulses.*
 
 # UART
-ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1). All read operations have to be done with notifications.
+ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1).
+
+## uart/read
+Read data from UART interface. Receing buffer resets on each read or write command and main contain up to 264 bytes.
+
+*Parameters*:  
+"mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing *Parameters*:   number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings("115200 8N1" by default) and will not reinit port.  
+"data" - data string encoded with base64 which would be sent before reading. Reading buffer will be cleared and will contain data which is received during "timeout" time only otherwise data will be since last read, write command or since last notification sent. Data size have to be equal or less than 264 bytes.  
+"timeout" - Can be used only with "data" field. Delay in ms for collecting answer after transmitting data. Maximum 1000ms, if not specified 250 ms is used.   
+
+*Example*:  
+```json
+{
+	"mode":"115200",
+	"data":"SGVsbG8sIHdvcmxkIQ=="
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"data":"SGkh"
+}
+```
+"data" field is base64 encoded data that was read from the interface.
 
 ## uart/write
 Send data via UART.
@@ -370,12 +402,13 @@ Send data via UART.
 }
 ```
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+
 ## uart/int
 Subscribe on notification which contains data that was read from UART. Firmware starts wait for data from and each time when byte is received byte puts into buffer (264 bytes len), then firmware starts wait for the next byte with some timeout. When timeout reached or buffer is full firmware sends notification.
 
 *Parameters*:  
 "mode" - the same "mode" parameter as in "uart/write"command, see description there. It also can be omitted to keep current parameters. Additionally this parameter can be "disable" or "0" for disabling notifications. 
-"timeout" - timeout for notifications. Default is 250 ms. 
+"timeout" - timeout for notifications in miliseconds. If internal buffer received something, notification will be sent with this timeout after last byte. Default is 250 ms. Maximum 5000 ms. 
 
 *Example*:  
 ```json
@@ -392,6 +425,7 @@ Return ‘OK’ in status. Or ‘Error’ and description in result on error. No
 ```
 
 Where "data" key name is always used and value is string with base64 encoded data(264 or less bytes).
+
 ## uart/terminal
 Resume terminal on UART interface. If UART’s pins were used by another feature(i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with 115200 8N1.
 
@@ -399,7 +433,7 @@ Resume terminal on UART interface. If UART’s pins were used by another feature
 No parameters.  
 
 Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-s
+
 # I2C
 There is software implementation of I2C protocol. Any GPIO pin can be SDA or SCL.
 
@@ -786,17 +820,17 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"temperature":32.2947,
 	"acceleration":
-  {
-    "X":-0.8475,
-    "Y":-0.1748,
-    "Z":9.9623
-  },
-  "rotation":
-  {
-    "X":-0.4272,
-    "Y":0.4883,
-    "Z":3.3264
-  }
+	{
+		"X":-0.8475,
+		"Y":-0.1748,
+		"Z":9.9623
+	},
+	"rotation":
+	{
+		"X":-0.4272,
+		"Y":0.4883,
+		"Z":3.3264
+	}
 }
 ```
 Temperature unit in Celsius degrees. Acceleration unit is metre per second squared. Rotation unit is degree per second.
@@ -822,14 +856,102 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```json
 {
 	"magnetometer":
-  {
-	"X":-0.0603,
-	"Y":0.2203,
-	"Z":0.0755
-  }
+	{
+		"X":-0.0603,
+		"Y":0.2203,
+		"Z":0.0755
+	}
 }
 ```
 Data unit is gauss. Proportional to the magnetic field component along its axis. NaN value is possible for any axis on overflow.
+
+## devices/pcf8574/read
+Read GPIO extender pins state. All pins have pull up after powering on and this is the only one way to operate as inputs.
+
+*Parameters*:  
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x4E.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+Pin numbers-value pairs where value can be only "pullup". If pin was used as output, "pullup" sets it back to input before reading. "all" key for all pins are supported.
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x4E",
+	"0":"pullup"
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"0":"1",
+	"1":"1",
+	"2":"0",
+	...
+}
+```
+Chip has 8(0..7) ports.
+
+## devices/pcf8574/write
+Write GPIO extender pins state. HIGH level provides small limited(100 uA) current and actually that is the same as "pullup" from hardware side and this API. See chip datasheet for details.
+
+*Parameters*:  
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x4E.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface. 
+Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HGIH.
+ 
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x4E",
+	"0": "0",
+	"1": "1"
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
+
+## devices/pcf8574/hd44780/write
+Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can have 16x2, 20x2, 20x4 or any other character array. Symbol "\n" (0x0A) for newline is supported. All display data erases on each command. PCF8574 should be connected to display with this pinmap: P0->RS, P1->RW, P2->E, P3->Backligth control or not connected, P4->D4, P5->D5, P6->D6 and P7->D7. 
+
+*Parameters*:  
+"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be ommitted. If not specified, previous pin will be used. Default is 0x4E.
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface. 
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface. 
+"data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.
+"text" - Plain text to set up. Cannot be combined with 'data' field in one command.
+ 
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x4E",
+	"text":"Hello!"
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
+
+## devices/mhz19/read
+Read data from MH-Z19 CO2 sensor via UART.
+
+*Parameters*:  
+No parameters.  
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"co2":384
+}
+```
+co2 unit is ppm(parts-per-million).
 
 # License
 The MIT License (MIT):

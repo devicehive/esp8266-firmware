@@ -24,7 +24,7 @@ for file in $DIR/*.html; do
     filename=$(basename "$file")
     echo "Generating $filename ..."
     name=${filename/./_}
-    data=$(cat "$file" | sed 's/^ *//' | tr -d '\n\r\t' | sed 's/"/\\"/g')
+    data=$(cat "$file" | tr -d '\r' | sed 's/\\/\\\\/g' | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
     print "RO_DATA char $name[] = \"$data\";"
     index="$index$comma {\"/$filename\", $name, sizeof($name)}"
     comma=", "

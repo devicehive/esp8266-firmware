@@ -1,0 +1,67 @@
+<html>
+ <head>
+ <style type="text/css">
+  html * {
+   font-family: sans-serif;
+  }
+  label {
+   width: 10%;
+   display: inline-block;
+  }
+  input {
+   width: 40%;
+   display: inline-block; 
+  }
+  input[type=button] {
+   width: 10%;
+   display: inline-block; 
+  }
+  input[type=radio] {
+   width: 5%;
+   display: inline-block; 
+  }
+  div {
+   color: green;
+  }
+ </style>
+ <title>DHT11/DHT22</title>
+ <script type="text/javascript">
+  function print(text, err = false) {
+   document.getElementById('output').style.color = err ? 'red' : 'green';
+   document.getElementById('output').innerHTML = text;
+  }
+  function run() {
+   type = document.getElementById('dht11').checked ? 'dht11':'dht22';  
+   localStorage['accesskey'] = document.getElementById('accesskey').value;
+   var xmlhttp = new XMLHttpRequest();  
+   xmlhttp.open('POST', "http://" + window.location.hostname + '/api/devices/' + type + '/read', true);
+   xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
+   xmlhttp.onreadystatechange = function() {
+    if(xmlhttp.readyState == 4 && isrun){
+     if(xmlhttp.status < 200 || xmlhttp.status > 299) {
+      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
+     } else {
+      var json = JSON.parse(xmlhttp.responseText);
+      print('Humidity is ' + json['humidity'] + '%, temperature is ' + json['temperature'] + '&deg;C');
+      setTimeout(function() { run(); }, 1000);
+     }
+    }
+   }
+   xmlhttp.send(JSON.stringify({"pin":document.getElementById('pin').value}));
+  }
+  function init() {
+   document.getElementById('accesskey').value = localStorage['accesskey'];
+  }
+ </script>
+ </head>
+ <body onload="init()">
+  <label>AccesKey: </label><input type='password' id='accesskey'><br>
+  <label>Pin: </label><input type='text' id='pin' value='2'><br>
+  DHT11:<input type="radio" name="dht" id="dht11" value="dht11" checked="checked">
+  DHT22:<input type="radio" name="dht" id="dht22" value="dht22"> <br>
+  <p>This sample humidity and temperature from sensor every 1 second. Click on buttons below to start or stop.</p>
+  <input type="button" value="Run" onclick="isrun=true; print(''); run();">
+  <input type="button" value="Stop" onclick="isrun=false; print('Stopped');"><br>
+  <br><div id="output"></div>
+ </body>
+</html>

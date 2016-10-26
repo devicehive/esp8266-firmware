@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <sys/time.h>
+#include <sys/ioctl.h>
 
 void * SerialPort::thread_start(void *arg) {
     SerialPort *port =  (SerialPort *)arg;
@@ -54,7 +55,7 @@ void * SerialPort::thread_start(void *arg) {
 }
 
 SerialPort *SerialPort::open(const char *port) {
-    COM comp = ::open ( port, O_RDWR | O_NONBLOCK | O_NDELAY );
+    COM comp = ::open ( port, O_RDWR | O_NONBLOCK | O_NDELAY);
     if(comp>=0)
     {
        struct termios tio;
@@ -154,6 +155,28 @@ unsigned int SerialPort::getTick() {
 	struct timeval tv;
 	gettimeofday(&tv,NULL);
 	return tv.tv_usec / 1000UL + (tv.tv_sec % 3600000UL) * 1000UL;
+}
+
+void SerialPort::setRts(bool val) {
+    int flag;
+    if(ioctl(mCom, TIOCMGET, &flag) != -1) {
+		if (val)
+			flag |= TIOCM_RTS;
+		else
+			flag &= ~TIOCM_RTS;
+		ioctl(mCom, TIOCMSET, &flag);
+    }
+}
+
+void SerialPort::setDtr(bool val) {
+    int flag;
+    if(ioctl(mCom, TIOCMGET, &flag) != -1) {
+		if (val)
+			flag |= TIOCM_DTR;
+		else
+			flag &= ~TIOCM_DTR;
+		ioctl(mCom, TIOCMSET, &flag);
+    }
 }
 
 #endif

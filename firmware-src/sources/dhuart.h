@@ -17,8 +17,9 @@
 
 /** UART mode. */
 typedef enum {
-	DUM_PER_BYTE,	///< Receive data byte by byte.
-	DUM_PER_BUF		///< Receive data per buffer.
+	DUM_IGNORE,		///< Ignore input data, can print everythin.
+	DUM_PER_BYTE,	///< Receive data byte by byte, dedicated callback on each byte, some send data function is disabled.
+	DUM_PER_BUF		///< Receive data per buffer, dedicated callback with buffer with some timeout which disabled by default, some send data function is disabled.
 } DHUART_DATA_MODE;
 
 /**
@@ -33,21 +34,21 @@ int dhuart_init(unsigned int speed, unsigned int databits, char parity, unsigned
 
 /**
  *	\brief				Write string to UART.
- *	\details			Works only in DUM_PER_BYTE mode.
+ *	\details			Doesn't works only in DUM_PER_BUF mode.
  *	\param[in]	str		String, ie bytes array that should be written. Will transmit buffer until first null char.
  */
 void dhuart_send_str(const char *str);
 
 /**
  *	\brief				Write string to UART and add "\r\n" to the end of string.
- *	\details			Works only in DUM_PER_BYTE mode.
+ *	\details			Doesn't work in DUM_PER_BUF mode.
  *	\param[in]	str		String, ie bytes array that should be written. Will transmit buffer until first null char.
  */
 void dhuart_send_line(const char *str);
 
 /**
  *	\brief				Write char array with specified size to UART.
- *	\details			Works only in DUM_PER_BUF mode.
+ *	\details			Doesn't works only in DUM_PER_BYTE mode.
  *	\param[in]	buf		Chars array.
  *	\param[in]	len		Number of chars in buf.
  */
@@ -55,10 +56,30 @@ void dhuart_send_buf(const char *buf, unsigned int len);
 
 /**
  *	\brief				Set current operating mode.
+ *	\details			Buffer is cleaned up on setting DUM_PER_BUF mode.
  *	\param[in]	mode	New operating mode.
- *	\param[in]	timeout	Timeout in ms which should pass without receiving to generate callback with read bytes. Can be set only with DUM_PER_BUF mode.
  */
-void dhuart_set_mode(DHUART_DATA_MODE mode, unsigned int timeout);
+void dhuart_set_mode(DHUART_DATA_MODE mode);
+
+/**
+ *	\brief				Set timeout for callback.
+ *	\details			This timeout means how many ms without receiving bytes should pass before calling callback.
+ *						Make sense only when mode is DUM_PER_BUF and callback is enabled.
+ *	\param[in]	timeout	Timeout in ms.
+ */
+void dhuart_set_callback_timeout(unsigned int timeout);
+
+/**
+ *	\brief				Get receiving buffer.
+ *	\param[out]	buf		Pointer where pointer to buffer should be stored.
+ *	\return				Number of bytes in buffer.
+ */
+unsigned int dhuart_get_buf(char ** buf);
+
+/**
+ *	\brief				Clean up buffer.
+ */
+void dhuart_reset_buf();
 
 /**
  *	\brief				Enable or disable DUM_PER_BUF callbacks.
@@ -71,7 +92,7 @@ void dhuart_enable_buf_interrupt(int enable);
  *	\brief		Get current timeout value.
  *	\return		Timeout value in milliseconds.
  */
-unsigned int dhuart_get_timeout();
+unsigned int dhuart_get_callback_timeout();
 
 /**
  *	\brief			Callback declaration for DUM_PER_BYTE mode.

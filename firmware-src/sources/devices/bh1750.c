@@ -19,7 +19,7 @@ static int mAddress = BH1750_DEFAULT_ADDRESS;
 DHI2C_STATUS ICACHE_FLASH_ATTR bh1750_read(int sda, int scl, float *illuminance) {
 	char buf[2];
 	DHI2C_STATUS status;
-	if(sda != BH1750_NO_PIN || scl != BH1750_NO_PIN) {
+	if(sda != BH1750_NO_PIN && scl != BH1750_NO_PIN) {
 		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
 			dhdebug("bh1750: failed to set up pins");
 			return status;

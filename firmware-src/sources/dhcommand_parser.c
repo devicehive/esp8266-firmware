@@ -43,6 +43,7 @@ LOCAL void ICACHE_FLASH_ATTR load_defaults(gpio_command_params *out, unsigned in
 	out->uart_partity = 'N';
 	out->uart_stopbits = 1;
 	out->timeout = timeout;
+	out->data_len = 0;
 }
 
 LOCAL char * ICACHE_FLASH_ATTR readUIntField(struct jsonparse_state *jparser, ALLOWED_FIELDS field, uint32_t *out, ALLOWED_FIELDS fields, ALLOWED_FIELDS *readedfields, unsigned int x) {
@@ -73,6 +74,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 		return "No parameters specified";
 	int type;
 	int pinnum;
+	unsigned int pins_found = 0;
 	unsigned int pinmask;
 	*readedfields = 0;
 	load_defaults(out, timeout);
@@ -184,7 +186,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					return res;
 				continue;
 			} else if(strcmp_value(&jparser, "data") == 0) {
-				if((fields & AF_DATA) == 0)
+				if((fields & AF_DATA) == 0 || out->data_len)
 					return UNEXPECTED;
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
@@ -194,13 +196,30 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					*readedfields |= AF_DATA;
 				}
 				continue;
+			}  else if(strcmp_value(&jparser, "text") == 0) {
+				if((fields & AF_TEXT_DATA) == 0 || out->data_len)
+					return UNEXPECTED;
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
+					if (jparser.vlen > sizeof(out->data) - 1)
+						return "Text is too long";
+					os_memcpy(out->data, &jparser.json[jparser.vstart], jparser.vlen);
+					out->data[jparser.vlen] = 0;
+					out->data_len = jparser.vlen;
+					*readedfields |= AF_TEXT_DATA;
+				}
+				continue;
 			} else if(strcmp_value(&jparser, "all") == 0) {
+				if(pins_found)
+					return "Wrong argument";
+				pins_found = ~(unsigned int)0;
 				pinmask = all;
 				pinnum = -1;
 			} else {
 				const int res = strToUInt(&jparser.json[jparser.vstart], &pinnum);
-				if(!res || pinnum < 0 || pinnum > DHGPIO_MAXGPIONUM)
+				if(!res || pinnum < 0 || pinnum > DHGPIO_MAXGPIONUM || (pins_found & (1 << pinnum)))
 					return "Wrong argument";
+				pins_found |= (1 << pinnum);
 				pinmask =  (1 << pinnum);
 			}
 			jsonparse_next(&jparser);
@@ -208,17 +227,17 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				if(strcmp_value(&jparser, "x") == 0)
 					continue;
 				else if(strcmp_value(&jparser, "init") == 0) {
-					if(fields & AF_INIT == 0)
+					if((fields & AF_INIT) == 0)
 						return UNEXPECTED;
 					out->pins_to_init |= pinmask;
 					*readedfields |= AF_INIT;
 				} else if(strcmp_value(&jparser, "pullup") == 0) {
-					if(fields & AF_PULLUP == 0)
+					if((fields & AF_PULLUP) == 0)
 						return UNEXPECTED;
 					out->pins_to_pullup |= pinmask;
 					*readedfields |= AF_PULLUP;
 				} else if(strcmp_value(&jparser, "nopull") == 0) {
-					if(fields & AF_NOPULLUP == 0)
+					if((fields & AF_NOPULLUP) == 0)
 						return UNEXPECTED;
 					out->pins_to_nopull |= pinmask;
 					*readedfields |= AF_NOPULLUP;
