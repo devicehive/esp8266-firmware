@@ -20,7 +20,13 @@ cp $DIR/../esp-utils/build/esp-flasher $BUILD/esp-flasher-osx
 cp $DIR/../esp-utils/build/esp-terminal $BUILD/esp-terminal-win.exe
 cp $DIR/../esp-utils/build/esp-flasher $BUILD/esp-flasher-win.exe
 cp  $DIR/utils/* $BUILD/
-(cd $DIR/.. && markdown-pdf DeviceHiveESP8266.md -o $BUILD/DeviceHiveESP8266.pdf)
+
+# since an issue - https://github.com/ariya/phantomjs/issues/13959 (markdown-pdf uses phantomjs)
+# just remove the local links from document.
+sed $DIR/../DeviceHiveESP8266.md -e 's/\[\([^]].*\)\](#.*)/\1/g' > $DIR/../DeviceHiveESP8266_hack.md
+(cd $DIR/.. && markdown-pdf DeviceHiveESP8266_hack.md -o $BUILD/DeviceHiveESP8266.pdf --css-path $DIR/md.css)
+rm $DIR/../DeviceHiveESP8266_hack.md
+
 (cd $DIR/../firmware-src && make rebuild) && cp $DIR/../firmware-src/firmware/* $BUILD
 
 (cd $BUILD && zip -r -q ../dh-esp-firmware-v$VER.zip *)
