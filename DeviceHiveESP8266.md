@@ -3,10 +3,9 @@
 ![](images/dh-logo.png?raw=true)
 
 # Table of contents
----------------------------
   * [Overview](#overview)
   * [Getting started](#getting-started)
-  * [Local services ](#local-services)
+  * [Local services](#local-services)
     * [mDNS](#mdns)
     * [RESTful API](#restful-api)
     * [Web server](#web-server)
@@ -55,7 +54,7 @@
   * [License](#license)
 
 # Overview
-This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to https://en.wikipedia.org/wiki/ESP8266
+This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to [https://en.wikipedia.org/wiki/ESP8266](https://en.wikipedia.org/wiki/ESP8266)
 
 Once ESP8266 device is connected you can issue commands using DeviceHive's RESTful API or local REST API hosted right on the chip. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
 
@@ -116,7 +115,7 @@ _Notice: you can avoid configuring firmware with terminal and use wireless confi
 
 Firmware terminal is a UNIX like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring for working with cloud services.  
 
-_For the very beginning or DIY purpose you can use DeviceHive free playground located here: http://playground.devicehive.com/ Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on http://devicehive.com_  
+_For the very beginning or DIY purpose you can use DeviceHive free playground located here: [http://playground.devicehive.com/](http://playground.devicehive.com/) Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on [http://devicehive.com](http://devicehive.com)_  
 
 Configuring sample is below:
 
@@ -128,7 +127,7 @@ After rebooting you can send commands to DeviceHive server or local RESTful API 
 
 ![](images/web.png?raw=true)
 
-Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks using DeviceHive RESTful API: http://devicehive.com/restful which you can transmitted with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
+Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks using DeviceHive RESTful API: [http://devicehive.com/restful](http://devicehive.com/restful) which you can transmitted with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
 # Local services
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are omitted.
@@ -141,7 +140,7 @@ A RESTful API is an application program interface(API) which uses HTTP requests 
 
 For example, we would like to set up pin GPIO1 to high state and chip has AccessKey configured. `curl` request is:
 ```shell
-curl -i -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
+curl -i -H 'Authorization: Bearer SomeAccessKeyHere' \
 http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
 Chip answers on this request '204 No content' which means that operation successfully completed.
