@@ -9,7 +9,7 @@ Actually we need just: 'Xtensa crosstool-NG' (https://github.com/jcmvbkbc/crosst
 SDK is already in this repo.
 
 # Firmware usage
-Flash firmware( devicehive.bin firmware directory) to the device with
+Flash firmware (devicehive.bin firmware directory) to the device with
 esp-flasher util (see esp-util project on top of the repo). You can also use any other
 flasher for esp8266 (esptool - https://github.com/themadinventor/esptool for example).
 Firmware should be flashed at 0x0 SPI chip address. Connect to device terminal

@@ -373,7 +373,7 @@ PWM is can be used to generate single or multiple pulses with specific length:
 ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1).
 
 ## uart/read
-Read data from UART interface. Receiving buffer resets on each read or write command and main contain up to 264 bytes.
+Read data from UART interface. Receiving buffer resets on each read or write command and may contain up to 264 bytes.
 
 *Parameters*:  
 "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing *Parameters*:   number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings ("115200 8N1" by default) and will not reinit port.  
@@ -670,7 +670,7 @@ Return ‘OK’ in status and result with list as below. Or ‘Error’ and desc
 
 
 ## onewire/dht/read
-Read data from DHT11/DHT22/AM2302 or device with the same protocol. Number of bytes which would read depends on device, but can not be more that 264. Any checksums will not be checked.
+Read data from DHT11/DHT22/AM2302 or device with the same protocol. Number of bytes for reading depends on device, but can not be more that 264. Any checksums will not be checked.
 
 *Parameters*:  
 "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".  
