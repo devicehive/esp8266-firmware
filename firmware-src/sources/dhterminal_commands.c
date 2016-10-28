@@ -292,8 +292,9 @@ void ICACHE_FLASH_ATTR dhterminal_commands_config(const char *args) {
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_configure(const char *args) {
-	if(os_strcmp(args, "--clear") == 0) {
-		if(dhsettings_clear()) {
+	int force = (os_strcmp(args, "--force-clear") == 0) ? 1 : 0;
+	if(force || os_strcmp(args, "--clear") == 0) {
+		if(dhsettings_clear(force)) {
 			dhuart_send_line("Settings was cleared, rebooting...");
 			system_restart();
 		} else {

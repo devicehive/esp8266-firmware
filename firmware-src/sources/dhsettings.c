@@ -44,7 +44,8 @@ LOCAL uint32_t ICACHE_FLASH_ATTR getStorageCrc(DH_SETTINGS *storage) {
 	return crc32(storage->storage, sizeof(storage->storage));
 }
 
-int ICACHE_FLASH_ATTR dhsettings_init() {
+int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
+	*exist = 1;
 	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
 	if(settings == NULL) {
 		dhdebug("Failed to read settings, no RAM.");
@@ -67,6 +68,7 @@ int ICACHE_FLASH_ATTR dhsettings_init() {
 		} else if(getStorageCrc(settings) != settings->crc) {
 			dhdebug("Backup storage data corrupted or never saved, using empty settings");
 			os_memset(settings, 0, sizeof(DH_SETTINGS));
+			*exist = 0;
 		} else {
 			read = 1;
 			dhdebug("Settings successfully loaded from backup storage");
@@ -79,15 +81,16 @@ int ICACHE_FLASH_ATTR dhsettings_init() {
 	return read;
 }
 
-int ICACHE_FLASH_ATTR dhsettings_commit() {
+LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 	int res = 1;
 	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
 	if(settings == NULL) {
 		dhdebug("Failed to write settings, no RAM.");
 		return 0;
 	}
-	os_memset(settings, 0, sizeof(DH_SETTINGS));
-	os_memcpy(&settings->data, &mSettingsData, sizeof(DH_SETTINGS_DATA));
+	os_memset(settings, 0xFF, sizeof(DH_SETTINGS));
+	if(data)
+		os_memcpy(&settings->data, data, sizeof(DH_SETTINGS_DATA));
 	settings->crc = getStorageCrc(settings);
 	if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK) {
 		if(spi_flash_write(ESP_SETTINGS_MAIN_SEC* SPI_FLASH_SEC_SIZE, (uint32 *)settings, sizeof(DH_SETTINGS)) != SPI_FLASH_RESULT_OK) {
@@ -113,21 +116,21 @@ int ICACHE_FLASH_ATTR dhsettings_commit() {
 	return res;
 }
 
-int ICACHE_FLASH_ATTR dhsettings_clear() {
-	int res = 1;
-	if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) != SPI_FLASH_RESULT_OK) {
-		dhdebug("Erasing of main storage failed");
-		res = 0;
+
+int ICACHE_FLASH_ATTR dhsettings_commit() {
+	return dhsettings_write(&mSettingsData);
+}
+
+int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
+	os_memset(mSettingsData, 0, sizeof(mSettingsData));
+	if(force) {
+		if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK &&
+				spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) == SPI_FLASH_RESULT_OK) {
+			return 1;
+		}
+		return 0;
 	}
-	if(spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) != SPI_FLASH_RESULT_OK) {
-		dhdebug("Erasing of backup storage failed");
-		res = 0;
-	}
-	if(res) {
-		os_memset(&mSettingsData, 0, sizeof(DH_SETTINGS_DATA));
-		dhdebug("Settings successfully cleared");
-	}
-	return res;
+	return dhsettings_write(NULL);
 }
 
 const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {

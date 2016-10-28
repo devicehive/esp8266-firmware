@@ -1,6 +1,6 @@
-CC				= g++
-CFLAGS			= -c -Wall
-LDFLAGS			= -s -Os
+CXX				?= g++
+CFLAGS			+= -c -Wall
+LDFLAGS			+= -s -Os
 LIBS			=
 OBJDIR			= build
 SOURCES			= $(wildcard common/*.cpp)
@@ -19,16 +19,16 @@ all: $(SOURCES) $(ESPTERMINAL) $(ESPFLASHER)
     
 $(ESPTERMINAL): $(ALLOBJECTS)
 	@echo "LD $@"
-	@$(CC) $(LDFLAGS) $(LIBS) $(COMMONOBJECTS) $@.o -o $@
+	@$(CXX) $(LDFLAGS) $(LIBS) $(COMMONOBJECTS) $@.o -o $@
 
 $(ESPFLASHER): $(ALLOBJECTS)
 	@echo "LD $@"
-	@$(CC) $(LDFLAGS) $(LIBS) $(COMMONOBJECTS) $@.o -o $@
+	@$(CXX) $(LDFLAGS) $(LIBS) $(COMMONOBJECTS) $@.o -o $@
 
 $(OBJDIR)/%.o: %.cpp
-	@echo "CC $<"
+	@echo "CXX $<"
 	@mkdir -p $(dir $@)
-	@$(CC) $(CFLAGS) $< -o $@
+	@$(CXX) $(CFLAGS) $< -o $@
 
 rebuild: clean all    
 

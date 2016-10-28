@@ -16,7 +16,7 @@
 /** UART speed to terminal. */
 #define UART_BAUND_RATE 115200
 /** Current firmware version. */
-#define FIRMWARE_VERSION "0.4"
+#define FIRMWARE_VERSION "0.5"
 /** Buffer size for data that uses for commands which require data transmition via interfaces like UART, I2C etc. */
 #define INTERFACES_BUF_SIZE 264
 /** Encode type for data field in commands. Can be DATAENCODEBASE64 or DATAENCODEHEX.*/

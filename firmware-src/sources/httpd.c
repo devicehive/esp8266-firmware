@@ -108,7 +108,6 @@ LOCAL void ICACHE_FLASH_ATTR on_client_disconnect(struct espconn *conn) {
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_disconnect_cb(void *arg) {
 	on_client_disconnect((struct espconn *)arg);
-	dhdebug("Httpd client disconnected, %u left", mConnected);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_sent_cb(void *arg) {
@@ -117,7 +116,6 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_sent_cb(void *arg) {
 		return;
 	}
 	espconn_disconnect(conn);
-	dhdebug("Httpd data sent");
 }
 
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
@@ -235,7 +233,6 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	answer.content.len = 0;
 	answer.free_content = 0;
 	answer.ok = 1;
-	dhdebug("Httpd received %d bytes", len);
 	dhstatistic_add_bytes_received(len);
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 
@@ -310,7 +307,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			if(answer.ok) {
 				send_res(conn, no_content, sizeof(no_content) - 1);
 			} else {
-				response_len = snprintf(response, sizeof(response), forbidden, 0);
+				response_len = snprintf(response, sizeof(response), forbidden, plain, 0);
 				send_res(conn, response, response_len);
 			}
 			return;
@@ -389,7 +386,6 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_connect_cb(void *arg) {
 	espconn_regist_recvcb(conn, dhap_httpd_recv_cb);
 	espconn_regist_disconcb(conn, dhap_httpd_disconnect_cb);
 	espconn_regist_sentcb(conn, dhap_httpd_sent_cb);
-	dhdebug("Httpd client connected");
 }
 
 void ICACHE_FLASH_ATTR httpd_init(HttpRequestCb get_cb, HttpRequestCb post_cb) {

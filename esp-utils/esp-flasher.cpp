@@ -405,6 +405,17 @@ void force_flash_mode(SerialPort *port) {
     port->setDtr(false);
 }
 
+void reboot(SerialPort *port) {
+	// Typically dev boards have:
+	// RTS is connected to GPIO0
+	// DTR is connected to RTS
+    port->setDtr(false);
+    port->sleep(50);
+    port->setDtr(true);
+    port->sleep(50);
+    port->setDtr(false);
+}
+
 int main(int argc, char* argv[]) {
 	setbuf(stdout, NULL);
 	int currentArg = 1;
@@ -471,9 +482,12 @@ int main(int argc, char* argv[]) {
 
 	bool developerMode = false;
 	if(argc > currentArg) {
-		if(strncmp(argv[1], "--developer", 5) == 0) {
+		if(strncmp(argv[currentArg], "--developer", 5) == 0) {
 			currentArg++;
 			developerMode = true;
+		} else if(strncmp(argv[currentArg], "--reboot", 5) == 0) {
+			reboot(port);
+			return 0;
 		}
 	}
 
@@ -493,7 +507,25 @@ int main(int argc, char* argv[]) {
 					"0x7C000 <- default configuration\r\n"
 					);
 		}
-		isSuccess = flash_file(port, (char*)"devicehive.bin", 0x00000,
+		char dh[] = "devicehive.bin";
+		int l = strlen(argv[0]);
+		char df[l + sizeof(dh)];
+		char *filename = dh;
+		FILE *fl = fopen(dh, "rb");
+		if(fl) { // if in current dir present
+			fclose(fl);
+		} else { // check the directory with binary
+			strcpy(df, argv[0]);
+			while(l >= 0) {
+				if(df[l] == '/' || df[l] == '\\') {
+					strcpy(&df[l + 1], dh);
+					filename = df;
+					break;
+				}
+				l--;
+			}
+		}
+		isSuccess = flash_file(port, filename, 0x00000,
 				developerMode ? (char*)"devicehive.bin.prev" : NULL);
 		if(isSuccess && !developerMode)
 			isSuccess = flash_default_config(port);

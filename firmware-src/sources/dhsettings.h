@@ -21,10 +21,13 @@
 #define DHSETTINGS_ACCESSKEY_MAX_LENGTH 65
 
 /**
- *	\brief			Inits settings, reads values from storage.
- *	\return 		Non zero value on success. Zero on error.
+ *	\brief				Inits settings, reads values from storage.
+ *	\param[out]	saved	Pointer to store confirm that settings were never saved
+ *						before. If flash was successfully read and setting were
+ *						never saved, zero will be stored. Non zero otherwise.
+ *	\return 			Non zero value on success. Zero on error.
  */
-int dhsettings_init();
+int dhsettings_init(int *saved);
 
 /**
  *	\brief			Saves values to permanent storage.
@@ -33,10 +36,11 @@ int dhsettings_init();
 int dhsettings_commit();
 
 /**
- *	\brief			Destroy data in permanent storage.
- *	\return 		Non zero value on success. Zero on error.
+ *	\brief				Destroy data in permanent storage.
+ *	\param[in] force	If zero, just delete data, non zero means destroy mark that setting was ever saved.
+ *	\return 			Non zero value on success. Zero on error.
  */
-int dhsettings_clear();
+int dhsettings_clear(int force);
 
 /**
  *	\brief			Get Wi-Fi SSID.
