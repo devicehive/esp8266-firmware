@@ -35,19 +35,20 @@ DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_read(int sda, int scl, unsigned int *pins
 }
 
 DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_write(int sda, int scl, unsigned int pins_to_set, unsigned int pins_to_clear) {
-    char buf;
-    DHI2C_STATUS status;
-    unsigned int current_state;
-    if((status = pcf8574_read(sda, scl, &current_state)) != DHI2C_OK) {
-    	return status;
-    }
-    buf = (char)(((current_state | pins_to_set) ^ pins_to_clear) & PCF8574_SUITABLE_PINS);
-    if((status = dhi2c_write(mAddress, &buf, 1, 1)) != DHI2C_OK) {
-        dhdebug("pcf8574: failed to write");
-        return status;
-    }
-
-    return DHI2C_OK;
+	char buf;
+	DHI2C_STATUS status;
+	unsigned int current_state;
+	if(pins_to_set & pins_to_clear)
+		return DHI2C_WRONG_PARAMETERS;
+	if((status = pcf8574_read(sda, scl, &current_state)) != DHI2C_OK) {
+		return status;
+	}
+	buf = (char)((current_state | pins_to_set) & (~pins_to_clear) & PCF8574_SUITABLE_PINS);
+	if((status = dhi2c_write(mAddress, &buf, 1, 1)) != DHI2C_OK) {
+		dhdebug("pcf8574: failed to write");
+		return status;
+	}
+	return DHI2C_OK;
 }
 
 DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_set(int sda, int scl, unsigned int pins) {
