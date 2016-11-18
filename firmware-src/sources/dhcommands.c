@@ -28,6 +28,7 @@
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
 #include "devices/bmp180.h"
+#include "devices/bmp280.h"
 #include "devices/bh1750.h"
 #include "devices/mpu6050.h"
 #include "devices/hmc5883l.h"
@@ -82,6 +83,8 @@ LOCAL char *ICACHE_FLASH_ATTR i2c_status_tochar(DHI2C_STATUS status) {
 			return "Wrong I2C parameters";
 		case DHI2C_BUS_BUSY:
 			return "Bus is busy";
+		case DHI2C_DEVICE_ERROR:
+			return "Device error";
 	}
 	return 0;
 }
@@ -461,6 +464,23 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
+	} else if( os_strcmp(command, "devices/bmp280/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				bmp180_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float temperature;
+		float pressure;
+		char *res = i2c_status_tochar(bmp280_read(BMP280_NO_PIN, BMP280_NO_PIN, &pressure, &temperature));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%f}", temperature, pressure);
 	} else if( os_strcmp(command, "devices/bh1750/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);

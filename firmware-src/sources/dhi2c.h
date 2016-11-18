@@ -14,7 +14,8 @@ typedef enum {
 	DHI2C_OK,					///< Success.
 	DHI2C_NOACK,				///< ACK response did not receive on bus.
 	DHI2C_WRONG_PARAMETERS,		///< Wrong parameters.
-	DHI2C_BUS_BUSY				///< Module wasn't able to set desired level on bus during timeout time.
+	DHI2C_BUS_BUSY,				///< Module wasn't able to set desired level on bus during timeout time.
+	DHI2C_DEVICE_ERROR			///< Error in device.
 } DHI2C_STATUS;
 
 /**
