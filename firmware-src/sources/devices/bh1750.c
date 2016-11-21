@@ -37,7 +37,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bh1750_read(int sda, int scl, float *illuminance)
 		return status;
 	}
 
-	*illuminance = (float)unsignedInt16(buf, 0) / 1.2f / 2.0f;
+	*illuminance = (float)unsignedInt16be(buf, 0) / 1.2f / 2.0f;
 	return DHI2C_OK;
 }
 

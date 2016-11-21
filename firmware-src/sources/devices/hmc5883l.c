@@ -48,9 +48,9 @@ DHI2C_STATUS ICACHE_FLASH_ATTR hmc5883l_read(int sda, int scl,
 		return status;
 	}
 
-	const int x = signedInt16(buf, 0);
-	const int y = signedInt16(buf, 4);
-	const int z = signedInt16(buf, 2);
+	const int x = signedInt16be(buf, 0);
+	const int y = signedInt16be(buf, 4);
+	const int z = signedInt16be(buf, 2);
 	// note: 2048 is a range of possible values, 1.3f is a default sensor field range
 	compass->X = (x == HMC5883l_OVERFLOWED_RAW) ?  HMC5883l_OVERFLOWED : (x * 1.3f / 2048.0f);
 	compass->Y = (y == HMC5883l_OVERFLOWED_RAW) ?  HMC5883l_OVERFLOWED : (y * 1.3f / 2048.0f);

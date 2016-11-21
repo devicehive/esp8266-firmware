@@ -34,18 +34,18 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, fl
 		dhdebug("bmp280: failed to read coefficients");
 		return status;
 	}
-	double T1 = (double)signedInt16(buf, 0);
-	double T2 = (double)signedInt16(buf, 2);
-	double T3 = (double)signedInt16(buf, 4);
-	double P1 = (double)signedInt16(buf, 6);
-	double P2 = (double)signedInt16(buf, 8);
-	double P3 = (double)signedInt16(buf, 10);
-	double P4 = (double)signedInt16(buf, 12);
-	double P5 = (double)signedInt16(buf, 14);
-	double P6 = (double)signedInt16(buf, 16);
-	double P7 = (double)signedInt16(buf, 18);
-	double P8 = (double)signedInt16(buf, 20);
-	double P9 = (double)signedInt16(buf, 22);
+	double T1 = (double)unsignedInt16le(buf, 0);
+	double T2 = (double)signedInt16le(buf, 2);
+	double T3 = (double)signedInt16le(buf, 4);
+	double P1 = (double)unsignedInt16le(buf, 6);
+	double P2 = (double)signedInt16le(buf, 8);
+	double P3 = (double)signedInt16le(buf, 10);
+	double P4 = (double)signedInt16le(buf, 12);
+	double P5 = (double)signedInt16le(buf, 14);
+	double P6 = (double)signedInt16le(buf, 16);
+	double P7 = (double)signedInt16le(buf, 18);
+	double P8 = (double)signedInt16le(buf, 20);
+	double P9 = (double)signedInt16le(buf, 22);
 
 	// configure
 	buf[0] = 0xF5; // config
@@ -61,7 +61,17 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, fl
 		return status;
 	}
 
-	os_delay_us(45000);
+	do { // wait until data is ready
+		buf[0] = 0xF3; // status
+		if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
+			dhdebug("bmp280: failed to get status");
+			return status;
+		}
+		if((status = dhi2c_read(mAddress, buf, 1)) != DHI2C_OK) {
+			dhdebug("bmp280: failed to read status");
+			return status;
+		}
+	} while(buf[0] & (1<<3));
 
 	buf[0] = 0xF7; // read press and temp result
 	if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
@@ -78,15 +88,15 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, fl
 			(((unsigned int)buf[1]) << 4) + (buf[2] >> 4));
 	double raw_temperature = (double)((((unsigned int)buf[3]) << 12) +
 			(((unsigned int)buf[4]) << 4) + (buf[5] >> 4));
-	double v1 = raw_temperature / 16384.0 - T1 / 1024.0 * T2;
+	double v1 = (raw_temperature / 16384.0 - T1 / 1024.0) * T2;
 	double v2 = raw_temperature / 131072.0 - T1 / 8192.0;
 	v2 = v2 * v2 * (double)T3;
-	double t_fine = v1 + v2;
+	long int t_fine = v1 + v2;
 	if(temperature) {
-		*temperature = (float)t_fine / 5120.0;
+		*temperature = (float)t_fine / 5120.0f;
 	}
 
-	v1 = t_fine / 2.0 - 64000.0;
+	v1 = ((double)t_fine) / 2.0 - 64000.0;
 	v2 = v1 * v1 * P6 / 32768.0;
 	v2 = v2 + v1 * P5 * 2.0;
 	v2 = v2 / 4.0 + P4 * 65536.0;
@@ -101,6 +111,13 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, fl
 	v2 = p * P8 / 32768.0;
 	p = p + (v1 + v2 + P7) / 16.0;
 	*pressure = (float)p;
+
+	buf[0] = 0xF4; // control
+	buf[1] = 0x0;  // sleep mode
+	if((status = dhi2c_write(mAddress, buf, 2, 1)) != DHI2C_OK) {
+		dhdebug("bmp280: failed to shutdown");
+		return status;
+	}
 	return DHI2C_OK;
 }
 

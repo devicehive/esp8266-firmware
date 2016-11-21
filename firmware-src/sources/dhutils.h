@@ -61,19 +61,35 @@ int hexToByte(const char *hex, unsigned char *byteout);
 const char *find_http_responce_code(const char *data, unsigned short len);
 
 /**
- *	\brief					Read unsigned 16 bit integer from pointer
+ *	\brief					Read unsigned 16 bit integer from pointer. Big endian.
  *	\param[in]	buf			Pointer to data.
  *	\param[in]	pos			Offset in data.
  *	\return					Result value.
  */
-unsigned int unsignedInt16(const char *buf, int pos);
+unsigned int unsignedInt16be(const char *buf, int pos);
 
 /**
- *	\brief					Read signed 16 bit integer from pointer
+ *	\brief					Read signed 16 bit integer from pointer. Big endian.
  *	\param[in]	buf			Pointer to data.
  *	\param[in]	pos			Offset in data.
  *	\return					Result value.
  */
-int signedInt16(const char *buf, int pos);
+int signedInt16be(const char *buf, int pos);
+
+/**
+ *	\brief					Read unsigned 16 bit integer from pointer. Big endian.
+ *	\param[in]	buf			Pointer to data.
+ *	\param[in]	pos			Offset in data.
+ *	\return					Result value.
+ */
+unsigned int unsignedInt16le(const char *buf, int pos);
+
+/**
+ *	\brief					Read signed 16 bit integer from pointer. Big endian.
+ *	\param[in]	buf			Pointer to data.
+ *	\param[in]	pos			Offset in data.
+ *	\return					Result value.
+ */
+int signedInt16le(const char *buf, int pos);
 
 #endif /* _DHUTILS_H_ */

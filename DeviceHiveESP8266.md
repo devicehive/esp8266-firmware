@@ -43,8 +43,8 @@
     * [devices/ds18b20/read](#devicesds18b20read)
     * [devices/dht11/read](#devicesdht11read)
     * [devices/dht22/read](#devicesdht22read)
-    * [devices/bmp180/read](#devicesbmp180read)
-    * [devices/bmp280/read](#devicesbmp280read)    
+    * [devices/bmp180/read](#devicesbmp180read-devicesbmp280read)
+    * [devices/bmp280/read](#devicesbmp180read-devicesbmp280read)    
     * [devices/bh1750/read](#devicesbh1750read)
     * [devices/mpu6050/read](#devicesmpu6050read)
     * [devices/hmc5883l/read](#deviceshmc5883lread)
@@ -755,8 +755,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 Temperature unit in Celsius degrees. Humidity unit is percent.
 
-## devices/bmp180/read
-## devices/bmp280/read
+## devices/bmp180/read devices/bmp280/read
 Read temperature and pressure from BMP180 or BMP280 sensor.
 
 *Parameters*:  
@@ -777,7 +776,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```json
 {
 	"temperature":25.5000,
-  "pressure":100521
+	"pressure":100521
 }
 ```
 Temperature unit in Celsius degrees. Pressure unit is pascal.

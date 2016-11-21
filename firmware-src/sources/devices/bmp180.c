@@ -38,17 +38,17 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, floa
 	}
 
 	int oss = 0;
-    int ac1 = signedInt16(buf, 0);
-    int ac2 = signedInt16(buf, 2);
-    int ac3 = signedInt16(buf, 4);
-    unsigned int ac4 = unsignedInt16(buf, 6);
-    unsigned int ac5 = unsignedInt16(buf, 8);
-    unsigned int ac6 = unsignedInt16(buf, 10);
-    int b1 = signedInt16(buf, 12);
-    int b2 = signedInt16(buf, 14);
+    int ac1 = signedInt16be(buf, 0);
+    int ac2 = signedInt16be(buf, 2);
+    int ac3 = signedInt16be(buf, 4);
+    unsigned int ac4 = unsignedInt16be(buf, 6);
+    unsigned int ac5 = unsignedInt16be(buf, 8);
+    unsigned int ac6 = unsignedInt16be(buf, 10);
+    int b1 = signedInt16be(buf, 12);
+    int b2 = signedInt16be(buf, 14);
     //int mb = signedInt16(buf, 16);
-    int mc = signedInt16(buf, 18);
-    int md = signedInt16(buf, 20);
+    int mc = signedInt16be(buf, 18);
+    int md = signedInt16be(buf, 20);
 
     buf[0] = 0xF4; // measure temperature
     buf[1] = 0x2E;
@@ -66,7 +66,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, floa
 		dhdebug("bmp180: failed to read temperature");
 		return status;
 	}
-	raw_temperature = unsignedInt16(buf, 0);
+	raw_temperature = unsignedInt16be(buf, 0);
 
     buf[0] = 0xF4; // measure pressure
     buf[1] = 0x34;
@@ -84,7 +84,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, floa
 		dhdebug("bmp180: failed to read pressure");
 		return status;
 	}
-	raw_pressure = unsignedInt16(buf, 0);
+	raw_pressure = unsignedInt16be(buf, 0);
 
 	// calc
 	long x1 = (raw_temperature - ac6) * ac5 >> 15;

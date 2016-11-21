@@ -39,6 +39,6 @@ char * ICACHE_FLASH_ATTR mhz19_read(int *co2) {
 	if(cs != result[8]) {
 		return "Checksum mismatch";
 	}
-	*co2 = unsignedInt16(result, 2);
+	*co2 = unsignedInt16be(result, 2);
 	return NULL;
 }

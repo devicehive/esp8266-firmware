@@ -136,12 +136,23 @@ const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned
 	return NULL;
 }
 
-unsigned int ICACHE_FLASH_ATTR unsignedInt16(const char *buf, int pos) {
+unsigned int ICACHE_FLASH_ATTR unsignedInt16be(const char *buf, int pos) {
 	return ((int)buf[pos] * 0x100 + (int)buf[pos + 1]);
 }
 
-int ICACHE_FLASH_ATTR signedInt16(const char *buf, int pos) {
-	int r = unsignedInt16(buf, pos);
+int ICACHE_FLASH_ATTR signedInt16be(const char *buf, int pos) {
+	int r = unsignedInt16be(buf, pos);
+	if (r <= 0x7FFF)
+		return r;
+	return r - 0x10000;
+}
+
+unsigned int ICACHE_FLASH_ATTR unsignedInt16le(const char *buf, int pos) {
+	return ((int)buf[pos] + (int)buf[pos + 1] * 0x100);
+}
+
+int ICACHE_FLASH_ATTR signedInt16le(const char *buf, int pos) {
+	int r = unsignedInt16le(buf, pos);
 	if (r <= 0x7FFF)
 		return r;
 	return r - 0x10000;

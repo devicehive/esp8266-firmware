@@ -70,19 +70,19 @@ DHI2C_STATUS ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl,
 	}
 
 	if(acceleromter) {
-		acceleromter->X = signedInt16(buf, 0) * 8.0f * EARTH_GRAVITY_ACCELERATION / 32768.0f;
-		acceleromter->Y = signedInt16(buf, 2) * 8.0f * EARTH_GRAVITY_ACCELERATION / 32768.0f;
-		acceleromter->Z = signedInt16(buf, 4) * 8.0f * EARTH_GRAVITY_ACCELERATION / 32768.0f;
+		acceleromter->X = signedInt16be(buf, 0) * 8.0f * EARTH_GRAVITY_ACCELERATION / 32768.0f;
+		acceleromter->Y = signedInt16be(buf, 2) * 8.0f * EARTH_GRAVITY_ACCELERATION / 32768.0f;
+		acceleromter->Z = signedInt16be(buf, 4) * 8.0f * EARTH_GRAVITY_ACCELERATION / 32768.0f;
 	}
 
 	if(gyroscope) {
-		gyroscope->X = signedInt16(buf, 8) * 1000.0f / 32768.0f;
-		gyroscope->Y = signedInt16(buf, 10) * 1000.0f / 32768.0f;
-		gyroscope->Z = signedInt16(buf, 12) * 1000.0f / 32768.0f;
+		gyroscope->X = signedInt16be(buf, 8) * 1000.0f / 32768.0f;
+		gyroscope->Y = signedInt16be(buf, 10) * 1000.0f / 32768.0f;
+		gyroscope->Z = signedInt16be(buf, 12) * 1000.0f / 32768.0f;
 	}
 
 	if(temparature)
-		*temparature = signedInt16(buf, 6) / 340.0f + 36.53f;
+		*temparature = signedInt16be(buf, 6) / 340.0f + 36.53f;
 	return DHI2C_OK;
 }
 

@@ -48,8 +48,8 @@ char * ICACHE_FLASH_ATTR dht22_read(int pin, float *humidity, float *temperature
 	if (r)
 		return r;
 
-	*humidity = signedInt16(buf, 0) / 10.0f;
+	*humidity = signedInt16be(buf, 0) / 10.0f;
 	if (temperature)
-		*temperature = signedInt16(buf, 2) / 10.0f;
+		*temperature = signedInt16be(buf, 2) / 10.0f;
 	return NULL;
 }
