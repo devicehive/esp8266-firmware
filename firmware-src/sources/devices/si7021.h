@@ -1,6 +1,6 @@
 /**
  *	\file		si7021.h
- *	\brief		Simple communication with SI7021 humidity and temperature sensor
+ *	\brief		Simple communication with SI7021 relative humidity and temperature sensor
  *	\author		Nikolay Khabarov
  *	\date		2016
  *	\copyright	DeviceHive MIT
@@ -17,10 +17,10 @@
 #define SI7021_NO_PIN -1
 
 /**
- *	\brief					Measure temperature and humidity one time.
+ *	\brief					Measure temperature and relative humidity one time.
  *	\param[in]	sda			Pin for I2C's SDA.
  *	\param[in]	scl			Pin for I2C's SCL.
- *	\param[out]	humidity	Pointer for storing humidity result measure in percents.
+ *	\param[out]	humidity	Pointer for storing relative humidity result measure in percents.
  *	\param[out]	temperature	Pointer for storing temperature result measure in degree Celsius. Can be NULL.
  *	\return 				Status value, one of DHI2C_STATUS enum.
  */

@@ -740,7 +740,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 Temperature unit in Celsius degrees.
 
 ## devices/dht11/read
-Read temperature and humidity from DHT11 sensor.
+Read temperature and relative humidity from DHT11 sensor.
 
 *Parameters*:  
 "pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
@@ -758,10 +758,10 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 	"humidity":20
 }
 ```
-Temperature unit in Celsius degrees. Humidity unit is percent.
+Temperature unit in Celsius degrees. Relative humidity unit is percent.
 
 ## devices/dht22/read
-Read temperature and humidity from DHT22 sensor.
+Read temperature and relative humidity from DHT22 sensor.
 
 *Parameters*:  
 "pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
@@ -779,10 +779,10 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 	"humidity":22.3000
 }
 ```
-Temperature unit in Celsius degrees. Humidity unit is percent.
+Temperature unit in Celsius degrees. Relative humidity unit is percent.
 
 ## devices/si7021/read
-Read temperature and humidity from SI7021 sensor.
+Read temperature and relative humidity from SI7021 sensor.
 
 *Parameters*:  
 "address" - I2C SI7021 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x80.  
@@ -804,7 +804,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 	"humidity":18.8506
 }
 ```
-Temperature unit in Celsius degrees. Humidity unit is percent.
+Temperature unit in Celsius degrees. Relative humidity unit is percent.
 
 ## devices/bmp180/read
 Read temperature and pressure from BMP180 sensor.

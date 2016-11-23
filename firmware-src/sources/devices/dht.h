@@ -13,18 +13,18 @@
 #define DHT_NO_PIN -1
 
 /**
- *	\brief					Measure humidity with DHT11 sensor one time.
+ *	\brief					Measure relative humidity with DHT11 sensor one time.
  *	\param[in]	pin			1-wire pin for communication.
- *	\param[out]	humidity	Pointer for storing humidity result measure in percents.
+ *	\param[out]	humidity	Pointer for storing relative humidity result measure in percents.
  *	\param[out]	temperature	Pointer for storing temperature result measure in degree Celsius. Can be NULL.
  *	\return 				NULL on success, text description on error.
  */
 char *dht11_read(int pin, int *humidity, int *temperature);
 
 /**
- *	\brief					Measure humidity with DHT22 sensor one time.
+ *	\brief					Measure relative humidity with DHT22 sensor one time.
  *	\param[in]	pin			1-wire pin for communication.
- *	\param[out]	humidity	Pointer for storing humidity result measure in percents.
+ *	\param[out]	humidity	Pointer for storing relative humidity result measure in percents.
  *	\param[out]	temperature	Pointer for storing temperature result measure in degree Celsius. Can be NULL.
  *	\return 				NULL on success, text description on error.
  */
