@@ -54,6 +54,7 @@
     * [devices/pcf8574/write](#devicespcf8574write)
     * [devices/pcf8574/hd44780/write](#devicespcf8574hd44780write)
     * [devices/mhz19/read](#devicesmhz19read)
+    * [devices/ads1115/read](#devicesads1115read)    
   * [License](#license)
 
 # Overview
@@ -1034,6 +1035,34 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 }
 ```
 co2 unit is ppm(parts-per-million).
+
+## devices/ads1115/read
+Read voltage from ADS1115 ADC pins. Chip has four inputs and one 16 bits converter with referense voltage. Input voltage is –0.3 ... Vdd + 0.3. Full scale is 4.096V. Data rate is 128 samples per second.
+
+*Parameters*:  
+"address" - I2C ADS1115 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x90"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"0":0.5695,
+	"1":0.5635,
+	"2":0.5650,
+	"3":0.5822
+}
+```
+Chip has 4(0..3) inputs. Since chip has one converter, values are measured not in the same time. All values are in Volts.
+
 
 # License
 The MIT License (MIT):

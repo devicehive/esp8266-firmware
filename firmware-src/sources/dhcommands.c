@@ -37,6 +37,7 @@
 #include "devices/mhz19.h"
 #include "devices/lm75.h"
 #include "devices/si7021.h"
+#include "devices/ads1115.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -650,6 +651,23 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
+	}  else if( os_strcmp(command, "devices/ads1115/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				ads1115_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float values[4];
+		char *res = i2c_status_tochar(ads1115_read(ADS1115_NO_PIN, ADS1115_NO_PIN, values));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
+				values[0], values[1], values[2], values[3]);
 	} else {
 		responce_error(cb, "Unknown command");
 	}
