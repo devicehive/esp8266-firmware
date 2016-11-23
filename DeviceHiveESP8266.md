@@ -44,8 +44,8 @@
     * [devices/lm75/read](#deviceslm75read)
     * [devices/dht11/read](#devicesdht11read)
     * [devices/dht22/read](#devicesdht22read)
-    * [devices/bmp180/read](#devicesbmp180read-devicesbmp280read)
-    * [devices/bmp280/read](#devicesbmp180read-devicesbmp280read)    
+    * [devices/bmp180/read](#devicesbmp180read)
+    * [devices/bmp280/read](#devicesbmp280read)    
     * [devices/bh1750/read](#devicesbh1750read)
     * [devices/mpu6050/read](#devicesmpu6050read)
     * [devices/hmc5883l/read](#deviceshmc5883lread)
@@ -780,11 +780,11 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 Temperature unit in Celsius degrees. Humidity unit is percent.
 
-## devices/bmp180/read devices/bmp280/read
-Read temperature and pressure from BMP180 or BMP280 sensor.
+## devices/bmp180/read
+Read temperature and pressure from BMP180 sensor.
 
 *Parameters*:  
-"address" - I2C BMP180/BMP280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEE for BMP180 and 0xEC for BMP280.  
+"address" - I2C BMP180device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEE for BMP180.  
 "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
@@ -802,6 +802,32 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 {
 	"temperature":25.5000,
 	"pressure":100521
+}
+```
+Temperature unit in Celsius degrees. Pressure unit is pascal.
+
+devices/bmp280/read
+Read temperature and pressure from BMP280 sensor.
+
+*Parameters*:  
+"address" - I2C BMP280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEC for BMP280.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"4",
+	"SCL":"5",
+	"address":"0xEE"
+}
+```
+
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":25.5000,
+	"pressure":100521.5000
 }
 ```
 Temperature unit in Celsius degrees. Pressure unit is pascal.
