@@ -44,6 +44,7 @@
     * [devices/lm75/read](#deviceslm75read)
     * [devices/dht11/read](#devicesdht11read)
     * [devices/dht22/read](#devicesdht22read)
+    * [devices/si7021/read](#devicessi7021read)    
     * [devices/bmp180/read](#devicesbmp180read)
     * [devices/bmp280/read](#devicesbmp280read)    
     * [devices/bh1750/read](#devicesbh1750read)
@@ -780,11 +781,36 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 Temperature unit in Celsius degrees. Humidity unit is percent.
 
+## devices/si7021/read
+Read temperature and humidity from SI7021 sensor.
+
+*Parameters*:  
+"address" - I2C SI7021 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x80.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x80"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":27.1961,
+	"humidity":18.8506
+}
+```
+Temperature unit in Celsius degrees. Humidity unit is percent.
+
 ## devices/bmp180/read
 Read temperature and pressure from BMP180 sensor.
 
 *Parameters*:  
-"address" - I2C BMP180device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEE for BMP180.  
+"address" - I2C BMP180 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEE.  
 "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
@@ -810,7 +836,7 @@ devices/bmp280/read
 Read temperature and pressure from BMP280 sensor.
 
 *Parameters*:  
-"address" - I2C BMP280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEC for BMP280.  
+"address" - I2C BMP280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEC.  
 "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 
