@@ -41,6 +41,7 @@
     * [onewire/dht/read](#onewiredhtread)
   * [Devices](#devices)
     * [devices/ds18b20/read](#devicesds18b20read)
+    * [devices/lm75/read](#deviceslm75read)
     * [devices/dht11/read](#devicesdht11read)
     * [devices/dht22/read](#devicesdht22read)
     * [devices/bmp180/read](#devicesbmp180read-devicesbmp280read)
@@ -703,6 +704,30 @@ Read temperature from DS18B20 sensor. Only one sensor can be connected to pin(sk
 ```json
 {
 	"pin":"2"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"temperature":24.5000
+}
+```
+Temperature unit in Celsius degrees.
+
+## devices/lm75/read
+Read temperature from LM75A/LM75B/LM75C sensor.
+
+*Parameters*:  
+"address" - I2C LM75 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x90.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0x90"
 }
 ```
 Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.

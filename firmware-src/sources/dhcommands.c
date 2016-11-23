@@ -35,6 +35,7 @@
 #include "devices/pcf8574.h"
 #include "devices/pcf8574_hd44780.h"
 #include "devices/mhz19.h"
+#include "devices/lm75.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -615,7 +616,23 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
-    } else {
+    } else if( os_strcmp(command, "devices/lm75/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				lm75_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float temperature;
+		char *res = i2c_status_tochar(lm75_read(LM75_NO_PIN, LM75_NO_PIN, &temperature));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	} else {
 		responce_error(cb, "Unknown command");
 	}
 }
