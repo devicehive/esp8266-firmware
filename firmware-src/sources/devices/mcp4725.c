@@ -20,7 +20,6 @@ static float mVoltage = 3.3f;
 DHI2C_STATUS ICACHE_FLASH_ATTR mcp4725_write(int sda, int scl, float value) {
 	char buf[2];
 	DHI2C_STATUS status;
-	int channel;
 	if(value < 0.0f || value > mVoltage)
 		return DHI2C_WRONG_PARAMETERS;
 	if(sda != MCP4725_NO_PIN && scl != MCP4725_NO_PIN) {
