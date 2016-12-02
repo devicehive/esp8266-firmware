@@ -22,6 +22,7 @@ body {
     display: inline-block;
     width: 210px;
     vertical-align: middle;
+}
 
 .header .key-box {
     display: inline-block;
@@ -75,7 +76,7 @@ body {
     height: 200px;
     overflow: scroll;
     resize: none;
-    margin-right: 10px;
+    margin: 10px 10px 0 0;
     vertical-align: top;
 }
 
@@ -86,14 +87,19 @@ body {
 .form-block .btn_event.btn_convert:hover {
     background: #196437;
     color: #fff;
-
 }
 
 .description {
     margin: 0 0 20px 0;
     font-size: 14px;
 }
-
+.description_list{
+    padding: 0;
+    list-style:none;
+}
+.description_list li {
+    margin: 5px 0;
+}
 .btn_event {
     cursor: pointer;
     outline: none;
@@ -103,7 +109,10 @@ body {
     border: none;
     font-size: 16px;
 }
-
+.btn_event:hover{
+    background: #467487;
+    color: #fff;
+}
 .btn_event.btn_event_green,
 .btn_event.btn_event_red {
     color: #ffffff;
@@ -131,4 +140,16 @@ body {
 
 #plength {
     margin: 20px 0;
+}
+
+.group-box{
+    margin: 10px 0;
+}
+.group-box .group-box_title{
+    display: inline-block;
+    margin-right: 20px;
+    min-width: 70px;
+}
+.group-box button{
+    margin-right: 20px;
 }
