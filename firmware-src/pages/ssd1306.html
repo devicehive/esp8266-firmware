@@ -1,159 +1,179 @@
 <html>
- <head>
- <style type="text/css">
-  html * {
-   font-family: sans-serif;
-  }
-  input {
-   width: 40%;
-   display: inline-block; 
-  }
-  input[type=button] {
-   width: 10%;
-   display: inline-block; 
-  }
-  label {
-   width: 10%;
-   display: inline-block; 
-  }
- </style>
- <title>SSD1306</title>
- <script type="text/javascript">
-  var commandList = [];
-  var imageData;
-  var imageWidth;
-  var imageHeight;
-  var SDA;
-  var SCL;
-  var address;
-  var sending;
-  function print(text, err = false) {
-   document.getElementById('output').style.color = err ? 'red' : 'green';
-   document.getElementById('output').innerHTML = text;
-  }
-  function send_command(command, parameters) {
-   var xmlhttp = new XMLHttpRequest();  
-   xmlhttp.open('POST', "http://" + window.location.hostname + '/api/' + command, true);
-   xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-   xmlhttp.onreadystatechange = function() {
-    if(xmlhttp.readyState == 4) {
-     if(xmlhttp.status < 200 || xmlhttp.status > 299) {
-      print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
-     } else {
-      if(commandList.length > 0) {
-       item = commandList.shift();
-       send_command(item['command'], item['parameters']);
-      } else {
-       if(!sending)
-        print("Done!");
-      }
-     }
-    }
-   }
-   xmlhttp.send(JSON.stringify(parameters));
-  }
-  function queue_command(command, parameters) {
-   if(sending == true) {
-    commandList.push({"command":command, "parameters":parameters});
-    return;  
-   } 
-   sending = true;
-   commandList = [];
-   send_command(command, parameters); 
-  }
-  function write_ssd1306_command(command) {
-   queue_command("i2c/master/write", {"SDA":SDA, "SCL":SCL, "address":address, "data":btoa(String.fromCharCode(0) + String.fromCharCode(command))});
-  }
-  function write_ssd1306_data(data) {
-   queue_command("i2c/master/write", {"SDA":SDA, "SCL":SCL, "address":"78", "data":btoa(String.fromCharCode(0x40) + data)});
-  }
-  function run() {
-   print('');
-   if(!document.getElementById("image").files[0]) {
-    print("Choose image first please", true);
-    return;
-   }
-   localStorage['accesskey'] = document.getElementById('accesskey').value;
-   SDA = document.getElementById('sda').value;
-   SCL = document.getElementById('scl').value;
-   address = document.getElementById('address').value;
-   sending = false;
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>SSD1306</title>
+    <script type="text/javascript">
+        var commandList = [];
+        var imageData;
+        var imageWidth;
+        var imageHeight;
+        var SDA;
+        var SCL;
+        var address;
+        var sending;
+        function print(text, err = false) {
+            document.getElementById('output').style.color = err ? 'red' : 'green';
+            document.getElementById('output').innerHTML = text;
+        }
+        function send_command(command, parameters) {
+            var xmlhttp = new XMLHttpRequest();
+            xmlhttp.open('POST', "http://" + window.location.hostname + '/api/' + command, true);
+            xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
+            xmlhttp.onreadystatechange = function () {
+                if (xmlhttp.readyState == 4) {
+                    if (xmlhttp.status < 200 || xmlhttp.status > 299) {
+                        print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
+                    } else {
+                        if (commandList.length > 0) {
+                            item = commandList.shift();
+                            send_command(item['command'], item['parameters']);
+                        } else {
+                            if (!sending)
+                                print("Done!");
+                        }
+                    }
+                }
+            }
+            xmlhttp.send(JSON.stringify(parameters));
+        }
+        function queue_command(command, parameters) {
+            if (sending == true) {
+                commandList.push({"command": command, "parameters": parameters});
+                return;
+            }
+            sending = true;
+            commandList = [];
+            send_command(command, parameters);
+        }
+        function write_ssd1306_command(command) {
+            queue_command("i2c/master/write", {
+                "SDA": SDA,
+                "SCL": SCL,
+                "address": address,
+                "data": btoa(String.fromCharCode(0) + String.fromCharCode(command))
+            });
+        }
+        function write_ssd1306_data(data) {
+            queue_command("i2c/master/write", {
+                "SDA": SDA,
+                "SCL": SCL,
+                "address": "78",
+                "data": btoa(String.fromCharCode(0x40) + data)
+            });
+        }
+        function run() {
+            print('');
+            if (!document.getElementById("image").files[0]) {
+                print("Choose image first please", true);
+                return;
+            }
+            localStorage['accesskey'] = document.getElementById('accesskey').value;
+            SDA = document.getElementById('sda').value;
+            SCL = document.getElementById('scl').value;
+            address = document.getElementById('address').value;
+            sending = false;
 
-   write_ssd1306_command(0x8D);
-   write_ssd1306_command(0x14);
-   write_ssd1306_command(0xAF);
-   for (i = 0; i < 8; i++) {
-    write_ssd1306_command(0xB0 + i);
-    write_ssd1306_command(0x00);
-    write_ssd1306_command(0x10);
-    data = "";
-    for (x = 0; x < 128; x++) {
-     var tb = 0;
-     for (j = 0; j < 8; j++) {
-      y = i * 8 + j;
-      if(getBWPix(128 - x,64 -y))
-       tb |= (1 << j);
-      }
-      data += String.fromCharCode(tb);
-    }
-    write_ssd1306_data(data);
-   }
-   sending = false;
-  }
-  function getBWPix(x, y) {
-   p = (y * imageWidth + x)*4;
-   r = imageData.data[p];
-   g = imageData.data[p + 1];
-   b = imageData.data[p + 2];
-   v = 0.2126*r + 0.7152*g + 0.0722*b;
-   if(v > 127)
-    return true;
-   return false;
-  }
-  function draw(event) {
-    var canvas = document.getElementById("canvas");
-    var cnvctx = canvas.getContext("2d"); 
-    var image = new Image(); 
-    var URL = window.webkitURL || window.URL;
-    var url = URL.createObjectURL(document.getElementById("image").files[0]); 
-    image.onload = function() {
-      cnvctx.drawImage(image, 0, 0);
-      imageData = cnvctx.getImageData(0,0,canvas.width,canvas.height);
-      imageWidth = canvas.width;
-      imageHeight = canvas.height;
-    };
-    image.onerror = function() {
-      cnvctx.rect(0,0, canvas.width, canvas.height);
-      cnvctx.fillStyle="white";
-      cnvctx.fill();
-      cnvctx.beginPath();
-      cnvctx.moveTo(0,0);
-      cnvctx.lineTo(canvas.width, canvas.height);
-      cnvctx.moveTo(0,canvas.height);
-      cnvctx.lineTo(canvas.width,0);
-      cnvctx.strokeStyle="red";
-      cnvctx.stroke(); 
-      imageData = cnvctx.getImageData(0, 0, canvas.width, canvas.height);
-      imageWidth = canvas.width;
-      imageHeight = canvas.height;
-    };
-    image.src = url; 
-  }
-  function init() {
-   document.getElementById('accesskey').value = localStorage['accesskey'];
-   document.getElementById('image').addEventListener("change", draw, false);
-  }
- </script>
- </head>
- <body onload="init()">
-  <label>AccesKey: </label><input type="password" id="accesskey"><br>
-  <p>SSD1306 is an OLED 128x64 graphic display. There is no direct support from firmware. But since this display uses I2C interface, firmware still can operate with display via I2C. Although JS code here is a little bit tricky.</p>
-  <label>SDA Pin: </label><input type="text" id="sda" value="0"><br>
-  <label>SCL Pin: </label><input type="text" id="scl" value="2"><br>
-  <label>I2C address: </label><input type="text" id="address" value="0x78"><br>
-  <label>Image: </label><input type="file" id="image"><br><br>
-  <canvas id="canvas" width="128" height="64"></canvas><br><br>
-  <input type="button" value="Run" onclick="run();"><br>
-  <br><div id="output"></div>
- </body>
+            write_ssd1306_command(0x8D);
+            write_ssd1306_command(0x14);
+            write_ssd1306_command(0xAF);
+            for (i = 0; i < 8; i++) {
+                write_ssd1306_command(0xB0 + i);
+                write_ssd1306_command(0x00);
+                write_ssd1306_command(0x10);
+                data = "";
+                for (x = 0; x < 128; x++) {
+                    var tb = 0;
+                    for (j = 0; j < 8; j++) {
+                        y = i * 8 + j;
+                        if (getBWPix(128 - x, 64 - y))
+                            tb |= (1 << j);
+                    }
+                    data += String.fromCharCode(tb);
+                }
+                write_ssd1306_data(data);
+            }
+            sending = false;
+        }
+        function getBWPix(x, y) {
+            p = (y * imageWidth + x) * 4;
+            r = imageData.data[p];
+            g = imageData.data[p + 1];
+            b = imageData.data[p + 2];
+            v = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            if (v > 127)
+                return true;
+            return false;
+        }
+        function draw(event) {
+            var canvas = document.getElementById("canvas");
+            var cnvctx = canvas.getContext("2d");
+            var image = new Image();
+            var URL = window.webkitURL || window.URL;
+            var url = URL.createObjectURL(document.getElementById("image").files[0]);
+            image.onload = function () {
+                cnvctx.drawImage(image, 0, 0);
+                imageData = cnvctx.getImageData(0, 0, canvas.width, canvas.height);
+                imageWidth = canvas.width;
+                imageHeight = canvas.height;
+            };
+            image.onerror = function () {
+                cnvctx.rect(0, 0, canvas.width, canvas.height);
+                cnvctx.fillStyle = "white";
+                cnvctx.fill();
+                cnvctx.beginPath();
+                cnvctx.moveTo(0, 0);
+                cnvctx.lineTo(canvas.width, canvas.height);
+                cnvctx.moveTo(0, canvas.height);
+                cnvctx.lineTo(canvas.width, 0);
+                cnvctx.strokeStyle = "red";
+                cnvctx.stroke();
+                imageData = cnvctx.getImageData(0, 0, canvas.width, canvas.height);
+                imageWidth = canvas.width;
+                imageHeight = canvas.height;
+            };
+            image.src = url;
+        }
+        function init() {
+            document.getElementById('accesskey').value = localStorage['accesskey'];
+            document.getElementById('image').addEventListener("change", draw, false);
+        }
+    </script>
+</head>
+<body onload="init()">
+<div class="header">
+    <div class="devecihive-logo-text"></div>
+    <div class="key-box">
+        <label for="accesskey">AccesKey: </label>
+        <input class="input-accesskey input-data" type="password" id="accesskey">
+    </div>
+</div>
+<div class="content">
+    <div class="description">SSD1306 is an OLED 128x64 graphic display. <br>
+        There is no direct support from firmware. But since this display uses
+        I2C interface, firmware still can operate with display via I2C. <br>
+        Although JS code here is a little bit
+        tricky.
+    </div>
+    <div class="form-block">
+        <label class="pin-label" for="sda">SDA Pin:
+            <input class="input-data" type="text" id="sda" value="0">
+        </label>
+        <label class="pin-label" for="scl">SCL Pin:
+            <input class="input-data" type="text" id="scl" value="2">
+        </label>
+        <label class="pin-label" for="address">I2C address:
+            <input class="input-data" type="text" id="address" value="0x78">
+        </label>
+        <label class="pin-label" for="image">Image:
+            <input type="file" id="image">
+        </label>
+        <canvas id="canvas" width="128" height="64"></canvas>
+        <p></p>
+        <button class="btn_event btn_event_green" type="button" value="Run" onclick="run();">Run</button>
+        <div class="extra-margin-top" id="output"></div>
+    </div>
+
+</div>
+
+</body>
 </html>

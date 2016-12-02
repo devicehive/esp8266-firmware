@@ -46,7 +46,7 @@ body {
 }
 
 .key-box .input-accesskey:focus,
-.input-data:focus{
+.input-data:focus {
     outline: none;
 }
 
@@ -67,14 +67,15 @@ body {
     font-size: 14px;
     margin-bottom: 10px;
 }
-.form-block label.pin-label{
+
+.form-block label.pin-label {
     margin: 10px 0 20px 0;
 }
 
 .form-block textarea {
     width: 70%;
     height: 200px;
-    overflow: scroll;
+    overflow-x: auto;
     resize: none;
     margin: 10px 10px 0 0;
     vertical-align: top;
@@ -93,26 +94,33 @@ body {
     margin: 0 0 20px 0;
     font-size: 14px;
 }
-.description_list{
+
+.description_list {
     padding: 0;
-    list-style:none;
+    list-style: none;
 }
+
 .description_list li {
     margin: 5px 0;
 }
+
 .btn_event {
     cursor: pointer;
     outline: none;
-    width: 100px;
+    min-width: 100px;
+    width: auto;
     height: 30px;
+    padding: 0 20px;
     border-radius: 10px;
     border: none;
     font-size: 16px;
 }
-.btn_event:hover{
+
+.btn_event:hover {
     background: #467487;
     color: #fff;
 }
+
 .btn_event.btn_event_green,
 .btn_event.btn_event_red {
     color: #ffffff;
@@ -142,14 +150,46 @@ body {
     margin: 20px 0;
 }
 
-.group-box{
+.group-box {
     margin: 10px 0;
 }
-.group-box .group-box_title{
+
+.group-box .group-box_title {
     display: inline-block;
     margin-right: 20px;
     min-width: 70px;
 }
-.group-box button{
+
+.group-box button {
     margin-right: 20px;
+}
+
+.welcome-title {
+    text-align: center;
+}
+
+a {
+    color: #467487;
+}
+
+a:visited {
+    color: #CD6672;
+}
+
+a:hover {
+    color: #4C9A6C;
+}
+
+.input-controller{
+    width: 400px;
+}
+
+.input-controller{
+    margin: 0 0 20px 0;
+}
+.extra-margin-top {
+    margin-top: 20px;
+}
+.margin-reset{
+    margin: 0 !important;
 }
