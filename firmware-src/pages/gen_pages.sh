@@ -20,7 +20,8 @@ print "typedef struct {const char *path; const char *data; unsigned int data_len
 
 index="WEBPAGE web_pages[] = { "
 comma=""
-for file in $DIR/*.html; do
+FILE_LIST=$(find $DIR -name \*.html -o -name \*.css -o -name \*.js)
+for file in $FILE_LIST; do
     filename=$(basename "$file")
     echo "Parsing $filename ..."
     name=${filename/./_}
