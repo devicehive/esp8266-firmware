@@ -76,7 +76,7 @@ body {
     width: 70%;
     height: 200px;
     overflow-x: auto;
-    resize: none;
+    resize: vertical;
     margin: 10px 10px 0 0;
     vertical-align: top;
 }
