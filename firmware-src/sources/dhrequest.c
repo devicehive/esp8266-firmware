@@ -80,7 +80,18 @@ void ICACHE_FLASH_ATTR dhrequest_update_poll(HTTP_REQUEST *old, const char *time
 	const unsigned int len = sizeof(HTTP_REQUEST_PATTERN) - 18 + 3 + mServerLen + 8 + mDeviceIdLen + 24 + timestamplength + mAccessKeyLen + 1;
 	if(old) {
 		if(old->len + 1 == len) {
-			os_memcpy(&old->data[4 + mServerLen + 8 + mDeviceIdLen + 24], timestamp, timestamplength);
+			char *current_timestamp = &old->data[4 + mServerLen + 8 + mDeviceIdLen + 24];
+			int i;
+			int cp = 0;
+			for(i = 0; i < timestamplength; i++) {
+				if(cp || timestamp[i] > current_timestamp[i]) {
+					cp = 1;
+					current_timestamp[i] = timestamp[i];
+				} else if(timestamp[i] < current_timestamp[i]) {
+					dhdebug("Timestamp is older then current");
+					return;
+				}
+			}
 			dhdebug("Poll request updated");
 			return;
 		}
