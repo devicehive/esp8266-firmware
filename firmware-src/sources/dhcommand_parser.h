@@ -28,7 +28,10 @@ typedef struct {
 	uint16_t pins_to_presence;						///< Bitwise mask with pin marked as presence.
 	uint32_t periodus;								///< converted frequency field value.
 	uint32_t count;									///< count field value.
-	uint32_t pin_value[DHGPIO_MAXGPIONUM + 1];		///< Pin values.
+	union {
+		uint32_t uintv[DHGPIO_MAXGPIONUM + 1];	///< Pin values.
+		float floatv[DHGPIO_MAXGPIONUM + 1];///< Pin values.
+	} pin_value;
 	uint16_t pin_value_readed;						///< Bitwise mask with read pin values.
 	uint32_t uart_speed;							///< Speed for UART from mode field.
 	uint8_t	uart_bits;								///< Bits per byte for UART from mode field.
@@ -43,6 +46,7 @@ typedef struct {
 	uint32_t spi_mode;								///< Mode for SPI.
 	uint32_t CS;									///< CS field value.
 	uint32_t pin;									///< pin field value
+	float ref;									///< ref field value
 } gpio_command_params;
 
 /** Flag based enum with available parameters fields. */
@@ -61,16 +65,18 @@ typedef enum {
 	AF_PERIOD = 0x800,		///< Read frequency field.
 	AF_COUNT = 0x1000,		///< Read count field.
 	AF_VALUES = 0x2000,		///< Read pins values.
-	AF_UARTMODE = 0x4000,	///< Read mode field for UART.
-	AF_DATA = 0x8000,		///< Read data field.
-	AF_TEXT_DATA = 0x10000,	///< Read text field and store as data.
-	AF_TIMEOUT = 0x20000,	///< Read timeout field.
-	AF_ADDRESS = 0x40000,	///< Read address field.
-	AF_SDA = 0x80000,		///< Read SDA field.
-	AF_SCL = 0x100000,		///< Read SCL field.
-	AF_SPIMODE = 0x200000,	///< Read mode field for SPI.
-	AF_CS = 0x400000,		///< Read CS field.
-	AF_PIN = 0x800000,		///< Read pin field.
+	AF_FLOATVALUES = 0x4000,///< Read pins values.
+	AF_UARTMODE = 0x8000,	///< Read mode field for UART.
+	AF_DATA = 0x10000,		///< Read data field.
+	AF_TEXT_DATA = 0x20000,	///< Read text field and store as data.
+	AF_TIMEOUT = 0x40000,	///< Read timeout field.
+	AF_ADDRESS = 0x80000,	///< Read address field.
+	AF_SDA = 0x100000,		///< Read SDA field.
+	AF_SCL = 0x200000,		///< Read SCL field.
+	AF_SPIMODE = 0x400000,	///< Read mode field for SPI.
+	AF_CS = 0x800000,		///< Read CS field.
+	AF_PIN = 0x1000000,		///< Read pin field.
+	AF_REF = 0x2000000,		///< Read ref field.
 } ALLOWED_FIELDS;
 
 /**

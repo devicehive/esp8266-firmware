@@ -19,6 +19,7 @@
 
 static char * const UNEXPECTED = "Unexpected parameter";
 static char * const NONINTEGER = "Non integer value";
+static char * const NONFLOAT = "Non float value";
 
 LOCAL int ICACHE_FLASH_ATTR strcmp_value(struct jsonparse_state *jparser, const char *str) {
 	const char *json = &jparser->json[jparser->vstart];
@@ -60,6 +61,21 @@ LOCAL char * ICACHE_FLASH_ATTR readUIntField(struct jsonparse_state *jparser, AL
 		const int res = strToUInt(&jparser->json[jparser->vstart], &value);
 		if(!res)
 			return NONINTEGER;
+		*out = value;
+		*readedfields |= field;
+	}
+	return 0;
+}
+
+LOCAL char * ICACHE_FLASH_ATTR readFloatField(struct jsonparse_state *jparser, ALLOWED_FIELDS field, float *out, ALLOWED_FIELDS fields, ALLOWED_FIELDS *readedfields) {
+	if((fields & field) == 0)
+		return UNEXPECTED;
+	float value;
+	jsonparse_next(jparser);
+	if(jsonparse_next(jparser) != JSON_TYPE_ERROR) {
+		const int res = strToFloat(&jparser->json[jparser->vstart], &value);
+		if(!res)
+			return NONFLOAT;
 		*out = value;
 		*readedfields |= field;
 	}
@@ -185,6 +201,11 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				if(res)
 					return res;
 				continue;
+			} else if(strcmp_value(&jparser, "ref") == 0) {
+				char * res = readFloatField(&jparser, AF_REF, &out->ref, fields, readedfields);
+				if(res)
+					return res;
+				continue;
 			} else if(strcmp_value(&jparser, "data") == 0) {
 				if((fields & AF_DATA) == 0 || out->data_len)
 					return UNEXPECTED;
@@ -248,9 +269,9 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					if (fields & AF_VALUES) {
 						int i;
 						if(pinnum > 0 )
-							out->pin_value[pinnum] = 0;
+							out->pin_value.uintv[pinnum] = 0;
 						else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
-							out->pin_value[i] = 0;
+							out->pin_value.uintv[i] = 0;
 						out->pin_value_readed |= pinmask;
 						*readedfields |= AF_VALUES;
 					}
@@ -283,14 +304,25 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						return UNEXPECTED;
 					out->pins_to_presence |= pinmask;
 					*readedfields |= AF_PRESENCE;
+				} else if((fields & AF_FLOATVALUES)) { // should be right under AF_VALUES
+					float value;
+					int i;
+					if(!strToFloat(&jparser.json[jparser.vstart], &value))
+						return NONFLOAT;
+					if(pinnum > 0 )
+						out->pin_value.floatv[pinnum] = value;
+					else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
+						out->pin_value.floatv[i] = value;
+					out->pin_value_readed |= pinmask;
+					*readedfields |= AF_FLOATVALUES;
 				} else if((fields & AF_VALUES)) { // BE CAREFULL, all digits values have to be under this if
 					int value, i;
 					if(!strToUInt(&jparser.json[jparser.vstart], &value))
 						return NONINTEGER;
 					if(pinnum > 0 )
-						out->pin_value[pinnum] = value;
+						out->pin_value.uintv[pinnum] = value;
 					else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
-						out->pin_value[i] = value;
+						out->pin_value.uintv[i] = value;
 					out->pin_value_readed |= pinmask;
 					*readedfields |= AF_VALUES;
 					if(value == 1 && (fields & AF_SET)) {
