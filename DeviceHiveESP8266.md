@@ -1036,6 +1036,26 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 co2 unit is ppm(parts-per-million).
 
+## devices/mcp4725/read
+Set DAC output voltage. This chip has 12-bit DAC and reference voltage is power supply.
+
+*Parameters*:  
+"address" - I2C MCP4725 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xC0.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+"ref" - Reference voltage(for MCP4725 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
+"0" - Output voltage in Volts. MCP4725 has one output, so only "0" is available.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"0":2.65
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
+
 ## devices/ads1115/read
 Read voltage from ADS1115 ADC pins. Chip has four inputs and one 16 bits converter with referense voltage. Input voltage is –0.3 ... Vdd + 0.3. Full scale is 4.096V. Data rate is 128 samples per second.
 
