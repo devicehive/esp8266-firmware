@@ -133,9 +133,9 @@
   addtest("i2c/master/read", {"address":"EE", "count":9999999}, false, "Wrong read size");
   addtest("i2c/master/write", {"address":"EE","data":""}, false, "Data is broken");
   addtest("i2c/master/write", {"address":"EE","data":"AA==","SDA":0}, false, "Only one pin specified");
-  addtest("i2c/master/write", {"address":"EE","data":"AA==","SDA":0,"SCL":0}, false, "Wrong I2C parameters");
+  addtest("i2c/master/write", {"address":"EE","data":"AA==","SDA":0,"SCL":0}, false, "Wrong parameters");
   addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":2}, false, "ACK response not detected");
-  addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":22}, false, "Wrong I2C parameters");
+  addtest("i2c/master/write", {"address":"0xFF","data":"AA==","SDA":0,"SCL":22}, false, "Wrong parameters");
   addtest("spi/master/read", {"count": 1}, true, {"data":"/w=="});
   addtest("spi/master/read", {"count": 1, "CS":"x"}, true, {"data":"/w=="});
   addtest("spi/master/read", {"count": 3}, true, {"data":"////"});

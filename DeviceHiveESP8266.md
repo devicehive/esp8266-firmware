@@ -54,7 +54,10 @@
     * [devices/pcf8574/write](#devicespcf8574write)
     * [devices/pcf8574/hd44780/write](#devicespcf8574hd44780write)
     * [devices/mhz19/read](#devicesmhz19read)
-    * [devices/ads1115/read](#devicesads1115read)    
+    * [devices/mcp4725/write](#devicesmcp4725write)
+    * [devices/pcf8591/read](#devicespcf8591read)
+    * [devices/pcf8591/write](#devicespcf8591write)
+    * [devices/ads1115/read](#devicesads1115read)
   * [License](#license)
 
 # Overview
@@ -1036,7 +1039,7 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 co2 unit is ppm(parts-per-million).
 
-## devices/mcp4725/read
+## devices/mcp4725/write
 Set DAC output voltage. This chip has 12-bit DAC and reference voltage is power supply.
 
 *Parameters*:  
@@ -1045,6 +1048,54 @@ Set DAC output voltage. This chip has 12-bit DAC and reference voltage is power 
 "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
 "ref" - Reference voltage(for MCP4725 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
 "0" - Output voltage in Volts. MCP4725 has one output, so only "0" is available.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"0":2.65
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
+
+## devices/pcf8591/read
+Read voltage from PCF8591 ADC pins. Chip has four inputs snd 8-bit ADC.
+
+*Parameters*:  
+"address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+"ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"ref":"3.25"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"0":2.9506,
+	"1":3.3000,
+	"2":2.0059,
+	"3":0.0000
+}
+```
+Chip has 4(0..3) inputs. Values are measured not in the same time. All values are in Volts. Values are correct if reference voltage is setup correctly.
+
+## devices/pcf8591/write
+Set DAC output voltage. This chip has 8-bit DAC and reference voltage is power supply.
+
+*Parameters*:  
+"address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+"ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
+"0" - Output voltage in Volts. PCF8591 has one output, so only "0" is available.  
 
 *Example*:  
 ```json

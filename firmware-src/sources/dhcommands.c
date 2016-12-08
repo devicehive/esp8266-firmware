@@ -38,6 +38,7 @@
 #include "devices/lm75.h"
 #include "devices/si7021.h"
 #include "devices/ads1115.h"
+#include "devices/pcf8591.h"
 #include "devices/mcp4725.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
@@ -84,7 +85,7 @@ LOCAL char *ICACHE_FLASH_ATTR i2c_status_tochar(DHI2C_STATUS status) {
 		case DHI2C_NOACK:
 			return "ACK response not detected";
 		case DHI2C_WRONG_PARAMETERS:
-			return "Wrong I2C parameters";
+			return "Wrong parameters";
 		case DHI2C_BUS_BUSY:
 			return "Bus is busy";
 		case DHI2C_DEVICE_ERROR:
@@ -669,7 +670,51 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
 				values[0], values[1], values[2], values[3]);
-	}  else if( os_strcmp(command, "devices/mcp4725/write") == 0 ) {
+	} else if( os_strcmp(command, "devices/pcf8591/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				pcf8591_set_address(parse_pins.address);
+			if(fields & AF_REF) {
+				char *res = i2c_status_tochar(pcf8591_set_vref(parse_pins.ref));
+				if(responce_error(cb, res))
+					return;
+			}
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float values[4];
+		char *res = i2c_status_tochar(pcf8591_read(ADS1115_NO_PIN, ADS1115_NO_PIN, values));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
+				values[0], values[1], values[2], values[3]);
+	} else if( os_strcmp(command, "devices/pcf8591/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
+		if (responce_error(cb, parse_res))
+			return;
+		if(parse_pins.pin_value_readed != 1) {
+			responce_error(cb, "Unsuitable pin");
+			return;
+		}
+		if(fields & AF_ADDRESS)
+			pcf8591_set_address(parse_pins.address);
+		if(fields & AF_REF) {
+			char *res = i2c_status_tochar(pcf8591_set_vref(parse_pins.ref));
+			if(responce_error(cb, res))
+				return;
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		char *res = i2c_status_tochar(pcf8591_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.pin_value.floatv[0]));
+		if(responce_error(cb, res))
+			return;
+		responce_ok(cb);
+	} else if( os_strcmp(command, "devices/mcp4725/write") == 0 ) {
 		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
 		if (responce_error(cb, parse_res))
 			return;
