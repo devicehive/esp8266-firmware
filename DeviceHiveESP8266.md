@@ -58,6 +58,7 @@
     * [devices/pcf8591/read](#devicespcf8591read)
     * [devices/pcf8591/write](#devicespcf8591write)
     * [devices/ads1115/read](#devicesads1115read)
+    * [devices/ina219/read](#devicesina219read)    
   * [License](#license)
 
 # Overview
@@ -1054,7 +1055,7 @@ Set DAC output voltage. This chip has 12-bit DAC and reference voltage is power 
 {
 	"SDA":"0",
 	"SCL":"2",
-	"0":2.65
+	"0":"2.65"
 }
 ```
 Return ‘OK’ in status on success. Or ‘Error’ and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
@@ -1133,6 +1134,33 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 }
 ```
 Chip has 4(0..3) inputs. Since chip has one converter, values are measured not in the same time. All values are in Volts.
+
+## devices/ina219/read
+Read data from INA219 power monitor.
+
+*Parameters*:  
+"address" - I2C INA219 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+"ref" - Shunt resistance in Ohm. If not specified, previous value will be used. Default is 0.1 Ohm.  
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"ref":"0.1"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"voltage":3.2040,
+	"current":0.0466,
+	"power":0.1520
+}
+```
+Voltage is in Volts, current is in amperes, power is in Watts. Current can be negative.
 
 
 # License

@@ -40,6 +40,7 @@
 #include "devices/ads1115.h"
 #include "devices/pcf8591.h"
 #include "devices/mcp4725.h"
+#include "devices/ina219.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -736,6 +737,31 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		responce_ok(cb);
+	} else if( os_strcmp(command, "devices/ina219/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				ina219_set_address(parse_pins.address);
+			if(fields & AF_REF) {
+				char *res = i2c_status_tochar(ina219_set_shunt(parse_pins.ref));
+				if(responce_error(cb, res))
+					return;
+			}
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float voltage;
+		float current;
+		float power;
+		char *res = i2c_status_tochar(ina219_read(ADS1115_NO_PIN, ADS1115_NO_PIN, &voltage, &current, &power));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+				"{\"voltage\":%f, \"current\":%f, \"power\":%f}",
+				voltage, current, power);
 	} else {
 		responce_error(cb, "Unknown command");
 	}
