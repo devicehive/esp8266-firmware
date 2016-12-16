@@ -1,85 +1,79 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <title>Scan I2C</title>
-    <script type="text/javascript">
-        var addr_enumerator = -4;
-        var last_checked = '0x00';
-        function send() {
-            if(addr_enumerator < 0) {
-                document.getElementById('status').innerHTML = 'Done, checked 0x00 - ' + last_checked;
-                if(document.getElementById('output').innerHTML.length == 0)
-                    document.getElementById('output').innerHTML = 'Nothing was found'
-                return;
-            }
-            current_addr = '0x' + addr_enumerator.toString(16).toUpperCase();
-            last_checked = current_addr;
-            document.getElementById('status').innerHTML = 'Checking ' + current_addr + '...';
-            localStorage['accesskey'] = document.getElementById('accesskey').value;
-            parameters = {
-                "SDA": document.getElementById('sda').value,
-                "SCL": document.getElementById('scl').value,
-                "address": current_addr,
-                "count": 1
-            };
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>Scan I2C</title>
+	<script type="text/javascript" src="librest.js"></script>
+	<script type="text/javascript">
+		var addr_enumerator = -4;
+		var last_checked = '0x00';
+		function send() {
+			if(addr_enumerator < 0) {
+				document.getElementById('status').innerHTML = 'Done, checked 0x00 - ' + last_checked;
+				if(document.getElementById('output').innerHTML.length == 0)
+					document.getElementById('output').innerHTML = 'Nothing was found'
+				return;
+			}
+			current_addr = '0x' + addr_enumerator.toString(16).toUpperCase();
+			last_checked = current_addr;
+			document.getElementById('status').innerHTML = 'Checking ' + current_addr + '...';
+			localStorage['accesskey'] = document.getElementById('accesskey').value;
+			parameters = {
+				"SDA": document.getElementById('sda').value,
+				"SCL": document.getElementById('scl').value,
+				"address": current_addr,
+				"count": 1
+			};
 
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open('POST', "http://" + window.location.hostname + '/api/i2c/master/read', true);
-            xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState == 4) {
-                    if (xmlhttp.status >= 200 && xmlhttp.status < 300) {
-                        document.getElementById('output').innerHTML += 'Found ' + current_addr + '<br>';
-                    }
-                    addr_enumerator += 2;
-                    if(addr_enumerator > 255)
-                        addr_enumerator = -4;
-                    send();
-                }
-            }
-            xmlhttp.send(JSON.stringify(parameters));
-        }
-        function init() {
-            document.getElementById('accesskey').value = localStorage['accesskey'];
-        }
-        function run() {
-            if(addr_enumerator < 0) {
-                document.getElementById('output').innerHTML = "";
-                document.getElementById('status').innerHTML = "";
-                addr_enumerator = 0;
-                send();
-            }
-        }
-        function stop() {
-            addr_enumerator = -4;
-        }
-    </script>
+			rest_common('i2c/master/read', parameters, function (err, res) {
+				if(!err) {
+					document.getElementById('output').innerHTML += 'Found ' + current_addr + '<br>';
+				}
+				addr_enumerator += 2;
+				if(addr_enumerator > 255)
+					addr_enumerator = -4;
+				send();
+			});
+		}
+		function init() {
+			document.getElementById('accesskey').value = localStorage['accesskey'];
+		}
+		function run() {
+			if(addr_enumerator < 0) {
+				document.getElementById('output').innerHTML = "";
+				document.getElementById('status').innerHTML = "";
+				addr_enumerator = 0;
+				send();
+			}
+		}
+		function stop() {
+			addr_enumerator = -4;
+		}
+	</script>
 </head>
 <body onload="init()">
 <div class="header">
-    <div class="devecihive-logo-text"></div>
-    <div class="key-box">
-        <label for="accesskey">AccesKey: </label>
-        <input class="input-accesskey input-data" type="password" id="accesskey">
-    </div>
+	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
+	<div class="key-box">
+		<label for="accesskey">AccesKey: </label>
+		<input class="input-accesskey input-data" type="password" id="accesskey">
+	</div>
 </div>
 <div class="content">
-    <ul class="description description_list">
-        This sample scans I2C bus via enumrating addresses to detect devices on it.
-    </ul>
-    <div class="form-block">
-        <label class="pin-label" for="sda">SDA Pin:
-            <input class="input-data" type='text' id='sda' value='0'>
-        </label>
-        <label class="pin-label" for="scl">SCL Pin:
-            <input class="input-data" type='text' id='scl' value='2'>
-        </label>
-        <button class="btn_event" type="button" value="Run" onclick="run();">Run</button>
-        <button class="btn_event" type="button" value="Stop" onclick="stop();">Stop</button>
-    </div>
-    <div id="status"></div>
-    <div id="output"></div>
+	<ul class="description description_list">
+		This sample scans I2C bus via enumrating addresses to detect devices on it.
+	</ul>
+	<div class="form-block">
+		<label class="pin-label" for="sda">SDA Pin:
+			<input class="input-data" type='text' id='sda' value='0'>
+		</label>
+		<label class="pin-label" for="scl">SCL Pin:
+			<input class="input-data" type='text' id='scl' value='2'>
+		</label>
+		<button class="btn_event" type="button" value="Run" onclick="run();">Run</button>
+		<button class="btn_event" type="button" value="Stop" onclick="stop();">Stop</button>
+	</div>
+	<div id="status"></div>
+	<div id="output"></div>
 </div>
-
 </body>
 </html>

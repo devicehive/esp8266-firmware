@@ -13,6 +13,8 @@
 typedef enum {
 	HRCS_ANSWERED_HTML,		///< Response was sent with html, content field is set.
 	HRCS_ANSWERED_JSON,		///< Response was sent with json, content field is set.
+	HRCS_ANSWERED_JS,		///< Response was sent with js, content field is set.
+	HRCS_ANSWERED_CSS,		///< Response was sent with css, content field is set.
 	HRCS_ANSWERED_PLAIN,	///< Response was sent with plain text, content field is set.
 	HRCS_NOT_FINISHED,		///< Request is not finished.
 	HRCS_NOT_FOUND,			///< Path not found.

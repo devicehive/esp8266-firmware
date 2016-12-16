@@ -1,79 +1,73 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <title>LCD 1602A, 2004A etc</title>
-    <script type="text/javascript">
-        function print(text, err = false) {
-            document.getElementById('output').style.color = err ? 'red' : 'green';
-            document.getElementById('output').innerHTML = text;
-        }
-        function send() {
-            print('');
-            localStorage['accesskey'] = document.getElementById('accesskey').value;
-            parameters = {
-                "SDA": document.getElementById('sda').value,
-                "SCL": document.getElementById('scl').value,
-                "address": document.getElementById('address').value,
-                "text": document.getElementById('text').value
-            };
-
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open('POST', "http://" + window.location.hostname + '/api/devices/pcf8574/hd44780/write', true);
-            xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState == 4) {
-                    if (xmlhttp.status < 200 || xmlhttp.status > 299) {
-                        print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
-                    } else {
-                        print('OK');
-                    }
-                }
-            }
-            xmlhttp.send(JSON.stringify(parameters));
-        }
-        function init() {
-            document.getElementById('accesskey').value = localStorage['accesskey'];
-        }
-    </script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>LCD 1602A, 2004A etc</title>
+	<script type="text/javascript" src="librest.js"></script>
+	<script type="text/javascript">
+		function print(text, err = false) {
+			document.getElementById('output').style.color = err ? 'red' : 'green';
+			document.getElementById('output').innerHTML = text;
+		}
+		function send() {
+			print('');
+			parameters = {
+			"SDA": document.getElementById('sda').value,
+			"SCL": document.getElementById('scl').value,
+			"address": document.getElementById('address').value,
+			"text": document.getElementById('text').value
+			};
+	
+			rest_common('i2c/write', parameters, function (err, res) {
+				if(err) {
+					print('ERROR: ' + res, true);
+				} else {
+					print('OK');
+					setTimeout(run, 1000);
+				}
+			});
+		}
+		function init() {
+			document.getElementById('accesskey').value = localStorage['accesskey'];
+		}
+	</script>
 </head>
 <body onload="init()">
 <div class="header">
-    <div class="devecihive-logo-text"></div>
-    <div class="key-box">
-        <label for="accesskey">AccesKey: </label>
-        <input class="input-accesskey input-data" type="password" id="accesskey">
-    </div>
+	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
+	<div class="key-box">
+	<label for="accesskey">AccesKey: </label>
+	<input class="input-accesskey input-data" type="password" id="accesskey">
+	</div>
 </div>
 <div class="content">
-    <ul class="description description_list">
-        This sample displays text on connected via PCF8574 adapter HD44870 screen like 1602A, 2004A etc. <p>Pinmap for
-        adapter
-        should be <strong>(PCF8574 pin -> Display pin):</strong>
-        <li>P0->RS</li>
-        <li>P1->RW</li>
-        <li>P2->E</li>
-        <li>P3->Backligth control or not connected</li>
-        <li>P4->D4</li>
-        <li>P5->D5</li>
-        <li>P6->D6</li>
-        <li>P7->D7</li>
-    </ul>
-    <div class="form-block">
-        <label class="pin-label" for="sda">SDA Pin:
-            <input class="input-data" type='text' id='sda' value='0'>
-        </label>
-        <label class="pin-label" for="scl">SCL Pin:
-            <input class="input-data" type='text' id='scl' value='2'>
-        </label>
-        <label class="pin-label" for="address">SCL Pin:
-            <input class="input-data" type='text' id='address' value="0x4E">
-        </label>
-        <label>Text:
-        </label><textarea id="text" rows="5">DeviceHive</textarea>
-        <p></p>
-        <button class="btn_event" type="button" value="Set" onclick="send();">Set</button>
-    </div>
-    <div id="output"></div>
+	<ul class="description description_list">
+	This sample displays text on connected via PCF8574 adapter HD44870 screen like 1602A, 2004A etc.
+	<p>Pinmap for adapter should be <strong>(PCF8574 pin -> Display pin):</strong>
+	<li>P0->RS</li>
+	<li>P1->RW</li>
+	<li>P2->E</li>
+	<li>P3->Backligth control or not connected</li>
+	<li>P4->D4</li>
+	<li>P5->D5</li>
+	<li>P6->D6</li>
+	<li>P7->D7</li>
+	</ul>
+	<div class="form-block">
+	<label class="pin-label" for="sda">SDA Pin:
+	<input class="input-data" type='text' id='sda' value='0'>
+	</label>
+	<label class="pin-label" for="scl">SCL Pin:
+	<input class="input-data" type='text' id='scl' value='2'>
+	</label>
+	<label class="pin-label" for="address">SCL Pin:
+	<input class="input-data" type='text' id='address' value="0x4E">
+	</label>
+	<label>Text:
+	</label><textarea id="text" rows="5">DeviceHive</textarea>
+	<p></p>
+	<button class="btn_event" type="button" value="Set" onclick="send();">Set</button>
+	</div>
+	<div id="output"></div>
 </div>
 
 </body>

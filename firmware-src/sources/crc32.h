@@ -1,6 +1,6 @@
 /**
  *	\file		crc32.h
- *	\brief		ADC hardware access layer for DeviceHive firmware.
+ *	\brief		CRC32 calculation module
  *	\author		Gary S. Brown
  *	\date		1986
  *	\copyright	Public Domain

@@ -1,55 +1,45 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <title>ADC</title>
-    <script type="text/javascript">
-        function print(text, err = false) {
-            document.getElementById('output').style.color = err ? 'red' : 'green';
-            document.getElementById('output').innerHTML = text;
-        }
-        function run() {
-            localStorage['accesskey'] = document.getElementById('accesskey').value;
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open('POST', "http://" + window.location.hostname + '/api/adc/read', true);
-            xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState == 4 && isrun) {
-                    if (xmlhttp.status < 200 || xmlhttp.status > 299) {
-                        print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
-                    } else {
-                        var json = JSON.parse(xmlhttp.responseText);
-                        print('ADC value is ' + json['0'] + 'V');
-                        setTimeout(function () {
-                            run();
-                        }, 1000);
-                    }
-                }
-            }
-            xmlhttp.send();
-        }
-        function init() {
-            document.getElementById('accesskey').value = localStorage['accesskey'];
-        }
-    </script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>ADC</title>
+	<script type="text/javascript" src="librest.js"></script>
+	<script type="text/javascript">
+		function print(text, err = false) {
+			document.getElementById('output').style.color = err ? 'red' : 'green';
+			document.getElementById('output').innerHTML = text;
+		}
+		function run() {
+			if(!isrun)
+				return;
+			rest_common('adc/read', null, function (err, res) {
+				if(err) {
+					print('ERROR: ' + res, true);
+				} else {
+					print('ADC value is ' + res['0'] + 'V');
+					setTimeout(run, 1000);
+				}
+			});
+		}
+		function init() {
+			document.getElementById('accesskey').value = localStorage['accesskey'];
+		}
+	</script>
 </head>
 <body onload="init()">
-<div class="header">
-    <div class="devecihive-logo-text"></div>
-    <div class="key-box">
-        <label for="accesskey">AccesKey: </label>
-        <input class="input-accesskey input-data" type="password" id="accesskey">
-    </div>
-</div>
-<div class="content">
-    <div class="form-block">
-
-        <div class="description">This sample reads ADC value every 1 second. <br>Click on buttons below to start or
-            stop.
-        </div>
-        <button class="btn_event btn_event_green" type="button" onclick="isrun=true; print('');run();">Run</button>
-        <button class="btn_event btn_event_red" type="button" onclick="isrun=false; print('Stopped');">Stop</button>
-        <div class="output-status" id="output"></div>
-    </div>
-</div>
+	<div class="header">
+		<a href="./help.html"><div class="devecihive-logo-text"></div></a>
+		<div class="key-box">
+			<label for="accesskey">AccesKey: </label>
+			<input class="input-accesskey input-data" type="password" id="accesskey">
+		</div>
+	</div>
+	<div class="content">
+		<div class="form-block">
+			<div class="description">This sample reads ADC value every 1 second. <br>Click on buttons below to start or stop.</div>
+			<button class="btn_event btn_event_green" type="button" onclick="isrun=true; print('');run();">Run</button>
+			<button class="btn_event btn_event_red" type="button" onclick="isrun=false; print('Stopped');">Stop</button>
+			<div class="output-status" id="output"></div>
+		</div>
+	</div>
 </body>
 </html>

@@ -1,87 +1,87 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <title>Base64</title>
-    <script type="text/javascript">
-        function printLength(data) {
-            if (data == null)
-                document.getElementById("plength").innerHTML = null;
-            else
-                document.getElementById("plength").innerHTML = "Length: " + data.length;
-        }
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>Base64</title>
+	<script type="text/javascript">
+		function printLength(data) {
+			if (data == null)
+				document.getElementById("plength").innerHTML = null;
+			else
+				document.getElementById("plength").innerHTML = "Length: " + data.length;
+		}
 
-        function setHex(data) {
-            var res = "";
-            for (var i = 0; i < data.length; i++) {
-                h = data.charCodeAt(i).toString(16);
-                if (h.length == 1)
-                    res += "0" + h;
-                else
-                    res += h;
-            }
-            document.form.hex.value = res;
-        }
+		function setHex(data) {
+			var res = "";
+			for (var i = 0; i < data.length; i++) {
+				h = data.charCodeAt(i).toString(16);
+				if (h.length == 1)
+					res += "0" + h;
+				else
+					res += h;
+			}
+			document.form.hex.value = res;
+		}
 
-        function fromhex() {
-            hex = document.form.hex.value.replace("0x", "").replace(" ", "").replace(",", "");
-            if (hex.length % 2 > 0) {
-                document.form.string.value = "";
-                document.form.base64.value = "";
-                printLength(null);
-                alert("Wrong hex");
-                return;
-            }
-            var data = ""
-            for (var i = 0; i < hex.length; i += 2) {
-                c = parseInt(hex.substr(i, 2), 16);
-                data += String.fromCharCode(c);
-            }
-            document.form.string.value = data;
-            document.form.base64.value = btoa(data);
-            printLength(data);
-        }
+		function fromhex() {
+			hex = document.form.hex.value.replace("0x", "").replace(" ", "").replace(",", "");
+			if (hex.length % 2 > 0) {
+				document.form.string.value = "";
+				document.form.base64.value = "";
+				printLength(null);
+				alert("Wrong hex");
+				return;
+			}
+			var data = ""
+			for (var i = 0; i < hex.length; i += 2) {
+				c = parseInt(hex.substr(i, 2), 16);
+				data += String.fromCharCode(c);
+			}
+			document.form.string.value = data;
+			document.form.base64.value = btoa(data);
+			printLength(data);
+		}
 
-        function frombase64() {
-            var data;
-            try {
-                data = atob(document.form.base64.value);
-            } catch (e) {
-                document.form.string.value = "";
-                document.form.hex.value = "";
-                printLength(null);
-                alert("Wrong base64: " + e.toString());
-                return;
-            }
-            document.form.string.value = data;
-            setHex(data);
-            printLength(data);
-        }
+		function frombase64() {
+			var data;
+			try {
+				data = atob(document.form.base64.value);
+			} catch (e) {
+				document.form.string.value = "";
+				document.form.hex.value = "";
+				printLength(null);
+				alert("Wrong base64: " + e.toString());
+				return;
+			}
+			document.form.string.value = data;
+			setHex(data);
+			printLength(data);
+		}
 
-        function fromstring() {
-            var data = document.form.string.value;
-            document.form.base64.value = btoa(data);
-            setHex(data);
-            printLength(data);
-        }
-    </script>
+		function fromstring() {
+			var data = document.form.string.value;
+			document.form.base64.value = btoa(data);
+			setHex(data);
+			printLength(data);
+		}
+	</script>
 </head>
 <body>
 <div class="header">
-    <div class="devecihive-logo-text"></div>
+	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 </div>
 <div class="content">
-    <form name="form" class="form-block">
-        <label for="hex">Hex: </label>
-        <textarea id="hex"></textarea>
-        <button class="btn_event btn_convert" type="button" onClick="fromhex();">Convert from Hex</button>
-        <label for="base64">Base64: </label>
-        <textarea id="base64"></textarea>
-        <button class="btn_event btn_convert" type="button" onClick="frombase64();">Convert from Base64</button>
-        <label for="string">String: </label>
-        <textarea id="string"></textarea>
-        <button class="btn_event btn_convert" type="button" onClick="fromstring();">Convert to String</button>
-        <div id="plength"></div>
-    </form>
+	<form name="form" class="form-block">
+		<label for="hex">Hex: </label>
+		<textarea id="hex"></textarea>
+		<button class="btn_event btn_convert" type="button" onClick="fromhex();">Convert from Hex</button>
+		<label for="base64">Base64: </label>
+		<textarea id="base64"></textarea>
+		<button class="btn_event btn_convert" type="button" onClick="frombase64();">Convert from Base64</button>
+		<label for="string">String: </label>
+		<textarea id="string"></textarea>
+		<button class="btn_event btn_convert" type="button" onClick="fromstring();">Convert to String</button>
+		<div id="plength"></div>
+	</form>
 </div>
 </body>
-</html> 
+</html>

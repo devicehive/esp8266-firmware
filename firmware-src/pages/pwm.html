@@ -1,66 +1,58 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <title>PWM</title>
-    <script type="text/javascript">
-        function print(text, err = false) {
-            document.getElementById('output').style.color = err ? 'red' : 'green';
-            document.getElementById('output').innerHTML = text;
-        }
-        function send(dc, count, frequency) {
-            print('');
-            localStorage['accesskey'] = document.getElementById('accesskey').value;
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open('POST', "http://" + window.location.hostname + '/api/pwm/control', true);
-            xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState == 4) {
-                    if (xmlhttp.status < 200 || xmlhttp.status > 299) {
-                        print('ERROR: Command returned ' + xmlhttp.status + ' ' + xmlhttp.responseText, true);
-                    }
-                }
-            }
-            var json = {}
-            json[document.getElementById('pin').value] = dc;
-            json['frequency'] = frequency;
-            json['count'] = count;
-            xmlhttp.send(JSON.stringify(json));
-        }
-        function slide(val) {
-            send(val, 0, 400)
-        }
-        function init() {
-            document.getElementById('accesskey').value = localStorage['accesskey'];
-        }
-    </script>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>PWM</title>
+	<script type="text/javascript" src="librest.js"></script>
+	<script type="text/javascript">
+		function print(text, err = false) {
+			document.getElementById('output').style.color = err ? 'red' : 'green';
+			document.getElementById('output').innerHTML = text;
+		}
+		function send(dc, count, frequency) {
+			print('');
+			var params = {}
+			params[document.getElementById('pin').value] = dc;
+			params['frequency'] = frequency;
+			params['count'] = count;
+			rest_common('pwm/control', params, function (err, res) {
+				if(err)
+					print('ERROR: ' + res, true);
+			});
+		}
+		function slide(val) {
+			send(val, 0, 400)
+		}
+		function init() {
+			document.getElementById('accesskey').value = localStorage['accesskey'];
+		}
+	</script>
 </head>
 <body onload="init()">
 <div class="header">
-    <div class="devecihive-logo-text"></div>
-    <div class="key-box">
-        <label for="accesskey">AccesKey: </label>
-        <input class="input-accesskey input-data" type="password" id="accesskey">
-    </div>
+	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
+	<div class="key-box">
+		<label for="accesskey">AccesKey: </label>
+		<input class="input-accesskey input-data" type="password" id="accesskey">
+	</div>
 </div>
 <div class="content">
-    <form name="form" class="form-block">
-        <label class="pin-label">Pin:
-            <input class="input-data" type="text" id="pin" value="2">
-        </label>
-        <div class="description">This sample shows how to use PWM. Connect LED and specified pin. Click buttons below.
-            <p></p>
-            Some boards have pin connected to GPIO2(TX) port and they mostly light up with '0' port state.
-        </div>
-        <button class="btn_event" type="button" value="Blink" onclick="send(50, 0, 4);">Blink</button>
-        <button class="btn_event" type="button" value="Blink 3 times" onclick="send(50, 3, 4);">Blink 3 times</button>
-        <button class="btn_event" type="button" value="Strobe" onclick="send(1, 0, 4);">Strobe</button>
-        <button class="btn_event" type="button" value="Inverted Strobe" onclick="send(99, 0, 4);">Inverted Strobe
-        </button>
-        <div class="description extra-margin-top">Brightness control, slide to light up</div>
-        <input class="input-controller " type="range" id="brightness" value="50"
-               onchange='slide(this.value)'>
-        <div id="output"></div>
-    </form>
+	<form name="form" class="form-block">
+		<label class="pin-label">Pin:
+			<input class="input-data" type="text" id="pin" value="2">
+		</label>
+		<div class="description">This sample shows how to use PWM. Connect LED and specified pin. Click buttons below.
+			<p></p>
+			Some boards have pin connected to GPIO2(TX) port and they mostly light up with '0' port state.
+		</div>
+		<button class="btn_event" type="button" value="Blink" onclick="send(50, 0, 4);">Blink</button>
+		<button class="btn_event" type="button" value="Blink 3 times" onclick="send(50, 3, 4);">Blink 3 times</button>
+		<button class="btn_event" type="button" value="Strobe" onclick="send(1, 0, 4);">Strobe</button>
+		<button class="btn_event" type="button" value="Inverted Strobe" onclick="send(99, 0, 4);">Inverted Strobe
+		</button>
+		<div class="description extra-margin-top">Brightness control, slide to light up</div>
+		<input class="input-controller " type="range" id="brightness" value="50" onchange='slide(this.value)'>
+		<div id="output"></div>
+	</form>
 </div>
 </body>
 </html>

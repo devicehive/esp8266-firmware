@@ -1,156 +1,156 @@
 <html>
 <head>
-    <link rel="stylesheet" type="text/css" href="style.css">
-    <title>Editor</title>
-    <script type="text/javascript">
-        var isUploadInProcess = false;
-        var isModified = false;
-        var flashPos = 0;
-        var flashLen = 1024;
-        var flashData;
-        var flashLimit = 65536;
-        function print(text, err = false) {
-            document.getElementById('output').style.color = err ? 'red' : 'green';
-            document.getElementById('output').innerHTML = text;
-        }
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>Editor</title>
+	<script type="text/javascript">
+		var isUploadInProcess = false;
+		var isModified = false;
+		var flashPos = 0;
+		var flashLen = 1024;
+		var flashData;
+		var flashLimit = 65536;
+		function print(text, err = false) {
+			document.getElementById('output').style.color = err ? 'red' : 'green';
+			document.getElementById('output').innerHTML = text;
+		}
 
-        function send(url, data, cb, method = 'POST') {
-            var xmlhttp = new XMLHttpRequest();
-            xmlhttp.open(method, "http://" + window.location.hostname + "/" + url, true);
-            xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-            xmlhttp.onreadystatechange = function () {
-                if (xmlhttp.readyState == 4) {
-                    if (xmlhttp.status == 401)
-                        alert("Wrong access key");
-                    cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);
-                }
-            }
-            xmlhttp.send(data);
-        }
+		function send(url, data, cb, method = 'POST') {
+			var xmlhttp = new XMLHttpRequest();
+			xmlhttp.open(method, "http://" + window.location.hostname + "/" + url, true);
+			xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
+			xmlhttp.onreadystatechange = function () {
+				if (xmlhttp.readyState == 4) {
+					if (xmlhttp.status == 401)
+						alert("Wrong access key");
+					cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);
+				}
+			}
+			xmlhttp.send(data);
+		}
 
-        function flash_clenup() {
-            isUploadInProcess = false;
-            flashData = null;
-        }
+		function flash_clenup() {
+			isUploadInProcess = false;
+			flashData = null;
+		}
 
-        function flash_data() {
-            print("Flashing " + Math.floor(flashPos * 100 / flashData.length) + "%...");
-            endchar = ((flashPos + flashLen) < flashData.length) ? (flashPos + flashLen) : (flashPos + flashData.length - flashPos);
-            send("flash/page/put", flashData.substring(flashPos, endchar), function (ok, data) {
-                if (ok) {
-                    flashPos += flashLen;
-                    if (flashPos >= flashData.length) {
-                        print("Finalizing...");
-                        send("flash/page/finish", null, function (ok, data) {
-                            print(ok ? "Succefully done, " + flashData.length + " bytes were written" : "Eror while finilizing", !ok);
-                            isModified = false;
-                            flash_clenup();
-                        });
-                    } else {
-                        flash_data();
-                    }
-                } else {
-                    print("Error while save at " + flashPos + "/" + flashData.length + " bytes", true);
-                    flash_clenup();
-                }
-            });
-        }
+		function flash_data() {
+			print("Flashing " + Math.floor(flashPos * 100 / flashData.length) + "%...");
+			endchar = ((flashPos + flashLen) < flashData.length) ? (flashPos + flashLen) : (flashPos + flashData.length - flashPos);
+			send("flash/page/put", flashData.substring(flashPos, endchar), function (ok, data) {
+				if (ok) {
+					flashPos += flashLen;
+					if (flashPos >= flashData.length) {
+						print("Finalizing...");
+						send("flash/page/finish", null, function (ok, data) {
+							print(ok ? "Succefully done, " + flashData.length + " bytes were written" : "Eror while finilizing", !ok);
+							isModified = false;
+							flash_clenup();
+						});
+					} else {
+						flash_data();
+					}
+				} else {
+					print("Error while save at " + flashPos + "/" + flashData.length + " bytes", true);
+					flash_clenup();
+				}
+			});
+		}
 
-        function flash() {
-            if (isUploadInProcess)
-                return;
-            localStorage['accesskey'] = document.getElementById('accesskey').value;
-            print("");
-            if (document.getElementById('page').value.length > flashLimit) {
-                alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + document.getElementById('page').value.length + " bytes.");
-                return;
-            }
-            if (document.getElementById('page').value.length == 0) {
-                alert("Nothing to save")
-                return;
-            }
-            isUploadInProcess = true;
-            print("Prepare saving...");
-            flashData = document.getElementById('page').value;
-            flashPos = 0;
-            send("flash/page/begin", null, function (ok, data) {
-                if (ok) {
-                    print("Flashing procedure is initialized");
-                    flash_data();
-                } else {
-                    print("Error while initialize", true);
-                    flash_clenup();
-                }
-            });
-        }
+		function flash() {
+			if (isUploadInProcess)
+				return;
+			localStorage['accesskey'] = document.getElementById('accesskey').value;
+			print("");
+			if (document.getElementById('page').value.length > flashLimit) {
+				alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + document.getElementById('page').value.length + " bytes.");
+				return;
+			}
+			if (document.getElementById('page').value.length == 0) {
+				alert("Nothing to save")
+				return;
+			}
+			isUploadInProcess = true;
+			print("Prepare saving...");
+			flashData = document.getElementById('page').value;
+			flashPos = 0;
+			send("flash/page/begin", null, function (ok, data) {
+				if (ok) {
+					print("Flashing procedure is initialized");
+					flash_data();
+				} else {
+					print("Error while initialize", true);
+					flash_clenup();
+				}
+			});
+		}
 
-        function preview() {
-            wnd = window.open();
-            wnd.document.body.innerHTML = document.getElementById('page').value;
-        }
+		function preview() {
+			wnd = window.open();
+			wnd.document.body.innerHTML = document.getElementById('page').value;
+		}
 
-        function savefile() {
-            data = document.getElementById('page').value;
-            if (data.length == 0)
-                return;
-            blob = new Blob([data], {type: "octet/stream"}),
-                atag = document.createElement('a');
-            atag.href = URL.createObjectURL(blob);
-            atag.target = '_blank';
-            atag.download = "esp8266.html";
-            atag.click();
-            URL.revokeObjectURL(atag.href);
-            isModified = false;
-        }
+		function savefile() {
+			data = document.getElementById('page').value;
+			if (data.length == 0)
+				return;
+			blob = new Blob([data], {type: "octet/stream"}),
+				atag = document.createElement('a');
+			atag.href = URL.createObjectURL(blob);
+			atag.target = '_blank';
+			atag.download = "esp8266.html";
+			atag.click();
+			URL.revokeObjectURL(atag.href);
+			isModified = false;
+		}
 
-        function openfile(event) {
-            var reader = new FileReader();
-            reader.onload = function () {
-                document.getElementById('page').value = reader.result;
-            };
-            reader.readAsText(document.getElementById("open").files[0]);
-        }
+		function openfile(event) {
+			var reader = new FileReader();
+			reader.onload = function () {
+				document.getElementById('page').value = reader.result;
+			};
+			reader.readAsText(document.getElementById("open").files[0]);
+		}
 
-        function init() {
-            document.getElementById('accesskey').value = localStorage['accesskey'];
-            document.getElementById('open').addEventListener("change", openfile, false);
-            send("", null, function (ok, data) {
-                if (ok) {
-                    document.getElementById('page').value = data;
-                    print("Page loaded " + data.length + " bytes");
-                } else {
-                    print("Error while retrieving current page", true);
-                }
-            }, 'GET');
-            window.onbeforeunload = confirmExit;
-            function confirmExit() {
-                if (isUploadInProcess)
-                    return "Page flashing is in the proccess. Leaving this page will interrupt this process.";
-                if (isModified)
-                    return "Page content was modified. Changes will be lost on closing or refreshing this page."
-                return null;
-            }
-        }
-    </script>
+		function init() {
+			document.getElementById('accesskey').value = localStorage['accesskey'];
+			document.getElementById('open').addEventListener("change", openfile, false);
+			send("", null, function (ok, data) {
+				if (ok) {
+					document.getElementById('page').value = data;
+					print("Page loaded " + data.length + " bytes");
+				} else {
+					print("Error while retrieving current page", true);
+				}
+			}, 'GET');
+			window.onbeforeunload = confirmExit;
+			function confirmExit() {
+				if (isUploadInProcess)
+					return "Page flashing is in the proccess. Leaving this page will interrupt this process.";
+				if (isModified)
+					return "Page content was modified. Changes will be lost on closing or refreshing this page."
+				return null;
+			}
+		}
+	</script>
 </head>
 <body onload="init()">
 <div class="header">
-    <div class="devecihive-logo-text"></div>
-    <div class="key-box">
-        <label for="accesskey">AccesKey: </label>
-        <input class="input-accesskey input-data" type="password" id="accesskey">
-    </div>
+	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
+	<div class="key-box">
+		<label for="accesskey">AccesKey: </label>
+		<input class="input-accesskey input-data" type="password" id="accesskey">
+	</div>
 </div>
 <div class="content">
-    <div class="form-block">
-        <button class="btn_event" type="button" onclick="document.getElementById('open').click();">Open...</button>
-        <input  class="btn_event" type="file" id="open" style="display:none;">
-        <button class="btn_event" type="button" onclick="savefile();">Save</button>
-        <button class="btn_event" type="button" onclick="preview();">Preview</button>
-        <button class="btn_event" type="button" onclick="flash();">Flash</button>
-        <textarea id="page" onchange="isModified = true;"></textarea><br>
-        <div class="output-status" id="output"></div>
-    </div>
+	<div class="form-block">
+		<button class="btn_event" type="button" onclick="document.getElementById('open').click();">Open...</button>
+		<input  class="btn_event" type="file" id="open" style="display:none;">
+		<button class="btn_event" type="button" onclick="savefile();">Save</button>
+		<button class="btn_event" type="button" onclick="preview();">Preview</button>
+		<button class="btn_event" type="button" onclick="flash();">Flash</button>
+		<textarea id="page" onchange="isModified = true;"></textarea><br>
+		<div class="output-status" id="output"></div>
+	</div>
 </div>
 
 <br>

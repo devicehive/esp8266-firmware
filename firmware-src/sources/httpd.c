@@ -227,6 +227,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	RO_DATA char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
 	RO_DATA char html[] = "html";
 	RO_DATA char json[] = "json";
+	RO_DATA char javascript[] = "javascript";
+	RO_DATA char css[] = "css";
 	RO_DATA char plain[] = "plain";
 
 	HTTP_ANSWER answer;
@@ -286,6 +288,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 
 	switch (res) {
 	case HRCS_ANSWERED_PLAIN:
+	case HRCS_ANSWERED_CSS:
+	case HRCS_ANSWERED_JS:
 	case HRCS_ANSWERED_JSON:
 	case HRCS_ANSWERED_HTML:
 	{
@@ -323,6 +327,10 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			content_type = json;
 		} else if(res == HRCS_ANSWERED_HTML) {
 			content_type = html;
+		} else if(res == HRCS_ANSWERED_CSS) {
+			content_type = css;
+		} else if(res == HRCS_ANSWERED_JS) {
+			content_type = javascript;
 		}
 
 		response_len = snprintf(response, sizeof(response),
