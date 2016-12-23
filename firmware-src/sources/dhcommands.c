@@ -41,6 +41,7 @@
 #include "devices/pcf8591.h"
 #include "devices/mcp4725.h"
 #include "devices/ina219.h"
+#include "devices/mfrc522.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -194,11 +195,11 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			} else if(parse_pins.pin_value_readed != 0x1) {
 				responce_error(cb, "Wrong adc channel");
 				return;
-			} else if ((parse_pins.pin_value.uintv[0] < ADCNOTIFICATION_MIN_TIMEOUT_MS && parse_pins.pin_value.uintv[0] != 0) || parse_pins.pin_value.uintv[0] > 0x7fffff) {
+			} else if ((parse_pins.storage.uint_values[0] < ADCNOTIFICATION_MIN_TIMEOUT_MS && parse_pins.storage.uint_values[0] != 0) || parse_pins.storage.uint_values[0] > 0x7fffff) {
 				responce_error(cb, "Wrong period");
 				return;
 			} else {
-				dhadc_loop(parse_pins.pin_value.uintv[0]);
+				dhadc_loop(parse_pins.storage.uint_values[0]);
 				responce_ok(cb);
 				return;
 			}
@@ -208,7 +209,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_VALUES | AF_PERIOD | AF_COUNT, &fields);
 		if (responce_error(cb, parse_res))
 			return;
-		if(dhpwm_set_pwm(&parse_pins.pin_value.uintv, parse_pins.pin_value_readed, (fields & AF_PERIOD) ? parse_pins.periodus : dhpwm_get_period_us(),  parse_pins.count))
+		if(dhpwm_set_pwm(&parse_pins.storage.uint_values, parse_pins.pin_value_readed, (fields & AF_PERIOD) ? parse_pins.periodus : dhpwm_get_period_us(),  parse_pins.count))
 			responce_ok(cb);
 		else
 			responce_error(cb, "Wrong parameters");
@@ -711,7 +712,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		fields |= AF_ADDRESS;
 		if(i2c_init(cb, fields, &parse_pins))
 			return;
-		char *res = i2c_status_tochar(pcf8591_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.pin_value.floatv[0]));
+		char *res = i2c_status_tochar(pcf8591_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.storage.float_values[0]));
 		if(responce_error(cb, res))
 			return;
 		responce_ok(cb);
@@ -733,7 +734,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		fields |= AF_ADDRESS;
 		if(i2c_init(cb, fields, &parse_pins))
 			return;
-		char *res = i2c_status_tochar(mcp4725_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.pin_value.floatv[0]));
+		char *res = i2c_status_tochar(mcp4725_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.storage.float_values[0]));
 		if(responce_error(cb, res))
 			return;
 		responce_ok(cb);
@@ -762,6 +763,108 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
 				"{\"voltage\":%f, \"current\":%f, \"power\":%f}",
 				voltage, current, power);
+	} else if( os_strcmp(command, "devices/mfrc522/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_CS) {
+				if(MFRC522_Set_CS(parse_pins.CS) != MFRC522_STATUS_OK) {
+					responce_error(cb, "Unsuitable pin");
+					return;
+				}
+			}
+		}
+		MFRC522_PCD_Init();
+		uint8_t bufferATQA[2];
+		uint8_t bufferSize = sizeof(bufferATQA);
+		MFRC522_StatusCode result = MFRC522_PICC_RequestA(bufferATQA, &bufferSize);
+		if(result == MFRC522_STATUS_OK || result == MFRC522_STATUS_COLLISION) {
+			MFRC522_Uid *uid = MFRC522_Get_Uid();
+			result = MFRC522_PICC_Select(uid, 0);
+			if(result == MFRC522_STATUS_OK) {
+				char hexbuf[uid->size * 2 + 1];
+				unsigned int i;
+				for(i = 0; i < uid->size; i++)
+				byteToHex(uid->uidByte[i], &hexbuf[i * 2]);
+				hexbuf[sizeof(hexbuf) - 1] = 0;
+				cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+								"{\"uid\":\"0x%s\", \"type\":\"%s\"}", hexbuf,
+								MFRC522_PICC_GetTypeName(MFRC522_PICC_GetType(uid->sak)));
+				MFRC522_PCD_AntennaOff();
+				return;
+			}
+		}
+		MFRC522_PICC_HaltA();
+		MFRC522_PCD_AntennaOff();
+		responce_error(cb, MFRC522_GetStatusCodeName(result));
+	} else if( (check = os_strcmp(command, "devices/mfrc522/mifare/read")) == 0 ||
+			os_strcmp(command, "devices/mfrc522/mifare/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS | AF_ADDRESS | AF_KEY | (check ? AF_DATA : 0), &fields);
+		if (responce_error(cb, parse_res))
+			return;
+		if(fields & AF_CS) {
+			if(MFRC522_Set_CS(parse_pins.CS) != MFRC522_STATUS_OK) {
+				responce_error(cb, "Unsuitable pin");
+				return;
+			}
+		}
+		if((fields & AF_ADDRESS) == 0) {
+			responce_error(cb, "Block address not specified");
+			return;
+		}
+		if((fields & AF_KEY) == 0) {
+			// default key
+			os_memset(parse_pins.storage.key.key_data, 0xFF, MF_KEY_SIZE);
+			parse_pins.storage.key.key_len = MF_KEY_SIZE;
+		} else if(parse_pins.storage.key.key_len != MF_KEY_SIZE) {
+			responce_error(cb, "Wrong key length");
+			return;
+		}
+		if(check) {
+			if((fields & AF_DATA) == 0) {
+				responce_error(cb, "Data not specified");
+				return;
+			} else if(parse_pins.data_len != 16) {
+				responce_error(cb, "Data length should be 16 bytes");
+				return;
+			}
+		}
+		MFRC522_PCD_Init();
+		uint8_t bufferATQA[2];
+		uint8_t bufferSize = sizeof(bufferATQA);
+		MFRC522_StatusCode result = MFRC522_PICC_RequestA(bufferATQA, &bufferSize);
+		if(result == MFRC522_STATUS_OK || result == MFRC522_STATUS_COLLISION) {
+			MFRC522_Uid *uid = MFRC522_Get_Uid();
+			result = MFRC522_PICC_Select(uid, 0);
+			MIFARE_Key key;
+			os_memcpy(key.keyByte, parse_pins.storage.key.key_data, MF_KEY_SIZE);
+			if(result == MFRC522_STATUS_OK) {
+				result = MFRC522_PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, parse_pins.address, &key, uid);
+				if(result == MFRC522_STATUS_OK) {
+					uint8_t len = (sizeof(parse_pins.data) > 0xFF) ? 0xFF : sizeof(parse_pins.data);
+					if(check)
+						result = MFRC522_MIFARE_Write(parse_pins.address, parse_pins.data, parse_pins.data_len);
+					else
+						result = MFRC522_MIFARE_Read(parse_pins.address, parse_pins.data, &len);
+					if(result == MFRC522_STATUS_OK) {
+						parse_pins.count = len;
+						if(check)
+							responce_ok(cb);
+						else
+							cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
+						MFRC522_PICC_HaltA();
+						MFRC522_PCD_StopCrypto1();
+						MFRC522_PCD_AntennaOff();
+						return;
+					}
+				}
+			}
+		}
+		MFRC522_PICC_HaltA();
+		MFRC522_PCD_StopCrypto1();
+		MFRC522_PCD_AntennaOff();
+		responce_error(cb, MFRC522_GetStatusCodeName(result));
 	} else {
 		responce_error(cb, "Unknown command");
 	}

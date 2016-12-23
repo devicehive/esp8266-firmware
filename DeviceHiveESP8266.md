@@ -58,7 +58,10 @@
     * [devices/pcf8591/read](#devicespcf8591read)
     * [devices/pcf8591/write](#devicespcf8591write)
     * [devices/ads1115/read](#devicesads1115read)
-    * [devices/ina219/read](#devicesina219read)    
+    * [devices/ina219/read](#devicesina219read)
+    * [devices/mfrc522/read](#devicesmfrc522read)
+    * [devices/mfrc522/mifare/read](#devicesmfrc522mifareread)
+    * [devices/mfrc522/mifare/write](#devicesmfrc522mifarewrite)
   * [License](#license)
 
 # Overview
@@ -1162,6 +1165,67 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 Voltage is in Volts, current is in amperes, power is in Watts. Current can be negative.
 
+## devices/mfrc522/read
+Reads tag's uid and type. MFRC522 is a RFID tag reader. It should be connected via SPI. MISO->GPIO12, MOSI->GPIO13, CLK->GPIO14. CS pin can be configured.
+
+*Parameters*:  
+"CS" - CS pin. If not specified GPIO15 is used.
+
+*Example*:  
+```json
+{
+	"uid":"0xA435AA7D",
+	"type":"MIFARE 1KB"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"voltage":3.2040,
+	"current":0.0466,
+	"power":0.1520
+}
+```
+
+## devices/mfrc522/mifare/read
+Reads tag's block memory.
+
+*Parameters*: 
+"address" - block address in hex. Number of blocks depends on tag type.  
+"key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.  
+"CS" - CS pin. If not specified GPIO15 is used.  
+
+*Example*:  
+```json
+{
+	"address":"0x04"
+}
+```
+Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+```json
+{
+	"data":"AAAAAAAAAAAAAAAAAAAAAA=="
+}
+```
+Data is base64 encoded.
+
+## devices/mfrc522/mifare/write
+Writes tag's block memory.
+
+*Parameters*: 
+"address" - block address in hex. Number of blocks depends on tag type.  
+"key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.  
+"CS" - CS pin. If not specified GPIO15 is used.  
+"data" - base64 encoded data for storing.  
+
+*Example*:  
+```json
+{
+	"address":"0x04"
+}
+```
+Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.  
+_Notice: MIFARE Ultralight tags should be programmed with 16 bytes, but only first 4 is written, other bytes should be zeros._
 
 # License
 The MIT License (MIT):

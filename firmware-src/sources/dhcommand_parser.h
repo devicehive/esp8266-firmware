@@ -29,9 +29,13 @@ typedef struct {
 	uint32_t periodus;								///< converted frequency field value.
 	uint32_t count;									///< count field value.
 	union {
-		uint32_t uintv[DHGPIO_MAXGPIONUM + 1];	///< Pin values.
-		float floatv[DHGPIO_MAXGPIONUM + 1];///< Pin values.
-	} pin_value;
+		uint32_t uint_values[DHGPIO_MAXGPIONUM + 1];///< Pin values.
+		float float_values[DHGPIO_MAXGPIONUM + 1];	///< Pin values.
+		struct {
+			uint8_t key_data[DHGPIO_MAXGPIONUM * 4];///< Key for authentication.
+			uint8_t key_len;						///< Key length.
+		} key;
+	} storage;
 	uint16_t pin_value_readed;						///< Bitwise mask with read pin values.
 	uint32_t uart_speed;							///< Speed for UART from mode field.
 	uint8_t	uart_bits;								///< Bits per byte for UART from mode field.
@@ -77,6 +81,7 @@ typedef enum {
 	AF_CS = 0x800000,		///< Read CS field.
 	AF_PIN = 0x1000000,		///< Read pin field.
 	AF_REF = 0x2000000,		///< Read ref field.
+	AF_KEY = 0x4000000,		///< Read key field.
 } ALLOWED_FIELDS;
 
 /**

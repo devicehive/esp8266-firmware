@@ -217,7 +217,18 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					*readedfields |= AF_DATA;
 				}
 				continue;
-			}  else if(strcmp_value(&jparser, "text") == 0) {
+			} else if(strcmp_value(&jparser, "key") == 0) {
+				if((fields & AF_KEY) == 0 || out->data_len)
+					return UNEXPECTED;
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
+					out->storage.key.key_len = dhdata_decode(&jparser.json[jparser.vstart], jparser.vlen, out->storage.key.key_data, sizeof(out->storage.key.key_data));
+					if(out->storage.key.key_len == 0)
+						return "Key is broken";
+					*readedfields |= AF_KEY;
+				}
+				continue;
+			} else if(strcmp_value(&jparser, "text") == 0) {
 				if((fields & AF_TEXT_DATA) == 0 || out->data_len)
 					return UNEXPECTED;
 				jsonparse_next(&jparser);
@@ -269,9 +280,9 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					if (fields & AF_VALUES) {
 						int i;
 						if(pinnum > 0 )
-							out->pin_value.uintv[pinnum] = 0;
+							out->storage.uint_values[pinnum] = 0;
 						else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
-							out->pin_value.uintv[i] = 0;
+							out->storage.uint_values[i] = 0;
 						out->pin_value_readed |= pinmask;
 						*readedfields |= AF_VALUES;
 					}
@@ -310,9 +321,9 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					if(!strToFloat(&jparser.json[jparser.vstart], &value))
 						return NONFLOAT;
 					if(pinnum > 0 )
-						out->pin_value.floatv[pinnum] = value;
+						out->storage.float_values[pinnum] = value;
 					else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
-						out->pin_value.floatv[i] = value;
+						out->storage.float_values[i] = value;
 					out->pin_value_readed |= pinmask;
 					*readedfields |= AF_FLOATVALUES;
 				} else if((fields & AF_VALUES)) { // BE CAREFULL, all digits values have to be under this if
@@ -320,9 +331,9 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					if(!strToUInt(&jparser.json[jparser.vstart], &value))
 						return NONINTEGER;
 					if(pinnum > 0 )
-						out->pin_value.uintv[pinnum] = value;
+						out->storage.uint_values[pinnum] = value;
 					else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
-						out->pin_value.uintv[i] = value;
+						out->storage.uint_values[i] = value;
 					out->pin_value_readed |= pinmask;
 					*readedfields |= AF_VALUES;
 					if(value == 1 && (fields & AF_SET)) {

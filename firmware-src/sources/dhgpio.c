@@ -133,7 +133,6 @@ int ICACHE_FLASH_ATTR dhgpio_write(unsigned int set_mask, unsigned int unset_mas
 	const unsigned int pins = set_mask | unset_mask;
 	if((pins | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS)
 		return 0;
-	dhdebug("GPIO set high at 0x%X, set low at 0x%X", set_mask, unset_mask);
 	dhgpio_prepare_pins(pins, 1);
 	dhgpio_open_drain(0, pins);
 	dhgpio_pull(0, pins);
