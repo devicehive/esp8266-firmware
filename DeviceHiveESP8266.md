@@ -1193,7 +1193,7 @@ Reads tag's block memory.
 *Parameters*: 
 "address" - block address in hex. Number of blocks depends on tag type.  
 "key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.  
-"CS" - CS pin. If not specified GPIO15 is used.  
+"CS" - CS pin. If not specified, previous timeout will be used. Default is GPIO15.  
 
 *Example*:  
 ```json
@@ -1215,13 +1215,15 @@ Writes tag's block memory.
 *Parameters*: 
 "address" - block address in hex. Number of blocks depends on tag type.  
 "key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.  
-"CS" - CS pin. If not specified GPIO15 is used.  
+"CS" - CS pin. If not specified, previous timeout will be used. Default is GPIO15.  
 "data" - base64 encoded data for storing.  
 
 *Example*:  
 ```json
 {
 	"address":"0x04"
+  "key":"////////"
+	"data":"AAAAAAAAAAAAAAAAAAAAAA=="
 }
 ```
 Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.  
