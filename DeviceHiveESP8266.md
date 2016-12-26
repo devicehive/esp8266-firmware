@@ -1229,6 +1229,27 @@ Writes tag's block memory.
 Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.  
 _Notice: MIFARE Ultralight tags should be programmed with 16 bytes, but only first 4 is written, other bytes should be zeros._
 
+## devices/pca9685/control
+Enable or disable PWM. Chip has 16 PWM channels with 12 bit resolution.
+
+*Parameters*:  
+Json with set of key-value, where key is pin name and value is duty cycle. Duty cycle is a float value between 0..100, i.e. percent. Mnemonic pin ‘all’ also can be used to control all GPIO pins simultaneously. To disable PWM for one of the outputs, just set value to ‘disable’ or ‘0’.  
+There are also additional parameters:   
+"frequency" - set PWM base frequency, if this parameter was omitted, previous frequency will be used. ‘frequency’ also can be set while PWM working or before command with pins duty cycles. Default frequency is 200 Hz. Minimum frequency is 24 Hz, maximum is 1526 Hz. There is a presceler in the chip, so frequency is not precise.   
+"address" - I2C PCA9685 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.  
+"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
+"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+
+*Example*:  
+```json
+{
+	"0":"45.5",
+	"frequency":"1000"
+}
+```
+
+Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+
 # License
 The MIT License (MIT):
 

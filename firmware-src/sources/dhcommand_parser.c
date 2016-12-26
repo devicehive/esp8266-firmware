@@ -274,10 +274,10 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					out->pins_to_nopull |= pinmask;
 					*readedfields |= AF_NOPULLUP;
 				} else if(strcmp_value(&jparser, "disable") == 0) {
-					if((fields & AF_VALUES) == 0 && (fields & AF_DISABLE) == 0) {
+					if((fields & AF_VALUES) == 0 && (fields & AF_FLOATVALUES) == 0 && (fields & AF_DISABLE) == 0) {
 						return UNEXPECTED;
 					}
-					if (fields & AF_VALUES) {
+					if(fields & AF_VALUES) {
 						int i;
 						if(pinnum > 0 )
 							out->storage.uint_values[pinnum] = 0;
@@ -285,6 +285,15 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 							out->storage.uint_values[i] = 0;
 						out->pin_value_readed |= pinmask;
 						*readedfields |= AF_VALUES;
+					}
+					if(fields & AF_FLOATVALUES) {
+						int i;
+						if(pinnum > 0 )
+							out->storage.float_values[pinnum] = 0;
+						else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
+							out->storage.float_values[i] = 0;
+						out->pin_value_readed |= pinmask;
+						*readedfields |= AF_FLOATVALUES;
 					}
 					if(fields & AF_DISABLE) {
 						out->pins_to_disable |= pinmask;

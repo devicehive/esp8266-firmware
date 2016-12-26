@@ -42,6 +42,7 @@
 #include "devices/mcp4725.h"
 #include "devices/ina219.h"
 #include "devices/mfrc522.h"
+#include "devices/pca9685.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -865,6 +866,21 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		MFRC522_PCD_StopCrypto1();
 		MFRC522_PCD_AntennaOff();
 		responce_error(cb, MFRC522_GetStatusCodeName(result));
+	} else if( os_strcmp(command, "devices/pca9685/control") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, PCA9685_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS | AF_FLOATVALUES | AF_PERIOD, &fields);
+		if (responce_error(cb, parse_res))
+			return;
+		if(fields & AF_ADDRESS)
+			pca9685_set_address(parse_pins.address);
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		char *res = i2c_status_tochar(pca9685_control(PCA9685_NO_PIN, PCA9685_NO_PIN,
+				parse_pins.storage.float_values, parse_pins.pin_value_readed,
+				(fields & AF_PERIOD) ? parse_pins.periodus : PCA9685_NO_PERIOD));
+		if(responce_error(cb, res))
+			return;
+		responce_ok(cb);
 	} else {
 		responce_error(cb, "Unknown command");
 	}
