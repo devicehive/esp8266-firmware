@@ -21,11 +21,12 @@ print "typedef struct {const char *path; const char *data; unsigned int data_len
 index="WEBPAGE web_pages[] = { "
 comma=""
 FILE_LIST=$(find $DIR -name \*.html -o -name \*.css -o -name \*.js)
+FILE_LIST="$FILE_LIST $DIR/favicon.ico"
 for file in $FILE_LIST; do
     filename=$(basename "$file")
     echo "Parsing $filename ..."
     name=${filename/./_}
-    data=$(cat "$file" | tr -d '\r' | sed 's/\\/\\\\/g' | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
+    data=$(od -An -v -t x1 $file| sed "s/ /\\\x/g" | tr -d '\n')
     print "RO_DATA char $name[] = \"$data\";"
     index="$index$comma {\"$filename\", $name, sizeof($name) - 1}"
     comma=", "

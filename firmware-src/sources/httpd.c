@@ -221,15 +221,16 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	RO_DATA char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:11\r\n\r\nBad Request";
 	RO_DATA char toomany[] = "HTTP/1.0 429 Too Many Requests\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 17\r\n\r\nToo Many Requests";
 	RO_DATA char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
-	RO_DATA char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	RO_DATA char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	RO_DATA char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
-	RO_DATA char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/%s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	RO_DATA char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
 	RO_DATA char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
-	RO_DATA char html[] = "html";
-	RO_DATA char json[] = "json";
-	RO_DATA char javascript[] = "javascript";
-	RO_DATA char css[] = "css";
-	RO_DATA char plain[] = "plain";
+	RO_DATA char html[] = "text/html";
+	RO_DATA char json[] = "text/json";
+	RO_DATA char javascript[] = "text/javascript";
+	RO_DATA char css[] = "text/css";
+	RO_DATA char plain[] = "text/plain";
+	RO_DATA char xicon[] = "image/x-icon";
 
 	HTTP_ANSWER answer;
 	answer.content.len = 0;
@@ -287,6 +288,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	}
 
 	switch (res) {
+	case HRCS_ANSWERED_XICON:
 	case HRCS_ANSWERED_PLAIN:
 	case HRCS_ANSWERED_CSS:
 	case HRCS_ANSWERED_JS:
@@ -331,6 +333,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			content_type = css;
 		} else if(res == HRCS_ANSWERED_JS) {
 			content_type = javascript;
+		} else if(res == HRCS_ANSWERED_XICON) {
+			content_type = xicon;
 		}
 
 		response_len = snprintf(response, sizeof(response),

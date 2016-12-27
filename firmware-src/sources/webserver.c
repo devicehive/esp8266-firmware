@@ -58,6 +58,8 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 					return HRCS_ANSWERED_JS;
 				if(os_strstr(&path[1], ".css"))
 					return HRCS_ANSWERED_CSS;
+				if(os_strstr(&path[1], ".ico"))
+					return HRCS_ANSWERED_XICON;
 				return HRCS_ANSWERED_HTML;
 			}
 		}
