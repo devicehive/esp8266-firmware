@@ -218,7 +218,7 @@ Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and rever
 Sets gpio pins according to parameters specified. Pins will be automatically initialized as output when command is received. All pins will be set up simultaneously. Unlisted pins will remain unaffected.
 
 *Parameters*:    
-JSON with a set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio10 to LOW and gpio11 to HGIH.
+JSON with a set of key-value pairs, where key is pin number and value "0" for LOW, "1" for HIGH or "x" for NOP, leaving pin unaffected. Sample below sets gpio10 to LOW and gpio11 to HGIH.
 
 *Example*:
 ```json
@@ -229,7 +229,7 @@ JSON with a set of key-value pairs, where key is pin number and value '0' for LO
 }
 ```
 
-Returns 'OK' on success or 'Error' with description in result.
+Returns "OK" on success or "Error" with description in result.
 
 ## gpio/read
 Reads the state of all GPIO pins. Only pins specified in the request will be initialized as input.
@@ -251,7 +251,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 
 Note: pull up and pull down are the SoC feature that allows to set input to high or low through resistor with very high resistance. By default each pin is not connected (Z) and reading will return random value. Enabling pull up feature puts a very weak high level on input pin by default and pull down sets very weak low level, thus making its state determined as 1 or 0.
 
-Returns "OK" on success with result or 'Error' with description in result.
+Returns "OK" on success with result or "Error" with description in result.
 
 *Example*:  
 ```json
@@ -288,9 +288,9 @@ Mnemonic "all" can be used to set value for all pins.
 }
 ```
 
-Returns 'OK' on success with result or 'Error' with description in result.
+Returns "OK" on success with result or "Error" with description in result.
 
-Notifications will be generated with the name 'gpio/int'. Each notification will contain list of gpio pins affected in 'caused' field (read: pins that caused an interrupt), 'state' contains values of all gpio inputs after timeout and 'tick' contains the number of ticks of SoC's internal clock as a timestamp:
+Notifications will be generated with the name "gpio/int". Each notification will contain list of gpio pins affected in "caused" field (read: pins that caused an interrupt), "state" contains values of all gpio inputs after timeout and "tick" contains the number of ticks of SoC's internal clock as a timestamp:
 ```json
 {
 	"caused":["0", "1"],
@@ -321,7 +321,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 }
 ```
 
-Returns 'OK' on success with result or 'Error' with description in result. Each entry contains channel number and value in volts.
+Returns "OK" on success with result or "Error" with description in result. Each entry contains channel number and value in volts.
 ```json
 {
 	"0":0.6
@@ -343,7 +343,7 @@ Json with set of key-value, where key is ADC channel and value is period in mill
 ```
 
 In this example value of channel 0 will be sent every 1 second.
-Return "OK" in status. Or "Error" and description in result on error. Notification will have name 'adc/int' and following format:
+Return "OK" in status. Or "Error" and description in result on error. Notification will have name "adc/int" and following format:
 ```json
 {
 	"0":"0.0566"
@@ -435,7 +435,7 @@ Subscribe on notification which contains data that was read from UART. Firmware 
 }
 ```
 
-Return "OK" in status. Or "Error" and description in result on error. Notifications with name 'uart/int' will have following format:
+Return "OK" in status. Or "Error" and description in result on error. Notifications with name "uart/int" will have following format:
 ```json
 {
 	"data":"SGVsbG8sIHdvcmxkIQ=="
@@ -623,7 +623,7 @@ Mnemonic "all" can be used as key to set up something for all pins.
 }
 ```
 Return "OK" in status. Or "Error" and description in result on error.
-Notifications will be sent with name 'onewire/master/int". Each notification will contain list of device's serial numbers and pin where it was found:
+Notifications will be sent with name "onewire/master/int". Each notification will contain list of device's serial numbers and pin where it was found:
 ```json
 {
 	"found":["5800000A08DB5E01", "700000288D214B01"],
@@ -980,7 +980,7 @@ Write GPIO extender pins state. HIGH level provides small limited(100 uA) curren
 * "address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
 * "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
 * "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
-* Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HIGH.
+* Set of key-value pairs, where key is pin number and value "0" for LOW, "1" for HIGH or "x" for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HIGH.
 
 *Example*:  
 ```json
@@ -1001,8 +1001,8 @@ Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can hav
 * "address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
 * "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
 * "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
-* "data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.
-* "text" - Plain text to set up. Cannot be combined with 'data' field in one command.
+* "data" - Text to set up in base64 encoding. Cannot be combined with "text" field in one command.
+* "text" - Plain text to set up. Cannot be combined with "data" field in one command.
 
 *Example*:
 ```json
@@ -1056,7 +1056,7 @@ Read voltage from PCF8591 ADC pins. Chip has four inputs snd 8-bit ADC.
 * "address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.
 * "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
 * "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
-* "ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.
+* "ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous value will be used. Default is 3.3V.
 
 *Example*:  
 ```json
@@ -1084,7 +1084,7 @@ Set DAC output voltage. This chip has 8-bit DAC and reference voltage is power s
 * "address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.
 * "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
 * "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
-* "ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.
+* "ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous value will be used. Default is 3.3V.
 * "0" - Output voltage in Volts. PCF8591 has one output, so only "0" is available.
 
 *Example*:  
