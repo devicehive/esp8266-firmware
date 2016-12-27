@@ -234,11 +234,11 @@ Returns 'OK' on success or 'Error' with description in result.
 ## gpio/read
 Reads the state of all GPIO pins. Only pins specified in the request will be initialized as input.
 
-*Parameters*:  
-JSON with a set of key-value pairs, where key is pin number and value is one of the following: 
-* "init" - in ESP8266 all pins are initialized as input by default. If pin was used as output in gpio/write or to interface with other peripherals before, pass this argument to re-init the pin before reading. Pullup state will not be affected.  
-* "pullup" - init pin as input and enable pullup  
-* "nopull" - init pin as input and disable pullup  
+*Parameters*:
+JSON with a set of key-value pairs, where key is pin number and value is one of the following:
+* "init" - in ESP8266 all pins are initialized as input by default. If pin was used as output in gpio/write or to interface with other peripherals before, pass this argument to re-init the pin before reading. Pullup state will not be affected.
+* "pullup" - init pin as input and enable pullup
+* "nopull" - init pin as input and disable pullup
 
 *Example*:  
 ```json
@@ -251,7 +251,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 
 Note: pull up and pull down are the SoC feature that allows to set input to high or low through resistor with very high resistance. By default each pin is not connected (Z) and reading will return random value. Enabling pull up feature puts a very weak high level on input pin by default and pull down sets very weak low level, thus making its state determined as 1 or 0.
 
-Returns 'OK' on success with result or 'Error' with description in result.
+Returns "OK" on success with result or 'Error' with description in result.
 
 *Example*:  
 ```json
@@ -265,13 +265,13 @@ Returns 'OK' on success with result or 'Error' with description in result.
 ## gpio/int
 Allows you to subscribe to notifications (interrupts) on pin state change.
 
-*Parameters*:  
-JSON with a set of key-value pairs. Where key is pin number and value is one of the following: 
+*Parameters*:
+JSON with a set of key-value pairs. Where key is pin number and value is one of the following:
 * "disable" - disable notifications
-* "rising" - send notification on rising edge  
-* "falling" - send notification on falling edge  
-* "both"  - send notification on rising and falling edge  
-* "timeout" - notification will be sent only after a certain period of time. Minimum is 50 ms. Maximum is 8388607 ms. If not specified, previous timeout will be used. Default is 250 ms.  
+* "rising" - send notification on rising edge
+* "falling" - send notification on falling edge
+* "both"  - send notification on rising and falling edge
+* "timeout" - notification will be sent only after a certain period of time. Minimum is 50 ms. Maximum is 8388607 ms. If not specified, previous timeout will be used. Default is 250 ms.
 
 Mnemonic "all" can be used to set value for all pins.
 
@@ -303,15 +303,15 @@ Notifications will be generated with the name 'gpio/int'. Each notification will
 }
 ```
 # ADC
-ESP8266 has just one ADC channel. This channel is connected to a dedicated pin 6 - ‘TOUT’. ADC can measure voltage in range from 0.0V to 1.0V with 10 bit resolution. 
+ESP8266 has just one ADC channel. This channel is connected to a dedicated pin 6 - "TOUT". ADC can measure voltage in range from 0.0V to 1.0V with 10 bit resolution.
 
 ## adc/read
-Reads ADC channels values. ESP8266 has just one channel - ‘0’.
+Reads ADC channels values. ESP8266 has just one channel - "0".
 
-*Parameters*:  
+*Parameters*:
 Can be empty, all channels will be sent in this case.
-JSON with a set of key-value pairs, where key is pin number and value is one of the following: 
-"read" - read channel current value  
+JSON with a set of key-value pairs, where key is pin number and value is one of the following:
+* "read" - read channel current value  
 
 *Example*:  
 ```json
@@ -321,7 +321,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 }
 ```
 
-Returns 'OK' on success with result or 'Error' with description in result. Each entry contains channel number and value in volts. 
+Returns 'OK' on success with result or 'Error' with description in result. Each entry contains channel number and value in volts.
 ```json
 {
 	"0":0.6
@@ -331,8 +331,8 @@ Returns 'OK' on success with result or 'Error' with description in result. Each 
 ## adc/int
 Subscribes on notifications with ADC value with some period.
 
-*Parameters*:  
-Json with set of key-value, where key is ADC channel and value is period in milliseconds or ‘disable’ for disabling. ‘0’ value also means disable. Period can be from 250 till 8388607 ms.
+*Parameters*:
+Json with set of key-value, where key is ADC channel and value is period in milliseconds or "disable" for disabling. "0" value also means disable. Period can be from 250 till 8388607 ms.
 
 *Example*:  
 ```json
@@ -343,8 +343,8 @@ Json with set of key-value, where key is ADC channel and value is period in mill
 ```
 
 In this example value of channel 0 will be sent every 1 second.
-Return ‘OK’ in status. Or ‘Error’ and description in result on error. Notification will have name 'adc/int' and following format:
-```json 
+Return "OK" in status. Or "Error" and description in result on error. Notification will have name 'adc/int' and following format:
+```json
 {
 	"0":"0.0566"
 }
@@ -358,11 +358,11 @@ ESP8266 has only software implementation of PWM which means there is no real-tim
 Enable or disable PWM.
 
 *Parameters*:  
-Json with set of key-value, where key is pin name and value is duty cycle. Duty cycle is an integer between 0..100, i.e. percent. Mnemonic pin ‘all’ also can be used to control all GPIO pins simultaneously. To disable PWM for one of the outputs, just set value to ‘disable’ or ‘0’. PWM can be also disabled for pin if command ‘gpio/write’ or 'gpio/read'(only with some pins for initialize)' is called for pin.
-There are also additional parameters:   
-‘frequency’ - set PWM base frequency, if this parameter was omitted, previous frequency will be used. ‘frequency’ also can be set while PWM working or before command with pins duty cycles. Default frequency is 1 kHz. Minimum frequency is 0.0005 Hz, maximum is 2000 Hz  
-‘count’ - the number of pulses that PWM will generate after command, maximum is 4294967295, 0 means never stop. Pins with 100% duty cycle will be switched to low level when PWM stops.  
-*Example*:  
+Json with set of key-value, where key is pin name and value is duty cycle. Duty cycle is an integer between 0..100, i.e. percent. Mnemonic pin "all" also can be used to control all GPIO pins simultaneously. To disable PWM for one of the outputs, just set value to "disable" or "0". PWM can be also disabled for pin if command "gpio/write" or "gpio/read"(only with some pins for initialize) is called for pin.
+There are also additional parameters:
+* "frequency" - set PWM base frequency, if this parameter was omitted, previous frequency will be used. ‘frequency" also can be set while PWM working or before command with pins duty cycles. Default frequency is 1 kHz. Minimum frequency is 0.0005 Hz, maximum is 2000 Hz
+* "count" - the number of pulses that PWM will generate after command, maximum is 4294967295, 0 means never stop. Pins with 100% duty cycle will be switched to low level when PWM stops.
+*Example*:
 ```json
 {
 	"0":"50",
@@ -373,7 +373,7 @@ There are also additional parameters:
 
 This example starts PWM with square pulses for 10 seconds, duty cycle is 50%, frequency 1 kHz.
 
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+Return "OK" in status. Or "Error" and description in result on error.
 
 *Notes:
 PWM is can be used to generate single or multiple pulses with specific length:
@@ -386,19 +386,19 @@ ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1).
 ## uart/read
 Read data from UART interface. Receiving buffer resets on each read or write command and may contain up to 264 bytes.
 
-*Parameters*:  
-"mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing *Parameters*:   number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings ("115200 8N1" by default) and will not reinit port.  
-"data" - data string encoded with base64 which would be sent before reading. Reading buffer will be cleared and will contain data which is received during "timeout" time only otherwise data will be since last read, write command or since last notification sent. Data size have to be equal or less than 264 bytes.  
-"timeout" - Can be used only with "data" field. Delay in ms for collecting answer after transmitting data. Maximum 1000ms, if not specified 250 ms is used.   
+*Parameters*:
+* "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing parameters: number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings ("115200 8N1" by default) and will not reinit port.
+* "data" - data string encoded with base64 which would be sent before reading. Reading buffer will be cleared and will contain data which is received during "timeout" time only otherwise data will be since last read, write command or since last notification sent. Data size have to be equal or less than 264 bytes.
+* "timeout" - Can be used only with "data" field. Delay in ms for collecting answer after transmitting data. Maximum 1000ms, if not specified 250 ms is used.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"mode":"115200",
 	"data":"SGVsbG8sIHdvcmxkIQ=="
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"data":"SGkh"
@@ -409,48 +409,47 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ## uart/write
 Send data via UART.
 
-*Parameters*:  
-"mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing *Parameters*:   number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings("115200 8N1" by default) and will not reinit port.  
-"data" - data string encoded with base64. Original data size have to be equal or less than 264 bytes.  
-*Example*:  
+*Parameters*:
+* "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing parameters: number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings("115200 8N1" by default) and will not reinit port.
+* "data" - data string encoded with base64. Original data size have to be equal or less than 264 bytes.
+*Example*:
 ```json
 {
 	"mode":"115200",
 	"data":"SGVsbG8sIHdvcmxkIQ=="
 }
 ```
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+Return "OK" in status. Or "Error" and description in result on error.
 
 ## uart/int
 Subscribe on notification which contains data that was read from UART. Firmware starts wait for data from and each time when byte is received byte puts into buffer (264 bytes len), then firmware starts wait for the next byte with some timeout. When timeout reached or buffer is full firmware sends notification.
 
-*Parameters*:  
-"mode" - the same "mode" parameter as in "uart/write" command, see description there. It also can be omitted to keep current parameters. Additionally this parameter can be "disable" or "0" for disabling notifications. 
-"timeout" - timeout for notifications in milliseconds. If internal buffer received something, notification will be sent with this timeout after last byte. Default is 250 ms. Maximum 5000 ms. 
+*Parameters*:
+* "mode" - the same "mode" parameter as in "uart/write" command, see description there. It also can be omitted to keep current parameters. Additionally this parameter can be "disable" or "0" for disabling notifications.
+* "timeout" - timeout for notifications in milliseconds. If internal buffer received something, notification will be sent with this timeout after last byte. Default is 250 ms. Maximum 5000 ms.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"mode":"38400 8E2"
 }
 ```
 
-Return ‘OK’ in status. Or ‘Error’ and description in result on error. Notifications with name 'uart/int' will have following format:
+Return "OK" in status. Or "Error" and description in result on error. Notifications with name 'uart/int' will have following format:
 ```json
 {
 	"data":"SGVsbG8sIHdvcmxkIQ=="
 }
 ```
-
 Where "data" key name is always used and value is string with base64 encoded data(264 or less bytes).
 
 ## uart/terminal
-Resume terminal on UART interface. If UART’s pins were used by another feature(i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with 115200 8N1.
+Resume terminal on UART interface. If UART"s pins were used by another feature(i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with 115200 8N1.
 
-*Parameters*:  
-No parameters.  
+*Parameters*:
+No parameters.
 
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+Return "OK" in status. Or "Error" and description in result on error.
 
 # I2C
 There is software implementation of I2C protocol. Any GPIO pin can be SDA or SCL.
@@ -458,14 +457,14 @@ There is software implementation of I2C protocol. Any GPIO pin can be SDA or SCL
 ## i2с/master/read
 Read specified number of bytes from bus. This command also can set up pins that will be used for I2C protocol. Pins will be init with open-drain output mode and on-board pull up will be enabled.
 
-*Parameters*:  
-"address" - I2C slave device address, hex value. Can start with "0x".  
-"count" - number of bytes that should be read. If not specified, 2 bytes will be read. Can not be 0.  
-"data" - base64 encoded data that should be sent before reading operation. Repeated START will be applied for bus if this field specified. Maximum size of data is 264 bytes.  
-"SDA" - GPIO port number for SDA data line. If not specified, previous pins will be used. Default is "0".  
-"SCL" - GPIO port number for SCL data line. If not specified, previous pins will be used. Default is "2".  
+*Parameters*:
+* "address" - I2C slave device address, hex value. Can start with "0x".
+* "count" - number of bytes that should be read. If not specified, 2 bytes will be read. Can not be 0.
+* "data" - base64 encoded data that should be sent before reading operation. Repeated START will be applied for bus if this field specified. Maximum size of data is 264 bytes.
+* "SDA" - GPIO port number for SDA data line. If not specified, previous pins will be used. Default is "0".
+* "SCL" - GPIO port number for SCL data line. If not specified, previous pins will be used. Default is "2".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -475,11 +474,10 @@ Read specified number of bytes from bus. This command also can set up pins that 
 	"data":"YWI="
 }
 ```
-
 *Notes:
 Very common situation  when slave device needs to be written with register address and data can be read after repeated START. Using this command with "data" field allow to organize repeated START for reading.*
 
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"data":"YWE="
@@ -491,13 +489,13 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ## i2с/master/write
 Write data to I2C bus.
 
-*Parameters*:  
-"address" - I2C slave device address, decimal integer value.  
-"data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.  
-"SDA" - GPIO port number for SDA data line. If not specified, previous pin will be used. Default is "0".  
-"SCL" - GPIO port number for SCL data line. If not specified, previous pin will be used. Default is "2".  
+*Parameters*:
+* "address" - I2C slave device address, decimal integer value.
+* "data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.
+* "SDA" - GPIO port number for SDA data line. If not specified, previous pin will be used. Default is "0".
+* "SCL" - GPIO port number for SCL data line. If not specified, previous pin will be used. Default is "2".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -506,8 +504,7 @@ Write data to I2C bus.
 	"data":"YWI="
 }
 ```
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-
+Return "OK" in status. Or "Error" and description in result on error.
 
 # SPI
 ESP8266 has hardware SPI module. MISO pin is 10 (GPIO12), MOSI pin is 12(GPIO13), CLK is 9(GPIO14), CS can be specified as any other pin. Clock divider is fixed and equal 80, i.e. SPI clock is 1 MHz.
@@ -515,18 +512,18 @@ ESP8266 has hardware SPI module. MISO pin is 10 (GPIO12), MOSI pin is 12(GPIO13)
 ## spi/master/read
 Read data from SPI bus.
 
-*Parameters*:  
-"count" - number of bytes that should be read. If not specified, 2 bytes will be read. Can not be 0.  
-"data" - base64 encoded data that should be sent before reading. Maximum size of data is 264 bytes.  
-"mode" - Select SPI clock mode. Can be:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 - Low clock polarity, front edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 - Low clock polarity, rear edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 - High clock polarity, front edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3 - High clock polarity, rear edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If not specified, previous mode will be used. Default is 0.  
-"CS" - GPIO port number for CS(chip select) line. If not specified, previous pin will be used. Can be "x" for disabling CS usage. Default is "x". Can not be the same pin as used for other SPI data communication.  
+*Parameters*:
+* "count" - number of bytes that should be read. If not specified, 2 bytes will be read. Can not be 0.
+* "data" - base64 encoded data that should be sent before reading. Maximum size of data is 264 bytes.
+* "mode" - Select SPI clock mode. Can be: 
+ * 0 - Low clock polarity, front edge 
+ * 1 - Low clock polarity, rear edge 
+ * 2 - High clock polarity, front edge 
+ * 3 - High clock polarity, rear edge 
+ * If not specified, previous mode will be used. Default is 0.
+* "CS" - GPIO port number for CS(chip select) line. If not specified, previous pin will be used. Can be "x" for disabling CS usage. Default is "x". Can not be the same pin as used for other SPI data communication.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"data":"YWI=",
@@ -536,31 +533,28 @@ Read data from SPI bus.
 }
 ```
 
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"data":"YWE="
 }
 ```
-
 "data" field is base64 encoded data that was read from bus.
-
-
 
 ## spi/master/write
 Write data to SPI bus.
 
-*Parameters*:  
-"data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.  
-"mode" - Select SPI clock mode. Can be:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0 - Low clock polarity, front edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 - Low clock polarity, rear edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 - High clock polarity, front edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3 - High clock polarity, rear edge  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If not specified, previous mode will be used. Default is 0.  
-"CS" - GPIO port number for CS(chip select) line. If not specified, previous pin will be used. Can be "x" for disabling CS usage. Default is "x". Can not be the same pin as used for other SPI data communication.  
+*Parameters*:
+* "data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.
+* "mode" - Select SPI clock mode. Can be:
+ * 0 - Low clock polarity, front edge
+ * 1 - Low clock polarity, rear edge
+ * 2 - High clock polarity, front edge
+ * 3 - High clock polarity, rear edge
+ * If not specified, previous mode will be used. Default is 0.
+* "CS" - GPIO port number for CS(chip select) line. If not specified, previous pin will be used. Can be "x" for disabling CS usage. Default is "x". Can not be the same pin as used for other SPI data communication.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"data":"YWI=",
@@ -568,9 +562,7 @@ Write data to SPI bus.
 	"mode":"0"
 }
 ```
-
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-
+Return "OK" in status. Or "Error" and description in result on error.
 
 # Onewire
 There is a software implementation of some onewire protocols. Any GPIO pin can be used for connection. Master operate as 1-wire master. Though selected pin will have on chip pull up, additional pull up resistor may require. Typically 4.7k Ohm.
@@ -578,12 +570,12 @@ There is a software implementation of some onewire protocols. Any GPIO pin can b
 ## onewire/master/read
 Read specified number of bytes from onewire bus. Onewire pin can also be specified with this for this command. Selected pin will be init with open-drain output mode and on-board pull up will be enabled.
 
-*Parameters*:  
-"count" - number of bytes that should be read. Can not be 0.  
-"data" - base64 encoded data that have to be sent before reading operation for initialize device for sending some data. Cannot be empty. Maximum size of data is 264 bytes.  
-"pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".  
+*Parameters*:
+* "count" - number of bytes that should be read. Can not be 0.
+* "data" - base64 encoded data that have to be sent before reading operation for initialize device for sending some data. Cannot be empty. Maximum size of data is 264 bytes.
+* "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"count":"1",
@@ -591,7 +583,7 @@ Read specified number of bytes from onewire bus. Onewire pin can also be specifi
 	"pin":"2"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"data":"YWE="
@@ -602,55 +594,56 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ## onewire/master/write
 Read specified data to onewire bus. Onewire pin can also be specified with this for this command. Selected pin will be init with open-drain output mode and on-board pull up will be enabled.
 
-*Parameters*:  
-"data" - base64 encoded data that have to be sent before reading operation for initialize device for sending some data. Maximum size of data is 264 bytes.  
-"pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".  
+*Parameters*:
+* "data" - base64 encoded data that have to be sent before reading operation for initialize device for sending some data. Maximum size of data is 264 bytes.
+* "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"data":"YWI=",
 	"pin": "2"
 }
 ```
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+Return "OK" in status. Or "Error" and description in result on error.
 
 ## onewire/master/int
 Enable or disable notifications for event on one wires buses.
 
 *Parameters*:  
 Json with set of key-value, where key is pin name and value can be:
-"disable" - disable interruption if it was enabled before  
-"presence" - scan bus and send notification with scan result when device send PRESENCE signal on bus. 1-wire devices sends this signal after powering on, so it can be used to read iButton devices serial.  
-Mnemonic "all" can be used as key to set up something for all pins.  
+* "disable" - disable interruption if it was enabled before
+* "presence" - scan bus and send notification with scan result when device send PRESENCE signal on bus. 1-wire devices sends this signal after powering on, so it can be used to read iButton devices serial.
+Mnemonic "all" can be used as key to set up something for all pins.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"2":"presence"
 }
 ```
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
-Notifications will be sent with name 'onewire/master/int’. Each notification will contain list of device's serial numbers and pin where it was found:
+Return "OK" in status. Or "Error" and description in result on error.
+Notifications will be sent with name 'onewire/master/int". Each notification will contain list of device's serial numbers and pin where it was found:
 ```json
 {
 	"found":["5800000A08DB5E01", "700000288D214B01"],
 	"pin":"2"
 }
 ```
+
 ## onewire/master/search
 Search bus for serial numbers of all attached devices.
 
-*Parameters*:  
-"pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".  
+*Parameters*:
+* "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"pin":"2"
 }
 ```
-Return ‘OK’ in status and result with list as below. Or ‘Error’ and description in result on error.
+Return "OK" in status and result with list as below. Or "Error" and description in result on error.
 ```json
 {
 	"found":["5800000A08DB5E01", "700000288D214B01"],
@@ -661,17 +654,16 @@ Return ‘OK’ in status and result with list as below. Or ‘Error’ and desc
 ## onewire/master/alarm
 Search bus for serial numbers of attached devices which are in alarm state.
 
-*Parameters*:  
-"pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".  
+*Parameters*:
+* "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"pin":"0"
 }
 ```
-
-Return ‘OK’ in status and result with list as below. Or ‘Error’ and description in result on error.
+Return "OK" in status and result with list as below. Or "Error" and description in result on error.
 ```json
 {
 	"found":["5800000A08DB5E01", "700000288D214B01"],
@@ -679,20 +671,19 @@ Return ‘OK’ in status and result with list as below. Or ‘Error’ and desc
 }
 ```
 
-
 ## onewire/dht/read
 Read data from DHT11/DHT22/AM2302 or device with the same protocol. Number of bytes for reading depends on device, but can not be more that 264. Any checksums will not be checked.
 
-*Parameters*:  
-"pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".  
+*Parameters*:
+* "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".
 
-*Example*:  
+*Example*:
 ```json
 {
 	"pin":"0"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"data":"YWE="
@@ -706,16 +697,16 @@ This section describes simple API for handling some hardware sensors. Internally
 ## devices/ds18b20/read
 Read temperature from DS18B20 sensor. Only one sensor can be connected to pin(skip ROM is used). Measurement uses sensor defaults.
 
-*Parameters*:  
-"pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
+*Parameters*:
+* "pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"pin":"2"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":24.5000
@@ -726,10 +717,10 @@ Temperature unit in Celsius degrees.
 ## devices/lm75/read
 Read temperature from LM75A/LM75B/LM75C sensor.
 
-*Parameters*:  
-"address" - I2C LM75 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x90.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C LM75 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x90.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
 *Example*:  
 ```json
@@ -739,7 +730,7 @@ Read temperature from LM75A/LM75B/LM75C sensor.
 	"address":"0x90"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":24.5000
@@ -750,8 +741,8 @@ Temperature unit in Celsius degrees.
 ## devices/dht11/read
 Read temperature and relative humidity from DHT11 sensor.
 
-*Parameters*:  
-"pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
+*Parameters*:
+* "pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
 
 *Example*:  
 ```json
@@ -759,7 +750,7 @@ Read temperature and relative humidity from DHT11 sensor.
 	"pin":"2"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":24,
@@ -771,16 +762,16 @@ Temperature unit in Celsius degrees. Relative humidity unit is percent.
 ## devices/dht22/read
 Read temperature and relative humidity from DHT22 sensor.
 
-*Parameters*:  
-"pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
+*Parameters*:
+* "pin" - GPIO port number for onewire data line. Behavior and default are common with onewire interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"pin":"2"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":25.5000,
@@ -792,12 +783,12 @@ Temperature unit in Celsius degrees. Relative humidity unit is percent.
 ## devices/si7021/read
 Read temperature and relative humidity from SI7021 sensor.
 
-*Parameters*:  
-"address" - I2C SI7021 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x80.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C SI7021 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0x80.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"0",
@@ -805,7 +796,7 @@ Read temperature and relative humidity from SI7021 sensor.
 	"address":"0x80"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":27.1961,
@@ -817,12 +808,12 @@ Temperature unit in Celsius degrees. Relative humidity unit is percent.
 ## devices/bmp180/read
 Read temperature and pressure from BMP180 sensor.
 
-*Parameters*:  
-"address" - I2C BMP180 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEE.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C BMP180 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEE.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -830,8 +821,7 @@ Read temperature and pressure from BMP180 sensor.
 	"address":"0xEE"
 }
 ```
-
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":25.5000,
@@ -840,15 +830,15 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ```
 Temperature unit in Celsius degrees. Pressure unit is pascal.
 
-devices/bmp280/read
+## devices/bmp280/read
 Read temperature and pressure from BMP280 sensor.
 
-*Parameters*:  
-"address" - I2C BMP280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEC.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C BMP280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEC.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -856,8 +846,7 @@ Read temperature and pressure from BMP280 sensor.
 	"address":"0xEE"
 }
 ```
-
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":25.5000,
@@ -869,12 +858,12 @@ Temperature unit in Celsius degrees. Pressure unit is pascal.
 ## devices/bh1750/read
 Read illuminance from BH1750 sensor. Mode is 'High Resolution2'.
 
-*Parameters*:  
-"address" - I2C BH1750 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x46.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C BH1750 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x46.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -882,8 +871,7 @@ Read illuminance from BH1750 sensor. Mode is 'High Resolution2'.
 	"address":"0x46"
 }
 ```
-
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"illuminance":59.1667
@@ -894,12 +882,12 @@ Illuminance unit in lux(lumens per square meter).
 ## devices/mpu6050/read
 Read accelerometer, gyroscope and temperature data from MPU6050 sensor. Accelerometer is configured -8g...+8g values, gyroscope -1000...+1000 dps.
 
-*Parameters*:  
-"address" - I2C MPU6050 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xD0.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C MPU6050 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xD0.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -907,8 +895,7 @@ Read accelerometer, gyroscope and temperature data from MPU6050 sensor. Accelero
 	"address":"0xD0"
 }
 ```
-
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"temperature":32.2947,
@@ -931,12 +918,12 @@ Temperature unit in Celsius degrees. Acceleration unit is meter per second squar
 ## devices/hmc5883l/read
 Read magnetometer, i.e. compass data. All configs are default, sensor field range is 1.3 gauss.
 
-*Parameters*:  
-"address" - I2C HMC5883L device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x3C.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C HMC5883L device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x3C.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"4",
@@ -944,8 +931,7 @@ Read magnetometer, i.e. compass data. All configs are default, sensor field rang
 	"address":"0x3C"
 }
 ```
-
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"magnetometer":
@@ -961,13 +947,14 @@ Data unit is gauss. Proportional to the magnetic field component along its axis.
 ## devices/pcf8574/read
 Read GPIO extender pins state. All pins have pull up after powering on and this is the only one way to operate as inputs.
 
-*Parameters*:  
-"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-Pin numbers-value pairs where value can be only "pullup". If pin was used as output, "pullup" sets it back to input before reading. "all" key for all pins are supported.  
+*Parameters*:
+* "address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+Pin numbers-value pairs where value can be only "pullup". If pin was used as output, "pullup" sets it back to input before reading.
+* "all" key for all pins are supported.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"0",
@@ -976,8 +963,7 @@ Pin numbers-value pairs where value can be only "pullup". If pin was used as out
 	"0":"pullup"
 }
 ```
-
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"0":"1",
@@ -991,10 +977,10 @@ Chip has 8(0..7) ports.
 Write GPIO extender pins state. HIGH level provides small limited(100 uA) current and actually that is the same as "pullup" from hardware side and this API. See chip datasheet for details.
 
 *Parameters*:  
-"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HIGH.  
+* "address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+* Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for HIGH or 'x' for NOP, leaving pin unaffected. Sample below sets gpio0 to LOW and gpio1 to HIGH.
 
 *Example*:  
 ```json
@@ -1006,19 +992,19 @@ Set of key-value pairs, where key is pin number and value '0' for LOW, '1' for H
 	"1": "1"
 }
 ```
-Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
+Return "OK" in status on success. Or "Error" and description in result on error.
 
 ## devices/pcf8574/hd44780/write
-Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can have 16x2, 20x2, 20x4 or any other character array. Symbol "\n" (0x0A) for newline is supported. All display data erases on each command. PCF8574 should be connected to display with this pinmap: P0->RS, P1->RW, P2->E, P3->Backlight control or not connected, P4->D4, P5->D5, P6->D6 and P7->D7. 
+Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can have 16x2, 20x2, 20x4 or any other character array. Symbol "\n" (0x0A) for newline is supported. All display data erases on each command. PCF8574 should be connected to display with this pinmap: P0->RS, P1->RW, P2->E, P3->Backlight control or not connected, P4->D4, P5->D5, P6->D6 and P7->D7.
 
-*Parameters*:  
-"address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-"data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.  
-"text" - Plain text to set up. Cannot be combined with 'data' field in one command.  
+*Parameters*:
+* "address" - I2C PCF8574 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x4E.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+* "data" - Text to set up in base64 encoding. Cannot be combined with 'text' field in one command.
+* "text" - Plain text to set up. Cannot be combined with 'data' field in one command.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"0",
@@ -1027,15 +1013,15 @@ Write with GPIO extender to HD44780 like display (1602A, KS0066 etc). It can hav
 	"text":"Hello!"
 }
 ```
-Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.
+Return "OK" in status on success. Or "Error" and description in result on error.
 
 ## devices/mhz19/read
 Read data from MH-Z19 CO2 sensor via UART.
 
 *Parameters*:  
-No parameters.  
+No parameters.
 
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"co2":384
@@ -1046,14 +1032,14 @@ co2 unit is ppm(parts-per-million).
 ## devices/mcp4725/write
 Set DAC output voltage. This chip has 12-bit DAC and reference voltage is power supply.
 
-*Parameters*:  
-"address" - I2C MCP4725 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xC0.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-"ref" - Reference voltage(for MCP4725 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
-"0" - Output voltage in Volts. MCP4725 has one output, so only "0" is available.  
+*Parameters*:
+* "address" - I2C MCP4725 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0xC0.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+* "ref" - Reference voltage(for MCP4725 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.
+* "0" - Output voltage in Volts. MCP4725 has one output, so only "0" is available.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"SDA":"0",
@@ -1061,16 +1047,16 @@ Set DAC output voltage. This chip has 12-bit DAC and reference voltage is power 
 	"0":"2.65"
 }
 ```
-Return ‘OK’ in status on success. Or ‘Error’ and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
+Return "OK" in status on success. Or "Error" and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
 
 ## devices/pcf8591/read
 Read voltage from PCF8591 ADC pins. Chip has four inputs snd 8-bit ADC.
 
-*Parameters*:  
-"address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-"ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
+*Parameters*:
+* "address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+* "ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.
 
 *Example*:  
 ```json
@@ -1080,7 +1066,7 @@ Read voltage from PCF8591 ADC pins. Chip has four inputs snd 8-bit ADC.
 	"ref":"3.25"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"0":2.9506,
@@ -1094,12 +1080,12 @@ Chip has 4(0..3) inputs. Values are measured not in the same time. All values ar
 ## devices/pcf8591/write
 Set DAC output voltage. This chip has 8-bit DAC and reference voltage is power supply.
 
-*Parameters*:  
-"address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-"ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.  
-"0" - Output voltage in Volts. PCF8591 has one output, so only "0" is available.  
+*Parameters*:
+* "address" - I2C PCF8591 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+* "ref" - Reference voltage(for PCF8591 it is supply voltage). If not specified, previous pin will be used. Default is 3.3V.
+* "0" - Output voltage in Volts. PCF8591 has one output, so only "0" is available.
 
 *Example*:  
 ```json
@@ -1109,15 +1095,15 @@ Set DAC output voltage. This chip has 8-bit DAC and reference voltage is power s
 	"0":2.65
 }
 ```
-Return ‘OK’ in status on success. Or ‘Error’ and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
+Return "OK" in status on success. Or "Error" and description in result on error. This sample command is valid when chip is powered with 3.3V. If chip is powered from different power supply, please specify "ref" parameter.
 
 ## devices/ads1115/read
 Read voltage from ADS1115 ADC pins. Chip has four inputs and one 16 bits converter with referense voltage. Input voltage is –0.3 ... Vdd + 0.3. Full scale is 4.096V. Data rate is 128 samples per second.
 
-*Parameters*:  
-"address" - I2C ADS1115 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+*Parameters*:
+* "address" - I2C ADS1115 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x90.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
 *Example*:  
 ```json
@@ -1127,7 +1113,7 @@ Read voltage from ADS1115 ADC pins. Chip has four inputs and one 16 bits convert
 	"address":"0x90"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"0":0.5695,
@@ -1141,11 +1127,11 @@ Chip has 4(0..3) inputs. Since chip has one converter, values are measured not i
 ## devices/ina219/read
 Read data from INA219 power monitor.
 
-*Parameters*:  
-"address" - I2C INA219 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
-"ref" - Shunt resistance in Ohm. If not specified, previous value will be used. Default is 0.1 Ohm.  
+*Parameters*:
+* "address" - I2C INA219 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+* "ref" - Shunt resistance in Ohm. If not specified, previous value will be used. Default is 0.1 Ohm.
 
 *Example*:  
 ```json
@@ -1155,7 +1141,7 @@ Read data from INA219 power monitor.
 	"ref":"0.1"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"voltage":3.2040,
@@ -1168,17 +1154,17 @@ Voltage is in Volts, current is in amperes, power is in Watts. Current can be ne
 ## devices/mfrc522/read
 Reads tag's uid and type. MFRC522 is a RFID tag reader. It should be connected via SPI. MISO->GPIO12, MOSI->GPIO13, CLK->GPIO14. CS pin can be configured.
 
-*Parameters*:  
-"CS" - CS pin. If not specified GPIO15 is used.
+*Parameters*:
+* "CS" - CS pin. If not specified GPIO15 is used.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"uid":"0xA435AA7D",
 	"type":"MIFARE 1KB"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"voltage":3.2040,
@@ -1190,18 +1176,18 @@ Return ‘OK’ in status and json like below in result on success. Or ‘Error�
 ## devices/mfrc522/mifare/read
 Reads tag's block memory.
 
-*Parameters*: 
-"address" - block address in hex. Number of blocks depends on tag type.  
-"key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.  
-"CS" - CS pin. If not specified, previous timeout will be used. Default is GPIO15.  
+*Parameters*:
+* "address" - block address in hex. Number of blocks depends on tag type.
+* "key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.
+* "CS" - CS pin. If not specified, previous timeout will be used. Default is GPIO15.
 
-*Example*:  
+*Example*:
 ```json
 {
 	"address":"0x04"
 }
 ```
-Return ‘OK’ in status and json like below in result on success. Or ‘Error’ and description in result on error.
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
 	"data":"AAAAAAAAAAAAAAAAAAAAAA=="
@@ -1212,33 +1198,33 @@ Data is base64 encoded.
 ## devices/mfrc522/mifare/write
 Writes tag's block memory.
 
-*Parameters*: 
-"address" - block address in hex. Number of blocks depends on tag type.  
-"key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.  
-"CS" - CS pin. If not specified, previous timeout will be used. Default is GPIO15.  
-"data" - base64 encoded data for storing.  
+*Parameters*:
+* "address" - block address in hex. Number of blocks depends on tag type.
+* "key" - base64 encoded key for block authentication. If not specified, default (0xFFFFFFFFFFFF) is used.
+* "CS" - CS pin. If not specified, previous timeout will be used. Default is GPIO15.
+* "data" - base64 encoded data for storing.
 
 *Example*:  
 ```json
 {
-	"address":"0x04"
-  "key":"////////"
+	"address":"0x04",
+	"key":"////////",
 	"data":"AAAAAAAAAAAAAAAAAAAAAA=="
 }
 ```
-Return ‘OK’ in status on success. Or ‘Error’ and description in result on error.  
+Return "OK" in status on success. Or "Error" and description in result on error.
 _Notice: MIFARE Ultralight tags should be programmed with 16 bytes, but only first 4 is written, other bytes should be zeros._
 
 ## devices/pca9685/control
 Enable or disable PWM. Chip has 16 PWM channels with 12 bit resolution.
 
 *Parameters*:  
-Json with set of key-value, where key is pin name and value is duty cycle. Duty cycle is a float value between 0..100, i.e. percent. Mnemonic pin ‘all’ also can be used to control all GPIO pins simultaneously. To disable PWM for one of the outputs, just set value to ‘disable’ or ‘0’.  
-There are also additional parameters:   
-"frequency" - set PWM base frequency, if this parameter was omitted, previous frequency will be used. ‘frequency’ also can be set while PWM working or before command with pins duty cycles. Default frequency is 200 Hz. Minimum frequency is 24 Hz, maximum is 1526 Hz. There is a presceler in the chip, so frequency is not precise.   
-"address" - I2C PCA9685 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.  
-"SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.  
-"SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.  
+Json with set of key-value, where key is pin name and value is duty cycle. Duty cycle is a float value between 0..100, i.e. percent. Mnemonic pin "all" also can be used to control all GPIO pins simultaneously. To disable PWM for one of the outputs, just set value to "disable" or "0".  
+There are also additional parameters:
+* "frequency" - set PWM base frequency, if this parameter was omitted, previous frequency will be used. "frequency" also can be set while PWM working or before command with pins duty cycles. Default frequency is 200 Hz. Minimum frequency is 24 Hz, maximum is 1526 Hz. There is a presceler in the chip, so frequency is not precise. 
+* "address" - I2C PCA9685 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
 
 *Example*:  
 ```json
@@ -1247,8 +1233,7 @@ There are also additional parameters:
 	"frequency":"1000"
 }
 ```
-
-Return ‘OK’ in status. Or ‘Error’ and description in result on error.
+Return "OK" in status. Or "Error" and description in result on error.
 
 # License
 The MIT License (MIT):
