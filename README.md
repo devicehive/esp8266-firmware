@@ -75,5 +75,5 @@ The MIT License. See LICENSE file. Except sdk directory, it has ESPRSSIF MIT
 License, see sdk/License file for details.
 
 # Authors
-Nikolay Khabarov
+Nikolay Khabarov  
 Embedded pages design: Maksim Kleshchevnikov
