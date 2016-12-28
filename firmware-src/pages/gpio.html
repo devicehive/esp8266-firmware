@@ -8,6 +8,7 @@
 			document.getElementById('output').style.color = err ? 'red' : 'green';
 			document.getElementById('output').innerHTML = text;
 		}
+
 		function send(command, data, cb) {
 			print('');
 			rest_common(command, data, function (err, res) {
@@ -17,11 +18,13 @@
 					cb(res);
 			});
 		}
+
 		function get(pin) {
 			send('gpio/read', null, function (res) {
 				print('GPIO' + pin + ': ' + res[pin.toString()]);
 			});
 		}
+
 		function set(pin, val) {
 			var json = {}
 			json[String(pin)] = val;
@@ -29,6 +32,7 @@
 				print('Value ' + val + ' was written to GPIO' + pin);
 			});
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 		}
@@ -44,7 +48,6 @@
 </div>
 <div class="content">
 	<div class="form-block">
-
 		<div class="description">This sample can read and write to GPIO ports.</div>
 		<div class="group-box">
 			<div class="group-box_title">GPIO0</div>
@@ -106,10 +109,8 @@
 			<button class="btn_event" type="button" value="Set 1" onclick="set(15, 1);">Set 1</button>
 			<button class="btn_event" type="button" value="Set 0" onclick="set(15, 0);">Set 0</button>
 		</div>
-
 		<div class="output-status" id="output"></div>
 	</div>
 </div>
-
 </body>
 </html>

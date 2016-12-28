@@ -8,6 +8,7 @@
 			document.getElementById('output').style.color = err ? 'red' : 'green';
 			document.getElementById('output').innerHTML = text;
 		}
+
 		function send(dc, count, frequency) {
 			print('');
 			var params = {}
@@ -19,9 +20,11 @@
 					print('ERROR: ' + res, true);
 			});
 		}
+
 		function slide(val) {
 			send(val, 0, 400)
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 		}

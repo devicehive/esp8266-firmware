@@ -16,6 +16,7 @@
 			document.getElementById('output').style.color = err ? 'red' : 'green';
 			document.getElementById('output').innerHTML = text;
 		}
+
 		function send_command(command, parameters) {
 			rest_common(command, parameters, function (err, res) {
 				if(err) {
@@ -31,6 +32,7 @@
 				}
 			});
 		}
+
 		function queue_command(command, parameters) {
 			if (sending == true) {
 				commandList.push({"command": command, "parameters": parameters});
@@ -40,6 +42,7 @@
 			commandList = [];
 			send_command(command, parameters);
 		}
+
 		function write_ssd1306_command(command) {
 			queue_command("i2c/master/write", {
 				"SDA": SDA,
@@ -48,6 +51,7 @@
 				"data": btoa(String.fromCharCode(0) + String.fromCharCode(command))
 			});
 		}
+
 		function write_ssd1306_data(data) {
 			queue_command("i2c/master/write", {
 				"SDA": SDA,
@@ -56,6 +60,7 @@
 				"data": btoa(String.fromCharCode(0x40) + data)
 			});
 		}
+
 		function run() {
 			print('');
 			if (!document.getElementById("image").files[0]) {
@@ -89,6 +94,7 @@
 			}
 			sending = false;
 		}
+
 		function getBWPix(x, y) {
 			p = (y * imageWidth + x) * 4;
 			r = imageData.data[p];
@@ -99,6 +105,7 @@
 				return true;
 			return false;
 		}
+
 		function draw(event) {
 			var canvas = document.getElementById("canvas");
 			var cnvctx = canvas.getContext("2d");
@@ -128,6 +135,7 @@
 			};
 			image.src = url;
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 			document.getElementById('image').addEventListener("change", draw, false);
@@ -166,7 +174,6 @@
 		<button class="btn_event btn_event_green" type="button" value="Run" onclick="run();">Run</button>
 		<div class="extra-margin-top" id="output"></div>
 	</div>
-
 </div>
 </body>
 </html>

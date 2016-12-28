@@ -34,9 +34,11 @@
 				send();
 			});
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 		}
+
 		function run() {
 			if(addr_enumerator < 0) {
 				document.getElementById('output').innerHTML = "";
@@ -45,6 +47,7 @@
 				send();
 			}
 		}
+
 		function stop() {
 			addr_enumerator = -4;
 		}

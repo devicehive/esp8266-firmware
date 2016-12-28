@@ -8,15 +8,15 @@
 			document.getElementById('output').style.color = err ? 'red' : 'green';
 			document.getElementById('output').innerHTML = text;
 		}
+
 		function send() {
 			print('');
 			parameters = {
-			"SDA": document.getElementById('sda').value,
-			"SCL": document.getElementById('scl').value,
-			"address": document.getElementById('address').value,
-			"text": document.getElementById('text').value
+				"SDA": document.getElementById('sda').value,
+				"SCL": document.getElementById('scl').value,
+				"address": document.getElementById('address').value,
+				"text": document.getElementById('text').value
 			};
-	
 			rest_common('i2c/write', parameters, function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
@@ -26,6 +26,7 @@
 				}
 			});
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 		}
@@ -69,6 +70,5 @@
 	</div>
 	<div id="output"></div>
 </div>
-
 </body>
 </html>

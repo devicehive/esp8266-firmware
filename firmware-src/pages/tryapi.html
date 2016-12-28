@@ -7,10 +7,12 @@
 		function printinput(text) {
 			document.getElementById('input').innerHTML = text;
 		}
+
 		function print(text, err = false) {
 			document.getElementById('output').style.color = err ? 'red' : 'green';
 			document.getElementById('output').innerHTML = text;
 		}
+
 		function run() {
 			print('');
 			key = document.getElementById('accesskey').value;
@@ -37,6 +39,7 @@
 				}
 			});
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 		}

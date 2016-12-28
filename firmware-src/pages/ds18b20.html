@@ -8,6 +8,7 @@
 			document.getElementById('output').style.color = err ? 'red' : 'green';
 			document.getElementById('output').innerHTML = text;
 		}
+
 		function run() {
 			if(!isrun)
 				return;
@@ -20,6 +21,7 @@
 				}
 			});
 		}
+
 		function init() {
 			document.getElementById('accesskey').value = localStorage['accesskey'];
 		}
@@ -45,6 +47,5 @@
 		<div class="output-status" id="output"></div>
 	</div>
 </div>
-
 </body>
 </html>
