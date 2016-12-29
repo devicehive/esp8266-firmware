@@ -15,6 +15,7 @@
 #include "../pages/pages.h"
 #include "uploadable_page.h"
 #include "uploadable_api.h"
+#include "irom.h"
 
 LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
@@ -35,6 +36,7 @@ LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *pa
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
 	HTTP_RESPONSE_STATUS res;
+	RO_DATA char default_page[] = "<html><head><meta http-equiv=\"refresh\" content=\"5; url=./help.html\" /></head><body>Page is not uploaded. Redirecting to <a href=\"./help.html\">the help page...</a></body></html>";
 	if(check_rest(&res, path, key, content_in, answer)) {
 		return res;
 	}
@@ -43,8 +45,8 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 			answer->content.data = uploadable_page_get(&answer->content.len);
 			if(answer->content.len == 0) {
 				// default page
-				answer->content.data = help_html;
-				answer->content.len = sizeof(help_html) - 1;
+				answer->content.data = default_page;
+				answer->content.len = sizeof(default_page) - 1;
 			}
 			return HRCS_ANSWERED_HTML;
 		}
