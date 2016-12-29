@@ -2,22 +2,18 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>LCD 1602A, 2004A etc</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
-
+	<script src="librest.js"></script>
+	<script src="libdom.js"></script>
+	<script>
 		function send() {
 			print('');
-			parameters = {
-				"SDA": document.getElementById('sda').value,
-				"SCL": document.getElementById('scl').value,
-				"address": document.getElementById('address').value,
-				"text": document.getElementById('text').value
+			var parameters = {
+				"SDA": byId('sda').value,
+				"SCL": byId('scl').value,
+				"address": byId('address').value,
+				"text": byId('text').value
 			};
-			rest_common('i2c/write', parameters, function (err, res) {
+			rest('/api/i2c/write', parameters, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
@@ -28,7 +24,7 @@
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 	</script>
 </head>

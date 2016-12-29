@@ -2,39 +2,32 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>GPIO</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
-
-		function send(command, data, cb) {
-			print('');
-			rest_common(command, data, function (err, res) {
+	<script src="librest.js"></script>
+	<script src="librest.js"></script>
+	<script>
+		function get(pin) {
+			rest('/api/gpio/read', data, getKey(), function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
 				else
-					cb(res);
-			});
-		}
-
-		function get(pin) {
-			send('gpio/read', null, function (res) {
-				print('GPIO' + pin + ': ' + res[pin.toString()]);
+					print('GPIO' + pin + ': ' + res[pin.toString()]);
 			});
 		}
 
 		function set(pin, val) {
 			var json = {}
 			json[String(pin)] = val;
-			send('gpio/write', json, function (res) {
-				print('Value ' + val + ' was written to GPIO' + pin);
+			print('');
+			rest('/api/gpio/write', data, getKey(), function (err, res) {
+				if(err)
+					print('ERROR: ' + res, true);
+				else
+					print('Value ' + val + ' was written to GPIO' + pin);
 			});
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 	</script>
 </head>

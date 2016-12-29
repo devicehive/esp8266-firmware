@@ -2,31 +2,32 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>Scan I2C</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
+	<script src="librest.js"></script>
+	<script src="libdom.js"></script>
+	<script>
 		var addr_enumerator = -4;
 		var last_checked = '0x00';
 		function send() {
 			if(addr_enumerator < 0) {
-				document.getElementById('status').innerHTML = 'Done, checked 0x00 - ' + last_checked;
-				if(document.getElementById('output').innerHTML.length == 0)
-					document.getElementById('output').innerHTML = 'Nothing was found'
+				byId('status').innerHTML = 'Done, checked 0x00 - ' + last_checked;
+				if(byId('output').innerHTML.length == 0)
+					byId('output').innerHTML = 'Nothing was found'
 				return;
 			}
 			current_addr = '0x' + addr_enumerator.toString(16).toUpperCase();
 			last_checked = current_addr;
-			document.getElementById('status').innerHTML = 'Checking ' + current_addr + '...';
-			localStorage['accesskey'] = document.getElementById('accesskey').value;
+			byId('status').innerHTML = 'Checking ' + current_addr + '...';
+			localStorage['accesskey'] = byId('accesskey').value;
 			parameters = {
-				"SDA": document.getElementById('sda').value,
-				"SCL": document.getElementById('scl').value,
+				"SDA": byId('sda').value,
+				"SCL": byId('scl').value,
 				"address": current_addr,
 				"count": 1
 			};
 
-			rest_common('i2c/master/read', parameters, function (err, res) {
+			rest('/api/i2c/master/read', parameters, getKey(), function (err, res) {
 				if(!err) {
-					document.getElementById('output').innerHTML += 'Found ' + current_addr + '<br>';
+					byId('output').innerHTML += 'Found ' + current_addr + '<br>';
 				}
 				addr_enumerator += 2;
 				if(addr_enumerator > 255)
@@ -36,13 +37,13 @@
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 
 		function run() {
 			if(addr_enumerator < 0) {
-				document.getElementById('output').innerHTML = "";
-				document.getElementById('status').innerHTML = "";
+				byId('output').innerHTML = "";
+				byId('status').innerHTML = "";
 				addr_enumerator = 0;
 				send();
 			}

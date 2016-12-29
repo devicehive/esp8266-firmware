@@ -2,29 +2,25 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>DHT11/DHT22</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
-
+	<script src="librest.js"></script>
+	<script src="libdom.js"></script>
+	<script>
 		function run() {
 			if(!isrun)
 				return;
-			type = document.getElementById('dht11').checked ? 'dht11' : 'dht22';
-			rest_common('devices/' + type + '/read', null, function (err, res) {
+			type = byId('dht11').checked ? 'dht11' : 'dht22';
+			rest('devices/' + type + '/read', null, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
-					print('Humidity is ' + res['humidity'] + '%, temperature is ' + res['temperature'] + '&deg;C');
+					print('Humidity is ' + res['humidity'] + '%, temperature is ' + res['temperature'] + '\xb0C');
 					setTimeout(run, 1000);
 				}
 			});
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 	</script>
 </head>

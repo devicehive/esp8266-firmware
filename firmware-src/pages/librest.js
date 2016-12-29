@@ -1,4 +1,4 @@
-function request_xhr(verb, url, params, key, cb) {
+function rest_xmlhttp(verb, url, params, key, cb) {
 	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open(verb, url);
 	xmlhttp.setRequestHeader('Authorization', 'Bearer ' + key);
@@ -28,10 +28,4 @@ function rest(command, params, key, cb) {
 		else
 			cb(false, res);
 	});
-}
-
-function rest_common(command, params, cb) {
-	var key = document.getElementById('accesskey').value;
-	localStorage['accesskey'] = key;
-	rest(command, params, key, cb);
 }

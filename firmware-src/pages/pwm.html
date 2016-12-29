@@ -4,29 +4,24 @@
 	<title>PWM</title>
 	<script type="text/javascript" src="librest.js"></script>
 	<script type="text/javascript">
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
-
-		function send(dc, count, frequency) {
+		function setPwm(dc, count, frequency) {
 			print('');
-			var params = {}
-			params[document.getElementById('pin').value] = dc;
+			var params = {};
+			params[byId('pin').value] = dc;
 			params['frequency'] = frequency;
 			params['count'] = count;
-			rest_common('pwm/control', params, function (err, res) {
+			rest('/api/pwm/control', params, function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
 			});
 		}
 
 		function slide(val) {
-			send(val, 0, 400)
+			setPwm(val, 0, 400)
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 	</script>
 </head>
@@ -47,10 +42,10 @@
 			<p></p>
 			Some boards have pin connected to GPIO2(TX) port and they mostly light up with '0' port state.
 		</div>
-		<button class="btn_event" type="button" value="Blink" onclick="send(50, 0, 4);">Blink</button>
-		<button class="btn_event" type="button" value="Blink 3 times" onclick="send(50, 3, 4);">Blink 3 times</button>
-		<button class="btn_event" type="button" value="Strobe" onclick="send(1, 0, 4);">Strobe</button>
-		<button class="btn_event" type="button" value="Inverted Strobe" onclick="send(99, 0, 4);">Inverted Strobe
+		<button class="btn_event" type="button" value="Blink" onclick="setPwm(50, 0, 4);">Blink</button>
+		<button class="btn_event" type="button" value="Blink 3 times" onclick="setPwm(50, 3, 4);">Blink 3 times</button>
+		<button class="btn_event" type="button" value="Strobe" onclick="setPwm(1, 0, 4);">Strobe</button>
+		<button class="btn_event" type="button" value="Inverted Strobe" onclick="setPwm(99, 0, 4);">Inverted Strobe
 		</button>
 		<div class="description extra-margin-top">Brightness control, slide to light up</div>
 		<input class="input-controller " type="range" id="brightness" value="50" onchange='slide(this.value)'>

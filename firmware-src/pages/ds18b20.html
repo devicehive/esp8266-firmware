@@ -2,28 +2,24 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>DS18B20</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
-
+	<script src="librest.js"></script>
+	<script src="libdom.js"></script>
+	<script>
 		function run() {
 			if(!isrun)
 				return;
-			rest_common('devices/ds18b20/read', null, function (err, res) {
+			rest('/api/devices/ds18b20/read', null, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
-					print('Temperature is ' + res['temperature'] + '&deg;C');
+					print('Temperature is ' + res['temperature'] + '\xb0C');
 					setTimeout(run, 1000);
 				}
 			});
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 	</script>
 </head>

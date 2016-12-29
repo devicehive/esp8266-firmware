@@ -2,12 +2,11 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>Base64</title>
-	<script type="text/javascript">
+	<script src="libdom.js"></script>
+	<script>
 		function printLength(data) {
-			if (data == null)
-				document.getElementById("plength").innerHTML = null;
-			else
-				document.getElementById("plength").innerHTML = "Length: " + data.length;
+			var text = typeof data === 'string' ? ('Length: ' + data.length) : '';
+			print(text, false, 'plength');
 		}
 
 		function setHex(data) {
