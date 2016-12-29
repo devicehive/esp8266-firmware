@@ -15,10 +15,10 @@
 
 		function run() {
 			print('');
-			key = document.getElementById('accesskey').value;
+			var key = document.getElementById('accesskey').value,
+				command = document.getElementById('command').value,
+				parameters = document.getElementById('parameters').value;
 			localStorage['accesskey'] = key;
-			command = document.getElementById('command').value;
-			parameters = document.getElementById('parameters').value;
 			if (parameters.length > 0) {
 				try {
 					parameters = JSON.parse(parameters);
@@ -27,10 +27,11 @@
 					return;
 				}
 			}
+			var base = location.protocol + '//' + location.host;
 			printinput('This command for cURL util:<br><code>curl -i -X POST  \\<br>	 -H "Authorization: Bearer YourAccessKeyHere="  \\<br>'
-				+ (Object.keys(parameters).length > 0 ? '	 -d &#39;' + JSON.stringify(parameters) + '&#39;  \\<br>' : '') + ' http://' + 
-				window.location.hostname + '/api/' + command + '</code>');
-			rest_xmlhttp(window.location.hostname, key, command, parameters, function (xmlhttp) {
+				+ (Object.keys(parameters).length > 0 ? '	 -d &#39;' + JSON.stringify(parameters) + '&#39;  \\<br>' : '') + ' ' +
+				base + '/api/' + command + '</code>');
+			rest_xmlhttp('POST', '/api/' + command, parameters, key, function (xmlhttp) {
 				err = xmlhttp.status < 200 || xmlhttp.status > 299;
 				if (xmlhttp.status == 0) {
 					print('Response is not received', true);
