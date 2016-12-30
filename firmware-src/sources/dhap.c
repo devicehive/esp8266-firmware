@@ -23,6 +23,10 @@ static struct ip_info *ipinfo = NULL;
 struct softap_config *apconfig = NULL;
 
 void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
+	if(ssid == 0)
+		return;
+	if(ssid[0] == 0)
+		return;
 	if(!wifi_set_opmode(SOFTAP_MODE))
 		dhdebug("Failed to wifi_set_opmode()");
 	apconfig = (struct softap_config *)os_zalloc(sizeof(struct softap_config));;
