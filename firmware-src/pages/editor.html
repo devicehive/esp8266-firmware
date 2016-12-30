@@ -2,7 +2,9 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>Editor</title>
+	<style>textarea, .ace_editor { width: 100%; height: 400px }</style>
 	<script src="librest.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ace.js"></script>
 	<script src="libdom.js"></script>
 	<script>
 		var isUploadInProcess = false;
@@ -11,6 +13,11 @@
 		var flashLen = 1024;
 		var flashData;
 		var flashLimit = 65536;
+		var editor;
+		var editorSession = {
+			getValue: function() { return byId('page').value; },
+			setValue: function(value) { byId('page').value = value; }
+		};
 
 		function send(method, url, data, cb) {
 			rest_xmlhttp(method || 'POST', url, data, getKey(), function(xmlhttp) {
@@ -53,17 +60,18 @@
 				return;
 			localStorage['accesskey'] = byId('accesskey').value;
 			print("");
-			if (byId('page').value.length > flashLimit) {
-				alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + byId('page').value.length + " bytes.");
+			var data = editorSession.getValue();
+			if (data.length > flashLimit) {
+				alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + data.length + " bytes.");
 				return;
 			}
-			if (byId('page').value.length == 0) {
+			if (data.length == 0) {
 				alert("Nothing to save")
 				return;
 			}
 			isUploadInProcess = true;
 			print("Prepare saving...");
-			flashData = byId('page').value;
+			flashData = data;
 			flashPos = 0;
 			send('POST', '/flash/page/begin', null, function (ok, data) {
 				if (ok) {
@@ -78,11 +86,11 @@
 
 		function preview() {
 			var wnd = window.open();
-			wnd.document.body.innerHTML = byId('page').value;
+			wnd.document.body.innerHTML = editorSession.getValue();
 		}
 
 		function savefile() {
-			var data = byId('page').value;
+			var data = editorSession.getValue();
 			if (data.length == 0)
 				return;
 			var blob = new Blob([data], {type: "octet/stream"}),
@@ -98,7 +106,7 @@
 		function openfile(event) {
 			var reader = new FileReader();
 			reader.onload = function () {
-				byId('page').value = reader.result;
+				editorSession.setValue(reader.result);
 			};
 			reader.readAsText(byId("open").files[0]);
 		}
@@ -106,21 +114,28 @@
 		function init() {
 			byId('accesskey').value = localStorage['accesskey'];
 			byId('open').addEventListener("change", openfile, false);
+
 			send('GET', '/', null, function (ok, data) {
 				if (ok) {
-					byId('page').value = data;
+					editorSession.setValue(data);
 					print("Page loaded " + data.length + " bytes");
 				} else {
 					print("Error while retrieving current page", true);
 				}
 			});
-			window.onbeforeunload = confirmExit;
-			function confirmExit() {
+
+			window.onbeforeunload = function confirmExit() {
 				if (isUploadInProcess)
 					return "Page flashing is in the proccess. Leaving this page will interrupt this process.";
 				if (isModified)
 					return "Page content was modified. Changes will be lost on closing or refreshing this page.";
 				return null;
+			};
+
+			if (typeof ace != 'undefined') {
+				editor = ace.edit('page');
+				editorSession = editor.getSession();
+				editorSession.setMode('ace/mode/html');
 			}
 		}
 	</script>
