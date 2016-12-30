@@ -11,34 +11,40 @@
 #include <osapi.h>
 #include <user_interface.h>
 #include <mem.h>
+#include <c_types.h>
 #include "dhap.h"
 #include "snprintf.h"
 #include "user_config.h"
 #include "dhdebug.h"
-#include "dhap_dnsd.h"
-#include "dhap_web.h"
+#include "dhzc_dnsd.h"
+#include "dhzc_web.h"
 
-void ICACHE_FLASH_ATTR dhap_init() {
-	dhdebug_direct();
-	dhdebug("\r\n**********************************\r\nWi-Fi Configuration Access Point Mode");
-	// initialize Wi-Fi AP
+static struct ip_info *ipinfo = NULL;
+struct softap_config *apconfig = NULL;
+
+void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 	if(!wifi_set_opmode(SOFTAP_MODE))
 		dhdebug("Failed to wifi_set_opmode()");
-	struct softap_config apconfig;
+	apconfig = (struct softap_config *)os_zalloc(sizeof(struct softap_config));;
 	if(!wifi_softap_dhcps_stop())
 		dhdebug("Failed to wifi_softap_dhcps_stop()");
-	os_memset(apconfig, 0, sizeof(apconfig));
-	apconfig.ssid_len = snprintf(apconfig.ssid, sizeof(apconfig.ssid), WIFI_CONFIGURATION_SSID);
-	apconfig.authmode = AUTH_OPEN;
-	apconfig.ssid_hidden = 0;
-	apconfig.channel = 7;
-	apconfig.max_connection = 4;
-	apconfig.beacon_interval = 100;
-	if(!wifi_softap_set_config(&apconfig))
+	apconfig->ssid_len = snprintf(apconfig->ssid, sizeof(apconfig->ssid), ssid);
+	apconfig->authmode = AUTH_OPEN;
+	if(password) {
+		if(password[0]) {
+			apconfig->authmode = AUTH_WPA_WPA2_PSK;
+			snprintf(apconfig->password, sizeof(apconfig->password), password);
+		}
+	}
+	apconfig->ssid_hidden = 0;
+	apconfig->channel = 7;
+	apconfig->max_connection = 4;
+	apconfig->beacon_interval = 100;
+	if(!wifi_softap_set_config(apconfig))
 		dhdebug("Failed to wifi_softap_set_config()");
 	if(!wifi_set_phy_mode(PHY_MODE_11G))
 		dhdebug("Failed to wifi_set_phy_mode()");
-	struct ip_info *ipinfo = (struct ip_info *)os_zalloc(sizeof(struct ip_info));
+	ipinfo = (struct ip_info *)os_zalloc(sizeof(struct ip_info));
 	if(!wifi_get_ip_info(SOFTAP_IF, ipinfo))
 		dhdebug("Failed to wifi_get_ip_info()");
 	IP4_ADDR(&ipinfo->ip, 192, 168, 2, 1);
@@ -49,14 +55,26 @@ void ICACHE_FLASH_ATTR dhap_init() {
 		dhdebug("Failed to wifi_set_ip_info()");
 	if(!wifi_softap_dhcps_start())
 		dhdebug("Failed to wifi_softap_dhcps_start()");
+	unsigned char *bip = (unsigned char *)&ipinfo->ip;
+	dhdebug("Access point is initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
+}
+
+void ICACHE_FLASH_ATTR dhap_zeroconf() {
+	dhdebug_direct();
+	dhdebug("\r\n**********************************\r\nWi-Fi Configuration Access Point Mode");
+
+	dhap_init(WIFI_CONFIGURATION_SSID, NULL);
 
 	// initialize DNS
-	dhap_dnsd_init();
+	dhzc_dnsd_init();
 
 	// initialize HTTP server
-	dhap_web_init();
+	dhzc_web_init();
 
-	unsigned char *bip = (unsigned char *)&ipinfo->ip;
-	dhdebug("Zero configuration server initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
-	dhdebug("Wi-Fi SSID is %s", apconfig.ssid);
+	dhdebug("Zero configuration server is initialized");
+	dhdebug("Wi-Fi SSID is %s", apconfig->ssid);
+}
+
+const struct ip_info * dhap_get_ip_info() {
+	return ipinfo;
 }

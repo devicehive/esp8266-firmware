@@ -1,5 +1,5 @@
 /*
- * dhap_web.h
+ * dhzc_web.h
  *
  * Copyright 2016 DeviceHive
  *
@@ -14,10 +14,10 @@
 #include <user_interface.h>
 #include "httpd.h"
 #include "dhdebug.h"
-#include "dhap_pages.h"
-#include "dhap_post.h"
 #include "dhesperrors.h"
 #include "dhsettings.h"
+#include "dhzc_pages.h"
+#include "dhzc_post.h"
 
 #define WEB_CONF_HOST "devicehive.config"
 #define RECONFIGURE_DELAY_MS 5000
@@ -33,7 +33,7 @@ LOCAL void ICACHE_FLASH_ATTR system_reconfigure(void *arg) {
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR check_if_configured(
 		HTTP_ANSWER *answer) {
 	if(mConfigured) {
-		answer->content.data = dhap_pages_ok(&answer->content.len);
+		answer->content.data = dhzc_pages_ok(&answer->content.len);
 		if(answer->content.data == 0) {
 			return HRCS_INTERNAL_ERROR;
 		}
@@ -50,7 +50,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 		return res;
 	if(path[0] == '/') {
 		if(path[1] == 0) {
-			answer->content.data = dhap_pages_form(&answer->content.len);
+			answer->content.data = dhzc_pages_form(&answer->content.len);
 			if(answer->content.data == 0) {
 				return HRCS_INTERNAL_ERROR;
 			}
@@ -66,14 +66,14 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	if(res != HRCS_NOT_FINISHED)
 		return res;
 	dhdebug("got POST with settings len %u", content_in->len);
-	char *parse_res = dhap_post_parse(content_in->data, content_in->len);
+	char *parse_res = dhzc_post_parse(content_in->data, content_in->len);
 	if(parse_res) {
-		answer->content.data = dhap_pages_error(parse_res, &answer->content.len);
+		answer->content.data = dhzc_pages_error(parse_res, &answer->content.len);
 	} else {
 		if(dhsettings_commit() == 0) {
 			return HRCS_INTERNAL_ERROR;
 		} else {
-			answer->content.data = dhap_pages_ok(&answer->content.len);
+			answer->content.data = dhzc_pages_ok(&answer->content.len);
 			if(answer->content.data == 0) {
 				dhdebug("Generate OK page fail");
 				return HRCS_INTERNAL_ERROR;
@@ -89,7 +89,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	return HRCS_ANSWERED_HTML;
 }
 
-void ICACHE_FLASH_ATTR dhap_web_init() {
+void ICACHE_FLASH_ATTR dhzc_web_init() {
 	httpd_redirect(WEB_CONF_HOST);
 	httpd_init(get_cb, post_cb);
 }

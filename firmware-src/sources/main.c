@@ -103,19 +103,25 @@ void user_rf_pre_init(void) {
 
 void user_init(void) {
 	int ever_saved;
-	if(mSpecialMode) {
+	dhsettings_init(&ever_saved);
+	if(ever_saved == 0) { // if first run on this chip
+		uploadable_page_delete();
+	}
+	if(mSpecialMode || ever_saved == 0) { // if special mode was called by user or if there is no settings
 		system_set_os_print(0);
-		dhsettings_init(&ever_saved);
-		dhap_init();
+		dhap_zeroconf();
 	} else {
 		dhdebug("*****************************");
-		dhsettings_init(&ever_saved);
-		if(ever_saved == 0) { // if first run on this chip
-			uploadable_page_delete();
+		if(dhsettings_get_wifi_mode() == WIFI_MODE_CLIENT) {
+			dhsender_queue_init();
+			dhconnector_init(dhcommands_do);
+			dhgpio_init();
+		} else if(dhsettings_get_wifi_mode() == WIFI_MODE_AP) {
+			dhap_init(dhsettings_get_wifi_ssid(), dhsettings_get_wifi_password());
+			if(dhsettings_get_devicehive_deviceid()[0]) {
+				mdnsd_start(dhsettings_get_devicehive_deviceid(), dhap_get_ip_info()->ip);
+			}
 		}
-		dhsender_queue_init();
-		dhconnector_init(dhcommands_do);
-		dhgpio_init();
 		webserver_init();
 		dhdebug("Initialization completed");
 		dhterminal_init();

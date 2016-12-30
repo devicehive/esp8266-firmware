@@ -82,9 +82,26 @@ LOCAL void ICACHE_FLASH_ATTR get_ssid_cb(const char *ssid) {
 	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_password_cb, 0, 0, DHSETTINGS_PASSWORD_MAX_LENGTH);
 }
 
-void ICACHE_FLASH_ATTR dhterminal_configure_start() {
-	dhuart_send_line("Welcome to the DeviceHive setup utility. Use Ctrl+C to interrupt.");
+void ICACHE_FLASH_ATTR get_mode_cb(const char *mode) {
+	if(os_strcmp(mode, "0") == 0) {
+		dhsettings_set_wifi_mode(WIFI_MODE_CLIENT);
+	} else {
+		dhsettings_set_wifi_mode(WIFI_MODE_AP);
+	}
 	dhuart_send_line("Enter Wi-Fi network SSID.");
 	dhterminal_set_mode(SM_INPUT_MODE, get_ssid_cb, 0, 0, DHSETTINGS_SSID_MAX_LENGTH);
 	dhterminal_set_input(dhsettings_get_wifi_ssid());
+}
+
+LOCAL int ICACHE_FLASH_ATTR configure_mode_filter(char c) {
+	if(c == '0' || c == '1')
+		return 1;
+	return 0;
+}
+
+void ICACHE_FLASH_ATTR dhterminal_configure_start() {
+	dhuart_send_line("Welcome to the DeviceHive setup utility. Use Ctrl+C to interrupt.");
+	dhuart_send_line("Choose Wi-Fi mode: '0' - WiFi client, '1' - WiFi Access Point.");
+	dhterminal_set_mode(SM_INPUT_MODE, get_mode_cb, 0, configure_mode_filter, 1);
+	dhterminal_set_input((dhsettings_get_wifi_mode() == WIFI_MODE_CLIENT) ? "0" : "1");
 }

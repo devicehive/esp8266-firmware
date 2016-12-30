@@ -15,13 +15,13 @@
 #include <espconn.h>
 #include <mem.h>
 #include "dhdebug.h"
-#include "dhap_pages.h"
-#include "dhap_post.h"
 #include "dhesperrors.h"
 #include "dhsettings.h"
 #include "dhstatistic.h"
 #include "snprintf.h"
 #include "dhsettings.h"
+#include "dhzc_pages.h"
+#include "dhzc_post.h"
 #include "irom.h"
 #include "user_config.h"
 
@@ -214,7 +214,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	static const char post[] = "POST ";
 	static const char options[] = "OPTIONS ";
 	static const char host[] = "Host:";
-	RO_DATA char internal[] = "HTTP/1.0 500  Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
+	RO_DATA char internal[] = "HTTP/1.0 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
 	RO_DATA char notfound[] = "HTTP/1.0 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
 	RO_DATA char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
 	RO_DATA char unauthorized[] = "HTTP/1.0 401 Unauthorized\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 12\r\n\r\nUnauthorized";

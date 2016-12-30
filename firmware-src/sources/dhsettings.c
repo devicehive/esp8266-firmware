@@ -28,6 +28,7 @@ typedef struct {
 	char server[DHSETTINGS_SERVER_MAX_LENGTH];
 	char deviceId[DHSETTINGS_DEVICEID_MAX_LENGTH];
 	char accessKey[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
+	WIFI_MODE mode;
 } DH_SETTINGS_DATA;
 
 typedef struct {
@@ -133,6 +134,10 @@ int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
 	return dhsettings_write(NULL);
 }
 
+WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode() {
+	return mSettingsData.mode;
+}
+
 const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {
 	return mSettingsData.ssid;
 }
@@ -157,6 +162,10 @@ LOCAL void ICACHE_FLASH_ATTR set_arg(char *arg, size_t argSize, const char *valu
 	const int len = snprintf(arg, argSize, "%s", value) + 1;
 	if(len < argSize)
 		os_memset(&arg[len], 0, argSize - len);
+}
+
+void ICACHE_FLASH_ATTR dhsettings_set_wifi_mode(WIFI_MODE mode) {
+	mSettingsData.mode = mode;
 }
 
 void ICACHE_FLASH_ATTR dhsettings_set_wifi_ssid(const char *ssid) {
@@ -196,3 +205,4 @@ int ICACHE_FLASH_ATTR dhsettings_server_filter(char c) {
 		return 0;
 	return 1;
 }
+

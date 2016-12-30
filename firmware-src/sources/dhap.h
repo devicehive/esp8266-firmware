@@ -10,8 +10,21 @@
 #define _DHAP_H_
 
 /**
+ *	\brief					Initialize access point.
+ *	\param[in]	ssid		Wireless network name.
+ *	\param[in]	password	Wireless network password. Can be NULL or empty string for open network.
+ */
+void dhap_init(const char *ssid, const char *password);
+
+/**
  *	\brief		Initialize access point and start HTTP and DNS daemon.
  */
-void dhap_init();
+void dhap_zeroconf();
+
+/**
+ *	\brief		Return AP ipinfo.
+ *	\return 	Pointer to ip_info struct.
+ */
+const struct ip_info * dhap_get_ip_info();
 
 #endif /* SOURCES_DHAP_H_ */

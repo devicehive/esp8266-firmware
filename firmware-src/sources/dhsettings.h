@@ -19,6 +19,11 @@
 #define DHSETTINGS_DEVICEID_MAX_LENGTH 128
 /** AccessKey string max length. */
 #define DHSETTINGS_ACCESSKEY_MAX_LENGTH 65
+/** WiFi modes */
+typedef enum {
+	WIFI_MODE_CLIENT,		///< WiFi connects as a client.
+	WIFI_MODE_AP			///< WiFi creates access point.
+} WIFI_MODE;
 
 /**
  *	\brief				Inits settings, reads values from storage.
@@ -41,6 +46,12 @@ int dhsettings_commit();
  *	\return 			Non zero value on success. Zero on error.
  */
 int dhsettings_clear(int force);
+
+/**
+ *	\brief			Get Wi-Fi mode.
+ *	\return 		One of DH_MODE enum value.
+ */
+WIFI_MODE dhsettings_get_wifi_mode();
 
 /**
  *	\brief			Get Wi-Fi SSID.
@@ -73,10 +84,17 @@ const char *dhsettings_get_devicehive_deviceid();
 const char *dhsettings_get_devicehive_acceykey();
 
 /**
+ *	\brief				Set Wi-Fi mode.
+ *	\param[in]	mode	WiFi mode from WIFI_MODE enum.
+ */
+void dhsettings_set_wifi_mode(WIFI_MODE mode);
+
+/**
  *	\brief				Set Wi-Fi SSID.
  *	\param[in]	ssid	Pointer to buffer with null terminated string.
  */
 void dhsettings_set_wifi_ssid(const char *ssid);
+
 /**
  *	\brief				Set Wi-Fi password.
  *	\param[in]	pass	Pointer to buffer with null terminated string.

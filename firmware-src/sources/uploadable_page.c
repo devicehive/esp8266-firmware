@@ -83,6 +83,11 @@ LOCAL SpiFlashOpResult ICACHE_FLASH_ATTR write_zero_byte(unsigned int sector) {
 }
 
 UP_STATUS ICACHE_FLASH_ATTR uploadable_page_delete() {
+	// check if page is already empty
+	unsigned int len;
+	uploadable_page_get(&len);
+	if(len == 0)
+		return UP_STATUS_OK;
 	// set first byte to zero
 	if(write_zero_byte(UPLOADABLE_PAGE_START_SECTOR) == SPI_FLASH_RESULT_OK)
 		return UP_STATUS_OK;

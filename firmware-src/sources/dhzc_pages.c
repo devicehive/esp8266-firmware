@@ -1,5 +1,5 @@
 /*
- * dhap_pages.h
+ * dhzc_pages.h
  *
  * Copyright 2015 DeviceHive
  *
@@ -10,22 +10,25 @@
 #include <c_types.h>
 #include <osapi.h>
 #include <mem.h>
-#include "dhap_pages.h"
 #include "snprintf.h"
 #include "dhsettings.h"
+#include "dhzc_pages.h"
 #include "rand.h"
 #include "user_config.h"
 #include "irom.h"
 
-#define DHAP_PAGE_TITLE_META  "<title>DeviceHive ESP8266 Configuration</title><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
-#define DHAP_PAGE_MAX_SIZE 4096
+#define DHZC_PAGE_TITLE_META  "<title>DeviceHive ESP8266 Configuration</title><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
+#define DHZC_PAGE_MAX_SIZE 4096
 
-RO_DATA char DHAP_PAGE_ERROR[] = "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='red'>%s<br>Go <a href='javascript:history.back()'>back</a> to try again.</font></body></html>";
-RO_DATA char DHAP_PAGE_OK[] =  "<html><head>"DHAP_PAGE_TITLE_META"</head><body><font color='green'>Configuration was saved. System will reboot shortly.</font></body></html>";
-RO_DATA char DHAP_PAGE_FORM[] =  "<html>" \
-							"<head>"DHAP_PAGE_TITLE_META\
-							"<style type='text/css'>input{width:100%%;}input[type=submit]{width:30%%;}</style></head>"\
+RO_DATA char DHZC_PAGE_ERROR[] = "<html><head>"DHZC_PAGE_TITLE_META"</head><body><font color='red'>%s<br>Go <a href='javascript:history.back()'>back</a> to try again.</font></body></html>";
+RO_DATA char DHZC_PAGE_OK[] =  "<html><head>"DHZC_PAGE_TITLE_META"</head><body><font color='green'>Configuration was saved. System will reboot shortly.</font></body></html>";
+RO_DATA char DHZC_PAGE_FORM[] =  "<html>" \
+							"<head>"DHZC_PAGE_TITLE_META\
+							"<style type='text/css'>input[type=text],input[type=password]{width:100%%;}input[type=submit]{width:30%%;}</style></head>"\
 							"<body><form method='post'>"\
+							    "WiFi mode:<br>"\
+							    "<input type='radio' name='mode' value='cl' %s>Client&emsp;"\
+							    "<input type='radio' name='mode' value='ap' %s>Access Point<br>"\
 								"Wi-Fi SSID:<br>"\
 								"<input type='text' name='ssid' value='%s'><br><br>"\
 								"Wi-Fi Password(leave empty to keep current):<br>"\
@@ -43,20 +46,20 @@ LOCAL char *mPageBuffer = 0;
 
 LOCAL char * ICACHE_FLASH_ATTR init() {
 	if(mPageBuffer == 0)
-		mPageBuffer = (char *)os_malloc(DHAP_PAGE_MAX_SIZE);
+		mPageBuffer = (char *)os_malloc(DHZC_PAGE_MAX_SIZE);
 	return mPageBuffer;
 }
 
-const char * ICACHE_FLASH_ATTR dhap_pages_error(const char *error, unsigned int *len) {
+const char * ICACHE_FLASH_ATTR dhzc_pages_error(const char *error, unsigned int *len) {
 	if(init() == 0)
 		return 0;
-	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_ERROR, error);
+	*len = snprintf(mPageBuffer, DHZC_PAGE_MAX_SIZE, DHZC_PAGE_ERROR, error);
 	return mPageBuffer;
 }
 
-const char * ICACHE_FLASH_ATTR dhap_pages_ok(unsigned int *len) {
-	*len = sizeof(DHAP_PAGE_OK) - 1;
-	return DHAP_PAGE_OK;
+const char * ICACHE_FLASH_ATTR dhzc_pages_ok(unsigned int *len) {
+	*len = sizeof(DHZC_PAGE_OK) - 1;
+	return DHZC_PAGE_OK;
 }
 
 LOCAL void ICACHE_FLASH_ATTR esc_cpystr(char *dst, const char *src) {
@@ -82,7 +85,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR esc_len(const char *str) {
 	return res;
 }
 
-const char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
+const char * ICACHE_FLASH_ATTR dhzc_pages_form(unsigned int *len) {
 	if(init() == 0)
 		return 0;
 	const char *ssid = dhsettings_get_wifi_ssid();
@@ -102,6 +105,14 @@ const char * ICACHE_FLASH_ATTR dhap_pages_form(unsigned int *len) {
 		esc_cpystr(esc_deviceid, deviceid);
 	else
 		esc_deviceid_len = rand_generate_deviceid(esc_deviceid);
-	*len = snprintf(mPageBuffer, DHAP_PAGE_MAX_SIZE, DHAP_PAGE_FORM, esc_ssid, esc_server, esc_deviceid);
+	const char *cb1 = "checked='checked'";
+	const char *cb2 = "";
+	if(dhsettings_get_wifi_mode() == WIFI_MODE_AP) {
+		const char *t = cb2;
+		cb2 = cb1;
+		cb1 = t;
+	}
+	*len = snprintf(mPageBuffer, DHZC_PAGE_MAX_SIZE, DHZC_PAGE_FORM, cb1, cb2,
+			esc_ssid, esc_server, esc_deviceid);
 	return mPageBuffer;
 }

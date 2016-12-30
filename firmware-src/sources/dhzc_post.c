@@ -1,5 +1,5 @@
 /*
- * dhap_post.h
+ * dhzc_post.h
  *
  * Copyright 2015 DeviceHive
  *
@@ -11,9 +11,9 @@
 #include <osapi.h>
 #include <os_type.h>
 #include <user_interface.h>
-#include "dhap_post.h"
 #include "dhsettings.h"
 #include "dhutils.h"
+#include "dhzc_post.h"
 
 typedef int (*Char_Test)(char c);
 
@@ -56,9 +56,10 @@ LOCAL int ICACHE_FLASH_ATTR read_value(const char *data, unsigned int len, char 
 	return 1;
 }
 
-char * ICACHE_FLASH_ATTR dhap_post_parse(const char *data, unsigned int len) {
+char * ICACHE_FLASH_ATTR dhzc_post_parse(const char *data, unsigned int len) {
 	if(len == 0)
 		return "POST data not found.";
+	const char mode[] = "mode=";
 	const char ssid[] = "ssid=";
 	const char pass[] = "pass=";
 	const char url[] = "url=";
@@ -69,7 +70,22 @@ char * ICACHE_FLASH_ATTR dhap_post_parse(const char *data, unsigned int len) {
 	unsigned char found = 0;
 	while(pos < len) {
 		unsigned int rb = sizeof(value);
-		if(os_strncmp(&data[pos], ssid, sizeof(ssid) - 1) == 0) {
+		if(os_strncmp(&data[pos], mode, sizeof(mode) - 1) == 0) {
+			pos += sizeof(mode) - 1;
+			if(pos <= len) {
+				int vl = read_value(&data[pos], len - pos, value, &rb, 0);
+				if(vl)
+					pos += rb;
+				if(vl && os_strcmp(value, "cl") == 0) {
+					dhsettings_set_wifi_mode(WIFI_MODE_CLIENT);
+				} else if(vl && os_strcmp(value, "ap") == 0) {
+					dhsettings_set_wifi_mode(WIFI_MODE_AP);
+				} else {
+					return "Wrong WiFi mode.";
+				}
+				found = 1;
+			}
+		} else if(os_strncmp(&data[pos], ssid, sizeof(ssid) - 1) == 0) {
 			pos += sizeof(ssid) - 1;
 			if(pos <= len) {
 				int vl = read_value(&data[pos], len - pos, value, &rb, 0);

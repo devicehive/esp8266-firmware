@@ -1,5 +1,5 @@
 /*
- * dhap_dnsd.h
+ * dhzc_dnsd.h
  *
  * Copyright 2015 DeviceHive
  *
@@ -13,9 +13,9 @@
 #include <user_interface.h>
 #include <espconn.h>
 #include <mem.h>
-#include "dhap_dnsd.h"
 #include "dns.h"
 #include "dhdebug.h"
+#include "dhzc_dnsd.h"
 
 #define MAX_CONNECTIONS 2
 
@@ -42,12 +42,12 @@ LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 			sizeof(info.ip.addr), (uint8_t *)&info.ip.addr, NULL, NULL);
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_disconnect_cb(void *arg) {
+LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_disconnect_cb(void *arg) {
 	mDNSdConnected--;
 	dhdebug("dnsd disconnect, %d left", mDNSdConnected);
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_sent_cb(void *arg) {
+LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_sent_cb(void *arg) {
 	struct espconn *conn = arg;
 	mSendingInProgress = 0;
 	if(conn->type & ESPCONN_TCP)
@@ -55,7 +55,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_sent_cb(void *arg) {
 	dhdebug("dnsd sent");
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_recv_cb(void *arg, char *data, unsigned short len) {
+LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_recv_cb(void *arg, char *data, unsigned short len) {
 	struct espconn *conn = arg;
 	if(mSendingInProgress || len + sizeof(DNS_ANSWER) > DNS_ANSWER_BUF_SIZE) {
 		if(mSendingInProgress)
@@ -101,12 +101,12 @@ LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_recv_cb(void *arg, char *data, unsigned s
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_reconnect_cb(void *arg, sint8 err) {
+LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_reconnect_cb(void *arg, sint8 err) {
 	mDNSdConnected--;
 	dhdebug("dnsd connect error %d", err);
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_connect_cb(void *arg) {
+LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_connect_cb(void *arg) {
 	struct espconn *conn = arg;
 	mDNSdConnected++;
 	if(mDNSdConnected > MAX_CONNECTIONS) {
@@ -114,13 +114,13 @@ LOCAL void ICACHE_FLASH_ATTR dhap_dnsd_connect_cb(void *arg) {
 		dhdebug("dnsd refuse");
 		return;
 	}
-	espconn_regist_recvcb(conn, dhap_dnsd_recv_cb);
-	espconn_regist_disconcb(conn, dhap_dnsd_disconnect_cb);
-	espconn_regist_sentcb(conn, dhap_dnsd_sent_cb);
+	espconn_regist_recvcb(conn, dhzc_dnsd_recv_cb);
+	espconn_regist_disconcb(conn, dhzc_dnsd_disconnect_cb);
+	espconn_regist_sentcb(conn, dhzc_dnsd_sent_cb);
 	dhdebug("dnsd connected");
 }
 
-void ICACHE_FLASH_ATTR dhap_dnsd_init() {
+void ICACHE_FLASH_ATTR dhzc_dnsd_init() {
 	mDNSAnswerBuffer = (char *)os_malloc(DNS_ANSWER_BUF_SIZE);
 
 	esp_tcp *dnsdTcp = (esp_tcp *)os_zalloc(sizeof(esp_tcp));
@@ -130,8 +130,8 @@ void ICACHE_FLASH_ATTR dhap_dnsd_init() {
 	dnsdConnTCP->state = ESPCONN_NONE;
 	dnsdConnTCP->proto.tcp = dnsdTcp;
 
-	espconn_regist_connectcb(dnsdConnTCP, dhap_dnsd_connect_cb);
-	espconn_regist_reconcb(dnsdConnTCP, dhap_dnsd_reconnect_cb);
+	espconn_regist_connectcb(dnsdConnTCP, dhzc_dnsd_connect_cb);
+	espconn_regist_reconcb(dnsdConnTCP, dhzc_dnsd_reconnect_cb);
 	espconn_accept(dnsdConnTCP);
 
 	esp_udp *dnsdUdp = (esp_udp *)os_zalloc(sizeof(esp_tcp));
@@ -141,7 +141,7 @@ void ICACHE_FLASH_ATTR dhap_dnsd_init() {
 	dnsdConnUDP->state = ESPCONN_NONE;
 	dnsdConnUDP->proto.udp = dnsdUdp;
 
-	espconn_regist_recvcb(dnsdConnUDP, dhap_dnsd_recv_cb);
-	espconn_regist_sentcb(dnsdConnUDP, dhap_dnsd_sent_cb);
+	espconn_regist_recvcb(dnsdConnUDP, dhzc_dnsd_recv_cb);
+	espconn_regist_sentcb(dnsdConnUDP, dhzc_dnsd_sent_cb);
 	espconn_create(dnsdConnUDP);
 }
