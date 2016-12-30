@@ -38,6 +38,8 @@ void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 		if(os_strlen(password) >= 8) {
 			apconfig->authmode = AUTH_WPA_WPA2_PSK;
 			snprintf(apconfig->password, sizeof(apconfig->password), "%s", password);
+		} else {
+			dhdebug("AP password is too short, use open network");
 		}
 	}
 	apconfig->ssid_hidden = 0;
