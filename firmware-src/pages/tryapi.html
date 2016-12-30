@@ -2,23 +2,21 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>RESTful API</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
-		function printinput(text) {
-			document.getElementById('input').innerHTML = text;
-		}
-
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
+	<script src="libs.js"></script>
+	<style>
+	#output, #input pre { white-space: pre-wrap }
+	</style>
+	<script>
+		function printinput(obj) {
+			replaceDom(byId('input'), obj);
 		}
 
 		function run() {
 			print('');
-			key = document.getElementById('accesskey').value;
+			var key = byId('accesskey').value,
+				command = byId('command').value,
+				parameters = byId('parameters').value;
 			localStorage['accesskey'] = key;
-			command = document.getElementById('command').value;
-			parameters = document.getElementById('parameters').value;
 			if (parameters.length > 0) {
 				try {
 					parameters = JSON.parse(parameters);
@@ -27,21 +25,30 @@
 					return;
 				}
 			}
-			printinput('This command for cURL util:<br><code>curl -i -X POST  \\<br>	 -H "Authorization: Bearer YourAccessKeyHere="  \\<br>'
-				+ (Object.keys(parameters).length > 0 ? '	 -d &#39;' + JSON.stringify(parameters) + '&#39;  \\<br>' : '') + ' http://' + 
-				window.location.hostname + '/api/' + command + '</code>');
-			rest_xmlhttp(window.location.hostname, key, command, parameters, function (xmlhttp) {
+			var base = location.protocol + '//' + location.host;
+			var params = '';
+			if (Object.keys(parameters).length > 0)
+				params = '\t-d \'' + JSON.stringify(parameters) + '\' \\\n';
+			printinput(['span', {},
+				'This command for cURL util:',
+				['pre', {},
+					'curl -i -X POST  \\\n',
+					'\t-H "Authorization: Bearer YourAccessKeyHere=" \\\n',
+					params + '\t' + base + '/api/' + command
+				]]);
+			ajax('POST', '/api/' + command, parameters, key, function (xmlhttp) {
 				err = xmlhttp.status < 200 || xmlhttp.status > 299;
 				if (xmlhttp.status == 0) {
 					print('Response is not received', true);
 				} else {
-					print('Response is<br>HTTP/1.0 ' + xmlhttp.status + ' ' + xmlhttp.statusText + '<br>' + xmlhttp.getAllResponseHeaders().split('\r\n').join('<br>') + '<br>' + xmlhttp.responseText, err);
+					print('Response is\nHTTP/1.0 ' + xmlhttp.status + ' ' + xmlhttp.statusText + '\n' +
+						xmlhttp.getAllResponseHeaders() + '\n' + xmlhttp.responseText, err);
 				}
 			});
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
+			byId('accesskey').value = localStorage['accesskey'];
 		}
 	</script>
 </head>

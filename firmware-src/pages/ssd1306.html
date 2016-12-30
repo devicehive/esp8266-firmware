@@ -2,8 +2,8 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>SSD1306</title>
-	<script type="text/javascript" src="librest.js"></script>
-	<script type="text/javascript">
+	<script src="libs.js"></script>
+	<script>
 		var commandList = [];
 		var imageData;
 		var imageWidth;
@@ -12,19 +12,15 @@
 		var SCL;
 		var address;
 		var sending;
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
 
-		function send_command(command, parameters) {
-			rest_common(command, parameters, function (err, res) {
+		function send_command_ssd(command, parameters) {
+			send_command(command, parameters, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
 					if (commandList.length > 0) {
 						item = commandList.shift();
-						send_command(item['command'], item['parameters']);
+						send_command_ssd(item['command'], item['parameters']);
 					} else {
 						if (!sending)
 							print("Done!");
@@ -40,7 +36,7 @@
 			}
 			sending = true;
 			commandList = [];
-			send_command(command, parameters);
+			send_command_ssd(command, parameters);
 		}
 
 		function write_ssd1306_command(command) {
@@ -63,14 +59,14 @@
 
 		function run() {
 			print('');
-			if (!document.getElementById("image").files[0]) {
+			if (!byId("image").files[0]) {
 				print("Choose image first please", true);
 				return;
 			}
-			localStorage['accesskey'] = document.getElementById('accesskey').value;
-			SDA = document.getElementById('sda').value;
-			SCL = document.getElementById('scl').value;
-			address = document.getElementById('address').value;
+			localStorage['accesskey'] = byId('accesskey').value;
+			SDA = byId('sda').value;
+			SCL = byId('scl').value;
+			address = byId('address').value;
 			sending = false;
 
 			write_ssd1306_command(0x8D);
@@ -107,11 +103,11 @@
 		}
 
 		function draw(event) {
-			var canvas = document.getElementById("canvas");
+			var canvas = byId("canvas");
 			var cnvctx = canvas.getContext("2d");
 			var image = new Image();
 			var URL = window.webkitURL || window.URL;
-			var url = URL.createObjectURL(document.getElementById("image").files[0]);
+			var url = URL.createObjectURL(byId("image").files[0]);
 			image.onload = function () {
 				cnvctx.drawImage(image, 0, 0);
 				imageData = cnvctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -137,8 +133,8 @@
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
-			document.getElementById('image').addEventListener("change", draw, false);
+			byId('accesskey').value = localStorage['accesskey'];
+			byId('image').addEventListener("change", draw, false);
 		}
 	</script>
 </head>

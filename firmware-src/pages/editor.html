@@ -2,30 +2,28 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
 	<title>Editor</title>
-	<script type="text/javascript">
+	<style>textarea, .ace_editor { width: 100%; height: 400px }</style>
+	<script src="libs.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.2.6/ace.js"></script>
+	<script>
 		var isUploadInProcess = false;
 		var isModified = false;
 		var flashPos = 0;
 		var flashLen = 1024;
 		var flashData;
 		var flashLimit = 65536;
-		function print(text, err = false) {
-			document.getElementById('output').style.color = err ? 'red' : 'green';
-			document.getElementById('output').innerHTML = text;
-		}
+		var editor;
+		var editorSession = {
+			getValue: function() { return byId('page').value; },
+			setValue: function(value) { byId('page').value = value; }
+		};
 
-		function send(url, data, cb, method = 'POST') {
-			var xmlhttp = new XMLHttpRequest();
-			xmlhttp.open(method, "http://" + window.location.hostname + "/" + url, true);
-			xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage['accesskey']);
-			xmlhttp.onreadystatechange = function () {
-				if (xmlhttp.readyState == 4) {
-					if (xmlhttp.status == 401)
-						alert("Wrong access key");
-					cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);
-				}
-			}
-			xmlhttp.send(data);
+		function send(method, url, data, cb) {
+			ajax(method, url, data, getKey(), function(xmlhttp) {
+				if (xmlhttp.status == 401)
+					alert("Wrong access key");
+				cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);
+			});
 		}
 
 		function flash_clenup() {
@@ -35,13 +33,13 @@
 
 		function flash_data() {
 			print("Flashing " + Math.floor(flashPos * 100 / flashData.length) + "%...");
-			endchar = ((flashPos + flashLen) < flashData.length) ? (flashPos + flashLen) : (flashPos + flashData.length - flashPos);
-			send("flash/page/put", flashData.substring(flashPos, endchar), function (ok, data) {
+			var endchar = Math.min(flashPos + flashLen, flashData.length);
+			send('POST', '/flash/page/put', flashData.substring(flashPos, endchar), function (ok, data) {
 				if (ok) {
 					flashPos += flashLen;
 					if (flashPos >= flashData.length) {
 						print("Finalizing...");
-						send("flash/page/finish", null, function (ok, data) {
+						send('POST', '/flash/page/finish', null, function (ok, data) {
 							print(ok ? "Succefully done, " + flashData.length + " bytes were written" : "Eror while finilizing", !ok);
 							isModified = false;
 							flash_clenup();
@@ -59,21 +57,22 @@
 		function flash() {
 			if (isUploadInProcess)
 				return;
-			localStorage['accesskey'] = document.getElementById('accesskey').value;
+			localStorage['accesskey'] = byId('accesskey').value;
 			print("");
-			if (document.getElementById('page').value.length > flashLimit) {
-				alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + document.getElementById('page').value.length + " bytes.");
+			var data = editorSession.getValue();
+			if (data.length > flashLimit) {
+				alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + data.length + " bytes.");
 				return;
 			}
-			if (document.getElementById('page').value.length == 0) {
+			if (data.length == 0) {
 				alert("Nothing to save")
 				return;
 			}
 			isUploadInProcess = true;
 			print("Prepare saving...");
-			flashData = document.getElementById('page').value;
+			flashData = data;
 			flashPos = 0;
-			send("flash/page/begin", null, function (ok, data) {
+			send('POST', '/flash/page/begin', null, function (ok, data) {
 				if (ok) {
 					print("Flashing procedure is initialized");
 					flash_data();
@@ -85,15 +84,15 @@
 		}
 
 		function preview() {
-			wnd = window.open();
-			wnd.document.body.innerHTML = document.getElementById('page').value;
+			var wnd = window.open();
+			wnd.document.body.innerHTML = editorSession.getValue();
 		}
 
 		function savefile() {
-			data = document.getElementById('page').value;
+			var data = editorSession.getValue();
 			if (data.length == 0)
 				return;
-			blob = new Blob([data], {type: "octet/stream"}),
+			var blob = new Blob([data], {type: "octet/stream"}),
 				atag = document.createElement('a');
 			atag.href = URL.createObjectURL(blob);
 			atag.target = '_blank';
@@ -106,29 +105,36 @@
 		function openfile(event) {
 			var reader = new FileReader();
 			reader.onload = function () {
-				document.getElementById('page').value = reader.result;
+				editorSession.setValue(reader.result);
 			};
-			reader.readAsText(document.getElementById("open").files[0]);
+			reader.readAsText(byId("open").files[0]);
 		}
 
 		function init() {
-			document.getElementById('accesskey').value = localStorage['accesskey'];
-			document.getElementById('open').addEventListener("change", openfile, false);
-			send("", null, function (ok, data) {
+			byId('accesskey').value = localStorage['accesskey'];
+			byId('open').addEventListener("change", openfile, false);
+
+			send('GET', '/', null, function (ok, data) {
 				if (ok) {
-					document.getElementById('page').value = data;
+					editorSession.setValue(data);
 					print("Page loaded " + data.length + " bytes");
 				} else {
 					print("Error while retrieving current page", true);
 				}
-			}, 'GET');
-			window.onbeforeunload = confirmExit;
-			function confirmExit() {
+			});
+
+			window.onbeforeunload = function confirmExit() {
 				if (isUploadInProcess)
 					return "Page flashing is in the proccess. Leaving this page will interrupt this process.";
 				if (isModified)
-					return "Page content was modified. Changes will be lost on closing or refreshing this page."
+					return "Page content was modified. Changes will be lost on closing or refreshing this page.";
 				return null;
+			};
+
+			if (typeof ace != 'undefined') {
+				editor = ace.edit('page');
+				editorSession = editor.getSession();
+				editorSession.setMode('ace/mode/html');
 			}
 		}
 	</script>
@@ -143,7 +149,7 @@
 </div>
 <div class="content">
 	<div class="form-block">
-		<button class="btn_event" type="button" onclick="document.getElementById('open').click();">Open...</button>
+		<button class="btn_event" type="button" onclick="byId('open').click();">Open...</button>
 		<input  class="btn_event" type="file" id="open" style="display:none;">
 		<button class="btn_event" type="button" onclick="savefile();">Save</button>
 		<button class="btn_event" type="button" onclick="preview();">Preview</button>
