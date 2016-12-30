@@ -36,7 +36,7 @@ LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *pa
 LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
 	HTTP_RESPONSE_STATUS res;
-	RO_DATA char default_page[] = "<html><head><meta http-equiv=\"refresh\" content=\"5; url=./help.html\" /></head><body>Page is not uploaded. Redirecting to <a href=\"./help.html\">the help page...</a></body></html>";
+	RO_DATA char default_page[] = "<html>\n\t<head>\n\t\t<meta http-equiv=\"refresh\" content=\"5; url=./help.html\"/>\n\t</head>\n\t<body>\n\t\tPage is not uploaded. Redirecting to <a href=\"./help.html\">the help page...</a>\n\t</body>\n</html>";
 	if(check_rest(&res, path, key, content_in, answer)) {
 		return res;
 	}
