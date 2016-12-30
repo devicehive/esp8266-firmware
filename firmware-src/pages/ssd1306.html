@@ -13,14 +13,14 @@
 		var address;
 		var sending;
 
-		function send_command(command, parameters) {
-			rest('/api/' + command, parameters, getKey(), function (err, res) {
+		function send_command_ssd(command, parameters) {
+			send_command(command, parameters, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
 					if (commandList.length > 0) {
 						item = commandList.shift();
-						send_command(item['command'], item['parameters']);
+						send_command_ssd(item['command'], item['parameters']);
 					} else {
 						if (!sending)
 							print("Done!");
@@ -36,7 +36,7 @@
 			}
 			sending = true;
 			commandList = [];
-			send_command(command, parameters);
+			send_command_ssd(command, parameters);
 		}
 
 		function write_ssd1306_command(command) {

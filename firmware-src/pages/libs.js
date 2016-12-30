@@ -1,5 +1,5 @@
 // ajax functions
-function rest_xmlhttp(verb, url, params, key, cb) {
+function ajax(verb, url, params, key, cb) {
 	var xmlhttp = new XMLHttpRequest();
 	xmlhttp.open(verb, url);
 	xmlhttp.setRequestHeader('Authorization', 'Bearer ' + key);
@@ -18,8 +18,8 @@ function rest_xmlhttp(verb, url, params, key, cb) {
 	}
 }
 
-function rest(command, params, key, cb) {
-	rest_xmlhttp('POST', '/api/' + command, params, key, function(xmlhttp) {
+function send_command(command, params, key, cb) {
+	ajax('POST', '/api/' + command, params, key, function(xmlhttp) {
 		var res = xmlhttp.responseText;
 		try {
 			res = JSON.parse(res);

@@ -5,7 +5,7 @@
 	<script src="libs.js"></script>
 	<script>
 		function get(pin) {
-			rest('/api/gpio/read', data, getKey(), function (err, res) {
+			send_command('gpio/read', data, getKey(), function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
 				else
@@ -17,7 +17,7 @@
 			var json = {}
 			json[String(pin)] = val;
 			print('');
-			rest('/api/gpio/write', data, getKey(), function (err, res) {
+			send_command('gpio/write', data, getKey(), function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
 				else

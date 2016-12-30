@@ -19,7 +19,7 @@
 		};
 
 		function send(method, url, data, cb) {
-			rest_xmlhttp(method || 'POST', url, data, getKey(), function(xmlhttp) {
+			ajax(method, url, data, getKey(), function(xmlhttp) {
 				if (xmlhttp.status == 401)
 					alert("Wrong access key");
 				cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);

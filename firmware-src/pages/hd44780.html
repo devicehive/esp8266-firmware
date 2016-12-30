@@ -12,7 +12,7 @@
 				"address": byId('address').value,
 				"text": byId('text').value
 			};
-			rest('/api/i2c/write', parameters, getKey(), function (err, res) {
+			send_command('i2c/write', parameters, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {

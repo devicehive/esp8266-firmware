@@ -24,7 +24,7 @@
 				"count": 1
 			};
 
-			rest('/api/i2c/master/read', parameters, getKey(), function (err, res) {
+			send_command('i2c/master/read', parameters, getKey(), function (err, res) {
 				if(!err) {
 					byId('output').innerHTML += 'Found ' + current_addr + '<br>';
 				}

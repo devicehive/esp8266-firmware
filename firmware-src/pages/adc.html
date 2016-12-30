@@ -7,7 +7,7 @@
 		function run() {
 			if(!isrun)
 				return;
-			rest('/api/adc/read', null, getKey(), function (err, res) {
+			send_command('adc/read', null, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {

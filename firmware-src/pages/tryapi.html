@@ -36,7 +36,7 @@
 					'\t-H "Authorization: Bearer YourAccessKeyHere=" \\\n',
 					params + '\t' + base + '/api/' + command
 				]]);
-			rest_xmlhttp('POST', '/api/' + command, parameters, key, function (xmlhttp) {
+			ajax('POST', '/api/' + command, parameters, key, function (xmlhttp) {
 				err = xmlhttp.status < 200 || xmlhttp.status > 299;
 				if (xmlhttp.status == 0) {
 					print('Response is not received', true);

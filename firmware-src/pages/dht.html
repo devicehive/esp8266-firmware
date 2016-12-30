@@ -8,7 +8,7 @@
 			if(!isrun)
 				return;
 			type = byId('dht11').checked ? 'dht11' : 'dht22';
-			rest('devices/' + type + '/read', null, getKey(), function (err, res) {
+			send_command('devices/' + type + '/read', null, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
