@@ -101,6 +101,14 @@ void user_rf_pre_init(void) {
 	rtc_mem_check(0);
 }
 
+void ICACHE_FLASH_ATTR system_init_done(void) {
+	if(dhsettings_get_wifi_mode() == WIFI_MODE_AP &&
+			dhsettings_get_devicehive_deviceid()[0]) {
+		mdnsd_start(dhsettings_get_devicehive_deviceid(), dhap_get_ip_info()->ip.addr);
+	}
+	dhdebug("Initialization completed");
+}
+
 void user_init(void) {
 	int ever_saved;
 	dhsettings_init(&ever_saved);
@@ -118,12 +126,9 @@ void user_init(void) {
 			dhgpio_init();
 		} else if(dhsettings_get_wifi_mode() == WIFI_MODE_AP) {
 			dhap_init(dhsettings_get_wifi_ssid(), dhsettings_get_wifi_password());
-			if(dhsettings_get_devicehive_deviceid()[0]) {
-				mdnsd_start(dhsettings_get_devicehive_deviceid(), dhap_get_ip_info()->ip);
-			}
 		}
 		webserver_init();
-		dhdebug("Initialization completed");
+		system_init_done_cb(system_init_done);
 		dhterminal_init();
 	}
 }
