@@ -10,7 +10,7 @@
 			params[byId('pin').value] = dc;
 			params['frequency'] = frequency;
 			params['count'] = count;
-			send_command('pwm/control', params, function (err, res) {
+			send_command('pwm/control', params, getKey(), function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
 			});
