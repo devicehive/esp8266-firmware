@@ -17,7 +17,7 @@
 			var json = {}
 			json[String(pin)] = val;
 			print('');
-			send_command('gpio/write', null, getKey(), function (err, res) {
+			send_command('gpio/write', json, getKey(), function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
 				else
