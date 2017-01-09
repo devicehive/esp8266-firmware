@@ -22,11 +22,8 @@ LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *pa
 	static const char api[] = "/api";
 	if(os_strncmp(path, api, sizeof(api) - 1) == 0) {
 		const char *p = &path[sizeof(api) - 1];
-		if(p[0] == 0) {
-			*res = rest_handle(p, key, content_in, answer);
-			return 1;
-		}else if(p[0] == '/') {
-			*res = rest_handle(&p[1], key, content_in, answer);
+		if(p[0] == 0 || p[0] == '/') {
+			*res = rest_handle((p[0] == 0) ? p : &p[1], key, content_in, answer);
 			return 1;
 		}
 	}

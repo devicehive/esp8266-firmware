@@ -93,7 +93,6 @@ LOCAL void ICACHE_FLASH_ATTR printIpInfo(uint8 if_index) {
 void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	uint8 mac[6];
 	char digitBuff[32];
-	struct station_config stationConfig;
 
 	const DHSTATISTIC *stat = dhstatistic_get_statistic();
 
@@ -106,9 +105,13 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	}
 
 	if(wifi_get_opmode() == SOFTAP_MODE) {
-		dhuart_send_line(" is in acess point mode.");
+		struct softap_config softapConfig;
+		dhuart_send_str(" is in AP mode, SSID ");
+		wifi_softap_get_config(&softapConfig);
+		dhuart_send_line(softapConfig.ssid);
 		printIpInfo(SOFTAP_IF);
 	} else {
+		struct station_config stationConfig;
 		if(!wifi_station_get_config(&stationConfig)) {
 			os_memset(&stationConfig, 0, sizeof(stationConfig));
 			os_strcpy(stationConfig.ssid, "[Can not get SSID]");
@@ -196,6 +199,9 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->notificationsTotal, stat->notificationsDroppedCount);
 	dhuart_send_line(digitBuff);
 
+	dhuart_send_str("Local REST requests/errors: ");
+	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->localRestRequestsCount, stat->localRestResponcesErrors);
+	dhuart_send_line(digitBuff);
 
 	dhuart_send_str("Free heap size: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%d", system_get_free_heap_size());

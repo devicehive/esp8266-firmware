@@ -58,6 +58,14 @@ void ICACHE_FLASH_ATTR dhstatistic_inc_responces_dropped_count() {
 	mStatistic.responcesDroppedCount++;
 }
 
+void dhstatistic_inc_local_rest_requests_count() {
+	mStatistic.localRestRequestsCount++;
+}
+
+void dhstatistic_inc_local_rest_responses_errors() {
+	mStatistic.localRestResponcesErrors++;
+}
+
 const DHSTATISTIC* ICACHE_FLASH_ATTR dhstatistic_get_statistic() {
 	return &mStatistic;
 }

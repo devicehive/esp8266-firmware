@@ -17,6 +17,7 @@
 #include "dhsender_data.h"
 #include "user_config.h"
 #include "irom.h"
+#include "dhstatistic.h"
 
 RO_DATA char desription[] = "<html><body>This is firmware RESTfull API endpoint. "\
 	"Please follow the firmware manual to use it.<br><a href='http://devicehive.com/' "\
@@ -44,28 +45,31 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 			answer->ok = 0;
 			answer->content.data = error;
 			answer->content.len = sizeof(error) - 1;
-			return;
+		} else {
+			int res = dhsender_data_to_json(buf, 2*INTERFACES_BUF_SIZE, 0, data_type, &data,
+					data_len, pin);
+			if(res < 0) {
+				os_free(buf);
+				RO_DATA char error[] = "Failed to build json";
+				answer->ok = 0;
+				answer->content.data = error;
+				answer->content.len = sizeof(error) - 1;
+			} else {
+				answer->content.data = buf;
+				answer->content.len = res;
+				answer->free_content = 1;
+			}
 		}
-		int res = dhsender_data_to_json(buf, 2*INTERFACES_BUF_SIZE, 0, data_type, &data,
-				data_len, pin);
-		if(res < 0) {
-			os_free(buf);
-			RO_DATA char error[] = "Failed to build json";
-			answer->ok = 0;
-			answer->content.data = error;
-			answer->content.len = sizeof(error) - 1;
-			return;
-		}
-		answer->content.data = buf;
-		answer->content.len = res;
-		answer->free_content = 1;
 	}
+	if(answer->ok == 0)
+		dhstatistic_inc_local_rest_responses_errors();
 	va_end(ap);
 }
 
 HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char *key,
 		HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
 	static const char cint[] = "/int";
+	dhstatistic_inc_local_rest_requests_count();
 	if(path[0] == 0) {
 		answer->content.data = desription;
 		answer->content.len = sizeof(desription) - 1;

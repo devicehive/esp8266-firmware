@@ -22,6 +22,8 @@ typedef struct {
 		unsigned int responcesTotal;			///< Attempts number of creating responses.
 		unsigned int notificationsDroppedCount;	///< Number of dropped notifications.
 		unsigned int responcesDroppedCount;		///< Number of dropped responses.
+		unsigned int localRestRequestsCount;	///< Number of requests received via local REST.
+		unsigned int localRestResponcesErrors;	///< Number of errors in responses to local REST.
 } DHSTATISTIC;
 
 /**
@@ -80,6 +82,16 @@ void dhstatistic_inc_responces_count();
  *	\brief				Increment number of dropped responses.
  */
 void dhstatistic_inc_responces_dropped_count();
+
+/**
+ *	\brief				Increment number REST requests.
+ */
+void dhstatistic_inc_local_rest_requests_count();
+
+/**
+ *	\brief				Increment number of REST requests which were answered with error.
+ */
+void dhstatistic_inc_local_rest_responses_errors();
 
 /**
  *	\brief				Return statistic.
