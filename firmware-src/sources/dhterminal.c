@@ -340,7 +340,6 @@ void ICACHE_FLASH_ATTR dhterminal_init() {
 	dhuart_set_mode(DUM_PER_BYTE);
 	dhuart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
 	dhterminal_reset();
-	dhdebug_terminal();
 }
 
 int ICACHE_FLASH_ATTR dhterminal_is_in_use() {

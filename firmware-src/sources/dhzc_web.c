@@ -14,6 +14,7 @@
 #include <user_interface.h>
 #include "httpd.h"
 #include "dhdebug.h"
+#include "dhuart.h"
 #include "dhesperrors.h"
 #include "dhsettings.h"
 #include "dhzc_pages.h"
@@ -27,6 +28,7 @@ LOCAL os_timer_t mReconfigureTimer;
 
 LOCAL void ICACHE_FLASH_ATTR system_reconfigure(void *arg) {
 	dhdebug("Rebooting...");
+	dhuart_leds(UART_LEDS_OFF);
 	system_restart();
 }
 

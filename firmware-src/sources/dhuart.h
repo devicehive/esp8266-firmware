@@ -17,10 +17,15 @@
 
 /** UART mode. */
 typedef enum {
-	DUM_IGNORE,		///< Ignore input data, can print everythin.
+	DUM_IGNORE,		///< Ignore input data, can print everything.
 	DUM_PER_BYTE,	///< Receive data byte by byte, dedicated callback on each byte, some send data function is disabled.
 	DUM_PER_BUF		///< Receive data per buffer, dedicated callback with buffer with some timeout which disabled by default, some send data function is disabled.
 } DHUART_DATA_MODE;
+
+typedef enum {
+	UART_LEDS_ON,
+	UART_LEDS_OFF
+} DHUART_LEDS_MODE;
 
 /**
  *	\brief					Initializes UART.
@@ -31,6 +36,13 @@ typedef enum {
  *	\return					Non zero value on success. Zero on error.
  */
 int dhuart_init(unsigned int speed, unsigned int databits, char parity, unsigned int stopbits);
+
+/**
+ *	\brief					Keep TX LEDs always on.
+ *	\details				Some modules has LEDs which are connected to TX pins. This method allows to keep this LEDs on.
+ *	\param[in]	on			LEDs mode.
+ */
+void dhuart_leds(DHUART_LEDS_MODE mode);
 
 /**
  *	\brief				Write string to UART.

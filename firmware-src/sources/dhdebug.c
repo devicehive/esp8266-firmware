@@ -20,45 +20,10 @@
 #include "user_config.h"
 #include "dhutils.h"
 
-LOCAL os_timer_t mRecoverLEDTimer;
-LOCAL char isDirect = 0;
-
-LOCAL void ICACHE_FLASH_ATTR recover_led(void *arg) {
-	ETS_INTR_LOCK();
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1);
-	gpio_output_set(0, 0b0110, 0b0110, 0);
-	ETS_INTR_UNLOCK();
-}
-
-LOCAL void ICACHE_FLASH_ATTR direct_debug(const char *fmt, va_list ap) {
-	os_timer_disarm(&mRecoverLEDTimer);
-	char buf[256];
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	// keep tx led on for both uarts for displaying this mode
-	gpio_output_set(0, 0, 0, 0b0110);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
-	dhuart_send_line(buf);
-	os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)recover_led, NULL);
-	os_timer_arm(&mRecoverLEDTimer, 20, 0);
-}
-
-void ICACHE_FLASH_ATTR dhdebug_terminal() {
-	isDirect = 0;
-}
-
-void ICACHE_FLASH_ATTR dhdebug_direct() {
-	dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-	dhuart_set_mode(DUM_IGNORE);
-	isDirect = 1;
-}
-
 void dhdebug_ram(const char *fmt, ...) {
 	va_list    ap;
 	va_start(ap, fmt);
-	if(isDirect)
-		direct_debug(fmt, ap);
-	else
-		dhterminal_debug(fmt, ap);
+	dhterminal_debug(fmt, ap);
 	va_end(ap);
 }
 

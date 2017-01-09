@@ -72,10 +72,30 @@ void ICACHE_FLASH_ATTR dhterminal_commands_uname(const char *args) {
 	dhuart_send_line("");
 }
 
+LOCAL void ICACHE_FLASH_ATTR printIpInfo(uint8 if_index) {
+	struct ip_info info;
+	char digitBuff[32];
+	if(!wifi_get_ip_info(if_index, &info)) {
+		dhuart_send_line("Failed to get ip info");
+	} else {
+		dhuart_send_str("IP: ");
+		sprintIp(digitBuff, &info.ip);
+		dhuart_send_str(digitBuff);
+		dhuart_send_str(", netmask: ");
+		sprintIp(digitBuff, &info.netmask);
+		dhuart_send_str(digitBuff);
+		dhuart_send_str(", gateway: ");
+		sprintIp(digitBuff, &info.gw);
+		dhuart_send_line(digitBuff);
+	}
+}
+
 void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	uint8 mac[6];
 	char digitBuff[32];
 	struct station_config stationConfig;
+
+	const DHSTATISTIC *stat = dhstatistic_get_statistic();
 
 	dhuart_send_str("Network adapter ");
 	if(!wifi_get_macaddr(STATION_IF, mac)) {
@@ -85,58 +105,49 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 		dhuart_send_str(digitBuff);
 	}
 
-	if(!wifi_station_get_config(&stationConfig)) {
-		os_memset(&stationConfig, 0, sizeof(stationConfig));
-		os_strcpy(stationConfig.ssid, "[Can not get SSID]");
-	}
-	switch(wifi_station_get_connect_status()) {
-	case STATION_IDLE:
-		dhuart_send_line(" is in idle");
-		break;
-	case STATION_CONNECTING:
-		dhuart_send_str(" is connecting to ");
-		dhuart_send_line(stationConfig.ssid);
-		break;
-	case STATION_WRONG_PASSWORD:
-		dhuart_send_str(" has wrong password for ");
-		dhuart_send_line(stationConfig.ssid);
-		break;
-	case STATION_NO_AP_FOUND:
-		dhuart_send_str(" can not find AP with SSID ");
-		dhuart_send_line(stationConfig.ssid);
-		break;
-	case STATION_CONNECT_FAIL:
-		dhuart_send_str(" has fail while connecting to ");
-		dhuart_send_line(stationConfig.ssid);
-		break;
-	case STATION_GOT_IP:
-	{
-		dhuart_send_str(" is connected to ");
-		dhuart_send_line(stationConfig.ssid);
-		struct ip_info info;
-		if(!wifi_get_ip_info(STATION_IF, &info)) {
-			dhuart_send_line("Failed to get ip info");
-		} else {
-			dhuart_send_str("IP: ");
-			sprintIp(digitBuff, &info.ip);
-			dhuart_send_str(digitBuff);
-			dhuart_send_str(", netmask: ");
-			sprintIp(digitBuff, &info.netmask);
-			dhuart_send_str(digitBuff);
-			dhuart_send_str(", gateway: ");
-			sprintIp(digitBuff, &info.gw);
-			dhuart_send_line(digitBuff);
+	if(wifi_get_opmode() == SOFTAP_MODE) {
+		dhuart_send_line(" is in acess point mode.");
+		printIpInfo(SOFTAP_IF);
+	} else {
+		if(!wifi_station_get_config(&stationConfig)) {
+			os_memset(&stationConfig, 0, sizeof(stationConfig));
+			os_strcpy(stationConfig.ssid, "[Can not get SSID]");
 		}
-		break;
+		switch(wifi_station_get_connect_status()) {
+		case STATION_IDLE:
+			dhuart_send_line(" is in idle");
+			break;
+		case STATION_CONNECTING:
+			dhuart_send_str(" is connecting to ");
+			dhuart_send_line(stationConfig.ssid);
+			break;
+		case STATION_WRONG_PASSWORD:
+			dhuart_send_str(" has wrong password for ");
+			dhuart_send_line(stationConfig.ssid);
+			break;
+		case STATION_NO_AP_FOUND:
+			dhuart_send_str(" can not find AP with SSID ");
+			dhuart_send_line(stationConfig.ssid);
+			break;
+		case STATION_CONNECT_FAIL:
+			dhuart_send_str(" has fail while connecting to ");
+			dhuart_send_line(stationConfig.ssid);
+			break;
+		case STATION_GOT_IP:
+		{
+			dhuart_send_str(" is connected to ");
+			dhuart_send_line(stationConfig.ssid);
+			printIpInfo(STATION_IF);
+			break;
+		}
+		default:
+			dhuart_send_line(" is in unknown state");
+			break;
+		}
+		dhuart_send_str("Wi-Fi disconnect count: ");
+		snprintf(digitBuff, sizeof(digitBuff), "%u", stat->wifiLosts);
+		dhuart_send_line(digitBuff);
 	}
-	default:
-		dhuart_send_line("is in unknown state");
-		break;
-	}
-	const DHSTATISTIC *stat = dhstatistic_get_statistic();
-	dhuart_send_str("Wi-Fi disconnect count: ");
-	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->wifiLosts);
-	dhuart_send_line(digitBuff);
 
 	dhuart_send_str("Bytes received: ");
 	printBytes(digitBuff, stat->bytesReceived);
@@ -283,6 +294,15 @@ void ICACHE_FLASH_ATTR dhterminal_commands_reboot(const char *args) {
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_config(const char *args) {
+	dhuart_send_str("Wi-Fi Mode: ");
+	switch(dhsettings_get_wifi_mode()) {
+	case WIFI_MODE_CLIENT:
+		dhuart_send_line("Client");
+		break;
+	case WIFI_MODE_AP:
+		dhuart_send_line("Access Point");
+		break;
+	}
 	dhuart_send_str("Wi-Fi SSID: ");
 	dhuart_send_line(dhsettings_get_wifi_ssid());
 	dhuart_send_str("DeviceHive Server: ");

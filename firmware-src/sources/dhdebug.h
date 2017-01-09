@@ -12,16 +12,6 @@
 #include "irom.h"
 
 /**
- *	\brief			Switch debug output to dhterminal
- */
-void dhdebug_terminal();
-
-/**
- *	\brief			Switch debug output to UART
- */
-void dhdebug_direct();
-
-/**
  *	\brief			Print to debug output.
  *	\param[in]	fmt	Format.
  *	\param[in]	...	Additional arguments specified by format

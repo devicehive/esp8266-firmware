@@ -34,6 +34,8 @@ LOCAL unsigned int mUartBufPos = 0;
 LOCAL os_timer_t mUartTimer;
 LOCAL unsigned int mUartTimerTimeout = 250;
 LOCAL unsigned char mBufInterrupt = 0;
+LOCAL os_timer_t mRecoverLEDTimer;
+LOCAL char keepLED = 0;
 
 LOCAL ICACHE_FLASH_ATTR void arm_buf_timer();
 
@@ -113,16 +115,46 @@ int ICACHE_FLASH_ATTR dhuart_init(unsigned int speed, unsigned int databits, cha
 	return 1;
 }
 
+LOCAL void ICACHE_FLASH_ATTR recover_led(void *arg) {
+	ETS_INTR_LOCK();
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1);
+	gpio_output_set(0, 0b0110, 0b0110, 0);
+	ETS_INTR_UNLOCK();
+}
+
+LOCAL void ICACHE_FLASH_ATTR off_led() {
+	gpio_output_set(0, 0, 0, 0b0110);
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
+}
+
+void ICACHE_FLASH_ATTR dhuart_leds(DHUART_LEDS_MODE mode) {
+	if(mode == UART_LEDS_ON) {
+		keepLED = 1;
+		recover_led(NULL);
+	} else {
+		keepLED = 0;
+		off_led();
+	}
+}
+
 LOCAL void ICACHE_FLASH_ATTR dhuart_send_char(char c) {
 	while((READ_PERI_REG(UART_STATUS_REGISTER) >> 16) & 0xFF);
-	WRITE_PERI_REG(UART_BASE , c);
+	WRITE_PERI_REG(UART_BASE, c);
 }
 
 void ICACHE_FLASH_ATTR dhuart_send_str(const char *str) {
 	if(mDataMode == DUM_PER_BUF)
 		return;
+	if(keepLED) {
+		os_timer_disarm(&mRecoverLEDTimer);
+		off_led();
+	}
 	while(*str)
 		dhuart_send_char(*str++);
+	if(keepLED) {
+		os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)recover_led, NULL);
+		os_timer_arm(&mRecoverLEDTimer, 20, 0);
+	}
 }
 
 void ICACHE_FLASH_ATTR dhuart_send_line(const char *str) {
@@ -133,9 +165,17 @@ void ICACHE_FLASH_ATTR dhuart_send_line(const char *str) {
 void ICACHE_FLASH_ATTR dhuart_send_buf(const char *buf, unsigned int len) {
 	if(mDataMode == DUM_PER_BYTE)
 		return;
+	if(keepLED) {
+		os_timer_disarm(&mRecoverLEDTimer);
+		off_led();
+	}
 	while(len--) {
 		system_soft_wdt_feed();
 		dhuart_send_char(*buf++);
+	}
+	if(keepLED) {
+		os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)recover_led, NULL);
+		os_timer_arm(&mRecoverLEDTimer, 20, 0);
 	}
 }
 

@@ -16,6 +16,7 @@
 #include "snprintf.h"
 #include "user_config.h"
 #include "dhdebug.h"
+#include "dhuart.h"
 #include "dhzc_dnsd.h"
 #include "dhzc_web.h"
 
@@ -60,7 +61,7 @@ void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 }
 
 void ICACHE_FLASH_ATTR dhap_zeroconf() {
-	dhdebug_direct();
+	dhuart_leds(UART_LEDS_ON);
 	dhdebug("\r\n**********************************\r\nWi-Fi Configuration Access Point Mode");
 
 	dhap_init(WIFI_CONFIGURATION_SSID, NULL);
