@@ -16,13 +16,17 @@
 #include "gpio.h"
 #include "dhcommands.h"
 #include "dhdebug.h"
+#include "dhuart.h"
 #include "dhsender_queue.h"
 #include "dhterminal.h"
 #include "dhsettings.h"
 #include "dhap.h"
+#include "dhgpio.h"
 #include "webserver.h"
 #include "irom.h"
 #include "uploadable_page.h"
+#include "dhzc_dnsd.h"
+#include "dhzc_web.h"
 
 typedef struct {
 	unsigned int magic;
@@ -103,7 +107,8 @@ void user_rf_pre_init(void) {
 
 void ICACHE_FLASH_ATTR system_init_done(void) {
 	if(dhsettings_get_wifi_mode() == WIFI_MODE_AP &&
-			dhsettings_get_devicehive_deviceid()[0]) {
+			dhsettings_get_devicehive_deviceid()[0] &&
+			mSpecialMode == 0) {
 		mdnsd_start(dhsettings_get_devicehive_deviceid(), dhap_get_ip_info()->ip.addr);
 	}
 	dhdebug("Initialization completed");
@@ -111,15 +116,21 @@ void ICACHE_FLASH_ATTR system_init_done(void) {
 
 void user_init(void) {
 	int ever_saved;
+	gpio_output_set(0, 0, 0, DHGPIO_SUITABLE_PINS);
 	dhsettings_init(&ever_saved);
 	if(ever_saved == 0) { // if first run on this chip
 		uploadable_page_delete();
+		mSpecialMode = 1;
 	}
-	if(mSpecialMode || ever_saved == 0) { // if special mode was called by user or if there is no settings
-		system_set_os_print(0);
-		dhap_zeroconf();
+	dhdebug("*****************************");
+	if(mSpecialMode) { // if special mode was called by user or if there is no settings
+		dhuart_leds(DHUART_LEDS_ON);
+		dhdebug("Wi-Fi Zero Configuration Mode");
+		dhap_init(WIFI_CONFIGURATION_SSID, NULL);
+		dhzc_dnsd_init();
+		dhzc_web_init();
+		dhdebug("Zero configuration server is initialized");
 	} else {
-		dhdebug("*****************************");
 		if(dhsettings_get_wifi_mode() == WIFI_MODE_CLIENT) {
 			dhsender_queue_init();
 			dhconnector_init(dhcommands_do);
@@ -128,7 +139,7 @@ void user_init(void) {
 			dhap_init(dhsettings_get_wifi_ssid(), dhsettings_get_wifi_password());
 		}
 		webserver_init();
-		system_init_done_cb(system_init_done);
-		dhterminal_init();
 	}
+	system_init_done_cb(system_init_done);
+	dhterminal_init();
 }

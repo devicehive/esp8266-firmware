@@ -23,8 +23,8 @@ typedef enum {
 } DHUART_DATA_MODE;
 
 typedef enum {
-	UART_LEDS_ON,
-	UART_LEDS_OFF
+	DHUART_LEDS_ON,
+	DHUART_LEDS_OFF
 } DHUART_LEDS_MODE;
 
 /**

@@ -17,8 +17,6 @@
 #include "user_config.h"
 #include "dhdebug.h"
 #include "dhuart.h"
-#include "dhzc_dnsd.h"
-#include "dhzc_web.h"
 
 static struct ip_info *ipinfo = NULL;
 struct softap_config *apconfig = NULL;
@@ -63,23 +61,8 @@ void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 	if(!wifi_softap_dhcps_start())
 		dhdebug("Failed to wifi_softap_dhcps_start()");
 	unsigned char *bip = (unsigned char *)&ipinfo->ip;
-	dhdebug("Access point is initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
-}
-
-void ICACHE_FLASH_ATTR dhap_zeroconf() {
-	dhuart_leds(UART_LEDS_ON);
-	dhdebug("\r\n**********************************\r\nWi-Fi Configuration Access Point Mode");
-
-	dhap_init(WIFI_CONFIGURATION_SSID, NULL);
-
-	// initialize DNS
-	dhzc_dnsd_init();
-
-	// initialize HTTP server
-	dhzc_web_init();
-
-	dhdebug("Zero configuration server is initialized");
 	dhdebug("Wi-Fi SSID is %s", apconfig->ssid);
+	dhdebug("Access point is initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
 }
 
 const struct ip_info * dhap_get_ip_info() {

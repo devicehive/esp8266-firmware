@@ -17,11 +17,6 @@
 void dhap_init(const char *ssid, const char *password);
 
 /**
- *	\brief		Initialize access point and start HTTP and DNS daemon.
- */
-void dhap_zeroconf();
-
-/**
  *	\brief		Return AP ipinfo.
  *	\return 	Pointer to ip_info struct.
  */

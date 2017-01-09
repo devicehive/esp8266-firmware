@@ -28,7 +28,6 @@ LOCAL os_timer_t mReconfigureTimer;
 
 LOCAL void ICACHE_FLASH_ATTR system_reconfigure(void *arg) {
 	dhdebug("Rebooting...");
-	dhuart_leds(UART_LEDS_OFF);
 	system_restart();
 }
 

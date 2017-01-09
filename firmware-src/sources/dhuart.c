@@ -35,7 +35,7 @@ LOCAL os_timer_t mUartTimer;
 LOCAL unsigned int mUartTimerTimeout = 250;
 LOCAL unsigned char mBufInterrupt = 0;
 LOCAL os_timer_t mRecoverLEDTimer;
-LOCAL char keepLED = 0;
+LOCAL char mKeepLED = 0;
 
 LOCAL ICACHE_FLASH_ATTR void arm_buf_timer();
 
@@ -84,17 +84,16 @@ LOCAL void dhuart_intr_handler(void *arg) {
 		case DUM_IGNORE:
 			break;
 		}
+	} else {
+		WRITE_PERI_REG(UART_INTERUPTION_REGISTER, 0xffff);
 	}
 }
 
 int ICACHE_FLASH_ATTR dhuart_init(unsigned int speed, unsigned int databits, char parity, unsigned int stopbits) {
 	if(speed < 300 || speed > 230400 || databits < 5 || databits > 8 || !(parity == 'N' || parity == 'O' || parity == 'E') || stopbits > 2 ||  stopbits < 1)
 		return 0;
-
-	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
+	ETS_UART_INTR_DISABLE();
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
-	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0RXD_U);
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_U0TXD);
 	gpio_output_set(0, 0, 0, BIT(1) | BIT(3));
 	PIN_PULLUP_EN(PERIPHS_IO_MUX_U0RXD_U);
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
@@ -108,32 +107,33 @@ int ICACHE_FLASH_ATTR dhuart_init(unsigned int speed, unsigned int databits, cha
 	SET_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, BIT(17) | BIT(18));
 	CLEAR_PERI_REG_MASK(UART_CONFIGURATION_REGISTER0, BIT(17) | BIT(18));
 	WRITE_PERI_REG(UART_CONFIGURATION_REGISTER1, BIT(0) | BIT(16) | BIT(23));
+	ETS_UART_INTR_ATTACH(dhuart_intr_handler, 0);
 	WRITE_PERI_REG(UART_INTERUPTION_REGISTER, 0xffff);
 	SET_PERI_REG_MASK(UART_INTERUPTION_ENABLE_REGISTER, BIT(0));
-	ETS_UART_INTR_ATTACH(dhuart_intr_handler,  0);
 	ETS_UART_INTR_ENABLE();
 	return 1;
 }
 
-LOCAL void ICACHE_FLASH_ATTR recover_led(void *arg) {
+LOCAL void ICACHE_FLASH_ATTR led_recover(void *arg) {
 	ETS_INTR_LOCK();
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_GPIO1);
 	gpio_output_set(0, 0b0110, 0b0110, 0);
 	ETS_INTR_UNLOCK();
 }
 
-LOCAL void ICACHE_FLASH_ATTR off_led() {
+LOCAL void ICACHE_FLASH_ATTR led_off() {
 	gpio_output_set(0, 0, 0, 0b0110);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
+	os_delay_us(10000);
 }
 
 void ICACHE_FLASH_ATTR dhuart_leds(DHUART_LEDS_MODE mode) {
-	if(mode == UART_LEDS_ON) {
-		keepLED = 1;
-		recover_led(NULL);
+	if(mode == DHUART_LEDS_ON) {
+		mKeepLED = 1;
+		led_recover(NULL);
 	} else {
-		keepLED = 0;
-		off_led();
+		mKeepLED = 0;
+		led_off();
 	}
 }
 
@@ -145,14 +145,14 @@ LOCAL void ICACHE_FLASH_ATTR dhuart_send_char(char c) {
 void ICACHE_FLASH_ATTR dhuart_send_str(const char *str) {
 	if(mDataMode == DUM_PER_BUF)
 		return;
-	if(keepLED) {
+	if(mKeepLED) {
 		os_timer_disarm(&mRecoverLEDTimer);
-		off_led();
+		led_off();
 	}
 	while(*str)
 		dhuart_send_char(*str++);
-	if(keepLED) {
-		os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)recover_led, NULL);
+	if(mKeepLED) {
+		os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)led_recover, NULL);
 		os_timer_arm(&mRecoverLEDTimer, 20, 0);
 	}
 }
@@ -165,16 +165,16 @@ void ICACHE_FLASH_ATTR dhuart_send_line(const char *str) {
 void ICACHE_FLASH_ATTR dhuart_send_buf(const char *buf, unsigned int len) {
 	if(mDataMode == DUM_PER_BYTE)
 		return;
-	if(keepLED) {
+	if(mKeepLED) {
 		os_timer_disarm(&mRecoverLEDTimer);
-		off_led();
+		led_off();
 	}
 	while(len--) {
 		system_soft_wdt_feed();
 		dhuart_send_char(*buf++);
 	}
-	if(keepLED) {
-		os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)recover_led, NULL);
+	if(mKeepLED) {
+		os_timer_setfn(&mRecoverLEDTimer, (os_timer_func_t *)led_recover, NULL);
 		os_timer_arm(&mRecoverLEDTimer, 20, 0);
 	}
 }

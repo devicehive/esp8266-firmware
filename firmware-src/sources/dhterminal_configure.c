@@ -29,7 +29,6 @@ LOCAL void ICACHE_FLASH_ATTR get_accesskey_cb(const char *key) {
 	if(dhsettings_commit()) {
 		dhuart_send_line("OK");
 		dhuart_send_line("Rebooting...");
-		dhuart_leds(UART_LEDS_OFF);
 		system_restart();
 	} else {
 		dhuart_send_line("ERROR. Not saved. Check debug output.");
