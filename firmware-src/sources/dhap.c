@@ -24,17 +24,23 @@ static struct ip_info *ipinfo = NULL;
 struct softap_config *apconfig = NULL;
 
 void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
+	if(ssid == 0)
+		return;
+	if(ssid[0] == 0)
+		return;
 	if(!wifi_set_opmode(SOFTAP_MODE))
 		dhdebug("Failed to wifi_set_opmode()");
 	apconfig = (struct softap_config *)os_zalloc(sizeof(struct softap_config));;
 	if(!wifi_softap_dhcps_stop())
 		dhdebug("Failed to wifi_softap_dhcps_stop()");
-	apconfig->ssid_len = snprintf(apconfig->ssid, sizeof(apconfig->ssid), ssid);
+	apconfig->ssid_len = snprintf(apconfig->ssid, sizeof(apconfig->ssid), "%s", ssid);
 	apconfig->authmode = AUTH_OPEN;
 	if(password) {
-		if(password[0]) {
+		if(os_strlen(password) >= 8) {
 			apconfig->authmode = AUTH_WPA_WPA2_PSK;
-			snprintf(apconfig->password, sizeof(apconfig->password), password);
+			snprintf(apconfig->password, sizeof(apconfig->password), "%s", password);
+		} else {
+			dhdebug("AP password is too short, use open network");
 		}
 	}
 	apconfig->ssid_hidden = 0;

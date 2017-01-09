@@ -28,3 +28,8 @@ v0.5
 - local RESTful API
 - support for some popular sensor devices
 - bug fixes
+
+v0.6
+- new devices support
+- access point mode
+- embedded pages redesgn
