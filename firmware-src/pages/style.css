@@ -76,14 +76,14 @@ body {
 	height: 200px;
 	overflow-x: auto;
 	resize: vertical;
-	margin: 10px 10px 0 0;
+	margin: 0px 0 20px 0;
 	vertical-align: top;
 }
 
 .form-block .btn_event.btn_convert {
 	width: 180px;
-  height: 60px;
-  margin: 10px 0 0 0;
+	height: 60px;
+	margin: 10px 0 0 0;
 }
 
 .form-block .btn_event.btn_convert:hover {
