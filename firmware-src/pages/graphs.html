@@ -11,7 +11,10 @@ path.line {
 	stroke: black;
 	stroke-width: 1.6px;
 }
-path.domain {
+.axis-x path.domain {
+	stroke: rgba(0.8, 0.8, 0.8, 0.5);
+}
+.axis-y path.domain {
 	stroke-width: 1.6px;
 }
 path.line-0, .axis-y-0 path.domain {
@@ -26,30 +29,25 @@ text.label-left {
 text.label-right {
 	transform: rotate(90deg) translateY(1.5em);
 }
+.legend {
+	margin-left: 40px;
+}
+.legend label {
+	display: inline-block;
+	margin-right: 20px;
+}
+.legend input[type="checkbox"] {
+	vertical-align: middle;
+}
 	</style>
 	<script src="libs.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
 	<script>
 /*jshint browser: true*/
 /*globals d3, ajax, getKey*/
-var sources = {
-	mpu6050: {
-		verb: 'GET',
-		url: '/api/devices/mpu6050/read',
-		params: null,
-		interval: 500,
-		plotConfig: [{
-			left: true,
-			minDomain: 10,
-			key: 'temperature',
-			label: 'Temperature, C'
-		}]
-	}
-};
-
-function now() {
+var now = function() {
 	return new Date().getTime();
-}
+};
 var plot;
 var initPlot = function() {
 	var data = [];
@@ -66,23 +64,31 @@ var initPlot = function() {
 		.attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
 
 	var scaleX = d3.scaleTime().rangeRound([0, width]);
+	var scaleY = d3.scaleLinear().rangeRound([height, 0]);
 
 	var axisX;
+	var axisY;
 	var sources = [];
+	var strkey = function(key) {
+		if (!Array.isArray(key)) {
+			return key;
+		}
+		return key.join('.');
+	};
 	var setSources = function(srcs) {
 		sources = srcs.map(function(src, idx) {
-			var scaleY = d3.scaleLinear().rangeRound([height, 0]);
+			var key = strkey(src.key);
 			var line = d3.line()
 				.x(function(d) { return scaleX(d.ts); })
-				.y(function(d) { return scaleY(d[src.key]); });
+				.y(function(d) { return scaleY(d[key]); });
 
 			return {
 				idx: idx,
 				left: !!src.left,
-				key: src.key,
+				akey: src.key,
+				key: key,
 				label: src.label,
 				minDomain: src.minDomain,
-				scale: scaleY,
 				line: line
 			};
 		});
@@ -93,14 +99,53 @@ var initPlot = function() {
 			src.path = g.append('path')
 				.attr('class', 'line ' + lineClass + ' line-' + src.idx);
 		});
+
+		var legend = sources.map(function(src) {
+			return ['label', {}, ['input', {type: 'checkbox'}], src.label || src.key]
+		});
+		legend = ['span', {}].concat(legend);
+		replaceDom(byId('legend'), legend);
+
 		dirty = true;
+	};
+
+	var lookup = function(obj, key) {
+		if (!Array.isArray(key)) {
+			return obj[key];
+		}
+		key.forEach(function(k) {
+			obj = obj[k];
+		});
+		return obj;
+	};
+
+	var deriveConfig = function (obj) {
+		var measures = [];
+		Object.keys(obj).forEach(function(k) {
+			var v = obj[k];
+			if (typeof v === 'object') {
+				deriveConfig(v).forEach(function(m) {
+					m.key = [k].concat(m.key);
+					measures.push(m);
+				});
+			} else {
+				measures.push({
+					key: [k],
+				});
+			}
+		});
+		return measures;
 	};
 
 	var feed = function(datum) {
 		var ts = now();
+		if (sources.length === 0) {
+			// hax
+			setSources(deriveConfig(datum));
+		};
 		var d = {ts: ts};
 		sources.forEach(function(s) {
-			d[s.key] = datum[s.key];
+			d[s.key] = lookup(datum, s.akey);
 		});
 		data.push(d);
 		dirty = true;
@@ -131,13 +176,17 @@ var initPlot = function() {
 		left = Math.min(left, ts - minTimeRange);
 		return [left, ts];
 	};
+	var calcExtentY = function() {
+		var domain = [];
+		sources.forEach(function(src) {
+			domain = domain.concat(d3.extent(data, function(d) { return d[src.key]; }));
+		});
+		return d3.extent(domain);
+	};
 
 	var reset = function() {
 		data = [];
 		sources.forEach(function(src) {
-			if (src.axis) {
-				src.axis.remove();
-			}
 			src.path.datum([]).attr('d', src.line);
 		});
 		sources = [];
@@ -150,22 +199,9 @@ var initPlot = function() {
 		scaleX.domain(calcExtentX());
 		redrawAxisX();
 
-		if (!dirty) {
-			sources.forEach(function(src) {
-				src.path.datum(data).attr('d', src.line);
-			});
-			return;
-		}
-
+		scaleY.domain(calcExtentY());
+		redrawAxisY();
 		sources.forEach(function(src) {
-			var domain = d3.extent(data, function(d) { return d[src.key]; });
-			if (src.minDomain && domain[1] - domain[0] < src.minDomain) {
-				domain[0] = (domain[0] + domain[1] - src.minDomain) / 2;
-				domain[1] = domain[0] + src.minDomain;
-			}
-
-			src.scale.domain(domain);
-			redrawAxisY(src);
 			src.path.datum(data).attr('d', src.line);
 		});
 
@@ -179,32 +215,16 @@ var initPlot = function() {
 		axisX = g.append('g')
 			.attr("class", "axis-x")
 				.attr("transform", "translate(0," + height + ")")
-				.call(d3.axisBottom(scaleX).tickArguments([undefined, '%M:%S']));
+				.call(d3.axisBottom(scaleX).tickArguments([undefined, '%H:%M:%S']));
 	};
 
 	var redrawAxisY = function(src) {
-		if (src.axis) {
-			src.axis.remove();
+		if (axisY) {
+			axisY.remove();
 		}
-		var axisKey, clsSuffix, x;
-		if (src.left) {
-			axisKey = 'axisLeft';
-			clsSuffix = '-left';
-			x = 0;
-		} else {
-			axisKey = 'axisRight';
-			clsSuffix = '-right';
-			x = width;
-		}
-
-		src.axis = g.append('g')
-			.attr('class', 'axis-y axis' + clsSuffix + ' axis-y-' + src.idx)
-			.attr('transform', 'translate(' + x + ', 0)');
-		src.axis
-			.call(d3[axisKey](src.scale))
-			.append('text')
-				.text(src.label)
-				.attr('class', 'label-text label' + clsSuffix);
+		axisY = g.append('g')
+			.attr("class", "axis-y")
+				.call(d3.axisLeft(scaleY));
 	};
 
 	return {
@@ -350,13 +370,17 @@ var selectSource = function(name) {
 	}
 	plot.reset();
 	renderLoop.stop();
-	var cfg = sources[name];
-	if (cfg) {
-		dataSource = initDataSource(cfg);
-		plot.setSources(cfg.plotConfig);
-		dataSource.start(plot);
-		renderLoop.start();
+	if (name === '') {
+		return;
 	}
+	dataSource = initDataSource({
+		verb: 'GET',
+		url: 'http://esp-office.vrn.dataart.net/api/devices/' + name + '/read',
+		params: null,
+	});
+	//plot.setSources(cfg.plotConfig);
+	dataSource.start(plot);
+	renderLoop.start();
 };
 	</script>
 </head>
@@ -377,6 +401,7 @@ var selectSource = function(name) {
 				<option value="mpu6050">MPU6050 (temperature)</option>
 			</select>
 			<svg width="1000" height="480"></svg>
+			<div id="legend" class="legend"></div>
 		</div>
 		<div class="output-status" id="output"></div>
 	</div>
