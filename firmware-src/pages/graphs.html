@@ -10,6 +10,9 @@ text.label-text {
 	fill: none;
 	stroke-width: 1.6px;
 }
+.tick line {
+	stroke: #a0a0a0;
+}
 .axis-x path.domain {
 	stroke: rgba(0.8, 0.8, 0.8, 0.5);
 }
@@ -80,6 +83,10 @@ var initPlot = function() {
 	var svg = d3.select('svg');
 	var width = +svg.attr('width') - margin.left - margin.right;
 	var height = +svg.attr('height') - margin.top - margin.bot;
+	var clip = svg.append('clipPath').attr('id', 'cliprect')
+		.append('rect')
+		.attr('x', 0).attr('y', 0)
+		.attr('width', width).attr('height', height);
 	var g = svg.append('g')
 		.attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
 
@@ -115,12 +122,13 @@ var initPlot = function() {
 			};
 		});
 
-		g.select('path.line').remove();
+		g.selectAll('path.line').remove();
 		sources.forEach(function(src) {
 			var lineClass = src.left ? 'line-left' : 'line-right';
 			console.log(src.color);
 			src.path = g.append('path')
 				.attr('stroke', src.color)
+				.attr("clip-path", "url(#cliprect)")
 				.attr('class', 'line ' + lineClass + ' line-' + src.idx);
 		});
 
@@ -230,9 +238,7 @@ var initPlot = function() {
 
 	var reset = function() {
 		data = [];
-		sources.forEach(function(src) {
-			src.path.datum([]).attr('d', src.line);
-		});
+		setSources([]);
 		sources = [];
 		dirty = true;
 		cutOff = false;
@@ -242,19 +248,24 @@ var initPlot = function() {
 		if (axisX) {
 			axisX.remove();
 		}
+		var axisGen = d3.axisBottom(scaleX)
+			.tickSizeInner(-height)
+			.tickArguments([undefined, '%H:%M:%S']);
 		axisX = g.append('g')
 			.attr('class', 'axis-x')
 				.attr('transform', 'translate(0,' + height + ')')
-				.call(d3.axisBottom(scaleX).tickArguments([undefined, '%H:%M:%S']));
+				.call(axisGen);
 	};
 
 	var redrawAxisY = function() {
 		if (axisY) {
 			axisY.remove();
 		}
+		var axisGen = d3.axisLeft(scaleY)
+			.tickSizeInner(-width);
 		axisY = g.append('g')
 			.attr('class', 'axis-y')
-				.call(d3.axisLeft(scaleY));
+				.call(axisGen);
 	};
 
 	var redraw = function() {
