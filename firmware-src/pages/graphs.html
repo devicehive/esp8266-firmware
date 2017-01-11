@@ -1,0 +1,235 @@
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>Graphs</title>
+	<style>
+text.label-text {
+	fill: black;
+}
+path.line {
+	fill: none;
+	stroke: black;
+	stroke-width: 1.6px;
+}
+path.domain {
+	stroke-width: 1.6px;
+}
+path.line-0, .axis-y-0 path.domain {
+	stroke: #6885d0;
+}
+path.line-1, .axis-y-1 path.domain {
+	stroke: #cc5658;
+}
+text.label-left {
+	transform: rotate(-90deg) translate(0, 1.5em);
+}
+text.label-right {
+	transform: rotate(90deg) translateY(1.5em);
+}
+	</style>
+	<script src="libs.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
+	<script>
+function now() {
+	return new Date().getTime();
+}
+var plot;
+var initPlot = function() {
+	var data = [];
+	var maxTimeRange = 20 * 1000;
+	var minTimeRange = 10 * 1000;
+	var dirty = true;
+	var cutOff = false;
+
+	var margin = {top: 20, right: 30, bot: 30, left: 30};
+	var svg = d3.select('svg');
+	var width = +svg.attr('width') - margin.left - margin.right;
+	var height = +svg.attr('height') - margin.top - margin.bot;
+	var g = svg.append('g')
+		.attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
+
+	var scaleX = d3.scaleTime().rangeRound([0, width]);
+
+	var axisX;
+	var sources = [];
+	var setSources = function(srcs) {
+		sources = srcs.map(function(src, idx) {
+			var scaleY = d3.scaleLinear().rangeRound([height, 0]);
+			var line = d3.line()
+				.x(function(d) { return scaleX(d.ts) })
+				.y(function(d) { return scaleY(d[src.key]) });
+
+			return {
+				idx: idx,
+				left: !!src.left,
+				key: src.key,
+				label: src.label,
+				scale: scaleY,
+				line: line
+			};
+		});
+
+		g.select('path.line').remove();
+		sources.forEach(function(src) {
+			var lineClass = src.left ? 'line-left' : 'line-right';
+			src.path = g.append('path')
+				.attr('class', 'line ' + lineClass + ' line-' + src.idx);
+		});
+		dirty = true;
+	};
+
+	var feed = function(datum) {
+		var ts = now();
+		var d = {ts: ts};
+		sources.forEach(function(s) {
+			d[s.key] = datum[s.key];
+		});
+		data.push(d);
+		dirty = true;
+	};
+
+	var cutOld = function() {
+		var ts = now();
+		var cutTime = ts - maxTimeRange;
+		var i;
+		for (var i = 0; i < data.length - 1; i++) {
+			if (data[i].ts >= cutTime) {
+				break;
+			}
+		}
+		if (i > 1) {
+			data = data.slice(i - 1);
+			cutOff = true;
+			dirty = true;
+		}
+	};
+
+	var calcExtentX = function() {
+		var ts = now();
+		var left = d3.min(data, function(d) { return d.ts });
+		if (cutOff || typeof left === 'undefined') {
+			left = ts - maxTimeRange;
+		}
+		left = Math.min(left, ts - minTimeRange);
+		return [left, ts];
+	};
+
+	var reset = function() {
+		data = [];
+		sources = [];
+		dirty = true;
+		cutOff = false;
+	};
+
+	var redraw = function() {
+		cutOld();
+		scaleX.domain(calcExtentX());
+		redrawAxisX();
+
+		if (!dirty) {
+			sources.forEach(function(src) {
+				src.path.datum(data).attr('d', src.line);
+			});
+			return;
+		}
+
+		sources.forEach(function(src) {
+			src.scale.domain(d3.extent(data, function(d) { return d[src.key] }));
+			redrawAxisY(src);
+			src.path.datum(data).attr('d', src.line);
+		});
+
+		dirty = false;
+	};
+
+	var redrawAxisX = function() {
+		if (axisX) {
+			axisX.remove();
+		}
+		axisX = g.append('g')
+			.attr("class", "axis-x")
+				.attr("transform", "translate(0," + height + ")")
+				.call(d3.axisBottom(scaleX).tickArguments([undefined, '%M:%S']));
+	};
+
+	var redrawAxisY = function(src) {
+		if (src.axis) {
+			src.axis.remove();
+		}
+		var axisKey, clsSuffix, x;
+		if (src.left) {
+			axisKey = 'axisLeft';
+			clsSuffix = '-left';
+			x = 0;
+		} else {
+			axisKey = 'axisRight';
+			clsSuffix = '-right';
+			x = width;
+		}
+
+		src.axis = g.append('g')
+			.attr('class', 'axis-y axis' + clsSuffix + ' axis-y-' + src.idx)
+			.attr('transform', 'translate(' + x + ', 0)');
+		src.axis
+			.call(d3[axisKey](src.scale))
+			.append('text')
+				.text(src.label)
+				.attr('class', 'label-text label' + clsSuffix);
+	};
+
+	return {
+		reset: reset,
+		setSources: setSources,
+		feed: feed,
+		redraw: redraw
+	};
+};
+
+window.onload = function init() {
+	plot = initPlot();
+	plot.reset();
+	plot.setSources([
+		{
+			left: true,
+			key: 'temp',
+			label: 'Temperature, C'
+		},
+		{
+			left: false,
+			key: 'humid',
+			label: 'Humidity, %'
+		}
+	]);
+	setInterval(function() {
+		plot.feed({
+			temp: 10 + Math.random() * 5,
+			humid: 50 + Math.random() * 20
+		});
+	}, 100);
+	function loop() {
+		plot.redraw();
+		requestAnimationFrame(loop);
+	}
+	loop();
+};
+	</script>
+</head>
+<body>
+<div class="header">
+	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
+	<div class="key-box">
+		<label for="accesskey">AccesKey: </label>
+		<input class="input-accesskey input-data" type="password" id="accesskey">
+	</div>
+</div>
+<div class="content">
+	<div class="form-block">
+		<div class="description">This sample can plot readouts over time.</div>
+		<div class="group-box">
+			<svg width="1000" height="480"></svg>
+		</div>
+		<div class="output-status" id="output"></div>
+	</div>
+</div>
+</body>
+</html>
