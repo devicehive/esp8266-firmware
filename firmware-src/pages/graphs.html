@@ -43,35 +43,35 @@ text.label-right {
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
 	<script>
 /*jshint browser: true*/
-/*globals d3, ajax, getKey*/
+/*globals d3, ajax, getKey, byId, renderDom*/
 var now = function() {
-	return new Date().getTime();
+	return Date.now();
 };
 var colors = [
-"#007e67",
-"#5f47f3",
-"#66ff80",
-"#ff50d6",
-"#1f9200",
-"#a485ff",
-"#b9b100",
-"#3c0068",
-"#fbff84",
-"#003b95",
-"#ff6f11",
-"#0172bc",
-"#8f1e00",
-"#74ffde",
-"#ab004a",
-"#57ceff",
-"#5a0e00",
-"#f9f1ff",
-"#0d002c",
-"#ffa995",
-"#001c1b",
-"#ff74b9",
-"#2d3600",
-"#630046"];
+	'#007e67',
+	'#5f47f3',
+	'#66ff80',
+	'#ff50d6',
+	'#1f9200',
+	'#a485ff',
+	'#b9b100',
+	'#3c0068',
+	'#fbff84',
+	'#003b95',
+	'#ff6f11',
+	'#0172bc',
+	'#8f1e00',
+	'#74ffde',
+	'#ab004a',
+	'#57ceff',
+	'#5a0e00',
+	'#f9f1ff',
+	'#0d002c',
+	'#ffa995',
+	'#001c1b',
+	'#ff74b9',
+	'#2d3600',
+	'#630046'];
 
 var plot;
 var initPlot = function() {
@@ -159,7 +159,8 @@ var initPlot = function() {
 		return obj;
 	};
 
-	var deriveConfig = function (obj) {
+	var deriveConfig;
+	deriveConfig = function(obj) {
 		var measures = [];
 		Object.keys(obj).forEach(function(k) {
 			var v = obj[k];
@@ -168,10 +169,12 @@ var initPlot = function() {
 					m.key = [k].concat(m.key);
 					measures.push(m);
 				});
-			} else {
+			} else if (typeof v === 'number') {
 				measures.push({
-					key: [k],
+					key: [k]
 				});
+			} else {
+				console.error('ignoring a key inside json', v);
 			}
 		});
 		return measures;
@@ -182,7 +185,7 @@ var initPlot = function() {
 		if (sources.length === 0) {
 			// hax
 			setSources(deriveConfig(datum));
-		};
+		}
 		var d = {ts: ts};
 		sources.forEach(function(s) {
 			d[s.key] = lookup(datum, s.akey);
@@ -195,7 +198,7 @@ var initPlot = function() {
 		var ts = now();
 		var cutTime = ts - maxTimeRange;
 		var i;
-		for (i = 0; i < data.length - 1; i++) {
+		for (i = 0; i < data.length - 1; i += 1) {
 			if (data[i].ts >= cutTime) {
 				break;
 			}
@@ -210,21 +213,26 @@ var initPlot = function() {
 	var calcExtentX = function() {
 		var ts = now();
 		var left = d3.min(data, function(d) { return d.ts; });
-		if (cutOff || typeof left === 'undefined') {
+		if (cutOff || left === undefined) {
 			left = ts - maxTimeRange;
 		}
 		left = Math.min(left, ts - minTimeRange);
 		return [left, ts];
 	};
+
 	var calcExtentY = function() {
 		var domain = [];
 		sources.forEach(function(src) {
-			if (!src.visible) {
-				return;
+			if (src.visible) {
+				domain = domain.concat(d3.extent(data, function(d) { return d[src.key]; }));
 			}
-			domain = domain.concat(d3.extent(data, function(d) { return d[src.key]; }));
 		});
-		return d3.extent(domain);
+		domain = d3.extent(domain);
+		if (isNaN(domain[0]) || isNaN(domain[1])) {
+			return [0, 1];
+		} else {
+			return d3.extent(domain);
+		}
 	};
 
 	var reset = function() {
@@ -237,37 +245,42 @@ var initPlot = function() {
 		cutOff = false;
 	};
 
-	var redraw = function() {
-		cutOld();
-		scaleX.domain(calcExtentX());
-		redrawAxisX();
-
-		scaleY.domain(calcExtentY());
-		redrawAxisY();
-		sources.forEach(function(src) {
-			src.path.datum(data).attr('d', src.line);
-		});
-
-		dirty = false;
-	};
-
 	var redrawAxisX = function() {
 		if (axisX) {
 			axisX.remove();
 		}
 		axisX = g.append('g')
-			.attr("class", "axis-x")
-				.attr("transform", "translate(0," + height + ")")
+			.attr('class', 'axis-x')
+				.attr('transform', 'translate(0,' + height + ')')
 				.call(d3.axisBottom(scaleX).tickArguments([undefined, '%H:%M:%S']));
 	};
 
-	var redrawAxisY = function(src) {
+	var redrawAxisY = function() {
 		if (axisY) {
 			axisY.remove();
 		}
 		axisY = g.append('g')
-			.attr("class", "axis-y")
+			.attr('class', 'axis-y')
 				.call(d3.axisLeft(scaleY));
+	};
+
+	var redraw = function() {
+		cutOld();
+		scaleX.domain(calcExtentX());
+		redrawAxisX();
+
+		if (dirty) {
+			scaleY.domain(calcExtentY());
+			redrawAxisY();
+		}
+
+		sources.forEach(function(src) {
+			if (src.visible) {
+				src.path.datum(data).attr('d', src.line);
+			}
+		});
+
+		dirty = false;
 	};
 
 	return {
@@ -309,28 +322,31 @@ var initDataSource = function(opts) {
 				console.error('error during data transformation:', e);
 			}
 
-			sink.feed(datum);
+			sink(datum);
 		});
 	};
 
 	var intervalId;
-	var start = function(target) {
-		if (running) {
-			return;
-		}
-		sink = target;
-		running = true;
-		intervalId = setInterval(loop, interval);
-	};
 	var stop = function() {
 		if (!running) {
 			return;
 		}
 		running = false;
+		requestInProgress = false;
+		clearInterval(intervalId);
 		sink = null;
-		if (typeof intervalId !== 'undefined') {
-			clearInterval(intervalId);
+	};
+
+	var start = function(target) {
+		if (typeof target !== 'function') {
+			throw new Error('expected function as an argument');
 		}
+		if (running) {
+			stop();
+		}
+		sink = target;
+		intervalId = setInterval(loop, interval);
+		running = true;
 	};
 
 	return {
@@ -359,27 +375,19 @@ var renderLoop = (function() {
 
 	var running = false;
 	var rafId;
-	var loop = function() {
+	var callback;
+	var loop;
+	loop = function() {
 		if (!running) {
 			return;
 		}
 
 		try {
-			if (plot) {
-				plot.redraw();
-			}
+			callback();
 		} catch(e) {
-		/// ???
+			console.error(e);
 		}
 		rafId = raf(loop);
-	};
-
-	var start = function() {
-		if (running) {
-			return;
-		}
-		running = true;
-		loop();
 	};
 
 	var stop = function() {
@@ -388,6 +396,18 @@ var renderLoop = (function() {
 		}
 		running = false;
 		caf(rafId);
+	};
+
+	var start = function(cb) {
+		if (typeof cb !== 'function') {
+			throw new Error('expected function as an argument');
+		}
+		if (running) {
+			stop();
+		}
+		running = true;
+		callback = cb;
+		loop();
 	};
 
 	var isRunning = function() {
@@ -399,7 +419,7 @@ var renderLoop = (function() {
 		start: start,
 		isRunning: isRunning
 	};
-})();
+}());
 
 window.onload = function init() {
 	plot = initPlot();
@@ -419,11 +439,11 @@ var selectSource = function(name) {
 	dataSource = initDataSource({
 		verb: 'GET',
 		url: '/api/devices/' + name + '/read',
-		params: null,
+		params: null
 	});
 	//plot.setSources(cfg.plotConfig);
-	dataSource.start(plot);
-	renderLoop.start();
+	dataSource.start(plot.feed);
+	renderLoop.start(plot.redraw);
 };
 	</script>
 </head>
