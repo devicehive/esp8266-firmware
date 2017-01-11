@@ -6,9 +6,8 @@
 text.label-text {
 	fill: black;
 }
-path.line {
+.line {
 	fill: none;
-	stroke: black;
 	stroke-width: 1.6px;
 }
 .axis-x path.domain {
@@ -16,12 +15,6 @@ path.line {
 }
 .axis-y path.domain {
 	stroke-width: 1.6px;
-}
-path.line-0, .axis-y-0 path.domain {
-	stroke: #cc5658;
-}
-path.line-1, .axis-y-1 path.domain {
-	stroke: #6885d0;
 }
 text.label-left {
 	transform: rotate(-90deg) translate(0, 1.5em);
@@ -39,6 +32,12 @@ text.label-right {
 .legend input[type="checkbox"] {
 	vertical-align: middle;
 }
+.legend-color {
+	position: absolute;
+	width: 50px;
+	border: 1px solid transparent;
+	margin-left: 24px;
+}
 	</style>
 	<script src="libs.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
@@ -48,6 +47,32 @@ text.label-right {
 var now = function() {
 	return new Date().getTime();
 };
+var colors = [
+"#007e67",
+"#5f47f3",
+"#66ff80",
+"#ff50d6",
+"#1f9200",
+"#a485ff",
+"#b9b100",
+"#3c0068",
+"#fbff84",
+"#003b95",
+"#ff6f11",
+"#0172bc",
+"#8f1e00",
+"#74ffde",
+"#ab004a",
+"#57ceff",
+"#5a0e00",
+"#f9f1ff",
+"#0d002c",
+"#ffa995",
+"#001c1b",
+"#ff74b9",
+"#2d3600",
+"#630046"];
+
 var plot;
 var initPlot = function() {
 	var data = [];
@@ -84,10 +109,12 @@ var initPlot = function() {
 
 			return {
 				idx: idx,
+				color: src.color || colors[idx] || 'black',
 				left: !!src.left,
 				akey: src.key,
 				key: key,
 				label: src.label,
+				visible: true,
 				minDomain: src.minDomain,
 				line: line
 			};
@@ -96,16 +123,29 @@ var initPlot = function() {
 		g.select('path.line').remove();
 		sources.forEach(function(src) {
 			var lineClass = src.left ? 'line-left' : 'line-right';
+			console.log(src.color);
 			src.path = g.append('path')
+				.attr('stroke', src.color)
 				.attr('class', 'line ' + lineClass + ' line-' + src.idx);
 		});
 
-		var legend = sources.map(function(src) {
-			return ['label', {}, ['input', {type: 'checkbox'}], src.label || src.key]
+		var legend = byId('legend');
+		legend.innerHTML = '';
+		sources.forEach(function(src) {
+			var label = renderDom(['label', {},
+				['div', {'class': 'legend-color'}],
+				['input', {type: 'checkbox', checked: true}],
+				src.label || src.key]);
+			var color = label.childNodes[0];
+			color.style.borderColor = src.color;
+			var input = label.childNodes[1];
+			input.onchange = function() {
+				src.visible = input.checked;
+				src.path.style('visibility', src.visible ? 'visible' : 'hidden');
+				dirty = true;
+			};
+			legend.appendChild(label);
 		});
-		legend = ['span', {}].concat(legend);
-		replaceDom(byId('legend'), legend);
-
 		dirty = true;
 	};
 
@@ -179,6 +219,9 @@ var initPlot = function() {
 	var calcExtentY = function() {
 		var domain = [];
 		sources.forEach(function(src) {
+			if (!src.visible) {
+				return;
+			}
 			domain = domain.concat(d3.extent(data, function(d) { return d[src.key]; }));
 		});
 		return d3.extent(domain);
@@ -375,7 +418,7 @@ var selectSource = function(name) {
 	}
 	dataSource = initDataSource({
 		verb: 'GET',
-		url: 'http://esp-office.vrn.dataart.net/api/devices/' + name + '/read',
+		url: '/api/devices/' + name + '/read',
 		params: null,
 	});
 	//plot.setSources(cfg.plotConfig);
