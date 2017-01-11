@@ -28,15 +28,10 @@ text.label-right {
 .legend label {
 	display: inline-block;
 	margin-right: 20px;
+	border-top: 2px solid transparent;
 }
 .legend input[type="checkbox"] {
 	vertical-align: middle;
-}
-.legend-color {
-	position: absolute;
-	width: 50px;
-	border: 1px solid transparent;
-	margin-left: 24px;
 }
 	</style>
 	<script src="libs.js"></script>
@@ -133,12 +128,10 @@ var initPlot = function() {
 		legend.innerHTML = '';
 		sources.forEach(function(src) {
 			var label = renderDom(['label', {},
-				['div', {'class': 'legend-color'}],
 				['input', {type: 'checkbox', checked: true}],
 				src.label || src.key]);
-			var color = label.childNodes[0];
-			color.style.borderColor = src.color;
-			var input = label.childNodes[1];
+			var input = label.childNodes[0];
+			label.style.borderColor = src.color;
 			input.onchange = function() {
 				src.visible = input.checked;
 				src.path.style('visibility', src.visible ? 'visible' : 'hidden');
