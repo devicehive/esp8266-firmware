@@ -15,10 +15,10 @@ path.domain {
 	stroke-width: 1.6px;
 }
 path.line-0, .axis-y-0 path.domain {
-	stroke: #6885d0;
+	stroke: #cc5658;
 }
 path.line-1, .axis-y-1 path.domain {
-	stroke: #cc5658;
+	stroke: #6885d0;
 }
 text.label-left {
 	transform: rotate(-90deg) translate(0, 1.5em);
@@ -30,18 +30,35 @@ text.label-right {
 	<script src="libs.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
 	<script>
+/*jshint browser: true*/
+/*globals d3, ajax, getKey*/
+var sources = {
+	mpu6050: {
+		verb: 'GET',
+		url: '/api/devices/mpu6050/read',
+		params: null,
+		interval: 500,
+		plotConfig: [{
+			left: true,
+			minDomain: 10,
+			key: 'temperature',
+			label: 'Temperature, C'
+		}]
+	}
+};
+
 function now() {
 	return new Date().getTime();
 }
 var plot;
 var initPlot = function() {
 	var data = [];
-	var maxTimeRange = 20 * 1000;
+	var maxTimeRange = 60 * 1000;
 	var minTimeRange = 10 * 1000;
 	var dirty = true;
 	var cutOff = false;
 
-	var margin = {top: 20, right: 30, bot: 30, left: 30};
+	var margin = {top: 20, right: 40, bot: 30, left: 40};
 	var svg = d3.select('svg');
 	var width = +svg.attr('width') - margin.left - margin.right;
 	var height = +svg.attr('height') - margin.top - margin.bot;
@@ -56,14 +73,15 @@ var initPlot = function() {
 		sources = srcs.map(function(src, idx) {
 			var scaleY = d3.scaleLinear().rangeRound([height, 0]);
 			var line = d3.line()
-				.x(function(d) { return scaleX(d.ts) })
-				.y(function(d) { return scaleY(d[src.key]) });
+				.x(function(d) { return scaleX(d.ts); })
+				.y(function(d) { return scaleY(d[src.key]); });
 
 			return {
 				idx: idx,
 				left: !!src.left,
 				key: src.key,
 				label: src.label,
+				minDomain: src.minDomain,
 				scale: scaleY,
 				line: line
 			};
@@ -92,7 +110,7 @@ var initPlot = function() {
 		var ts = now();
 		var cutTime = ts - maxTimeRange;
 		var i;
-		for (var i = 0; i < data.length - 1; i++) {
+		for (i = 0; i < data.length - 1; i++) {
 			if (data[i].ts >= cutTime) {
 				break;
 			}
@@ -106,7 +124,7 @@ var initPlot = function() {
 
 	var calcExtentX = function() {
 		var ts = now();
-		var left = d3.min(data, function(d) { return d.ts });
+		var left = d3.min(data, function(d) { return d.ts; });
 		if (cutOff || typeof left === 'undefined') {
 			left = ts - maxTimeRange;
 		}
@@ -116,6 +134,12 @@ var initPlot = function() {
 
 	var reset = function() {
 		data = [];
+		sources.forEach(function(src) {
+			if (src.axis) {
+				src.axis.remove();
+			}
+			src.path.datum([]).attr('d', src.line);
+		});
 		sources = [];
 		dirty = true;
 		cutOff = false;
@@ -134,7 +158,13 @@ var initPlot = function() {
 		}
 
 		sources.forEach(function(src) {
-			src.scale.domain(d3.extent(data, function(d) { return d[src.key] }));
+			var domain = d3.extent(data, function(d) { return d[src.key]; });
+			if (src.minDomain && domain[1] - domain[0] < src.minDomain) {
+				domain[0] = (domain[0] + domain[1] - src.minDomain) / 2;
+				domain[1] = domain[0] + src.minDomain;
+			}
+
+			src.scale.domain(domain);
 			redrawAxisY(src);
 			src.path.datum(data).attr('d', src.line);
 		});
@@ -185,32 +215,148 @@ var initPlot = function() {
 	};
 };
 
+var dataSource;
+var initDataSource = function(opts) {
+	var interval = Math.max(opts.interval || 1000, 200);
+
+	var running = false;
+	var requestInProgress = false;
+	var sink;
+	var loop = function() {
+		if (requestInProgress || !running) {
+			return;
+		}
+		requestInProgress = true;
+		ajax(opts.verb, opts.url, opts.params, getKey(), function(xhr) {
+			if (!running) {
+				return;
+			}
+			requestInProgress = false;
+			if (xhr.status < 200 || xhr.status > 299) {
+				console.error('error getting data:', xhr);
+				return;
+			}
+			var datum;
+			try {
+				datum = JSON.parse(xhr.responseText);
+				if (typeof opts.map === 'function') {
+					datum = opts.map(datum);
+				}
+			} catch(e) {
+				console.error('error during data transformation:', e);
+			}
+
+			sink.feed(datum);
+		});
+	};
+
+	var intervalId;
+	var start = function(target) {
+		if (running) {
+			return;
+		}
+		sink = target;
+		running = true;
+		intervalId = setInterval(loop, interval);
+	};
+	var stop = function() {
+		if (!running) {
+			return;
+		}
+		running = false;
+		sink = null;
+		if (typeof intervalId !== 'undefined') {
+			clearInterval(intervalId);
+		}
+	};
+
+	return {
+		start: start,
+		stop: stop
+	};
+};
+
+var renderLoop = (function() {
+	var raf = window.requestAnimationFrame ||
+			window.webkitRequestAnimationFrame ||
+			window.mozRequestAnimationFrame ||
+			window.oRequestAnimationFrame ||
+			window.msRequestAnimationFrame ||
+			function(callback) {
+				return window.setTimeout(callback, 16);
+			};
+	var caf = window.cancelAnimationFrame ||
+		window.webkitCancelAnimationFrame ||
+		window.mozCancelAnimationFrame ||
+		window.oCancelAnimationFrame ||
+		window.msCancelAnimationFrame ||
+		function(id) {
+			window.clearTimeout(id);
+		};
+
+	var running = false;
+	var rafId;
+	var loop = function() {
+		if (!running) {
+			return;
+		}
+
+		try {
+			if (plot) {
+				plot.redraw();
+			}
+		} catch(e) {
+		/// ???
+		}
+		rafId = raf(loop);
+	};
+
+	var start = function() {
+		if (running) {
+			return;
+		}
+		running = true;
+		loop();
+	};
+
+	var stop = function() {
+		if (!running) {
+			return;
+		}
+		running = false;
+		caf(rafId);
+	};
+
+	var isRunning = function() {
+		return running;
+	};
+
+	return {
+		stop: stop,
+		start: start,
+		isRunning: isRunning
+	};
+})();
+
 window.onload = function init() {
 	plot = initPlot();
-	plot.reset();
-	plot.setSources([
-		{
-			left: true,
-			key: 'temp',
-			label: 'Temperature, C'
-		},
-		{
-			left: false,
-			key: 'humid',
-			label: 'Humidity, %'
-		}
-	]);
-	setInterval(function() {
-		plot.feed({
-			temp: 10 + Math.random() * 5,
-			humid: 50 + Math.random() * 20
-		});
-	}, 100);
-	function loop() {
-		plot.redraw();
-		requestAnimationFrame(loop);
+	plot.redraw();
+};
+
+var selectSource = function(name) {
+	if (dataSource) {
+		dataSource.stop();
+		dataSource = null;
 	}
-	loop();
+	plot.reset();
+	renderLoop.stop();
+	var cfg = sources[name];
+	if (cfg) {
+		dataSource = initDataSource(cfg);
+		plot.setSources(cfg.plotConfig);
+		dataSource.start(plot);
+		renderLoop.start();
+	}
 };
 	</script>
 </head>
@@ -224,8 +370,12 @@ window.onload = function init() {
 </div>
 <div class="content">
 	<div class="form-block">
-		<div class="description">This sample can plot readouts over time.</div>
+		<div class="description">This sample page plots readouts over time.</div>
 		<div class="group-box">
+			<select onchange="selectSource(this.value)">
+				<option value="">Select data source to plot</option>
+				<option value="mpu6050">MPU6050 (temperature)</option>
+			</select>
 			<svg width="1000" height="480"></svg>
 		</div>
 		<div class="output-status" id="output"></div>
