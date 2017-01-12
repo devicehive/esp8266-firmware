@@ -36,6 +36,13 @@ text.label-right {
 .legend input[type="checkbox"] {
 	vertical-align: middle;
 }
+.form-block textarea {
+	width: 401px;
+	height: 100px;
+}
+.params-box {
+	padding-left: 40px;
+}
 	</style>
 	<script src="libs.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
@@ -218,8 +225,10 @@ var initPlot = function() {
 	var calcExtentX = function() {
 		var ts = now();
 		var left = d3.min(data, function(d) { return d.ts; });
-		if (cutOff || left === undefined) {
+		if (cutOff) {
 			left = ts - maxTimeRange;
+		} else if (left === undefined) {
+			left = ts - minTimeRange;
 		}
 		left = clamp(left, ts - maxTimeRange, ts - minTimeRange);
 		return [left, ts];
@@ -427,22 +436,41 @@ var renderLoop = (function() {
 window.onload = function init() {
 	plot = initPlot();
 	plot.redraw();
+	byId('run-btn').onclick = selectSource;
+	byId('stop-btn').onclick = function () {
+		if (dataSource) {
+			dataSource.stop();
+		}
+		renderLoop.stop();
+	};
 };
 
-var selectSource = function(name) {
+var selectSource = function() {
+	var device = byId('dev-name').value;
+	var params;
+	try {
+		var json = byId('dev-params');
+		if (json.length) {
+			params = JSON.parse(json)
+		} else {
+			params = null;
+		}
+	} catch(e) {
+		console.err('could not parse json', e);
+	}
 	if (dataSource) {
 		dataSource.stop();
 		dataSource = null;
 	}
 	plot.reset();
 	renderLoop.stop();
-	if (name === '') {
+	if (device === '') {
 		return;
 	}
 	dataSource = initDataSource({
-		verb: 'GET',
-		url: '/api/devices/' + name + '/read',
-		params: null
+		verb: 'POST',
+		url: '/api/' + device,
+		params: params
 	});
 	//plot.setSources(cfg.plotConfig);
 	dataSource.start(plot.feed);
@@ -461,11 +489,32 @@ var selectSource = function(name) {
 <div class="content">
 	<div class="form-block">
 		<div class="description">This sample page plots readouts over time.</div>
-		<div class="group-box">
-			<select onchange="selectSource(this.value)">
-				<option value="">Select data source to plot</option>
-				<option value="mpu6050">MPU6050</option>
-			</select>
+		<div class="params-box group-box">
+			<input id="dev-name" placeholder="device name" list="sensors">
+			<datalist id="sensors">
+				<option value="devices/ds18b20/read">
+				<option value="devices/lm75/read">
+				<option value="devices/dht11/read">
+				<option value="devices/dht22/read">
+				<option value="devices/si7021/read">
+				<option value="devices/bmp180/read">
+				<option value="devices/bmp280/read">
+				<option value="devices/bh1750/read">
+				<option value="devices/mpu6050/read">
+				<option value="devices/hmc5883l/read">
+				<option value="devices/pcf8574/read">
+				<option value="devices/mhz19/read">
+				<option value="devices/pcf8591/read">
+				<option value="devices/ads1115/read">
+				<option value="devices/ina219/read">
+				<option value="gpio/read">
+			</datalist>
+			<button class="btn_event btn_event_green" type="button" id="run-btn">Run</button>
+			<button class="btn_event btn_event_red" type="button" id="stop-btn">Stop</button>
+			<br>
+			<textarea id="dev-params" placeholder="device parameters"></textarea>
+		</div>
+		<div class="graph-block">
 			<svg width="1000" height="500"></svg>
 			<div id="legend" class="legend"></div>
 		</div>
