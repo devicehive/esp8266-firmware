@@ -6,19 +6,18 @@
 text.label-text {
 	fill: black;
 }
-path.line {
+.line {
 	fill: none;
-	stroke: black;
 	stroke-width: 1.6px;
 }
-path.domain {
+.tick line {
+	stroke: #a0a0a0;
+}
+.axis-x path.domain {
+	stroke: rgba(0.8, 0.8, 0.8, 0.5);
+}
+.axis-y path.domain {
 	stroke-width: 1.6px;
-}
-path.line-0, .axis-y-0 path.domain {
-	stroke: #cc5658;
-}
-path.line-1, .axis-y-1 path.domain {
-	stroke: #6885d0;
 }
 text.label-left {
 	transform: rotate(-90deg) translate(0, 1.5em);
@@ -26,30 +25,52 @@ text.label-left {
 text.label-right {
 	transform: rotate(90deg) translateY(1.5em);
 }
+.legend {
+	margin-left: 40px;
+}
+.legend label {
+	display: inline-block;
+	margin-right: 20px;
+	border-top: 2px solid transparent;
+}
+.legend input[type="checkbox"] {
+	vertical-align: middle;
+}
 	</style>
 	<script src="libs.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
 	<script>
 /*jshint browser: true*/
-/*globals d3, ajax, getKey*/
-var sources = {
-	mpu6050: {
-		verb: 'GET',
-		url: '/api/devices/mpu6050/read',
-		params: null,
-		interval: 500,
-		plotConfig: [{
-			left: true,
-			minDomain: 10,
-			key: 'temperature',
-			label: 'Temperature, C'
-		}]
-	}
+/*globals d3, ajax, getKey, byId, renderDom*/
+var now = function() {
+	return Date.now();
 };
+var colors = [
+	'#007e67',
+	'#5f47f3',
+	'#66ff80',
+	'#ff50d6',
+	'#1f9200',
+	'#a485ff',
+	'#b9b100',
+	'#3c0068',
+	'#fbff84',
+	'#003b95',
+	'#ff6f11',
+	'#0172bc',
+	'#8f1e00',
+	'#74ffde',
+	'#ab004a',
+	'#57ceff',
+	'#5a0e00',
+	'#f9f1ff',
+	'#0d002c',
+	'#ffa995',
+	'#001c1b',
+	'#ff74b9',
+	'#2d3600',
+	'#630046'];
 
-function now() {
-	return new Date().getTime();
-}
 var plot;
 var initPlot = function() {
 	var data = [];
@@ -62,61 +83,133 @@ var initPlot = function() {
 	var svg = d3.select('svg');
 	var width = +svg.attr('width') - margin.left - margin.right;
 	var height = +svg.attr('height') - margin.top - margin.bot;
+	var clip = svg.append('clipPath').attr('id', 'cliprect')
+		.append('rect')
+		.attr('x', 0).attr('y', 0)
+		.attr('width', width).attr('height', height);
 	var g = svg.append('g')
 		.attr('transform', 'translate(' + margin.left + ', ' + margin.top + ')');
+	var axes = g.append('g');
 
 	var scaleX = d3.scaleTime().rangeRound([0, width]);
+	var scaleY = d3.scaleLinear().rangeRound([height, 0]);
 
 	var axisX;
+	var axisY;
 	var sources = [];
+	var clamp = function(x, lower, higher) {
+		return Math.min(Math.max(x, lower), higher);
+	};
+	var strkey = function(key) {
+		if (!Array.isArray(key)) {
+			return key;
+		}
+		return key.join('.');
+	};
 	var setSources = function(srcs) {
 		sources = srcs.map(function(src, idx) {
-			var scaleY = d3.scaleLinear().rangeRound([height, 0]);
+			var key = strkey(src.key);
 			var line = d3.line()
 				.x(function(d) { return scaleX(d.ts); })
-				.y(function(d) { return scaleY(d[src.key]); });
+				.y(function(d) { return scaleY(d[key]); });
 
 			return {
 				idx: idx,
+				color: src.color || colors[idx] || 'black',
 				left: !!src.left,
-				key: src.key,
+				akey: src.key,
+				key: key,
 				label: src.label,
+				visible: true,
 				minDomain: src.minDomain,
-				scale: scaleY,
 				line: line
 			};
 		});
 
-		g.select('path.line').remove();
+		g.selectAll('path.line').remove();
 		sources.forEach(function(src) {
 			var lineClass = src.left ? 'line-left' : 'line-right';
+			console.log(src.color);
 			src.path = g.append('path')
+				.attr('stroke', src.color)
+				.attr('clip-path', 'url(#cliprect)')
 				.attr('class', 'line ' + lineClass + ' line-' + src.idx);
+		});
+
+		var legend = byId('legend');
+		legend.innerHTML = '';
+		sources.forEach(function(src) {
+			var label = renderDom(['label', {},
+				['input', {type: 'checkbox', checked: true}],
+				src.label || src.key]);
+			var input = label.childNodes[0];
+			label.style.borderColor = src.color;
+			input.onchange = function() {
+				src.visible = input.checked;
+				src.path.style('visibility', src.visible ? 'visible' : 'hidden');
+				dirty = true;
+			};
+			legend.appendChild(label);
 		});
 		dirty = true;
 	};
 
+	var lookup = function(obj, key) {
+		if (!Array.isArray(key)) {
+			return obj[key];
+		}
+		key.forEach(function(k) {
+			obj = obj[k];
+		});
+		return obj;
+	};
+
+	var deriveConfig;
+	deriveConfig = function(obj) {
+		var measures = [];
+		Object.keys(obj).forEach(function(k) {
+			var v = obj[k];
+			if (typeof v === 'object') {
+				deriveConfig(v).forEach(function(m) {
+					m.key = [k].concat(m.key);
+					measures.push(m);
+				});
+			} else if (typeof v === 'number') {
+				measures.push({
+					key: [k]
+				});
+			} else {
+				console.error('ignoring a key inside json', v);
+			}
+		});
+		return measures;
+	};
+
 	var feed = function(datum) {
 		var ts = now();
+		if (sources.length === 0) {
+			// hax
+			setSources(deriveConfig(datum));
+		}
 		var d = {ts: ts};
 		sources.forEach(function(s) {
-			d[s.key] = datum[s.key];
+			d[s.key] = lookup(datum, s.akey);
 		});
 		data.push(d);
 		dirty = true;
 	};
 
-	var cutOld = function() {
+	var discardOldData = function() {
 		var ts = now();
 		var cutTime = ts - maxTimeRange;
 		var i;
-		for (i = 0; i < data.length - 1; i++) {
+		for (i = 0; i < data.length - 1; i += 1) {
 			if (data[i].ts >= cutTime) {
 				break;
 			}
 		}
 		if (i > 1) {
-			data = data.slice(i - 1);
+			data.splice(0, i - 1);
 			cutOff = true;
 			dirty = true;
 		}
@@ -125,86 +218,75 @@ var initPlot = function() {
 	var calcExtentX = function() {
 		var ts = now();
 		var left = d3.min(data, function(d) { return d.ts; });
-		if (cutOff || typeof left === 'undefined') {
+		if (cutOff || left === undefined) {
 			left = ts - maxTimeRange;
 		}
-		left = Math.min(left, ts - minTimeRange);
+		left = clamp(left, ts - maxTimeRange, ts - minTimeRange);
 		return [left, ts];
+	};
+
+	var calcExtentY = function() {
+		var domain = [];
+		sources.forEach(function(src) {
+			if (src.visible) {
+				domain = domain.concat(d3.extent(data, function(d) { return d[src.key]; }));
+			}
+		});
+		domain = d3.extent(domain);
+		if (isNaN(domain[0]) || isNaN(domain[1])) {
+			return [0, 1];
+		} else {
+			return d3.extent(domain);
+		}
 	};
 
 	var reset = function() {
 		data = [];
-		sources.forEach(function(src) {
-			if (src.axis) {
-				src.axis.remove();
-			}
-			src.path.datum([]).attr('d', src.line);
-		});
+		setSources([]);
 		sources = [];
 		dirty = true;
 		cutOff = false;
 	};
 
+	var redrawAxisX = function() {
+		if (!axisX) {
+			axisX = axes.append('g')
+				.attr('class', 'axis-x')
+				.attr('transform', 'translate(0,' + height + ')')
+		}
+		var axisGen = d3.axisBottom(scaleX)
+			.tickSizeInner(-height)
+			.tickArguments([undefined, '%H:%M:%S']);
+		axisX.call(axisGen);
+	};
+
+	var redrawAxisY = function() {
+		if (!axisY) {
+			axisY = axes.append('g')
+				.attr('class', 'axis-y');
+		}
+		var axisGen = d3.axisLeft(scaleY)
+			.tickSizeInner(-width);
+		axisY.call(axisGen);
+	};
+
 	var redraw = function() {
-		cutOld();
+		discardOldData();
 		scaleX.domain(calcExtentX());
 		redrawAxisX();
 
-		if (!dirty) {
-			sources.forEach(function(src) {
-				src.path.datum(data).attr('d', src.line);
-			});
-			return;
+		if (dirty) {
+			scaleY.domain(calcExtentY());
+			redrawAxisY();
 		}
 
 		sources.forEach(function(src) {
-			var domain = d3.extent(data, function(d) { return d[src.key]; });
-			if (src.minDomain && domain[1] - domain[0] < src.minDomain) {
-				domain[0] = (domain[0] + domain[1] - src.minDomain) / 2;
-				domain[1] = domain[0] + src.minDomain;
+			if (src.visible) {
+				src.path.attr('d', src.line(data));
 			}
-
-			src.scale.domain(domain);
-			redrawAxisY(src);
-			src.path.datum(data).attr('d', src.line);
 		});
 
 		dirty = false;
-	};
-
-	var redrawAxisX = function() {
-		if (axisX) {
-			axisX.remove();
-		}
-		axisX = g.append('g')
-			.attr("class", "axis-x")
-				.attr("transform", "translate(0," + height + ")")
-				.call(d3.axisBottom(scaleX).tickArguments([undefined, '%M:%S']));
-	};
-
-	var redrawAxisY = function(src) {
-		if (src.axis) {
-			src.axis.remove();
-		}
-		var axisKey, clsSuffix, x;
-		if (src.left) {
-			axisKey = 'axisLeft';
-			clsSuffix = '-left';
-			x = 0;
-		} else {
-			axisKey = 'axisRight';
-			clsSuffix = '-right';
-			x = width;
-		}
-
-		src.axis = g.append('g')
-			.attr('class', 'axis-y axis' + clsSuffix + ' axis-y-' + src.idx)
-			.attr('transform', 'translate(' + x + ', 0)');
-		src.axis
-			.call(d3[axisKey](src.scale))
-			.append('text')
-				.text(src.label)
-				.attr('class', 'label-text label' + clsSuffix);
 	};
 
 	return {
@@ -246,28 +328,31 @@ var initDataSource = function(opts) {
 				console.error('error during data transformation:', e);
 			}
 
-			sink.feed(datum);
+			sink(datum);
 		});
 	};
 
 	var intervalId;
-	var start = function(target) {
-		if (running) {
-			return;
-		}
-		sink = target;
-		running = true;
-		intervalId = setInterval(loop, interval);
-	};
 	var stop = function() {
 		if (!running) {
 			return;
 		}
 		running = false;
+		requestInProgress = false;
+		clearInterval(intervalId);
 		sink = null;
-		if (typeof intervalId !== 'undefined') {
-			clearInterval(intervalId);
+	};
+
+	var start = function(target) {
+		if (typeof target !== 'function') {
+			throw new Error('expected function as an argument');
 		}
+		if (running) {
+			stop();
+		}
+		sink = target;
+		intervalId = setInterval(loop, interval);
+		running = true;
 	};
 
 	return {
@@ -296,27 +381,19 @@ var renderLoop = (function() {
 
 	var running = false;
 	var rafId;
-	var loop = function() {
+	var callback;
+	var loop;
+	loop = function() {
 		if (!running) {
 			return;
 		}
 
 		try {
-			if (plot) {
-				plot.redraw();
-			}
+			callback();
 		} catch(e) {
-		/// ???
+			console.error(e);
 		}
 		rafId = raf(loop);
-	};
-
-	var start = function() {
-		if (running) {
-			return;
-		}
-		running = true;
-		loop();
 	};
 
 	var stop = function() {
@@ -327,16 +404,23 @@ var renderLoop = (function() {
 		caf(rafId);
 	};
 
-	var isRunning = function() {
-		return running;
+	var start = function(cb) {
+		if (typeof cb !== 'function') {
+			throw new Error('expected function as an argument');
+		}
+		if (running) {
+			stop();
+		}
+		running = true;
+		callback = cb;
+		loop();
 	};
 
 	return {
 		stop: stop,
-		start: start,
-		isRunning: isRunning
+		start: start
 	};
-})();
+}());
 
 window.onload = function init() {
 	plot = initPlot();
@@ -350,13 +434,17 @@ var selectSource = function(name) {
 	}
 	plot.reset();
 	renderLoop.stop();
-	var cfg = sources[name];
-	if (cfg) {
-		dataSource = initDataSource(cfg);
-		plot.setSources(cfg.plotConfig);
-		dataSource.start(plot);
-		renderLoop.start();
+	if (name === '') {
+		return;
 	}
+	dataSource = initDataSource({
+		verb: 'GET',
+		url: '/api/devices/' + name + '/read',
+		params: null
+	});
+	//plot.setSources(cfg.plotConfig);
+	dataSource.start(plot.feed);
+	renderLoop.start(plot.redraw);
 };
 	</script>
 </head>
@@ -374,9 +462,10 @@ var selectSource = function(name) {
 		<div class="group-box">
 			<select onchange="selectSource(this.value)">
 				<option value="">Select data source to plot</option>
-				<option value="mpu6050">MPU6050 (temperature)</option>
+				<option value="mpu6050">MPU6050</option>
 			</select>
 			<svg width="1000" height="480"></svg>
+			<div id="legend" class="legend"></div>
 		</div>
 		<div class="output-status" id="output"></div>
 	</div>
