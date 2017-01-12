@@ -263,7 +263,7 @@ var initPlot = function() {
 		if (!axisX) {
 			axisX = axes.append('g')
 				.attr('class', 'axis-x')
-				.attr('transform', 'translate(0,' + height + ')')
+				.attr('transform', 'translate(0,' + height + ')');
 		}
 		var axisGen = d3.axisBottom(scaleX)
 			.tickSizeInner(-height)
@@ -447,11 +447,11 @@ window.onload = function init() {
 
 var selectSource = function() {
 	var device = byId('dev-name').value;
-	var params;
+	var params = null;
 	try {
 		var json = byId('dev-params');
 		if (json.length) {
-			params = JSON.parse(json)
+			params = JSON.parse(json);
 		} else {
 			params = null;
 		}
