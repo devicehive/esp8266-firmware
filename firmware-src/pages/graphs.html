@@ -37,6 +37,7 @@ text.label-right {
 	vertical-align: middle;
 }
 .form-block textarea {
+	margin-top: 5px;
 	width: 401px;
 	height: 100px;
 }
@@ -472,7 +473,7 @@ var selectSource = function() {
 	}
 	dataSource = initDataSource({
 		verb: 'POST',
-		url: '/api/' + command,
+		url: 'http:///esp-office.vrn.dataart.net/api/' + command,
 		params: params
 	});
 	//plot.setSources(cfg.plotConfig);
