@@ -234,10 +234,12 @@ var initPlot = function() {
 		});
 		domain = d3.extent(domain);
 		if (isNaN(domain[0]) || isNaN(domain[1])) {
-			return [0, 1];
-		} else {
-			return d3.extent(domain);
+			domain = [0, 1];
 		}
+		var size = (domain[1] - domain[0]);
+		domain[0] -= size * 0.005;
+		domain[1] += size * 0.005;
+		return domain;
 	};
 
 	var reset = function() {
@@ -464,7 +466,7 @@ var selectSource = function(name) {
 				<option value="">Select data source to plot</option>
 				<option value="mpu6050">MPU6050</option>
 			</select>
-			<svg width="1000" height="480"></svg>
+			<svg width="1000" height="500"></svg>
 			<div id="legend" class="legend"></div>
 		</div>
 		<div class="output-status" id="output"></div>
