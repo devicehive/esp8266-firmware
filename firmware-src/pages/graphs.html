@@ -480,6 +480,11 @@ var gpioAdapter = function(sink) {
 	};
 };
 
+var gpioCommands = [
+	'gpio/read',
+	'devices/pcf8574/read'
+];
+
 var selectSource = function() {
 	if (dataSource) {
 		dataSource.stop();
@@ -517,7 +522,7 @@ var selectSource = function() {
 		params: params
 	});
 	//plot.setSources(cfg.plotConfig);
-	if (command === 'gpio/read') {
+	if (gpioCommands.indexOf(command) > -1) {
 		dataSource.start(gpioAdapter(plot.feed));
 	} else {
 		dataSource.start(plot.feed);
