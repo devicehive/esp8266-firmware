@@ -62,7 +62,7 @@
     * [devices/mfrc522/read](#devicesmfrc522read)
     * [devices/mfrc522/mifare/read](#devicesmfrc522mifareread)
     * [devices/mfrc522/mifare/write](#devicesmfrc522mifarewrite)
-    * [devices/pca9685/control](#devices/pca9685/control)
+    * [devices/pca9685/control](#devicespca9685control)
   * [License](#license)
 
 # Overview
