@@ -12,7 +12,7 @@ function ajax(verb, url, params, key, cb) {
 	else if(params.length == 0)
 		xmlhttp.send();
 	else {
-		if (typeof params == 'object')
+		if (typeof params == 'object' && !(params instanceof Uint8Array))
 			params = JSON.stringify(params);
 		xmlhttp.send(params);
 	}

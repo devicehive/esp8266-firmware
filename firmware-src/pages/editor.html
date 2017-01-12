@@ -18,6 +18,21 @@
 			setValue: function(value) { byId('page').value = value; }
 		};
 
+		function toUtf8(str) {
+			str = encodeURIComponent(str);
+			var array = [];
+			for (var i = 0; i < str.length; i++) {
+				if (str[i] === '%') {
+					var num = str.substr(i + 1, i + 3);
+					array.push(parseInt(num, 16));
+					i += 2;
+				} else {
+					array.push(str.charCodeAt(i));
+				}
+			}
+			return new Uint8Array(array);
+		}
+
 		function send(method, url, data, cb) {
 			ajax(method, url, data, getKey(), function(xmlhttp) {
 				if (xmlhttp.status == 401)
@@ -34,7 +49,7 @@
 		function flash_data() {
 			print("Flashing " + Math.floor(flashPos * 100 / flashData.length) + "%...");
 			var endchar = Math.min(flashPos + flashLen, flashData.length);
-			send('POST', '/flash/page/put', flashData.substring(flashPos, endchar), function (ok, data) {
+			send('POST', '/flash/page/put', flashData.slice(flashPos, endchar), function (ok, data) {
 				if (ok) {
 					flashPos += flashLen;
 					if (flashPos >= flashData.length) {
@@ -59,7 +74,7 @@
 				return;
 			localStorage['accesskey'] = byId('accesskey').value;
 			print("");
-			var data = editorSession.getValue();
+			var data = toUtf8(editorSession.getValue());
 			if (data.length > flashLimit) {
 				alert("Page is too big. Limit is " + flashLimit + " bytes. Current size is " + data.length + " bytes.");
 				return;
@@ -117,7 +132,7 @@
 			send('GET', '/', null, function (ok, data) {
 				if (ok) {
 					editorSession.setValue(data);
-					print("Page loaded " + data.length + " bytes");
+					print("Page loaded " + toUtf8(data).length + " bytes");
 				} else {
 					print("Error while retrieving current page", true);
 				}
