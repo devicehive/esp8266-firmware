@@ -97,6 +97,9 @@ var initPlot = function() {
 	var axisX;
 	var axisY;
 	var sources = [];
+	var clamp = function(x, lower, higher) {
+		return Math.min(Math.max(x, lower), higher);
+	};
 	var strkey = function(key) {
 		if (!Array.isArray(key)) {
 			return key;
@@ -129,7 +132,7 @@ var initPlot = function() {
 			console.log(src.color);
 			src.path = g.append('path')
 				.attr('stroke', src.color)
-				.attr("clip-path", "url(#cliprect)")
+				.attr('clip-path', 'url(#cliprect)')
 				.attr('class', 'line ' + lineClass + ' line-' + src.idx);
 		});
 
@@ -196,7 +199,7 @@ var initPlot = function() {
 		dirty = true;
 	};
 
-	var cutOld = function() {
+	var discardOldData = function() {
 		var ts = now();
 		var cutTime = ts - maxTimeRange;
 		var i;
@@ -206,7 +209,7 @@ var initPlot = function() {
 			}
 		}
 		if (i > 1) {
-			data = data.slice(i - 1);
+			data.splice(0, i - 1);
 			cutOff = true;
 			dirty = true;
 		}
@@ -218,7 +221,7 @@ var initPlot = function() {
 		if (cutOff || left === undefined) {
 			left = ts - maxTimeRange;
 		}
-		left = Math.min(left, ts - minTimeRange);
+		left = clamp(left, ts - maxTimeRange, ts - minTimeRange);
 		return [left, ts];
 	};
 
@@ -246,31 +249,29 @@ var initPlot = function() {
 	};
 
 	var redrawAxisX = function() {
-		if (axisX) {
-			axisX.remove();
+		if (!axisX) {
+			axisX = axes.append('g')
+				.attr('class', 'axis-x')
+				.attr('transform', 'translate(0,' + height + ')')
 		}
 		var axisGen = d3.axisBottom(scaleX)
 			.tickSizeInner(-height)
 			.tickArguments([undefined, '%H:%M:%S']);
-		axisX = axes.append('g')
-			.attr('class', 'axis-x')
-				.attr('transform', 'translate(0,' + height + ')')
-				.call(axisGen);
+		axisX.call(axisGen);
 	};
 
 	var redrawAxisY = function() {
-		if (axisY) {
-			axisY.remove();
+		if (!axisY) {
+			axisY = axes.append('g')
+				.attr('class', 'axis-y');
 		}
 		var axisGen = d3.axisLeft(scaleY)
 			.tickSizeInner(-width);
-		axisY = axes.append('g')
-			.attr('class', 'axis-y')
-				.call(axisGen);
+		axisY.call(axisGen);
 	};
 
 	var redraw = function() {
-		cutOld();
+		discardOldData();
 		scaleX.domain(calcExtentX());
 		redrawAxisX();
 
@@ -281,7 +282,7 @@ var initPlot = function() {
 
 		sources.forEach(function(src) {
 			if (src.visible) {
-				src.path.datum(data).attr('d', src.line);
+				src.path.attr('d', src.line(data));
 			}
 		});
 
@@ -415,14 +416,9 @@ var renderLoop = (function() {
 		loop();
 	};
 
-	var isRunning = function() {
-		return running;
-	};
-
 	return {
 		stop: stop,
-		start: start,
-		isRunning: isRunning
+		start: start
 	};
 }());
 
