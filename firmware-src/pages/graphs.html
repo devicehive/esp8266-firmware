@@ -327,6 +327,9 @@ var initDataSource = function(opts) {
 			requestInProgress = false;
 			if (xhr.status < 200 || xhr.status > 299) {
 				console.error('error getting data:', xhr);
+				replaceDom(byId('output'), ['div', {},
+					'Could not load data: ' + xhr.status,
+					['pre', {}, xhr.responseText]]);
 				return;
 			}
 			var datum;
@@ -451,7 +454,7 @@ var selectSource = function() {
 	try {
 		var json = byId('dev-params');
 		if (json.length) {
-			params = JSON.parse(json);
+			params = JSON.parse(json).value;
 		} else {
 			params = null;
 		}
