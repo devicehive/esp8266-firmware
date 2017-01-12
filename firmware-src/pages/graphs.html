@@ -250,7 +250,7 @@ var initPlot = function() {
 		if (isNaN(domain[0]) || isNaN(domain[1])) {
 			domain = [0, 1];
 		}
-		var size = (domain[1] - domain[0]);
+		var size = Math.max(domain[1] - domain[0], 1);
 		domain[0] -= size * 0.005;
 		domain[1] += size * 0.005;
 		return domain;
@@ -458,6 +458,33 @@ window.onload = function init() {
 	};
 };
 
+var gpioAdapter = function(sink) {
+	var hasPrev = false;
+	var prev;
+	var keys;
+
+	return function(datum) {
+		if (hasPrev) {
+			sink(prev);
+		}
+		if (keys === undefined) {
+			keys = Object.keys(datum);
+		}
+		var d = {};
+		keys.map(function(key, i) {
+			d[key] = datum[key] * 0.8 + i;
+		});
+		sink(d);
+		prev = d;
+		hasPrev = true;
+	};
+};
+
+var gpioCommands = [
+	'gpio/read',
+	'devices/pcf8574/read'
+];
+
 var selectSource = function() {
 	if (dataSource) {
 		dataSource.stop();
@@ -495,7 +522,11 @@ var selectSource = function() {
 		params: params
 	});
 	//plot.setSources(cfg.plotConfig);
-	dataSource.start(plot.feed);
+	if (gpioCommands.indexOf(command) > -1) {
+		dataSource.start(gpioAdapter(plot.feed));
+	} else {
+		dataSource.start(plot.feed);
+	}
 	renderLoop.start(plot.redraw);
 };
 	</script>
@@ -514,6 +545,8 @@ var selectSource = function() {
 		<div class="params-box group-box">
 			<input id="command-name" placeholder="command name" list="sensors">
 			<datalist id="sensors">
+				<option value="gpio/read">
+				<option value="adc/read">
 				<option value="devices/ds18b20/read">
 				<option value="devices/lm75/read">
 				<option value="devices/dht11/read">
@@ -529,7 +562,6 @@ var selectSource = function() {
 				<option value="devices/pcf8591/read">
 				<option value="devices/ads1115/read">
 				<option value="devices/ina219/read">
-				<option value="gpio/read">
 			</datalist>
 			<button class="btn_event btn_event_green" type="button" id="run-btn">Run</button>
 			<button class="btn_event btn_event_red" type="button" id="stop-btn">Stop</button>
