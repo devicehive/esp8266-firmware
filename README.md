@@ -76,4 +76,5 @@ License, see sdk/License file for details.
 
 # Authors
 Nikolay Khabarov  
-Embedded pages design: Maksim Kleshchevnikov
+Igor Malovitsa  
+Maksim Kleshchevnikov  
