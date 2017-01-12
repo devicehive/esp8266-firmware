@@ -966,9 +966,9 @@ Pin numbers-value pairs where value can be only "pullup". If pin was used as out
 Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
-	"0":"1",
-	"1":"1",
-	"2":"0"
+	"0":1,
+	"1":1,
+	"2":0
 }
 ```
 Chip has 8(0..7) ports.
