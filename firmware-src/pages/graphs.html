@@ -44,6 +44,10 @@ text.label-right {
 .params-box {
 	padding-left: 40px;
 }
+.params-box, .output-status {
+	margin-top: 10px;
+	float: left;
+}
 	</style>
 	<script src="libs.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.4.1/d3.min.js"></script>
@@ -442,6 +446,7 @@ var renderLoop = (function() {
 }());
 
 window.onload = function init() {
+	byId('accesskey').value = localStorage['accesskey'];
 	plot = initPlot();
 	plot.redraw();
 	byId('run-btn').onclick = selectSource;
@@ -454,7 +459,20 @@ window.onload = function init() {
 };
 
 var selectSource = function() {
+	if (dataSource) {
+		dataSource.stop();
+		dataSource = null;
+	}
+
+	replaceDom(byId('output'), '');
+	renderLoop.stop();
+	plot.reset();
+
 	var command = byId('command-name').value;
+	if (command === '') {
+		return;
+	}
+
 	var params = null;
 	try {
 		var json = byId('command-params').value;
@@ -464,18 +482,13 @@ var selectSource = function() {
 			params = null;
 		}
 	} catch(e) {
-		console.err('could not parse json', e);
-	}
-	if (dataSource) {
-		dataSource.stop();
-		dataSource = null;
-	}
-	replaceDom(byId('output'), '');
-	renderLoop.stop();
-	plot.reset();
-	if (command === '') {
+		console.error('could not parse json', e);
+		replaceDom(byId('output'), ['div', {},
+			'Could not parse command parameters json: ', ['br', {}],
+			e.toString()]);
 		return;
 	}
+
 	dataSource = initDataSource({
 		verb: 'POST',
 		url: '/api/' + command,
@@ -523,11 +536,11 @@ var selectSource = function() {
 			<br>
 			<textarea id="command-params" placeholder="command parameters"></textarea>
 		</div>
+		<div class="output-status" id="output"></div>
 		<div class="graph-block">
 			<svg width="1000" height="500"></svg>
 			<div id="legend" class="legend"></div>
 		</div>
-		<div class="output-status" id="output"></div>
 	</div>
 </div>
 </body>
