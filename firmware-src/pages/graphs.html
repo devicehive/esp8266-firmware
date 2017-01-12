@@ -458,6 +458,24 @@ window.onload = function init() {
 	};
 };
 
+var gpioAdapter = function(sink) {
+	var hasPrev = false;
+	var prev;
+
+	return function(datum) {
+		if (hasPrev) {
+			sink(prev);
+		}
+		var d = {};
+		Object.keys(datum).map(function(key, i) {
+			d[key] = datum[key] * 0.8 + i;
+		});
+		sink(d);
+		prev = d;
+		hasPrev = true;
+	};
+};
+
 var selectSource = function() {
 	if (dataSource) {
 		dataSource.stop();
@@ -495,7 +513,11 @@ var selectSource = function() {
 		params: params
 	});
 	//plot.setSources(cfg.plotConfig);
-	dataSource.start(plot.feed);
+	if (command === 'gpio/read') {
+		dataSource.start(gpioAdapter(plot.feed));
+	} else {
+		dataSource.start(plot.feed);
+	}
 	renderLoop.start(plot.redraw);
 };
 	</script>
