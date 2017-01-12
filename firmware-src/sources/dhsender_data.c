@@ -66,7 +66,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf,
 		const unsigned int pin = 1 << i;
 		const pinvalue = (state & pin) ? 1 : 0;
 		if(suitable & pin) {
-			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":\"%d\"" : ", \"%d\":\"%d\"", i, pinvalue);
+			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":%d" : ", \"%d\":%d", i, pinvalue);
 		}
 	}
 	return len + snprintf(&buf[len], buflen - len, "}");

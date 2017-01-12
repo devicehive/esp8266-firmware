@@ -256,9 +256,9 @@ Returns "OK" on success with result or "Error" with description in result.
 *Example*:  
 ```json
 {
-	"0":"0",
-	"1":"1",
-	"2":"0"
+	"0":0,
+	"1":1,
+	"2":0
 }
 ```
 
@@ -295,9 +295,9 @@ Notifications will be generated with the name "gpio/int". Each notification will
 {
 	"caused":["0", "1"],
 	"state":{
-		"0":"0",
-		"1":"1",
-		"16":"0"
+		"0":0,
+		"1":1,
+		"16":0
 	},
 	"tick":123456
 }
