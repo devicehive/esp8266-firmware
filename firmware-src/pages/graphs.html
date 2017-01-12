@@ -461,13 +461,17 @@ window.onload = function init() {
 var gpioAdapter = function(sink) {
 	var hasPrev = false;
 	var prev;
+	var keys;
 
 	return function(datum) {
 		if (hasPrev) {
 			sink(prev);
 		}
+		if (keys === undefined) {
+			keys = Object.keys(datum);
+		}
 		var d = {};
-		Object.keys(datum).map(function(key, i) {
+		keys.map(function(key, i) {
 			d[key] = datum[key] * 0.8 + i;
 		});
 		sink(d);
