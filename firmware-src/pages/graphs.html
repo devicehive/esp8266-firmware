@@ -449,10 +449,10 @@ window.onload = function init() {
 };
 
 var selectSource = function() {
-	var device = byId('dev-name').value;
+	var command = byId('command-name').value;
 	var params = null;
 	try {
-		var json = byId('dev-params');
+		var json = byId('command-params');
 		if (json.length) {
 			params = JSON.parse(json).value;
 		} else {
@@ -467,12 +467,12 @@ var selectSource = function() {
 	}
 	plot.reset();
 	renderLoop.stop();
-	if (device === '') {
+	if (command === '') {
 		return;
 	}
 	dataSource = initDataSource({
 		verb: 'POST',
-		url: '/api/' + device,
+		url: '/api/' + command,
 		params: params
 	});
 	//plot.setSources(cfg.plotConfig);
@@ -493,7 +493,7 @@ var selectSource = function() {
 	<div class="form-block">
 		<div class="description">This sample page plots readouts over time.</div>
 		<div class="params-box group-box">
-			<input id="dev-name" placeholder="device name" list="sensors">
+			<input id="command-name" placeholder="command name" list="sensors">
 			<datalist id="sensors">
 				<option value="devices/ds18b20/read">
 				<option value="devices/lm75/read">
@@ -515,7 +515,7 @@ var selectSource = function() {
 			<button class="btn_event btn_event_green" type="button" id="run-btn">Run</button>
 			<button class="btn_event btn_event_red" type="button" id="stop-btn">Stop</button>
 			<br>
-			<textarea id="dev-params" placeholder="device parameters"></textarea>
+			<textarea id="command-params" placeholder="command parameters"></textarea>
 		</div>
 		<div class="graph-block">
 			<svg width="1000" height="500"></svg>
