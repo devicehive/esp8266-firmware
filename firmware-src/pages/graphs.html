@@ -145,7 +145,7 @@ var initPlot = function() {
 		});
 
 		var legend = byId('legend');
-		legend.innerHTML = '';
+		replaceDom(legend, '');
 		sources.forEach(function(src) {
 			var label = renderDom(['label', {},
 				['input', {type: 'checkbox', checked: true}],
@@ -340,8 +340,12 @@ var initDataSource = function(opts) {
 					datum = opts.map(datum);
 				}
 			} catch(e) {
+				replaceDom(byId('output'),
+					'Could not transform data: ' + e.toString());
 				console.error('error during data transformation:', e);
+				return;
 			}
+			replaceDom(byId('output'), '');
 
 			sink(datum);
 		});
@@ -453,9 +457,9 @@ var selectSource = function() {
 	var command = byId('command-name').value;
 	var params = null;
 	try {
-		var json = byId('command-params');
+		var json = byId('command-params').value;
 		if (json.length) {
-			params = JSON.parse(json).value;
+			params = JSON.parse(json);
 		} else {
 			params = null;
 		}
@@ -466,8 +470,9 @@ var selectSource = function() {
 		dataSource.stop();
 		dataSource = null;
 	}
-	plot.reset();
+	replaceDom(byId('output'), '');
 	renderLoop.stop();
+	plot.reset();
 	if (command === '') {
 		return;
 	}
