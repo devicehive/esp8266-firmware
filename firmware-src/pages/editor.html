@@ -23,7 +23,7 @@
 			var array = [];
 			for (var i = 0; i < str.length; i++) {
 				if (str[i] === '%') {
-					var num = str.substr(i + 1, i + 3);
+					var num = str.substr(i + 1, 2);
 					array.push(parseInt(num, 16));
 					i += 2;
 				} else {
@@ -49,7 +49,7 @@
 		function flash_data() {
 			print("Flashing " + Math.floor(flashPos * 100 / flashData.length) + "%...");
 			var endchar = Math.min(flashPos + flashLen, flashData.length);
-			send('POST', '/flash/page/put', flashData.slice(flashPos, endchar), function (ok, data) {
+			send('POST', '/flash/page/put', flashData.slice(flashPos, endchar).buffer, function (ok, data) {
 				if (ok) {
 					flashPos += flashLen;
 					if (flashPos >= flashData.length) {
