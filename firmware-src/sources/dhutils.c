@@ -146,3 +146,10 @@ int ICACHE_FLASH_ATTR signedInt16(const char *buf, int pos) {
 		return r;
 	return r - 0x10000;
 }
+
+int ICACHE_FLASH_ATTR signedInt16_sm(const char *buf, int pos) {
+	int r = unsignedInt16(buf, pos);
+	if (r <= 0x7FFF)
+		return r;
+	return -(r & 0x7FFF);
+}

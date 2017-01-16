@@ -76,4 +76,11 @@ unsigned int unsignedInt16(const char *buf, int pos);
  */
 int signedInt16(const char *buf, int pos);
 
+/**	\brief					Read signed 16 bit integer from pointer in sign-magnitude representation. Big endian.
+ *	\param[in]	buf			Pointer to data.
+ *	\param[in]	pos			Offset in data.
+ *	\return					Result value.
+ */
+int signedInt16_sm(const char *buf, int pos);
+
 #endif /* _DHUTILS_H_ */

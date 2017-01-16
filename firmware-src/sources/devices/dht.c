@@ -46,8 +46,8 @@ float ICACHE_FLASH_ATTR dht22_read(int pin, float *temperature) {
 	if (dht_read(pin, buf) == DHT_ERROR)
 		return DHT_ERROR;
 
-	float humidity = signedInt16(buf, 0) / 10.0f;
-	float temp = signedInt16(buf, 2) / 10.0f;
+	float humidity = signedInt16_sm(buf, 0) / 10.0f;
+	float temp = signedInt16_sm(buf, 2) / 10.0f;
 	if (temperature)
 		*temperature = temp;
 	return humidity;
