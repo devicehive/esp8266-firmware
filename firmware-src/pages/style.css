@@ -10,7 +10,7 @@ body {
 	border-bottom: 3px solid #467487;
 	height: 60px;
 	padding: 10px;
-	max-width: 980px;
+	max-width: 1024px;
 	width: 100%;
 	margin: 0 auto;
 }
@@ -52,7 +52,7 @@ body {
 
 .content {
 	padding: 20px;
-	max-width: 980px;
+	max-width: 1024px;
 	margin: 0 auto;
 	width: 100%;
 }
