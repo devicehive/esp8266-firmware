@@ -147,6 +147,13 @@ int ICACHE_FLASH_ATTR signedInt16be(const char *buf, int pos) {
 	return r - 0x10000;
 }
 
+int ICACHE_FLASH_ATTR signedInt16be_sm(const char *buf, int pos) {
+	int r = unsignedInt16be(buf, pos);
+	if (r <= 0x7FFF)
+		return r;
+	return -(r & 0x7FFF);
+}
+
 unsigned int ICACHE_FLASH_ATTR unsignedInt16le(const char *buf, int pos) {
 	return ((int)buf[pos] + (int)buf[pos + 1] * 0x100);
 }
