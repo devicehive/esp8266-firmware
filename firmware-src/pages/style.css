@@ -181,20 +181,20 @@ a:hover {
 	color: #4C9A6C;
 }
 
-.input-controller{
+.input-controller {
 	width: 400px;
 }
 
-.input-controller{
+.input-controller {
 	margin: 0 0 20px 0;
 }
 .extra-margin-top {
 	margin-top: 20px;
 }
-.margin-reset{
+.margin-reset {
 	margin: 0 !important;
 }
 
-.help-text	h3{
-    padding-top: 10px;
+.help-text h3 {
+	padding-top: 10px;
 }
