@@ -21,7 +21,7 @@
 #include "snprintf.h"
 
 static const char REGISTER_JSON[] =
-		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\""FIRMWARE_VERSION"\",\"offlineTimeout\":\"120\"}}";
+		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\""FIRMWARE_VERSION"\",\"offlineTimeout\":\"900\"}}";
 static const char UPDATE_JSON[] =
 		"{\"status\":\"%s\",\"result\":%s%s%s}";
 static const char NOTIFICATION_JSON[] =
