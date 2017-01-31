@@ -21,6 +21,7 @@
 #include "custom_firmware.h"
 
 LOCAL HTTP_REQUEST notification;
+int dht11_detected = 0;
 
 void ICACHE_FLASH_ATTR test_output() {
 	int dht11_temperature;
@@ -54,7 +55,16 @@ HTTP_REQUEST * ICACHE_FLASH_ATTR custom_firmware_request() {
 		temperature = ds18b20_read(CUSTOM_DS18B20_PIN);
 		// recover if ds18b20 pin equal gpio1
 		dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-		humiduty = (float)dht11_read(CUSTOM_DHT11_PIN, 0);
+		int attemps = 5;
+		while (humiduty == DHT_ERROR && --attemps) {
+			humiduty = (float)dht11_read(CUSTOM_DHT11_PIN, 0);
+			if(dht11_detected == 0)
+				break;
+			if(humiduty == DHT_ERROR)
+				os_delay_us(100000);
+			else
+				dht11_detected = 1;
+		}
 	}
 	int pressure = bmp180_read(CUSTOM_BMP180_SDA_PIN, CUSTOM_BMP180_SCL_PIN, 0);
 	dhgpio_write(0, 1 << CUSTOM_POWER_PIN); // power down sensors
