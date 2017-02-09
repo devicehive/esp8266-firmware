@@ -43,6 +43,7 @@
 #include "devices/ina219.h"
 #include "devices/mfrc522.h"
 #include "devices/pca9685.h"
+#include "devices/mlx90614.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -881,6 +882,23 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		responce_ok(cb);
+	} else if( os_strcmp(command, "devices/mlx90614/read") == 0 ) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+			if(fields & AF_ADDRESS)
+				mlx90614_set_address(parse_pins.address);
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		float ambient;
+		float object;
+		char *res = i2c_status_tochar(mlx90614_read(MLX90614_NO_PIN, MLX90614_NO_PIN, &ambient, &object));
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"ambient\":%f, \"object\":%f}", ambient, object);
 	} else {
 		responce_error(cb, "Unknown command");
 	}

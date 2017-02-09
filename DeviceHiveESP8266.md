@@ -1236,6 +1236,31 @@ There are also additional parameters:
 ```
 Return "OK" in status. Or "Error" and description in result on error.
 
+## devices/mlx90614/read
+Read temperature from MLX90614 contactless IR sensor.
+
+*Parameters*:
+* "address" - I2C MLX90614 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xB4.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+
+*Example*:  
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"address":"0xB4"
+}
+```
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
+```json
+{
+	"ambient":27.5300,
+	"object":27.5500
+}
+```
+Temperature unit in Celsius degrees.
+
 # License
 The MIT License (MIT):
 
