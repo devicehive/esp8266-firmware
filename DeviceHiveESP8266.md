@@ -64,6 +64,7 @@
     * [devices/mfrc522/mifare/write](#devicesmfrc522mifarewrite)
     * [devices/pca9685/control](#devicespca9685control)
     * [devices/mlx90614/read](#devicesmlx90614read)
+    * [devices/max6675/read](#devicesmax6675read)
   * [License](#license)
 
 # Overview
@@ -1258,6 +1259,26 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 {
 	"ambient":27.5300,
 	"object":27.5500
+}
+```
+Temperature unit in Celsius degrees.
+
+## devices/max6675/read
+Read temperature from MAX6675 thermocouple temperature sensor. This sensor has SPI compatialbe interface, connect it as SPI device, but leave MOSI not connected.
+
+*Parameters*:
+* "CS" - CS pin. If not specified, previous pin will be used, GPIO15 is default.
+
+*Example*:  
+```json
+{
+	"CS":"0"
+}
+```
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
+```json
+{
+	"temperature":32.0000
 }
 ```
 Temperature unit in Celsius degrees.

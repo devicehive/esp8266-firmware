@@ -44,6 +44,7 @@
 #include "devices/mfrc522.h"
 #include "devices/pca9685.h"
 #include "devices/mlx90614.h"
+#include "devices/max6675.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -899,6 +900,17 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"ambient\":%f, \"object\":%f}", ambient, object);
+	} else if(os_strcmp(command, "devices/max6675/read") == 0) {
+		if(paramslen) {
+			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
+			if (responce_error(cb, parse_res))
+				return;
+		}
+		float temperature;
+		char *res = max6675_read((fields & AF_CS) ? parse_pins.CS : MAX6675_NO_PIN, &temperature);
+		if(responce_error(cb, res))
+			return;
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
 	} else {
 		responce_error(cb, "Unknown command");
 	}
