@@ -39,14 +39,15 @@
     * [onewire/master/search](#onewiremastersearch)
     * [onewire/master/alarm](#onewiremasteralarm)
     * [onewire/dht/read](#onewiredhtread)
+    * [onewire/ws2812b/write](#onewirews2812bwrite)
   * [Devices](#devices)
     * [devices/ds18b20/read](#devicesds18b20read)
     * [devices/lm75/read](#deviceslm75read)
     * [devices/dht11/read](#devicesdht11read)
     * [devices/dht22/read](#devicesdht22read)
-    * [devices/si7021/read](#devicessi7021read)    
+    * [devices/si7021/read](#devicessi7021read)
     * [devices/bmp180/read](#devicesbmp180read)
-    * [devices/bmp280/read](#devicesbmp280read)    
+    * [devices/bmp280/read](#devicesbmp280read)
     * [devices/bh1750/read](#devicesbh1750read)
     * [devices/mpu6050/read](#devicesmpu6050read)
     * [devices/hmc5883l/read](#deviceshmc5883lread)
@@ -596,7 +597,7 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 "data" field is base64 encoded data that was read from bus.
 
 ## onewire/master/write
-Read specified data to onewire bus. Onewire pin can also be specified with this for this command. Selected pin will be init with open-drain output mode and on-board pull up will be enabled.
+Write specified data to onewire bus. Onewire pin can also be specified with this for this command. Selected pin will be init with open-drain output mode and on-board pull up will be enabled.
 
 *Parameters*:
 * "data" - base64 encoded data that have to be sent before reading operation for initialize device for sending some data. Maximum size of data is 264 bytes.
@@ -694,6 +695,23 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 }
 ```
 "data" field is base64 encoded data that was read from bus.
+
+## onewire/ws2812b/write
+Write specified data to ws2812b device onewire bus. Each ws2812b chip takes 3 bytes. Each byte means color value (0 - off, 255 - max). Color order - GRB.
+
+*Parameters*:
+* "data" - base64 encoded data. Maximum size of data is 264 bytes.
+* "pin" - GPIO port number for onewire data line. If not specified, previous pins will be used. Default is "0".
+
+*Example*:
+```json
+{
+	"data":"/wAAAP8AAAD/",
+	"pin": "2"
+}
+```
+This example turn on 3 LEDs, first with green color, second with red color and third with blue.
+Return "OK" in status. Or "Error" and description in result on error.
 
 # Devices
 This section describes simple API for handling some hardware sensors. Internally it uses one of interfaces described above, so parameters and error responses are mostly common.

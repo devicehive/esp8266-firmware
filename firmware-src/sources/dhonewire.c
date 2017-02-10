@@ -323,53 +323,45 @@ int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int len) {
 	return i / 8;
 }
 
-LOCAL inline void ICACHE_FLASH_ATTR ws2812b_sleep(unsigned tacts) {
-	unsigned f, r;
-	asm volatile("rsr %0, ccount" : "=r"(f));
-	f += tacts;
-	do {
-		asm volatile("rsr %0, ccount" : "=r"(r));
-	} while(r < f);
+/*LOCAL*/ void ws2812b_write(const char *buf, const char *ebuf, unsigned int pin,
+		unsigned T, unsigned S, unsigned L) {
+	// due to the strict timings, this method should be in IRAM,
+	// don't mark it with ICACHE_FLASH_ATTR or even LOCAL
+
+	// send each byte in real time
+	int j;
+	unsigned ss, se, r;
+	for( ; buf < ebuf; buf++) {
+		for(j = 1; j <= 0x80; j <<= 1) {
+			GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin);
+			asm volatile("rsr %0, ccount" : "=r"(r));
+			ss = r + ((*buf & j) ? L : S);
+			se = r + T;
+			do {
+				asm volatile("rsr %0, ccount" : "=r"(r));
+			} while(r < ss);
+			GPIO_REG_WRITE(GPIO_OUT_W1TC_ADDRESS, pin);
+			do {
+				asm volatile("rsr %0, ccount" : "=r"(r));
+			} while(r < se);
+		}
+	}
 }
 
-void ICACHE_FLASH_ATTR dhonewire_ws2812b_write(char *buf, unsigned int len) {
-	int i, j;
-	const unsigned int pin = (1 << mOneWirePin);
-
+void ICACHE_FLASH_ATTR dhonewire_ws2812b_write(const char *buf, unsigned int len) {
 	// init number of CPU tacts for delay
 	// delays are lower that spec on 50ns due to GPIO latency, anyway spec allows 150ns jitter.
 	const int freq = system_get_cpu_freq(); // MHz
-	unsigned T0H = 350 * freq / 1000;
-	unsigned T1H = 800 * freq / 1000;
-	unsigned T0L = 750 * freq / 1000;
-	unsigned T1L = 400 * freq / 1000;
-
+	const unsigned S = 350 * freq / 1000;
+	const unsigned L = 750 * freq / 1000;
+	const char *ebuf = buf + len;
+	const unsigned int pin = (1 << mOneWirePin);
 	ETS_GPIO_INTR_DISABLE();
 
-	// send reset
-	gpio_output_set(pin, 0, pin, 0);
-	os_delay_us(10);
-	gpio_output_set(0, pin, 0, 0);
+	// send reset, low more then 50 ms
+	gpio_output_set(0, pin, pin, 0); // low and initialize
 	os_delay_us(50);
-	gpio_output_set(pin, 0, 0, 0);
-
-	// send each byte
-	for(i = 0; i < len; i++) {
-		const char b = buf[i];
-		for(j = 1; j <= 0x80; j <<= 1) {
-			if(b & j) {
-					ws2812b_sleep(T1H);
-					gpio_output_set(0, pin, 0, 0);
-					ws2812b_sleep(T1L);
-					gpio_output_set(pin, 0, 0, 0);
-				} else {
-					ws2812b_sleep(T0H);
-					gpio_output_set(0, pin, 0, 0);
-					ws2812b_sleep(T0L);
-					gpio_output_set(pin, 0, 0, 0);
-				}
-			}
-	}
+	ws2812b_write(buf, ebuf, pin, S + L, S, L);
 
 	ETS_GPIO_INTR_ENABLE();
 }

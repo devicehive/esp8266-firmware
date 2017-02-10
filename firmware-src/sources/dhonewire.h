@@ -75,7 +75,7 @@ extern void dhonewire_search_result(unsigned int pin_number, char *buf, unsigned
  *	\brief				Read data from DHT like devices.
  *	\details			Checksum will not be checked.
  *	\param[out]	buf		Buffer for data.
- *	\param[in]	len	Buffer length in bytes.
+ *	\param[in]	len		Buffer length in bytes.
  *	\return				Number of read bytes on success, zero on error.
  */
 int dhonewire_dht_read(char *buf, unsigned int len);
@@ -86,6 +86,6 @@ int dhonewire_dht_read(char *buf, unsigned int len);
  *	\param[in]	buf			Pointer to buffer with data.
  *	\param[in]	len			Buffer length.
  */
-void dhonewire_ws2812b_write(char *buf, unsigned int len);
+void dhonewire_ws2812b_write(const char *buf, unsigned int len);
 
 #endif /* _DHONEWIRE_H_ */
