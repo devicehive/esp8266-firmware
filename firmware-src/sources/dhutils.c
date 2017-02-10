@@ -10,6 +10,7 @@
  */
 
 #include <c_types.h>
+#include <osapi.h>
 #include "dhutils.h"
 
 int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
@@ -163,4 +164,13 @@ int ICACHE_FLASH_ATTR signedInt16le(const char *buf, int pos) {
 	if (r <= 0x7FFF)
 		return r;
 	return r - 0x10000;
+}
+
+void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {
+	while( ms >= 65) {
+		os_delay_us(65000);
+		ms -= 65;
+	}
+	if(ms)
+		os_delay_us(ms * 1000);
 }

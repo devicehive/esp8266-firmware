@@ -11,6 +11,7 @@
 #include <c_types.h>
 #include "ds18b20.h"
 #include "dhonewire.h"
+#include "dhutils.h"
 
 char * ICACHE_FLASH_ATTR ds18b20_read(int pin, float *temperature) {
 	char in_buf[8];
@@ -27,7 +28,7 @@ char * ICACHE_FLASH_ATTR ds18b20_read(int pin, float *temperature) {
 		return "No response";
 	}
 
-	os_delay_us(750*1000); // maximum possible time for measure
+	delay_ms(750); // maximum possible time for measure
 
 	out_buf[1] = 0xBE; // read memory
 	if(!dhonewire_write(out_buf, sizeof(out_buf))) {

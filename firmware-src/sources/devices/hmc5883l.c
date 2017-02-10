@@ -36,7 +36,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR hmc5883l_read(int sda, int scl,
 		return status;
 	}
 
-	os_delay_us(80000);
+	delay_ms(80);
 
 	buf[0] = 0x03; // get data
 	if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {

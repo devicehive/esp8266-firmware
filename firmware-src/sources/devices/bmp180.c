@@ -56,7 +56,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, floa
 		dhdebug("bmp180: failed to stare measure temperature");
 		return status;
 	}
-    os_delay_us(50000);
+    delay_ms(50);
     buf[0] = 0xF6; // get result
     if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to write get temperature command");
@@ -74,7 +74,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp180_read(int sda, int scl, int *pressure, floa
 		dhdebug("bmp180: failed to stare measure pressure");
 		return status;
 	}
-    os_delay_us(50000);
+    delay_ms(50);
     buf[0] = 0xF6; // get result
     if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {
 		dhdebug("bmp180: failed to write get pressure command");

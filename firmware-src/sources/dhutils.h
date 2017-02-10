@@ -100,4 +100,9 @@ unsigned int unsignedInt16le(const char *buf, int pos);
  */
 int signedInt16le(const char *buf, int pos);
 
+/**
+ *	\brief					Delay in milliseconds.
+ */
+void delay_ms(unsigned int ms);
+
 #endif /* _DHUTILS_H_ */

@@ -31,7 +31,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bh1750_read(int sda, int scl, float *illuminance)
 		return status;
 	}
 
-	os_delay_us(180000);
+	delay_ms(180);
 	if((status = dhi2c_read(mAddress, buf, 2)) != DHI2C_OK) {
 		dhdebug("bh1750: failed to read");
 		return status;

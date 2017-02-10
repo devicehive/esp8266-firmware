@@ -50,7 +50,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR mpu6050_read(int sda, int scl,
 		return status;
 	}
 
-	os_delay_us(50000);
+	delay_ms(50);
 
 	buf[0] = 0x3B; // get data
 	if((status = dhi2c_write(mAddress, buf, 1, 0)) != DHI2C_OK) {

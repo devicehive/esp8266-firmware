@@ -24,7 +24,7 @@ char * ICACHE_FLASH_ATTR mhz19_read(int *co2) {
 	if(dhuart_init(9600, 8, 'N', 1) == 0)
 		return "Uart init failed";
 	dhuart_send_buf(request, sizeof(request));
-	os_delay_us(20000);
+	delay_ms(20);
 	int len = dhuart_get_buf(&result);
 	if(len != 9){
 		if(len)

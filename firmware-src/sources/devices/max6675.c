@@ -32,7 +32,7 @@ char * ICACHE_FLASH_ATTR max6675_read(int pin, float *temperature) {
 
 	//start converting
 	dhgpio_write((1 << mCSPin), 0);
-	os_delay_us(250000);
+	delay_ms(250);
 
 	dhspi_read((char *)&buf, sizeof(buf));
 

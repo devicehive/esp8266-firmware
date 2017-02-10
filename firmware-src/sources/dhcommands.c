@@ -25,6 +25,7 @@
 #include "dhspi.h"
 #include "dhonewire.h"
 #include "dhdebug.h"
+#include "dhutils.h"
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
 #include "devices/bmp180.h"
@@ -249,7 +250,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			dhuart_set_mode(DUM_PER_BUF);
 			dhuart_send_buf(parse_pins.data, parse_pins.data_len);
 			system_soft_wdt_feed();
-			os_delay_us(((fields & AF_TIMEOUT) ? parse_pins.timeout : 250) * 1000);
+			delay_ms((fields & AF_TIMEOUT) ? parse_pins.timeout : 250);
 			system_soft_wdt_feed();
 		}
 		char *buf;
