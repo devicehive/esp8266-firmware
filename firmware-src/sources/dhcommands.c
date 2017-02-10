@@ -47,7 +47,6 @@
 #include "devices/mlx90614.h"
 #include "devices/max6675.h"
 #include "devices/max31855.h"
-#include "devices/ws2812b.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -417,6 +416,18 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 			cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
 		else
 			responce_error(cb, "No response");
+	} else if( os_strcmp(command, "onewire/ws2812b/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN | AF_DATA, &fields);
+		if(responce_error(cb, parse_res))
+			return;
+		if((fields & AF_DATA) == 0) {
+			responce_error(cb, "Data not specified");
+			return;
+		}
+		if(onewire_init(cb, fields, &parse_pins))
+			return;
+		dhonewire_ws2812b_write(parse_pins.data, parse_pins.data_len);
+		responce_ok(cb);
 	} else if( os_strcmp(command, "devices/ds18b20/read") == 0 ) {
 		if(paramslen) {
 			parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
@@ -925,18 +936,6 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-	} else if( os_strcmp(command, "devices/ws2812b/write") == 0 ) {
-		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN | AF_DATA, &fields);
-		if(responce_error(cb, parse_res))
-			return;
-		if((fields & AF_DATA) == 0) {
-			responce_error(cb, "Data not specified");
-			return;
-		}
-		char *res = ws2812b_write((fields & AF_PIN) ? parse_pins.pin : WS2812B_NO_PIN, parse_pins.data, parse_pins.data_len);
-		if(responce_error(cb, res))
-			return;
-		responce_ok(cb);
 	} else {
 		responce_error(cb, "Unknown command");
 	}

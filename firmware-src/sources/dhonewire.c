@@ -13,6 +13,7 @@
 #include <eagle_soc.h>
 #include <osapi.h>
 #include <os_type.h>
+#include <ets_sys.h>
 #include "dhonewire.h"
 #include "dhgpio.h"
 #include "user_config.h"
@@ -295,7 +296,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR donewire_dht_measure_high(unsigned int pin)
 	return counter;
 }
 
-int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int size) {
+int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int len) {
 	const unsigned int pin = (1 << mOneWirePin);
 	if(dhonewire_reset(pin, ONEWIRE_DHT_RESET_LENGTH_US, 1) == 0)
 		return 0;
@@ -305,7 +306,7 @@ int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int size) {
 		ETS_INTR_UNLOCK();
 		return 0;
 	}
-	for(i = 0; i / 8 < size; i++) {
+	for(i = 0; i / 8 < len; i++) {
 		unsigned int time = donewire_dht_measure_high(pin);
 		if(time >= ONEWIRE_DHT_TIMEOUT_US || time <= 10) {
 			break;
@@ -320,4 +321,55 @@ int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int size) {
 	}
 	ETS_INTR_UNLOCK();
 	return i / 8;
+}
+
+LOCAL inline void ICACHE_FLASH_ATTR ws2812b_sleep(unsigned tacts) {
+	unsigned f, r;
+	asm volatile("rsr %0, ccount" : "=r"(f));
+	f += tacts;
+	do {
+		asm volatile("rsr %0, ccount" : "=r"(r));
+	} while(r < f);
+}
+
+void ICACHE_FLASH_ATTR dhonewire_ws2812b_write(char *buf, unsigned int len) {
+	int i, j;
+	const unsigned int pin = (1 << mOneWirePin);
+
+	// init number of CPU tacts for delay
+	// delays are lower that spec on 50ns due to GPIO latency, anyway spec allows 150ns jitter.
+	const int freq = system_get_cpu_freq(); // MHz
+	unsigned T0H = 350 * freq / 1000;
+	unsigned T1H = 800 * freq / 1000;
+	unsigned T0L = 750 * freq / 1000;
+	unsigned T1L = 400 * freq / 1000;
+
+	ETS_GPIO_INTR_DISABLE();
+
+	// send reset
+	gpio_output_set(pin, 0, pin, 0);
+	os_delay_us(10);
+	gpio_output_set(0, pin, 0, 0);
+	os_delay_us(50);
+	gpio_output_set(pin, 0, 0, 0);
+
+	// send each byte
+	for(i = 0; i < len; i++) {
+		const char b = buf[i];
+		for(j = 1; j <= 0x80; j <<= 1) {
+			if(b & j) {
+					ws2812b_sleep(T1H);
+					gpio_output_set(0, pin, 0, 0);
+					ws2812b_sleep(T1L);
+					gpio_output_set(pin, 0, 0, 0);
+				} else {
+					ws2812b_sleep(T0H);
+					gpio_output_set(0, pin, 0, 0);
+					ws2812b_sleep(T0L);
+					gpio_output_set(pin, 0, 0, 0);
+				}
+			}
+	}
+
+	ETS_GPIO_INTR_ENABLE();
 }
