@@ -14,8 +14,8 @@
 /**
  *	\brief				Set text on screen.
  *	\details			Old text will be erased. '\n'(0x0A) char is supported.
- *	\param[in]	sda		Pin for I2C's SDA. Use HMC5883L_NO_PIN to prevent initialization.
- *	\param[in]	scl		Pin for I2C's SCL. Use HMC5883L_NO_PIN to prevent initialization.
+ *	\param[in]	sda		Pin for I2C's SDA. Use PCF8574_NO_PIN to prevent initialization.
+ *	\param[in]	scl		Pin for I2C's SCL. Use PCF8574_NO_PIN to prevent initialization.
  *	\param[in]	text	Chars to write on display.
   *	\param[in]	len		Number of chars to write. Data more then 80 bytes is ignored.
  *	\return 			NULL on success, text description on error.
