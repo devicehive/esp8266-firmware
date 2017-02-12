@@ -1330,7 +1330,7 @@ Write to 8 segments LED controller.
 * "SDA" - GPIO port number for SDA(DIO) data line. Behavior and default are common with i2c interface.
 * "SCL" - GPIO port number for SCL(CLK) data line. Behavior and default are common with i2c interface.
 * "data" - Text to set up in base64 encoding. Cannot be combined with "text" field in one command.
-* "text" - Plain text to set up. Cannot be combined with "data" field in one command. Text can only contains chars `[-0-9:.]` (spece means empty, dot and colon are equal and mean 8 segment of previous char).
+* "text" - Plain text to set up. Cannot be combined with "data" field in one command. Text can only contains chars `[-0-9 :.]` (spece means empty, dot and colon are equal and mean 8 segment of previous char).
 
 *Example*:
 ```json
