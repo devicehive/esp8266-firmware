@@ -22,7 +22,7 @@
 #include "irom.h"
 
 RO_DATA char REGISTER_JSON[] =
-		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\""FIRMWARE_VERSION"\",\"offlineTimeout\":\"120\"}}";
+		"{\"name\":\"%s\",\"key\":\"%s\",\"status\":\"Online\",\"deviceClass\":{\"name\":\"ESP Class\",\"version\":\""FIRMWARE_VERSION"\",\"offlineTimeout\":\"900\"}}";
 RO_DATA char UPDATE_JSON[] =
 		"{\"status\":\"%s\",\"result\":%s%s%s}";
 RO_DATA char NOTIFICATION_JSON[] =

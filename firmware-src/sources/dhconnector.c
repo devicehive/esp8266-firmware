@@ -163,6 +163,15 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 
 LOCAL void network_connect_cb(void *arg) {
 	HTTP_REQUEST *request;
+	uint32_t keepalive;
+	espconn_set_opt(&mDHConnector, ESPCONN_KEEPALIVE);
+	//set keepalive: 120s = 90 + 10 * 3
+	keepalive = 90;
+	espconn_set_keepalive(&mDHConnector, ESPCONN_KEEPIDLE, &keepalive);
+	keepalive = 10;
+	espconn_set_keepalive(&mDHConnector, ESPCONN_KEEPINTVL, &keepalive);
+	keepalive = 3;
+	espconn_set_keepalive(&mDHConnector, ESPCONN_KEEPCNT, &keepalive);
 	switch(mConnectionState) {
 	case CS_GETINFO:
 		request = &mInfoRequest;

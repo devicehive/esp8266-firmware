@@ -112,6 +112,15 @@ LOCAL void ICACHE_FLASH_ATTR senderRecvCb(void *arg, char *data, unsigned short 
 
 LOCAL void ICACHE_FLASH_ATTR senderConnectCb(void *arg) {
 	int res;
+	uint32_t keepalive;
+	espconn_set_opt(&mDHSender, ESPCONN_KEEPALIVE);
+	//set keepalive: 40s = 30 + 5 * 2
+	keepalive = 30;
+	espconn_set_keepalive(&mDHSender, ESPCONN_KEEPIDLE, &keepalive);
+	keepalive = 5;
+	espconn_set_keepalive(&mDHSender, ESPCONN_KEEPINTVL, &keepalive);
+	keepalive = 2;
+	espconn_set_keepalive(&mDHSender, ESPCONN_KEEPCNT, &keepalive);
 	if( (res = espconn_send(&mDHSender, mSenderRequest.data, mSenderRequest.len)) != ESPCONN_OK) {
 		dhesperrors_espconn_result("sender espconn_send failed:", res);
 		espconn_disconnect(&mDHSender);
