@@ -67,6 +67,7 @@
     * [devices/mlx90614/read](#devicesmlx90614read)
     * [devices/max6675/read](#devicesmax6675read)
     * [devices/max31855/read](#devicesmax31855read)
+    * [devices/tm1636/write](#devicestm1636write)
   * [License](#license)
 
 # Overview
@@ -1321,6 +1322,25 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 }
 ```
 Temperature unit in Celsius degrees.
+
+## devices/tm1637/write
+Write to 8 segments LED controller.
+
+*Parameters*:
+* "SDA" - GPIO port number for SDA(DIO) data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL(CLK) data line. Behavior and default are common with i2c interface.
+* "data" - Text to set up in base64 encoding. Cannot be combined with "text" field in one command.
+* "text" - Plain text to set up. Cannot be combined with "data" field in one command. Text can only contains chars [-0-9:.] (spece means empty, dot and colon are equal and mean 8 segment of previous char).
+
+*Example*:
+```json
+{
+	"SDA":"0",
+	"SCL":"2",
+	"text":"12:34"
+}
+```
+Return "OK" in status on success. Or "Error" and description in result on error.
 
 # License
 The MIT License (MIT):

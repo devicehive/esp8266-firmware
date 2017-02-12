@@ -174,3 +174,7 @@ void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {
 	if(ms)
 		os_delay_us(ms * 1000);
 }
+
+unsigned char ICACHE_FLASH_ATTR bitwise_reverse_byte(unsigned char v) {
+	return ((v * 0x0802LU & 0x22110LU) | (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
+}

@@ -105,4 +105,11 @@ int signedInt16le(const char *buf, int pos);
  */
 void delay_ms(unsigned int ms);
 
+/**
+ *	\brief					Reverse bits in byte.
+ *	\param[in]	v			Byte.
+ *	\return					Byte in reverse bit order.
+ */
+unsigned char bitwise_reverse_byte(unsigned char v);
+
 #endif /* _DHUTILS_H_ */

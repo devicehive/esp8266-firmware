@@ -47,6 +47,7 @@
 #include "devices/mlx90614.h"
 #include "devices/max6675.h"
 #include "devices/max31855.h"
+#include "devices/tm1636.h"
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
@@ -936,7 +937,23 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		if(responce_error(cb, res))
 			return;
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-	} else {
+	} else if( os_strcmp(command, "devices/tm1637/write") == 0 ) {
+		parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_DATA | AF_TEXT_DATA, &fields);
+		if (responce_error(cb, parse_res))
+			return;
+		if((fields & (AF_DATA | AF_TEXT_DATA)) == 0 || parse_pins.data_len == 0) {
+			responce_error(cb, "Text not specified");
+			return;
+		}
+		fields |= AF_ADDRESS;
+		if(i2c_init(cb, fields, &parse_pins))
+			return;
+		char *res = i2c_status_tochar(tm1636_write(TM1636_NO_PIN, TM1636_NO_PIN,
+				parse_pins.data, parse_pins.data_len));
+		if(responce_error(cb, res))
+			return;
+		responce_ok(cb);
+    } else {
 		responce_error(cb, "Unknown command");
 	}
 }
