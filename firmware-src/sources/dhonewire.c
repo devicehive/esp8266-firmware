@@ -332,7 +332,7 @@ int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int len) {
 	int j;
 	unsigned ss, se, r;
 	for( ; buf < ebuf; buf++) {
-		for(j = 1; j <= 0x80; j <<= 1) {
+		for(j = 0x80; j >= 0x01; j >>= 1) {
 			GPIO_REG_WRITE(GPIO_OUT_W1TS_ADDRESS, pin);
 			asm volatile("rsr %0, ccount" : "=r"(r));
 			ss = r + ((*buf & j) ? L : S);
