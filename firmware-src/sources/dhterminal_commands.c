@@ -63,6 +63,7 @@ LOCAL void ICACHE_FLASH_ATTR sprintMac(char *buff, const uint8 *mac) {
 void ICACHE_FLASH_ATTR dhterminal_commands_uname(const char *args) {
 	char digitBuff[32];
 	dhuart_send_line("DeviceHive ESP8266 firmware v"FIRMWARE_VERSION" [Built: "__TIME__" "__DATE__"]");
+	dhuart_send_line("Git revision: "FIRMWARE_GIT_REVISION);
 	dhuart_send_line("Created by Nikolay Khabarov.");
 	dhuart_send_str("ChipID: 0x");
 	snprintf(digitBuff, sizeof(digitBuff), "%X", system_get_chip_id());
