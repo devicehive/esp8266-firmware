@@ -30,6 +30,27 @@ v0.5
 - bug fixes
 
 v0.6
-- new devices support
+- fixes and improvements
+- new devices support. Overall firmware supports:
+    - DS18B20, LM75 - temperature sensors,
+    - DHT11, DHT22, SI7021 - humidity sensors
+    - BMP180, BMP280 - barometric pressure sensor
+    - BH1750 - light sensor
+    - MPU6050 - 3-axis gyroscope and a 3-axis accelerometer
+    - HMC5883L - magnetometer
+    - PCF8574 - GPIO extender
+    - HD44780 - 2x16 4x20 displays(with PCF8574 adapter)
+    - MH-Z19 - CO2 sensor
+    - MCP4725 - digital to analog convertor
+    - PCF8591 - analog to digital and digital to analog converter
+    - ADS1115 - analog to digital converter
+    - INA219 - power monitor
+    - MFRC522 - RFID tag reader
+    - PCA9685 - PWM controller
+    - MLX90614 - contactless IR thermometer
+    - MAX6675, MAX31855 - thermocouple thermometers
+    - TM1637 - 8 segments LED display controller
+    - WS2812B - LED strip controller
 - access point mode
-- embedded pages redesgn
+- embedded pages redesign
+- sample of using D3.js for plotting graphs from different sensors on embedded web server
