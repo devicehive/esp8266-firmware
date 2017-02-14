@@ -16,7 +16,7 @@
 /** UART speed to terminal. */
 #define UART_BAUND_RATE 115200
 /** Current firmware version. */
-#define FIRMWARE_VERSION "0.5"
+#define FIRMWARE_VERSION "0.6"
 /** Git revision */
 #ifndef FIRMWARE_GIT_REVISION
 	#define FIRMWARE_GIT_REVISION "unknown"
