@@ -10,6 +10,7 @@
     * [RESTful API](#restful-api)
     * [Web server](#web-server)
     * [Uploadable page](#uploadable-page)
+    * [WiFi AP mode](#wifi-ap-mode)
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
   * [GPIO](#gpio)
@@ -170,8 +171,11 @@ The original main page can be replaced with any other up to 65536 bytes. Only ma
 
 This feature can be used for creating web enabled IoT devices. Any HTML, CSS, JS or anything else can be saved there. Local web server provides this page as is, without any modifications. Embedded JS in web browser can be used for communicating with RESTful API. As an example, it's possible to build some sensor with web interface. A couple of such samples can found on the local web server. `http://device-id-or-ip.local/help.html` page contains a list of them. 
 
+## WiFi AP mode
+Firmware can be configured to use chip as WiFi access point during configuration procedure. In chis mode chip creates specified wireless network with WPA/WPA2 security protocol and server connectivy is disabled. In this mode all local services like mDNS, RESTful API, uploadable web page are available. This mode can be use for creating local autonomous devices with a web interface.
+
 # Wireless configuring
-Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. To enter configuration mode just reset device three times with chip RESET pin. Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
+Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. If chip doesn't contain config, wireless configure starts automatically on boot. To enter configuration mode manually just reset device three times with chip RESET pin or button(if present on board). Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
 
 ![](images/phone1.jpg?raw=true)
 
