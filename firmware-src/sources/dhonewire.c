@@ -356,12 +356,12 @@ void ICACHE_FLASH_ATTR dhonewire_ws2812b_write(const char *buf, unsigned int len
 	const unsigned L = 750 * freq / 1000;
 	const char *ebuf = buf + len;
 	const unsigned int pin = (1 << mOneWirePin);
-	ETS_GPIO_INTR_DISABLE();
+	ETS_INTR_LOCK();
 
 	// send reset, low more then 50 ms
 	gpio_output_set(0, pin, pin, 0); // low and initialize
 	os_delay_us(50);
 	ws2812b_write(buf, ebuf, pin, S + L, S, L);
 
-	ETS_GPIO_INTR_ENABLE();
+	ETS_INTR_UNLOCK();
 }
