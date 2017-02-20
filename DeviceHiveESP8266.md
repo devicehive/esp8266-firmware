@@ -1187,16 +1187,14 @@ Reads tag's uid and type. MFRC522 is a RFID tag reader. It should be connected v
 *Example*:
 ```json
 {
-	"uid":"0xA435AA7D",
-	"type":"MIFARE 1KB"
+	"CS":15
 }
 ```
 Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json
 {
-	"voltage":3.2040,
-	"current":0.0466,
-	"power":0.1520
+	"uid":"0xA435AA7D",
+	"type":"MIFARE 1KB"
 }
 ```
 
