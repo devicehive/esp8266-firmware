@@ -89,7 +89,7 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(HTTP_REQUEST *out, unsigned int *is_no
 	if(mQueueSize < MEM_RECOVER_THRESHOLD && dhmem_isblock())
 		dhmem_unblock();
 
-	char buf[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD];
+	/*char buf[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD];
 	if(dhsender_data_to_json(buf, sizeof(buf),
 			item.notification_type == RNT_NOTIFICATION_GPIO, item.data_type,
 			&item.data, item.data_len, item.pin) < 0) {
@@ -126,7 +126,7 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(HTTP_REQUEST *out, unsigned int *is_no
 		default:
 			dhdebug("ERROR: Unknown type of request %d", item.type);
 			return 0;
-	}
+	}*/
 	return 1;
 }
 

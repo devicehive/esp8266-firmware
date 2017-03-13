@@ -81,7 +81,7 @@ const char *dhsettings_get_devicehive_deviceid();
  *	\brief			Get DeviceHive AccessKey.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_acceykey();
+const char *dhsettings_get_devicehive_accesskey();
 
 /**
  *	\brief				Set Wi-Fi mode.

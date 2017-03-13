@@ -11,7 +11,7 @@
 
 #include <c_types.h>
 #include <osapi.h>
-#include "dhrequest.h"
+#include "dhsettings.h"
 #include "uploadable_page.h"
 
 HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR uploadable_api_handle(const char *path, const char *key,
@@ -19,11 +19,11 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR uploadable_api_handle(const char *path, c
 	static const char flash[] = "/flash/page/";
 	answer->content.len = 0;
 	if(os_strncmp(path, flash, sizeof(flash) - 1) == 0) {
-		if(dhrequest_current_accesskey()[0]) {
+		if(dhsettings_get_devicehive_accesskey()[0]) {
 			if(key == 0) {
 				return HRCS_UNAUTHORIZED;
 			}
-			if(os_strcmp(key, dhrequest_current_accesskey())) {
+			if(os_strcmp(key, dhsettings_get_devicehive_accesskey())) {
 				return HRCS_UNAUTHORIZED;
 			}
 		}

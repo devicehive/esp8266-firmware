@@ -18,11 +18,11 @@ typedef void (*dhconnector_command_json_cb)(COMMAND_RESULT *cb,
 
 /** Current connection state. */
 typedef enum {
-	CS_DISCONNECT,	///< Disconnected from DeviceHive server.
-	CS_GETINFO,		///< Getting info from DeviceHive server.
-	CS_REGISTER,	///< Registering on DeviceHive server.
-	CS_POLL,		///< Polling command from DeviceHive server.
-	CS_CUSTOM		///< Custom firmware mode.
+	CS_DISCONNECT,		///< Disconnected from DeviceHive server.
+	CS_GETINFO,			///< Getting info from DeviceHive server with WebSocket url.
+	CS_RESOLVEWEBSOCKET,///< Resolve WebSocket url.
+	CS_WEBSOCKET,		///< Request to switch protocol to WebSocket.
+	CS_OPERATE			///< Normal operational state.
 } CONNECTION_STATE;
 
 /**

@@ -18,7 +18,6 @@
 #include <json/jsonparse.h>
 #include "dhrequest.h"
 #include "dhconnector.h"
-#include "dhsender.h"
 #include "dhdebug.h"
 #include "dhmem.h"
 #include "dhutils.h"
@@ -30,11 +29,9 @@
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
 LOCAL dhconnector_command_json_cb mCommandCallback;
-LOCAL HTTP_REQUEST mRegisterRequest;
-LOCAL HTTP_REQUEST mPollRequest;
-LOCAL HTTP_REQUEST mInfoRequest;
 LOCAL os_timer_t mRetryTimer;
 LOCAL unsigned char mNeedRecover = 0;
+LOCAL char mWSUrl[DHSETTINGS_SERVER_MAX_LENGTH];
 
 LOCAL void set_state(CONNECTION_STATE state);
 
@@ -57,93 +54,56 @@ LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
 
 LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	int type;
-	unsigned int id;
-	char command[128] = "";
-	const char *params;
-	int paramslen = 0;
-	char timestamp[128] = "";
 	while (jparser->pos < jparser->len) {
 		type = jsonparse_next(jparser);
 		if(type == JSON_TYPE_PAIR_NAME) {
-			if (jsonparse_strcmp_value(jparser, "serverTimestamp") == 0) {
+			if (jsonparse_strcmp_value(jparser, "webSocketServerUrl") == 0) {
 				jsonparse_next(jparser);
 				if (jsonparse_next(jparser) != JSON_TYPE_ERROR) {
-					jsonparse_copy_value(jparser, timestamp, sizeof(timestamp));
-					dhdebug("Timestamp received %s", timestamp);
-					dhrequest_update_poll(&mPollRequest, timestamp);
+					jsonparse_copy_value(jparser, mWSUrl, sizeof(mWSUrl));
+					dhdebug("WebSocker URL received %s", mWSUrl);
 				}
 				break;
-			} else if (jsonparse_strcmp_value(jparser, "command") == 0) {
-				jsonparse_next(jparser);
-				if(jsonparse_next(jparser) != JSON_TYPE_ERROR)
-					jsonparse_copy_value(jparser, command, sizeof(command));
-			} else if (jsonparse_strcmp_value(jparser, "id") == 0) {
-				jsonparse_next(jparser);
-				if(jsonparse_next(jparser) != JSON_TYPE_ERROR)
-					id = jsonparse_get_value_as_ulong(jparser);
-			} else if (jsonparse_strcmp_value(jparser, "parameters") == 0) {
-				jsonparse_next(jparser);
-				if(jsonparse_next(jparser) != JSON_TYPE_ERROR) {
-					// there is an issue with extracting subjson with jparser->vstart or jparser_copy_value
-					params = &jparser->json[jparser->pos - 1];
-					if(*params == '{') {
-						int end = jparser->pos;
-						while(end < jparser->len && jparser->json[end] != '}') {
-							end++;
-						}
-						paramslen = end - jparser->pos + 2;
-					}
-				}
-			} else if (jsonparse_strcmp_value(jparser, "timestamp") == 0) {
-				jsonparse_next(jparser);
-				if(jsonparse_next(jparser) != JSON_TYPE_ERROR)
-					jsonparse_copy_value(jparser, timestamp, sizeof(timestamp));
 			}
 		} else if(type == JSON_TYPE_ERROR) {
 			break;
 		}
 	}
-	if (mConnectionState == CS_POLL) {
-		if(timestamp[0]) {
-			dhdebug("Timestamp received %s", timestamp);
-			dhrequest_update_poll(&mPollRequest, timestamp);
-		}
-		COMMAND_RESULT cb;
-		cb.callback = dhsender_response;
-		cb.data.id = id;
-		mCommandCallback(&cb, command, params, paramslen);
-	}
 }
 
 LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 	dhstatistic_add_bytes_received(len);
+	if (mConnectionState == CS_OPERATE) {
+		// TODO TODO TODO
+		return;
+	}
 	const char *rc = find_http_responce_code(data, len);
 	if (rc) { // HTTP
-		if (*rc == '2') { // HTTP responce code 2xx - Success
-			if (mConnectionState == CS_REGISTER) {
-				dhdebug("Successfully register");
-			} else {
-				char *content = (char *) os_strstr(data, (char *) "\r\n\r\n");
-				if (content && mConnectionState != CS_CUSTOM) {
-					int deep = 0;
-					unsigned int pos = 0;
-					unsigned int jsonstart = 0;
-					while (pos < len) {
-						if (data[pos] == '{') {
-							if (deep == 0)
-								jsonstart = pos;
-							deep++;
-						} else if (data[pos] == '}') {
-							deep--;
-							if (deep == 0) {
-								struct jsonparse_state jparser;
-								jsonparse_setup(&jparser, &data[jsonstart],
-										pos - jsonstart + 1);
-								parse_json(&jparser);
-							}
+		if (rc[0] == '1' && rc[1] == '0' && rc[2] == '1' && mConnectionState == CS_WEBSOCKET) { // HTTP responce code 101 - Switching Protocols
+			set_state(CS_OPERATE);
+			dhdebug("WebSocket connection is established");
+			// do not disconnect
+			return;
+		} else if (*rc == '2' && mConnectionState == CS_GETINFO) { // HTTP responce code 2xx - Success
+			if (os_strstr(data, (char *) "\r\n\r\n")) {
+				int deep = 0;
+				unsigned int pos = 0;
+				unsigned int jsonstart = 0;
+				while (pos < len) {
+					if (data[pos] == '{') {
+						if (deep == 0)
+							jsonstart = pos;
+						deep++;
+					} else if (data[pos] == '}') {
+						deep--;
+						if (deep == 0) {
+							struct jsonparse_state jparser;
+							jsonparse_setup(&jparser, &data[jsonstart],
+									pos - jsonstart + 1);
+							parse_json(&jparser);
 						}
-						pos++;
 					}
+					pos++;
 				}
 			}
 		} else {
@@ -172,16 +132,17 @@ LOCAL void network_connect_cb(void *arg) {
 	espconn_set_keepalive(&mDHConnector, ESPCONN_KEEPINTVL, &keepalive);
 	keepalive = 3;
 	espconn_set_keepalive(&mDHConnector, ESPCONN_KEEPCNT, &keepalive);
-	switch(mConnectionState) {
+	switch (mConnectionState) {
 	case CS_GETINFO:
-		request = &mInfoRequest;
+		request = dhrequest_create_info(dhsettings_get_devicehive_server());
 		dhdebug("Send info request...");
 		break;
-	case CS_REGISTER:
-		request = &mRegisterRequest;
-		dhdebug("Send register request...");
+	case CS_WEBSOCKET:
+		request = dhrequest_create_wsrequest(dhsettings_get_devicehive_server(), mWSUrl);
+		dhdebug("Send web socket upgrade request...");
 		break;
-	case CS_POLL:
+	// TODO TODO TODO
+	/*case CS_POLL:
 	case CS_CUSTOM:
 		request = custom_firmware_request();
 		if(request) {
@@ -190,12 +151,12 @@ LOCAL void network_connect_cb(void *arg) {
 			request = &mPollRequest;
 			dhdebug("Send poll request...");
 		}
-		break;
+		break;*/
 	default:
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
 	int res;
-	if( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
+	if ( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
 		mConnectionState = CS_DISCONNECT;
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
 		espconn_disconnect(&mDHConnector);
@@ -210,14 +171,14 @@ LOCAL void network_disconnect_cb(void *arg) {
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		break;
 	case CS_GETINFO:
-		set_state(CS_REGISTER);
+		set_state(CS_WEBSOCKET);
 		break;
-	case CS_REGISTER:
-		mConnectionState = CS_POLL;
-		/* no break */
-	case CS_POLL:
-		arm_repeat_timer(DHREQUEST_PAUSE_MS);
+	case CS_WEBSOCKET:
+	case CS_OPERATE:
+		mConnectionState = CS_DISCONNECT;
+		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		break;
+/* TODO TODO TODO
 	case CS_CUSTOM:
 		if (dhterminal_is_in_use()) {
 			dhdebug("Terminal is in use, no deep sleep");
@@ -227,6 +188,7 @@ LOCAL void network_disconnect_cb(void *arg) {
 			// after deep sleep chip will be rebooted
 		}
 		break;
+*/
 	default:
 		dhdebug("ASSERT: networkDisconnectCb wrong state %d", mConnectionState);
 	}
@@ -251,56 +213,19 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 	unsigned char *bip = (unsigned char *) ip;
 	dhdebug("Host %s ip: %d.%d.%d.%d, using port %d", name, bip[0], bip[1], bip[2], bip[3], mDHConnector.proto.tcp->remote_port);
 
-	dhsender_init(ip, mDHConnector.proto.tcp->remote_port);
 	dhconnector_init_connection(ip);
-	if(mPollRequest.len)
-		set_state(CS_POLL);
-	else
+	if(mConnectionState == CS_DISCONNECT)
 		set_state(CS_GETINFO);
+	else if(mConnectionState == CS_RESOLVEWEBSOCKET)
+		set_state(CS_WEBSOCKET);
+	else
+		dhdebug("ASSERT: Wrong state on resolve");
 }
 
-LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server() {
+LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server(const char *server) {
 	static ip_addr_t ip;
-	const char *server = dhrequest_current_server();
-	char host[os_strlen(server) + 1];
-	const char *fr = server;
-	while(*fr != ':') {
-		fr++;
-		if(*fr == 0) {
-			fr = 0;
-			break;
-		}
-	}
-	if(fr) {
-		fr++;
-		if(*fr != '/')
-			fr = 0;
-	}
-	if (fr) {
-		while (*fr == '/')
-			fr++;
-		int i = 0;
-		while (*fr != '/' && *fr != ':' && *fr != 0)
-			host[i++] = *fr++;
-		// read port if present
-		int port = 0;
-		if(*fr == ':') {
-			unsigned char d;
-			fr++;
-			while ( (d = *fr - 0x30) < 10) {
-				fr++;
-				port = port*10 + d;
-				if(port > 0xFFFF)
-					break;
-			}
-		}
-		if(port && port < 0xFFFF)
-			mDHConnector.proto.tcp->remote_port = port;
-		else if (os_strncmp(dhrequest_current_server(), "https", 5) == 0)
-			mDHConnector.proto.tcp->remote_port = 443; // HTTPS default port
-		else
-			mDHConnector.proto.tcp->remote_port = 80; //HTTP default port
-		host[i] = 0;
+	char host[DHREQUEST_HOST_MAX_BUF_LEN];
+	if(dhrequest_parse_url(server, host, &mDHConnector.proto.tcp->remote_port)) {
 		dhdebug("Resolving %s", host);
 		err_t r = espconn_gethostbyname(&mDHConnector, host, &ip, resolve_cb);
 		if(r == ESPCONN_OK) {
@@ -331,12 +256,25 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	}
 	switch(state) {
 	case CS_DISCONNECT:
-		start_resolve_dh_server();
+		if(os_strncmp(dhsettings_get_devicehive_server(), "ws://", 5) == 0 ||
+				os_strncmp(dhsettings_get_devicehive_server(), "wss://", 6) == 0 ) {
+			snprintf(mWSUrl, sizeof(mWSUrl), "%s", dhsettings_get_devicehive_server());
+			mConnectionState = CS_RESOLVEWEBSOCKET;
+			start_resolve_dh_server(mWSUrl);
+		} else {
+			mWSUrl[0] = 0;
+			start_resolve_dh_server(dhsettings_get_devicehive_server());
+		}
+		break;
+	case CS_RESOLVEWEBSOCKET:
+		if(mWSUrl[0] == 0) {
+			dhdebug("Failed to get WebSocket URL");
+			set_state(CS_DISCONNECT);
+		}
+		start_resolve_dh_server(mWSUrl);
 		break;
 	case CS_GETINFO:
-	case CS_REGISTER:
-	case CS_POLL:
-	case CS_CUSTOM:
+	case CS_WEBSOCKET:
 	{
 		const sint8 cr = espconn_connect(&mDHConnector);
 		if(cr == ESPCONN_ISCONN)
@@ -347,6 +285,8 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 		}
 		break;
 	}
+	case CS_OPERATE:
+		break;
 	default:
 		dhdebug("ASSERT: set_state wrong state %d", mConnectionState);
 	}
@@ -360,8 +300,8 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 			mConnectionState = CS_DISCONNECT;
 			arm_repeat_timer(DHREQUEST_PAUSE_MS);
 
-			if(dhrequest_current_deviceid()[0]) {
-				mdnsd_start(dhrequest_current_deviceid(), event->event_info.got_ip.ip.addr);
+			if(dhsettings_get_devicehive_deviceid()[0]) {
+				mdnsd_start(dhsettings_get_devicehive_deviceid(), event->event_info.got_ip.ip.addr);
 			}
 		} else {
 			dhdebug("ERROR: WiFi reports STAMODE_GOT_IP, but no actual ip found");
@@ -378,13 +318,8 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 }
 
 void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
-	dhrequest_load_settings();
 	mCommandCallback = cb;
 	mConnectionState = CS_DISCONNECT;
-
-	dhrequest_create_info(&mInfoRequest);
-	dhrequest_create_register(&mRegisterRequest);
-	mPollRequest.len = mPollRequest.data[0] = 0;
 
 	wifi_set_opmode(STATION_MODE);
 	wifi_station_set_auto_connect(1);
@@ -392,16 +327,16 @@ void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
 	struct station_config stationConfig;
 	wifi_station_get_config(&stationConfig);
 	wifi_set_phy_mode(PHY_MODE_11N);
-	if(dhrequest_current_deviceid()[0]) {
-		char hostname[33];
-		// limit length to 32 chars due to the sdk limit
-		snprintf(hostname, sizeof(hostname), "%s", dhrequest_current_deviceid());
-		wifi_station_set_hostname(hostname);
-	}
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
 	snprintf(stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
 	snprintf(stationConfig.password, sizeof(stationConfig.password), "%s", dhsettings_get_wifi_password());
+	if(dhsettings_get_devicehive_deviceid()[0]) {
+		char hostname[33];
+		// limit length to 32 chars due to the sdk limit
+		snprintf(hostname, sizeof(hostname), "%s", dhsettings_get_devicehive_deviceid());
+		wifi_station_set_hostname(hostname);
+	}
 	wifi_station_set_config(&stationConfig);
 
 	static esp_tcp tcp;

@@ -178,11 +178,11 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	case CS_GETINFO:
 		dhuart_send_str("getting info from server");
 		break;
-	case CS_REGISTER:
-		dhuart_send_str("registering device");
+	case CS_RESOLVEWEBSOCKET:
+	case CS_WEBSOCKET:
+		dhuart_send_str("connecting to web socket");
 		break;
-	case CS_POLL:
-	case CS_CUSTOM:
+	case CS_OPERATE:
 		dhuart_send_str("successfully connected to server");
 		break;
 	default:

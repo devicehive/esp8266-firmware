@@ -12,7 +12,7 @@
 #include <osapi.h>
 #include <mem.h>
 #include "rest.h"
-#include "dhrequest.h"
+#include "dhsettings.h"
 #include "dhcommands.h"
 #include "dhsender_data.h"
 #include "user_config.h"
@@ -75,11 +75,11 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 		answer->content.len = sizeof(desription) - 1;
 		return HRCS_ANSWERED_HTML;
 	}
-	if(dhrequest_current_accesskey()[0]) {
+	if(dhsettings_get_devicehive_accesskey()[0]) {
 		if(key == 0) {
 			return HRCS_UNAUTHORIZED;
 		}
-		if(os_strcmp(key, dhrequest_current_accesskey())) {
+		if(os_strcmp(key, dhsettings_get_devicehive_accesskey())) {
 			return HRCS_UNAUTHORIZED;
 		}
 	}
