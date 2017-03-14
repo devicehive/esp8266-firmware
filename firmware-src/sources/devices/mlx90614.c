@@ -36,7 +36,6 @@ DHI2C_STATUS ICACHE_FLASH_ATTR mlx90614_read(int sda, int scl, float *ambient, f
 		dhdebug("mlx90614: failed to read Ta");
 		return status;
 	}
-	dhdebug_dump(buf, 2);
 	raw_temperature = signedInt16le(buf, 0);
 	*ambient = raw_temperature * 0.02f - 273.15f;
 
@@ -49,7 +48,6 @@ DHI2C_STATUS ICACHE_FLASH_ATTR mlx90614_read(int sda, int scl, float *ambient, f
 		dhdebug("mlx90614: failed to read Tobj1");
 		return status;
 	}
-	dhdebug_dump(buf, 2);
 	raw_temperature = signedInt16le(buf, 0);
 	*object = raw_temperature * 0.02f - 273.15f;
 	return DHI2C_OK;
