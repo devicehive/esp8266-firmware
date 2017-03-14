@@ -25,6 +25,7 @@
 #include "snprintf.h"
 #include "dhstatistic.h"
 #include "mdnsd.h"
+#include "dhconnector_websocket.h"
 
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
@@ -71,10 +72,19 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	}
 }
 
+LOCAL void ws_send(const char *data, unsigned int len) {
+	if (mConnectionState != CS_OPERATE)
+		return;
+	if (espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK) {
+		mConnectionState = CS_DISCONNECT;
+		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
+	}
+}
+
 LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 	dhstatistic_add_bytes_received(len);
 	if (mConnectionState == CS_OPERATE) {
-		// TODO TODO TODO
+		dhconnector_websocket_parse(data, len);
 		return;
 	}
 	const char *rc = find_http_responce_code(data, len);
@@ -82,6 +92,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 		if (rc[0] == '1' && rc[1] == '0' && rc[2] == '1' && mConnectionState == CS_WEBSOCKET) { // HTTP responce code 101 - Switching Protocols
 			set_state(CS_OPERATE);
 			dhdebug("WebSocket connection is established");
+			dhconnector_websocket_start(ws_send);
 			// do not disconnect
 			return;
 		} else if (*rc == '2' && mConnectionState == CS_GETINFO) { // HTTP responce code 2xx - Success
