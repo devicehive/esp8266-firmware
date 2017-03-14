@@ -57,7 +57,7 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	int type;
 	while (jparser->pos < jparser->len) {
 		type = jsonparse_next(jparser);
-		if(type == JSON_TYPE_PAIR_NAME) {
+		if (type == JSON_TYPE_PAIR_NAME) {
 			if (jsonparse_strcmp_value(jparser, "webSocketServerUrl") == 0) {
 				jsonparse_next(jparser);
 				if (jsonparse_next(jparser) != JSON_TYPE_ERROR) {
@@ -66,22 +66,32 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 				}
 				break;
 			}
-		} else if(type == JSON_TYPE_ERROR) {
+		} else if (type == JSON_TYPE_ERROR) {
+			if (jparser->pos > 0 && jparser->len - jparser->pos >= 3) { // fix issue with parsing null value
+				if (os_strncmp(&jparser->json[jparser->pos - 1], "null", 4) == 0) {
+					jparser->pos += 3;
+					jparser->vtype = JSON_TYPE_NULL;
+					continue;
+				}
+			}
 			break;
 		}
 	}
 }
 
-LOCAL void ws_send(const char *data, unsigned int len) {
-	if (mConnectionState != CS_OPERATE)
-		return;
-	if (espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK) {
-		mConnectionState = CS_DISCONNECT;
-		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-	}
+LOCAL void ICACHE_FLASH_ATTR ws_error() {
+	// close connection and restart everything on error
+	espconn_disconnect(&mDHConnector);
 }
 
-LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
+LOCAL void ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
+	if (mConnectionState != CS_OPERATE)
+		return;
+	if (espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK)
+		ws_error();
+}
+
+LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned short len) {
 	dhstatistic_add_bytes_received(len);
 	if (mConnectionState == CS_OPERATE) {
 		dhconnector_websocket_parse(data, len);
@@ -92,7 +102,7 @@ LOCAL void network_recv_cb(void *arg, char *data, unsigned short len) {
 		if (rc[0] == '1' && rc[1] == '0' && rc[2] == '1' && mConnectionState == CS_WEBSOCKET) { // HTTP responce code 101 - Switching Protocols
 			set_state(CS_OPERATE);
 			dhdebug("WebSocket connection is established");
-			dhconnector_websocket_start(ws_send);
+			dhconnector_websocket_start(ws_send, ws_error);
 			// do not disconnect
 			return;
 		} else if (*rc == '2' && mConnectionState == CS_GETINFO) { // HTTP responce code 2xx - Success
@@ -178,12 +188,10 @@ LOCAL void network_connect_cb(void *arg) {
 
 LOCAL void network_disconnect_cb(void *arg) {
 	switch(mConnectionState) {
-	case CS_DISCONNECT:
-		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-		break;
 	case CS_GETINFO:
 		set_state(CS_WEBSOCKET);
 		break;
+	case CS_DISCONNECT:
 	case CS_WEBSOCKET:
 	case CS_OPERATE:
 		mConnectionState = CS_DISCONNECT;
