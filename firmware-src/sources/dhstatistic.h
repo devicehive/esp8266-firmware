@@ -61,7 +61,7 @@ void dhstatistic_inc_wifi_lost_count();
 /**
  *	\brief				Increment number of server errors.
  */
-void dhstatistic_server_errors_count();
+void dhstatistic_inc_server_errors_count();
 
 /**
  *	\brief				Increment number of notifications.

@@ -12,10 +12,6 @@
 #include "dhrequest.h"
 #include "dhsender_data.h"
 
-/** Function prototype for handling function. */
-typedef void (*dhconnector_command_json_cb)(COMMAND_RESULT *cb,
-		const char *command, const char *params, unsigned int paramslen);
-
 /** Current connection state. */
 typedef enum {
 	CS_DISCONNECT,		///< Disconnected from DeviceHive server.
@@ -27,9 +23,8 @@ typedef enum {
 
 /**
  *	\brief			Initializes connector, parameters are taken from permanent storage.
- *	\param[in]	cb	Pointer to command callback.
  */
-void dhconnector_init(dhconnector_command_json_cb cb);
+void dhconnector_init();
 
 /**
  *	\brief			Get connector current state.

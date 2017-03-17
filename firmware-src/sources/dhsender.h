@@ -17,17 +17,20 @@
 #include "dhsender_data.h"
 
 /**
- *	\brief				Initializes sender for using remote DeviceHive server.
- *	\param[in]	ip		Remote server IP.
- *	\param[in]	port	Remote server port.
+ *	\brief				Notify that current data was failed to send.
  */
-void dhsender_init(ip_addr_t *ip, int port);
+void dhsender_current_fail();
 
 /**
- *	\brief				Start sending data from queue.
- *	\details			It does nothing if data sending is already in progress or there is no data for sending
+ *	\brief				Notify that current data was sent.
  */
-void dhsender_start();
+void dhsender_current_success();
+
+/**
+ *	\brief				Get next struct SENDER_JSON_DATA which should be sent.
+ *	\return				Pointer to SENDER_JSON_DATA or NULL if there is no data to send.
+ */
+SENDER_JSON_DATA *dhsender_next();
 
 /**
  *	\brief					Send command response.
@@ -45,10 +48,5 @@ void dhsender_response(CommandResultArgument cid, RESPONCE_STATUS status, REQUES
  *	\param[in]	...			Data according to the type.
  */
 void dhsender_notification(REQUEST_NOTIFICATION_TYPE type, REQUEST_DATA_TYPE data_type, ...);
-
-/**
- *	\brief				Stops repeat attempts on error.
- */
-void dhsender_stop_repeat();
 
 #endif /* _DHSENDER_H_ */

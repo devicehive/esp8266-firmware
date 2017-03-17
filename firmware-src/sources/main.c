@@ -14,7 +14,6 @@
 #include <c_types.h>
 #include <user_interface.h>
 #include "gpio.h"
-#include "dhcommands.h"
 #include "dhdebug.h"
 #include "dhuart.h"
 #include "dhsender_queue.h"
@@ -133,7 +132,7 @@ void user_init(void) {
 	} else {
 		if(dhsettings_get_wifi_mode() == WIFI_MODE_CLIENT) {
 			dhsender_queue_init();
-			dhconnector_init(dhcommands_do);
+			dhconnector_init();
 			dhgpio_init();
 		} else if(dhsettings_get_wifi_mode() == WIFI_MODE_AP) {
 			dhap_init(dhsettings_get_wifi_ssid(), dhsettings_get_wifi_password());

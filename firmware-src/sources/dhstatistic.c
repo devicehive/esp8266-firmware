@@ -38,7 +38,7 @@ void ICACHE_FLASH_ATTR dhstatistic_inc_wifi_lost_count() {
 	mStatistic.wifiLosts++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_server_errors_count() {
+void ICACHE_FLASH_ATTR dhstatistic_inc_server_errors_count() {
 	mStatistic.serverErrors++;
 }
 

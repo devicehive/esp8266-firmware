@@ -11,6 +11,7 @@
 
 #include <stdarg.h>
 #include "user_config.h"
+#include "dhsettings.h"
 
 /** Data type that should be read from arguments and how it will be formatted in response or notification. */
 typedef enum {
@@ -75,6 +76,12 @@ typedef union {
 	float adc;							///< Float value.
 	GPIO_DATA gpio;						///< GPIO data.
 } SENDERDATA;
+
+/** Struct for passing JSON. */
+typedef union {
+	char json[((3 * INTERFACES_BUF_SIZE + DHSETTINGS_DEVICEID_MAX_LENGTH) / 1024 + 1) * 1024];	///< JSON string
+	unsigned int jsonlen;																		///< Length of JSON
+} SENDER_JSON_DATA;
 
 /**
  *	\brief						Parse va list to SENDERDATA.

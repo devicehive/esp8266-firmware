@@ -22,6 +22,9 @@
 #include "dhdebug.h"
 #include "rand.h"
 #include "user_config.h"
+#include "dhcommands.h"
+#include "dhsender.h"
+#include "dhsender_queue.h"
 
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int maxlen) {
 	RO_DATA char template[] =
@@ -32,29 +35,65 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int ma
 	return snprintf(buf, maxlen, template, dhsettings_get_devicehive_accesskey());
 }
 
+LOCAL int check_bad_status(int status, const char *in, unsigned int inlen) {
+	if(status) {
+		dhdebug("Action bad return status: ");
+		char b[inlen + 1];
+		os_memcpy(b, in, inlen);
+		b[inlen] = 0;
+		dhdebug("%s", b);
+	}
+	return status;
+}
+
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsigned int inlen, char *out, unsigned int outmaxlen) {
 	int type;
-	int iserror = 1;
+	int status_not_success = 1;
 	char action[32];
+	char command[128];
+	const char *params;
+	unsigned int paramslen;
+	unsigned int id;
 	action[0] = 0;
 	struct jsonparse_state jparser;
 	jsonparse_setup(&jparser, in, inlen);
 	while (jparser.pos < jparser.len) {
 		type = jsonparse_next(&jparser);
-		if (type == JSON_TYPE_PAIR_NAME) {
-			if (jsonparse_strcmp_value(&jparser, "status") == 0) {
+		if(type == JSON_TYPE_PAIR_NAME) {
+			if(jsonparse_strcmp_value(&jparser, "status") == 0) {
 				jsonparse_next(&jparser);
-				if (jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
-					iserror = jsonparse_strcmp_value(&jparser, "success");
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
+					status_not_success = jsonparse_strcmp_value(&jparser, "success");
 				}
-			} else if (jsonparse_strcmp_value(&jparser, "action") == 0) {
+			} else if(jsonparse_strcmp_value(&jparser, "action") == 0) {
 				jsonparse_next(&jparser);
-				if (jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
 					jsonparse_copy_value(&jparser, action, sizeof(action));
+			} else if(jsonparse_strcmp_value(&jparser, "command") == 0) {
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+					jsonparse_copy_value(&jparser, command, sizeof(command));
 			}
-		} else if (type == JSON_TYPE_ERROR) {
-			if (jparser.pos > 0 && jparser.len - jparser.pos >= 3) { // fix issue with parsing null value
-				if (os_strncmp(&jparser.json[jparser.pos - 1], "null", 4) == 0) {
+		} else if(jsonparse_strcmp_value(&jparser, "id") == 0) {
+			jsonparse_next(&jparser);
+			if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+				id = jsonparse_get_value_as_ulong(&jparser);
+		} else if(jsonparse_strcmp_value(&jparser, "parameters") == 0) {
+			jsonparse_next(&jparser);
+			if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
+				// there is an issue with extracting subjson with jparser->vstart or jparser_copy_value
+				params = &jparser.json[jparser.pos - 1];
+				if(*params == '{') {
+					int end = jparser.pos;
+					while(end < jparser.len && jparser.json[end] != '}') {
+						end++;
+					}
+					paramslen = end - jparser.pos + 2;
+				}
+			}
+		} else if(type == JSON_TYPE_ERROR) {
+			if(jparser.pos > 0 && jparser.len - jparser.pos >= 3) { // fix issue with parsing null value
+				if(os_strncmp(&jparser.json[jparser.pos - 1], "null", 4) == 0) {
 					jparser.pos += 3;
 					jparser.vtype = JSON_TYPE_NULL;
 					continue;
@@ -64,16 +103,13 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		}
 	}
 
-	if (iserror) {
-		dhdebug("Action bad return status: ");
-		char b[inlen + 1];
-		os_memcpy(b, in, inlen);
-		b[inlen] = 0;
-		dhdebug("%s", b);
-		return DHCONNECT_WEBSOCKET_API_ERROR;
-	}
-
-	if (os_strcmp(action, "authenticate") == 0) {
+	if(os_strcmp(action, "command/insert") == 0) {
+		COMMAND_RESULT cb;
+		cb.callback = dhsender_response;
+		cb.data.id = id;
+		dhcommands_do(&cb, command, params, paramslen);
+		return 0;
+	} else if(os_strcmp(action, "authenticate") == 0) {
 		RO_DATA char template[] =
 				"{"
 					"\"action\":\"device/save\","
@@ -91,16 +127,22 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 					"}"
 				"}";
 		char dk[9];
+		if(check_bad_status(status_not_success, in, inlen)) {
+			return DHCONNECT_WEBSOCKET_API_ERROR;
+		}
 		snprintf(dk, sizeof(dk), "%s", dhsettings_get_devicehive_accesskey());
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid(), dk,
 				dhsettings_get_devicehive_deviceid(), dk);
-	} else if (os_strcmp(action, "device/save") == 0) {
+	} else if(os_strcmp(action, "device/save") == 0) {
 		RO_DATA char template[] =
 				"{"
 					"\"action\":\"command/subscribe\","
 					"\"deviceGuids\":[\"%s\"]"
 				"}";
+		if(check_bad_status(status_not_success, in, inlen)) {
+			return DHCONNECT_WEBSOCKET_API_ERROR;
+		}
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid());
 	}

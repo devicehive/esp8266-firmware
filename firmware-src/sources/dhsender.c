@@ -13,6 +13,7 @@
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
+#include <ctype.h>
 #include <gpio.h>
 #include <user_interface.h>
 #include <espconn.h>
@@ -26,42 +27,21 @@
 
 #define DHSENDER_RETRY_COUNT 5
 
-LOCAL struct espconn mDHSender = {0};
-LOCAL os_timer_t mRepeatTimer = {0};
-LOCAL unsigned char mStopped = 0;
-LOCAL HTTP_REQUEST mSenderRequest;
+LOCAL SENDER_JSON_DATA mDataToSend;
 LOCAL unsigned int isCurrentNotification;
 LOCAL int mSenderTook = 0;
 
-LOCAL void dhsender_next(void *arg);
-
-LOCAL void ICACHE_FLASH_ATTR dhsender_arm_timer(unsigned int ms) {
-	os_timer_disarm(&mRepeatTimer);
-	os_timer_setfn(&mRepeatTimer, (os_timer_func_t *)dhsender_next, NULL);
-	os_timer_arm(&mRepeatTimer, ms, 0);
-}
-
-LOCAL void ICACHE_FLASH_ATTR dhsender_next(void *arg) {
-	if(mStopped)
-		return;
+SENDER_JSON_DATA * ICACHE_FLASH_ATTR dhsender_next(void *arg) {
 	if(mSenderTook == 0) {
-		if(dhsender_queue_take(&mSenderRequest, &isCurrentNotification))
-			mSenderTook = DHSENDER_RETRY_COUNT;
-		else
-			return;
-	}
-	sint8 cr = espconn_connect(&mDHSender);
-	if(cr == ESPCONN_ISCONN) {
-		return;
-	} else if (cr != ESPCONN_OK) {
-		dhesperrors_espconn_result("Sender espconn_connect failed:", cr);
-		dhsender_arm_timer(RETRY_CONNECTION_INTERVAL_MS);
-	} else {
+		if(dhsender_queue_take(&mDataToSend, &isCurrentNotification) == 0)
+				return NULL;
+		mSenderTook = DHSENDER_RETRY_COUNT;
 		dhdebug("Sender start");
 	}
+	return &mDataToSend;
 }
 
-LOCAL void ICACHE_FLASH_ATTR decrementSenderTook() {
+void ICACHE_FLASH_ATTR dhsender_current_fail() {
 	if(mSenderTook) {
 		if(mSenderTook == 1) {
 			dhdebug("WARNING: Request is not delivered after %u attempts", DHSENDER_RETRY_COUNT);
@@ -74,83 +54,8 @@ LOCAL void ICACHE_FLASH_ATTR decrementSenderTook() {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR senderDisconnectCb(void *arg) {
-	if(mSenderTook == 0) {
-		dhsender_arm_timer(DHREQUEST_PAUSE_MS);
-	} else {
-		decrementSenderTook();
-		dhsender_arm_timer(RETRY_CONNECTION_INTERVAL_MS);
-	}
-}
-
-LOCAL void ICACHE_FLASH_ATTR senderErrorCb(void *arg, sint8 err) {
-	dhesperrors_espconn_result("Sender error occurred:", err);
-	decrementSenderTook();
-	dhsender_arm_timer(RETRY_CONNECTION_INTERVAL_MS);
-	dhstatistic_inc_network_errors_count();
-}
-
-LOCAL void ICACHE_FLASH_ATTR senderRecvCb(void *arg, char *data, unsigned short len) {
-	dhstatistic_add_bytes_received(len);
-	const char *rc = find_http_responce_code(data, len);
-	if (rc) { // HTTP
-		if (*rc == '2') { // HTTP responce code 2xx - Success
-			mSenderTook = 0;
-			dhdebug("Sender received OK");
-		} else {
-			dhdebug("Sender HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
-			dhdebug_ram(data);
-			dhdebug("--------------------------------------");
-			dhstatistic_server_errors_count();
-		}
-	} else {
-		dhdebug("Sender received wrong HTTP magic");
-		dhstatistic_server_errors_count();
-	}
-	espconn_disconnect(&mDHSender);
-}
-
-LOCAL void ICACHE_FLASH_ATTR senderConnectCb(void *arg) {
-	int res;
-	uint32_t keepalive;
-	espconn_set_opt(&mDHSender, ESPCONN_KEEPALIVE);
-	//set keepalive: 40s = 30 + 5 * 2
-	keepalive = 30;
-	espconn_set_keepalive(&mDHSender, ESPCONN_KEEPIDLE, &keepalive);
-	keepalive = 5;
-	espconn_set_keepalive(&mDHSender, ESPCONN_KEEPINTVL, &keepalive);
-	keepalive = 2;
-	espconn_set_keepalive(&mDHSender, ESPCONN_KEEPCNT, &keepalive);
-	if( (res = espconn_send(&mDHSender, mSenderRequest.data, mSenderRequest.len)) != ESPCONN_OK) {
-		dhesperrors_espconn_result("sender espconn_send failed:", res);
-		espconn_disconnect(&mDHSender);
-	} else {
-		dhstatistic_add_bytes_sent(mSenderRequest.len);
-	}
-}
-
-void ICACHE_FLASH_ATTR dhsender_init(ip_addr_t *ip, int port) {
-	static esp_tcp tcp;
-	static int local_port = -1;
-	if(local_port == -1)
-		local_port = espconn_port();
-	mDHSender.type = ESPCONN_TCP;
-	mDHSender.state = ESPCONN_NONE;
-	mDHSender.proto.tcp = &tcp;
-	mDHSender.proto.tcp->local_port = local_port;
-	mDHSender.proto.tcp->remote_port = port;
-	os_memcpy(mDHSender.proto.tcp->remote_ip, &ip->addr, sizeof(ip->addr));
-	espconn_regist_connectcb(&mDHSender, senderConnectCb);
-	espconn_regist_recvcb(&mDHSender, senderRecvCb);
-	espconn_regist_reconcb(&mDHSender, senderErrorCb);
-	espconn_regist_disconcb(&mDHSender, senderDisconnectCb);
-	mStopped = 0;
-	dhsender_arm_timer(DHREQUEST_PAUSE_MS);
-}
-
-void ICACHE_FLASH_ATTR dhsender_stop_repeat() {
-	mStopped = 1;
-	os_timer_disarm(&mRepeatTimer);
+void ICACHE_FLASH_ATTR dhsender_current_success() {
+	mSenderTook = 0;
 }
 
 void ICACHE_FLASH_ATTR dhsender_response(CommandResultArgument cid, RESPONCE_STATUS status, REQUEST_DATA_TYPE data_type, ...) {
@@ -161,7 +66,7 @@ void ICACHE_FLASH_ATTR dhsender_response(CommandResultArgument cid, RESPONCE_STA
 		dhsender_next(NULL);
 	} else {
 		dhstatistic_inc_responces_dropped_count();
-		dhdebug("ERROR: No memory for response.");
+		dhdebug("ERROR: No memory for response");
 	}
 	va_end(ap);
 }
@@ -174,7 +79,7 @@ void ICACHE_FLASH_ATTR dhsender_notification(REQUEST_NOTIFICATION_TYPE type, REQ
 		dhsender_next(NULL);
 	} else {
 		dhstatistic_inc_notifications_dropped_count();
-		dhdebug("ERROR: No memory for notification.");
+		dhdebug("ERROR: No memory for notification");
 	}
 	va_end(ap);
 }

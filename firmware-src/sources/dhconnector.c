@@ -29,7 +29,6 @@
 
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
-LOCAL dhconnector_command_json_cb mCommandCallback;
 LOCAL os_timer_t mRetryTimer;
 LOCAL unsigned char mNeedRecover = 0;
 LOCAL char mWSUrl[DHSETTINGS_SERVER_MAX_LENGTH];
@@ -57,18 +56,18 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	int type;
 	while (jparser->pos < jparser->len) {
 		type = jsonparse_next(jparser);
-		if (type == JSON_TYPE_PAIR_NAME) {
-			if (jsonparse_strcmp_value(jparser, "webSocketServerUrl") == 0) {
+		if(type == JSON_TYPE_PAIR_NAME) {
+			if(jsonparse_strcmp_value(jparser, "webSocketServerUrl") == 0) {
 				jsonparse_next(jparser);
-				if (jsonparse_next(jparser) != JSON_TYPE_ERROR) {
+				if(jsonparse_next(jparser) != JSON_TYPE_ERROR) {
 					jsonparse_copy_value(jparser, mWSUrl, sizeof(mWSUrl));
 					dhdebug("WebSocker URL received %s", mWSUrl);
 				}
 				break;
 			}
-		} else if (type == JSON_TYPE_ERROR) {
-			if (jparser->pos > 0 && jparser->len - jparser->pos >= 3) { // fix issue with parsing null value
-				if (os_strncmp(&jparser->json[jparser->pos - 1], "null", 4) == 0) {
+		} else if(type == JSON_TYPE_ERROR) {
+			if(jparser->pos > 0 && jparser->len - jparser->pos >= 3) { // fix issue with parsing null value
+				if(os_strncmp(&jparser->json[jparser->pos - 1], "null", 4) == 0) {
 					jparser->pos += 3;
 					jparser->vtype = JSON_TYPE_NULL;
 					continue;
@@ -80,44 +79,47 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 }
 
 LOCAL void ICACHE_FLASH_ATTR ws_error() {
+	dhstatistic_inc_server_errors_count();
 	// close connection and restart everything on error
 	espconn_disconnect(&mDHConnector);
 }
 
 LOCAL void ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
-	if (mConnectionState != CS_OPERATE)
+	if(mConnectionState != CS_OPERATE)
 		return;
-	if (espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK)
+	if(espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK)
 		ws_error();
+	else
+		dhstatistic_add_bytes_sent(len);
 }
 
 LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned short len) {
 	dhstatistic_add_bytes_received(len);
-	if (mConnectionState == CS_OPERATE) {
+	if(mConnectionState == CS_OPERATE) {
 		dhconnector_websocket_parse(data, len);
 		return;
 	}
 	const char *rc = find_http_responce_code(data, len);
-	if (rc) { // HTTP
-		if (rc[0] == '1' && rc[1] == '0' && rc[2] == '1' && mConnectionState == CS_WEBSOCKET) { // HTTP responce code 101 - Switching Protocols
+	if(rc) { // HTTP
+		if(rc[0] == '1' && rc[1] == '0' && rc[2] == '1' && mConnectionState == CS_WEBSOCKET) { // HTTP responce code 101 - Switching Protocols
 			set_state(CS_OPERATE);
 			dhdebug("WebSocket connection is established");
 			dhconnector_websocket_start(ws_send, ws_error);
 			// do not disconnect
 			return;
-		} else if (*rc == '2' && mConnectionState == CS_GETINFO) { // HTTP responce code 2xx - Success
-			if (os_strstr(data, (char *) "\r\n\r\n")) {
+		} else if(*rc == '2' && mConnectionState == CS_GETINFO) { // HTTP responce code 2xx - Success
+			if(os_strstr(data, (char *) "\r\n\r\n")) {
 				int deep = 0;
 				unsigned int pos = 0;
 				unsigned int jsonstart = 0;
 				while (pos < len) {
-					if (data[pos] == '{') {
-						if (deep == 0)
+					if(data[pos] == '{') {
+						if(deep == 0)
 							jsonstart = pos;
 						deep++;
-					} else if (data[pos] == '}') {
+					} else if(data[pos] == '}') {
 						deep--;
-						if (deep == 0) {
+						if(deep == 0) {
 							struct jsonparse_state jparser;
 							jsonparse_setup(&jparser, &data[jsonstart],
 									pos - jsonstart + 1);
@@ -132,12 +134,12 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 			dhdebug("Connector HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
 			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
-			dhstatistic_server_errors_count();
+			dhstatistic_inc_server_errors_count();
 		}
 	} else {
 		mConnectionState = CS_DISCONNECT;
 		dhdebug("Connector HTTP magic number is wrong");
-		dhstatistic_server_errors_count();
+		dhstatistic_inc_server_errors_count();
 	}
 	espconn_disconnect(&mDHConnector);
 }
@@ -177,7 +179,7 @@ LOCAL void network_connect_cb(void *arg) {
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
 	int res;
-	if ( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
+	if( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
 		mConnectionState = CS_DISCONNECT;
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
 		espconn_disconnect(&mDHConnector);
@@ -199,7 +201,7 @@ LOCAL void network_disconnect_cb(void *arg) {
 		break;
 /* TODO TODO TODO
 	case CS_CUSTOM:
-		if (dhterminal_is_in_use()) {
+		if(dhterminal_is_in_use()) {
 			dhdebug("Terminal is in use, no deep sleep");
 			arm_repeat_timer(CUSTOM_NOTIFICATION_INTERVAL_MS);
 		} else {
@@ -222,7 +224,7 @@ LOCAL void ICACHE_FLASH_ATTR dhconnector_init_connection(ip_addr_t *ip) {
 }
 
 LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *arg) {
-	if (ip == NULL) {
+	if(ip == NULL) {
 		dhdebug("Resolve %s failed. Trying again...", name);
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
@@ -327,7 +329,6 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 		}
 	} else if(event->event == EVENT_STAMODE_DISCONNECTED) {
 		os_timer_disarm(&mRetryTimer);
-		dhsender_stop_repeat();
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
 		dhstatistic_inc_wifi_lost_count();
 		mdnsd_stop();
@@ -336,8 +337,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhconnector_init(dhconnector_command_json_cb cb) {
-	mCommandCallback = cb;
+void ICACHE_FLASH_ATTR dhconnector_init() {
 	mConnectionState = CS_DISCONNECT;
 
 	wifi_set_opmode(STATION_MODE);
