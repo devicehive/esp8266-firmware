@@ -9,6 +9,12 @@
 #ifndef _DHUTILS_H_
 #define _DHUTILS_H_
 
+/** Find maximum value */
+#define MAX(x, y) (((x) < (y)) ? (x) : (y))
+
+/** Round value to KiB */
+#define ROUND_KB(x) (((x) / 1024 + 1) * 1024)
+
 /**
  *	\brief				Convert string to float.
  *	\details			Read string till first non digit character or null terminated char.

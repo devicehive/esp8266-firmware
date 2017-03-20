@@ -20,8 +20,14 @@
 #include "rand.h"
 #include "user_config.h"
 #include "dhconnector_websocket_api.h"
+#include "dhsettings.h"
+#include "dhutils.h"
+#include "dhsender_data.h"
+#include "dhsender.h"
 
-#define PAYLOAD_BUF_SIZE (DHSETTINGS_DEVICEID_MAX_LENGTH + DHSETTINGS_ACCESSKEY_MAX_LENGTH + 512)
+#define PAYLOAD_BUF_SIZE (MAX( \
+	ROUND_KB(DHSETTINGS_DEVICEID_MAX_LENGTH + DHSETTINGS_ACCESSKEY_MAX_LENGTH + 512), \
+	SENDER_JSON_MAX_LENGTH))
 #define WEBSOCKET_HEADER_MAX_SIZE 4
 #define WEBSOCKET_MASK_SIZE 4
 
@@ -30,6 +36,15 @@ LOCAL dhconnector_websocket_error mErrFunc;
 LOCAL char mBuf[PAYLOAD_BUF_SIZE + WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL char *mPayLoadBuf = &mBuf[WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL int mPayLoadBufLen = 0;
+
+LOCAL void ICACHE_FLASH_ATTR error(data, len) {
+	mErrFunc();
+	dhsender_current_fail();
+	char b[len + 1];
+	os_memcpy(b, data, len);
+	b[len] = 0;
+	dhdebug("%s", b);
+}
 
 LOCAL void ICACHE_FLASH_ATTR mask() {
 	uint32_t *mask = (uint32_t *)&mBuf[WEBSOCKET_HEADER_MAX_SIZE];
@@ -48,7 +63,6 @@ LOCAL void ICACHE_FLASH_ATTR send_payload() {
 	} else if(mPayLoadBufLen < 126) {
 		mBuf[2] = 0x81; // final text frame
 		mBuf[3] = 0x80 | mPayLoadBufLen; // masked, size
-dhdebug_dump(&mBuf[2], mPayLoadBufLen + 2 + WEBSOCKET_MASK_SIZE);
 		mask();
 		mSendFunc(&mBuf[2], mPayLoadBufLen + 2 + WEBSOCKET_MASK_SIZE);
 	} else { // if(mPayLoadBufLen < 65536) - buf is always smaller then 65536, so there is no implementation for buf more then 65535 bytes.
@@ -56,9 +70,20 @@ dhdebug_dump(&mBuf[2], mPayLoadBufLen + 2 + WEBSOCKET_MASK_SIZE);
 		mBuf[1] = 0x80 | 126; // masked, size in the next two bytes
 		mBuf[2] = (mPayLoadBufLen >> 8) & 0xFF;
 		mBuf[3] = mPayLoadBufLen & 0xFF;
-dhdebug_dump(mBuf, mPayLoadBufLen + 4 + WEBSOCKET_MASK_SIZE);
 		mask();
 		mSendFunc(mBuf, mPayLoadBufLen + 4 + WEBSOCKET_MASK_SIZE);
+	}
+}
+
+LOCAL void ICACHE_FLASH_ATTR check_queue() {
+	dhsender_current_success();
+	SENDER_JSON_DATA *data = dhsender_next();
+	if(data) {
+		dhdebug("Sender start with %d bytes", data->jsonlen);
+		// sizeof(data->json) always is equal or lower then PAYLOAD_BUF_SIZE
+		os_memcpy(mPayLoadBuf, data->json, data->jsonlen);
+		mPayLoadBufLen = data->jsonlen;
+		send_payload();
 	}
 }
 
@@ -66,6 +91,8 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_start(dhconnector_websocket_send_pr
 		dhconnector_websocket_error err_func) {
 	mSendFunc = send_func;
 	mErrFunc = err_func;
+
+	dhsender_set_cb(check_queue);
 
 	mPayLoadBufLen = dhconnector_websocket_api_start(mPayLoadBuf, PAYLOAD_BUF_SIZE);
 	send_payload();
@@ -86,13 +113,13 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	if(data[0] != 0x81) {
 		// always expect final text frame
 		dhdebug("WebSocket error - wrong header 0x%X", data[0]);
-		mErrFunc();
+		error(data, len);
 		return;
 	}
 	if(data[1] & 0x80) {
 		// always expect unmasked data
 		dhdebug("WebSocket error - masked data from server");
-		mErrFunc();
+		error(data, len);
 		return;
 	}
 
@@ -100,7 +127,7 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	unsigned int wslen = (data[1] & 0x7F);
 	if(wslen == 127) {
 		dhdebug("WebSocket error - cannot handle more then 65535 bytes");
-		mErrFunc();
+		error(data, len);
 		return;
 	} else if(wslen == 126) {
 		wslen = data[2];
@@ -115,17 +142,17 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	if(wslen != len) {
 		// it is final frame, we checked before, received and header lengths should be equal
 		dhdebug("WebSocket error - length mismatch");
-		mErrFunc();
+		error(data, len);
 		return;
 	}
 
 	// here we should have JSON in data and len variables
-	dhdebug("WS got response");
-dhdebug_dump(data, len);
-
+	dhdebug("WS got %d bytes", len);
 	mPayLoadBufLen = dhconnector_websocket_api_communicate(data, len, mPayLoadBuf, PAYLOAD_BUF_SIZE);
-	if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR)
-		mErrFunc();
-	else if(mPayLoadBufLen > 0)
+	if(mPayLoadBufLen > 0)
 		send_payload();
+	else if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR)
+		error(data, len);
+	else // if we have data to send, we can do it
+		check_queue();
 }

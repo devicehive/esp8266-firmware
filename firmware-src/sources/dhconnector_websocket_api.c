@@ -24,7 +24,6 @@
 #include "user_config.h"
 #include "dhcommands.h"
 #include "dhsender.h"
-#include "dhsender_queue.h"
 
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int maxlen) {
 	RO_DATA char template[] =
@@ -35,26 +34,16 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int ma
 	return snprintf(buf, maxlen, template, dhsettings_get_devicehive_accesskey());
 }
 
-LOCAL int check_bad_status(int status, const char *in, unsigned int inlen) {
-	if(status) {
-		dhdebug("Action bad return status: ");
-		char b[inlen + 1];
-		os_memcpy(b, in, inlen);
-		b[inlen] = 0;
-		dhdebug("%s", b);
-	}
-	return status;
-}
-
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsigned int inlen, char *out, unsigned int outmaxlen) {
 	int type;
 	int status_not_success = 1;
 	char action[32];
 	char command[128];
 	const char *params;
-	unsigned int paramslen;
-	unsigned int id;
+	unsigned int paramslen = 0;
+	unsigned int id = 0;
 	action[0] = 0;
+	command[0] = 0;
 	struct jsonparse_state jparser;
 	jsonparse_setup(&jparser, in, inlen);
 	while (jparser.pos < jparser.len) {
@@ -73,22 +62,23 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
 					jsonparse_copy_value(&jparser, command, sizeof(command));
-			}
-		} else if(jsonparse_strcmp_value(&jparser, "id") == 0) {
-			jsonparse_next(&jparser);
-			if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
-				id = jsonparse_get_value_as_ulong(&jparser);
-		} else if(jsonparse_strcmp_value(&jparser, "parameters") == 0) {
-			jsonparse_next(&jparser);
-			if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
-				// there is an issue with extracting subjson with jparser->vstart or jparser_copy_value
-				params = &jparser.json[jparser.pos - 1];
-				if(*params == '{') {
-					int end = jparser.pos;
-					while(end < jparser.len && jparser.json[end] != '}') {
-						end++;
+			} else if(jsonparse_strcmp_value(&jparser, "id") == 0) {
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+					id = jsonparse_get_value_as_ulong(&jparser);
+			} else if(jsonparse_strcmp_value(&jparser, "parameters") == 0) {
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
+					// there is an issue with extracting subjson with jparser->vstart or jparser_copy_value
+					params = &jparser.json[jparser.pos - 1];
+					if(*params == '{') {
+						int end = jparser.pos;
+						while(end < jparser.len && jparser.json[end] != '}') {
+							end++;
+						}
+						paramslen = end - jparser.pos + 2;
+						jparser.pos += paramslen;
 					}
-					paramslen = end - jparser.pos + 2;
 				}
 			}
 		} else if(type == JSON_TYPE_ERROR) {
@@ -127,7 +117,8 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 					"}"
 				"}";
 		char dk[9];
-		if(check_bad_status(status_not_success, in, inlen)) {
+		if(status_not_success) {
+			dhdebug("Failed to authenticate");
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
 		snprintf(dk, sizeof(dk), "%s", dhsettings_get_devicehive_accesskey());
@@ -140,7 +131,8 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 					"\"action\":\"command/subscribe\","
 					"\"deviceGuids\":[\"%s\"]"
 				"}";
-		if(check_bad_status(status_not_success, in, inlen)) {
+		if(status_not_success) {
+			dhdebug("Failed to save device");
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
 		return snprintf(out, outmaxlen, template,

@@ -16,6 +16,9 @@
 
 #include "dhsender_data.h"
 
+/** Function prototype for new item in queue callback. */
+typedef void (*dhsender_new_item_cb)();
+
 /**
  *	\brief				Notify that current data was failed to send.
  */
@@ -31,6 +34,12 @@ void dhsender_current_success();
  *	\return				Pointer to SENDER_JSON_DATA or NULL if there is no data to send.
  */
 SENDER_JSON_DATA *dhsender_next();
+
+/**
+ *	\brief					Set callbacks.
+ *	\param[in]	new_item	Pointer to a function which should be called on adding new item to queue.
+ */
+void dhsender_set_cb(dhsender_new_item_cb new_item);
 
 /**
  *	\brief					Send command response.

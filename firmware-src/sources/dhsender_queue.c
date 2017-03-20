@@ -141,12 +141,15 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *i
 			return 0;
 	}
 
-	if(dhsender_data_to_json(&out->json[pos], sizeof(out->json) - pos,
+
+	int rl = dhsender_data_to_json(&out->json[pos], sizeof(out->json) - pos,
 			item.notification_type == RNT_NOTIFICATION_GPIO, item.data_type,
-			&item.data, item.data_len, item.pin) < 0) {
+			&item.data, item.data_len, item.pin);
+	if(rl < 0) {
 		pos += snprintf(&out->json[pos], sizeof(out->json) - pos, "Failed to convert data to json");
 		item.type = RT_RESPONCE_ERROR;
 	}
+	pos += rl;
 
 	pos += snprintf(&out->json[pos], sizeof(out->json) - pos, "}}");
 	out->jsonlen = pos;

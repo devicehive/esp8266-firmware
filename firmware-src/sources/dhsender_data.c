@@ -97,9 +97,9 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 		unsigned int data_len, unsigned int pin) {
 	switch(data_type) {
 		case RDT_FORMAT_STRING:
-			return snprintf(buf, buf_len, "%s", data->array);
+			return snprintf(buf, buf_len, "\"%s\"", data->array);
 		case RDT_CONST_STRING:
-			return snprintf(buf, buf_len, "%s", data->string);
+			return snprintf(buf, buf_len, "\"%s\"", data->string);
 		case RDT_DATA_WITH_LEN:
 		{
 			const unsigned int pos = snprintf(buf, buf_len, "{\"data\":\"");
