@@ -59,7 +59,7 @@ SerialPort *SerialPort::open(const char *port) {
     char namebuff[MAX_PATH];
     snprintf(namebuff, sizeof namebuff, "\\\\.\\%s", port);
     HANDLE hCOM=CreateFileA(namebuff,GENERIC_READ|GENERIC_WRITE,0,NULL,OPEN_EXISTING,0,NULL);
-    if (hCOM!=INVALID_HANDLE_VALUE)
+    if(hCOM!=INVALID_HANDLE_VALUE)
     {
         DCB cdcb;
         if( GetCommState(hCOM,&cdcb)==0 ) {
@@ -88,7 +88,7 @@ SerialPort *SerialPort::open(const char *port) {
 
         SerialPort *comport = new SerialPort(hCOM);
         DWORD dwThreadId;
-        if ( (comport->mThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ThreadProc, (LPVOID)comport,  0, &dwThreadId)) == NULL)
+        if( (comport->mThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ThreadProc, (LPVOID)comport,  0, &dwThreadId)) == NULL)
         {
             delete comport;
             return 0;

@@ -40,13 +40,13 @@ const char * ICACHE_FLASH_ATTR dhrequest_parse_url(const char *url, char *host, 
 	const char *fr = url;
 	while (*fr != ':') {
 		fr++;
-		if (*fr == 0) {
+		if(*fr == 0) {
 			return NULL;
 		}
 	}
 	for(i = 0; i < 2; i++) {
 		fr++;
-		if (*fr != '/')
+		if(*fr != '/')
 			return NULL;
 	}
 	fr++;
@@ -57,19 +57,19 @@ const char * ICACHE_FLASH_ATTR dhrequest_parse_url(const char *url, char *host, 
 
 	// read port if present
 	int p = 0;
-	if (*fr == ':') {
+	if(*fr == ':') {
 		unsigned char d;
 		fr++;
 		while ((d = *fr - 0x30) < 10) {
 			fr++;
 			p = p * 10 + d;
-			if (p > 0xFFFF)
+			if(p > 0xFFFF)
 				break;
 		}
 	}
-	if (p && p < 0xFFFF)
+	if(p && p < 0xFFFF)
 		*port = p;
-	else if (os_strncmp(url, "https", 5) == 0 || os_strncmp(url, "wss", 3) == 0)
+	else if(os_strncmp(url, "https", 5) == 0 || os_strncmp(url, "wss", 3) == 0)
 		*port = 443; // HTTPS default port
 	else
 		*port = 80; //HTTP default port
@@ -84,7 +84,7 @@ HTTP_REQUEST * ICACHE_FLASH_ATTR dhrequest_create_info(const char *api) {
 	char host[DHREQUEST_HOST_MAX_BUF_LEN];
 	int port;
 	const char *path = dhrequest_parse_url(api, host, &port);
-	if (path == NULL)
+	if(path == NULL)
 		return NULL;
 	buf->len = snprintf(buf->data, sizeof(sbuf) - sizeof(unsigned int), HTTP_INFO_REQUEST_PATTERN, path, host);
 	dhdebug("Info request created, %d/%d", buf->len + 1, sizeof(sbuf) - sizeof(unsigned int));
@@ -97,7 +97,7 @@ HTTP_REQUEST * ICACHE_FLASH_ATTR dhrequest_create_wsrequest(const char *api, con
 	char host[DHREQUEST_HOST_MAX_BUF_LEN];
 	int port;
 	const char *path = dhrequest_parse_url(url, host, &port);
-	if (path == NULL)
+	if(path == NULL)
 		return NULL;
 	buf->len = snprintf(buf->data, sizeof(sbuf) - sizeof(unsigned int), HTTP_WS_REQUEST_PATTERN, path, host, api);
 	dhdebug("WS request created, %d/%d", buf->len + 1, sizeof(sbuf) - sizeof(unsigned int));

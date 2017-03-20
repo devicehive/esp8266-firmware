@@ -70,7 +70,7 @@ void Terminal::put(char c) {
 	} else if(escRecieving) {
 		escSequence[escSequencePos++] = c;
 		escSequence[escSequencePos] = 0;
-		if (escSequencePos == 1 && c == '[')
+		if(escSequencePos == 1 && c == '[')
 			return;
 		if((c >= 0x40 && c <= 0x7e) || escSequencePos >= sizeof(escSequence) - 1) {
 			if(strcmp(escSequence, "[C") == 0) { // Right

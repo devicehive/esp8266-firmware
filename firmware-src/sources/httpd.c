@@ -48,7 +48,7 @@ LOCAL HttpRequestCb mPostHttpRequestCb = 0;
 LOCAL CONTENT_ITEM mContentQueue[MAX_CONNECTIONS] = {0};
 
 LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *item) {
-	if (os_memcmp(tcp->remote_ip, item->remote_ip, sizeof(tcp->remote_ip)) == 0
+	if(os_memcmp(tcp->remote_ip, item->remote_ip, sizeof(tcp->remote_ip)) == 0
 			&& tcp->remote_port == item->remote_port) {
 		return 1;
 	}
@@ -283,7 +283,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		}
 	}
 
-	if (res != HRCS_NOT_FINISHED) {
+	if(res != HRCS_NOT_FINISHED) {
 		dhstatistic_inc_httpd_requests_count();
 	}
 

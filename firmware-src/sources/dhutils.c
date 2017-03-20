@@ -20,15 +20,15 @@ int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 	char found = 0;
 	int pos = 0;
 	while (1) {
-		if (ptr[pos] == '+') {
+		if(ptr[pos] == '+') {
 			sign = 1.0f;
-		} else if (ptr[pos] == '-') {
+		} else if(ptr[pos] == '-') {
 			sign = -1.0f;
-		} else if (ptr[pos] == '.' || ptr[pos] == ',') {
+		} else if(ptr[pos] == '.' || ptr[pos] == ',') {
 			fract = 0.1f;
-		} else if (ptr[pos] >= '0' && ptr[pos] <= '9') {
+		} else if(ptr[pos] >= '0' && ptr[pos] <= '9') {
 			const unsigned char v = ptr[pos] - 0x30;
-			if (fract == 1.0L) {
+			if(fract == 1.0L) {
 				res *= 10.0f;
 				res += v;
 			} else {
@@ -37,7 +37,7 @@ int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 			}
 			found = 1;
 		} else {
-			if (found) {
+			if(found) {
 				*result = res * sign;
 				return pos;
 			}
@@ -95,16 +95,16 @@ int ICACHE_FLASH_ATTR byteToHex(unsigned char byte, char *hexout) {
 }
 
 LOCAL int ICACHE_FLASH_ATTR hexchar(const char c) {
-	if (c > 0x60) {
+	if(c > 0x60) {
 		if(c > 0x66)
 			return -1;
 		return c - 0x57;
-	} else if (c > 0x40) {
-		if (c > 0x46)
+	} else if(c > 0x40) {
+		if(c > 0x46)
 			return -1;
 		return c - 0x37;
-	} else if (c > 0x2F) {
-		if (c > 0x39)
+	} else if(c > 0x2F) {
+		if(c > 0x39)
 			return -1;
 		return c - 0x30;
 	} else
@@ -128,9 +128,9 @@ int ICACHE_FLASH_ATTR hexToByte(const char *hex, unsigned char *byteout) {
 
 const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned short len) {
 	unsigned short pos = sizeof(uint32);
-	if (len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
+	if(len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
 		while (pos < len)
-			if (data[pos++] == ' ')
+			if(data[pos++] == ' ')
 				break;
 		return &data[pos];
 	}
@@ -143,14 +143,14 @@ unsigned int ICACHE_FLASH_ATTR unsignedInt16be(const char *buf, int pos) {
 
 int ICACHE_FLASH_ATTR signedInt16be(const char *buf, int pos) {
 	int r = unsignedInt16be(buf, pos);
-	if (r <= 0x7FFF)
+	if(r <= 0x7FFF)
 		return r;
 	return r - 0x10000;
 }
 
 int ICACHE_FLASH_ATTR signedInt16be_sm(const char *buf, int pos) {
 	int r = unsignedInt16be(buf, pos);
-	if (r <= 0x7FFF)
+	if(r <= 0x7FFF)
 		return r;
 	return -(r & 0x7FFF);
 }
@@ -161,7 +161,7 @@ unsigned int ICACHE_FLASH_ATTR unsignedInt16le(const char *buf, int pos) {
 
 int ICACHE_FLASH_ATTR signedInt16le(const char *buf, int pos) {
 	int r = unsignedInt16le(buf, pos);
-	if (r <= 0x7FFF)
+	if(r <= 0x7FFF)
 		return r;
 	return r - 0x10000;
 }

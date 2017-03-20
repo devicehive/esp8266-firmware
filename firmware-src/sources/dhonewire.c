@@ -77,7 +77,7 @@ LOCAL int ICACHE_FLASH_ATTR dhonewire_reset(unsigned int pin, unsigned int reset
 				if((gpio_input_get() & pin) == 0)
 					presence = 1;
 			}
-		} else if (exit_on_presence) {
+		} else if(exit_on_presence) {
 			if(presence) {
 				if(gpio_input_get() & pin)
 					return 1;
@@ -149,7 +149,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR dhonewire_check_crc(char *data) {
 	for (i = 0; i < 8; i++) {
 		char b = data[i];
 		for (j = 0; j < 8; j++) {
-			if ((seed ^ b) & 0x01)
+			if((seed ^ b) & 0x01)
 				seed = (seed >> 1) ^ 0x8C;
 			else
 				seed >>= 1;

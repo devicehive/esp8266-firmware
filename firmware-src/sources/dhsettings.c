@@ -55,7 +55,7 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 	SpiFlashOpResult res;
 	res = spi_flash_read(ESP_SETTINGS_MAIN_SEC * SPI_FLASH_SEC_SIZE, (uint32 *)settings, sizeof(DH_SETTINGS));
 	int read = 1;
-	if (res != SPI_FLASH_RESULT_OK) {
+	if(res != SPI_FLASH_RESULT_OK) {
 		dhdebug("Could not read settings from main storage %d, recover from backup", res);
 		read = 0;
 	} else if(getStorageCrc(settings) != settings->crc) {
@@ -64,7 +64,7 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 	}
 	if(read == 0) {
 		res = spi_flash_read(ESP_SETTINGS_BACKUP_SEC * SPI_FLASH_SEC_SIZE, (uint32 *)settings, sizeof(DH_SETTINGS));
-		if (res != SPI_FLASH_RESULT_OK) {
+		if(res != SPI_FLASH_RESULT_OK) {
 			dhdebug("Could not read settings from backup storage %d", res);
 		} else if(getStorageCrc(settings) != settings->crc) {
 			dhdebug("Backup storage data corrupted or never saved, using empty settings");

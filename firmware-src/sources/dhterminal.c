@@ -45,7 +45,7 @@ LOCAL os_timer_t mUsageTimer;
 LOCAL int isInUse = 0;
 
 LOCAL void ICACHE_FLASH_ATTR printWelcome() {
-	if (mMode == SM_NORMAL_MODE) {
+	if(mMode == SM_NORMAL_MODE) {
 		dhuart_send_str("$ ");
 	} else if(mMode == SM_INPUT_MODE || mMode == SM_HIDDEN_INPUT_MODE) {
 		dhuart_send_str("> ");
@@ -160,7 +160,7 @@ LOCAL void ICACHE_FLASH_ATTR dhterminal_reset() {
 		mDebugBuff[0] = 0;
 		mDebugBuffPos = 0;
 	}
-	if (mMode == SM_AWATING_MODE)
+	if(mMode == SM_AWATING_MODE)
 		os_timer_disarm(&mAwatingTimer);
 	dhterminal_set_mode(SM_NORMAL_MODE, 0, 0, 0, 0);
 	mHistoryScrollBufPos = mHistoryBuffPos;
@@ -189,7 +189,7 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 	int i;
 	if(mMode == SM_DEBUG_MODE || mMode == SM_OUTPUT_MODE || mMode == SM_AWATING_MODE) {
 		if(c == 'Q' || c == 'q' || c == 0x3 /*Ctrl+C*/) {
-			if (c == 0x3)
+			if(c == 0x3)
 				dhuart_send_str("^C\r\n");
 			dhterminal_reset();
 		} else if(c == '\n' && mMode == SM_DEBUG_MODE) {

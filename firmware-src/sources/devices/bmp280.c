@@ -102,7 +102,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, fl
 	v2 = v2 / 4.0 + P4 * 65536.0;
 	v1 = (P3 * v1 * v1 / 524288.0 + P2 * v1) / 524288.0;
 	v1 = (1.0 + v1 / 32768.0) * P1;
-	if (v1 == 0.0) {
+	if(v1 == 0.0) {
 		return DHI2C_DEVICE_ERROR;
 	}
 	double p = 1048576.0 - raw_pressure;

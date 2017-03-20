@@ -118,7 +118,7 @@ LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_writebyte(unsigned char byte) {
 	res = dhi2c_set_pin(mSCLPin, 0);
 	if(res != DHI2C_OK)
 		return res;
-	if (ackbit)
+	if(ackbit)
 		return DHI2C_NOACK;
 	return DHI2C_OK;
 }

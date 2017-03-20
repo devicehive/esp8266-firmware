@@ -20,7 +20,7 @@ LOCAL signed char ICACHE_FLASH_ATTR reverse_base64_table(char c) {
 		if(c > 'z')
 			return -1;
 		return c - 'a' + 26;
-	} else if (c >= 'A') {
+	} else if(c >= 'A') {
 		if(c > 'Z')
 			return -1;
 		return c - 'A';

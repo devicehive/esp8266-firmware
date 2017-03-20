@@ -23,10 +23,10 @@ int ICACHE_FLASH_ATTR vsnprintf(char *pString, size_t length, const char *pForma
 
 	/* Phase string */
 	while ( (pf = irom_char(pFormat)) != 0 && (pString-pOriginalStr) < length){
-		if (pf != '%'){
+		if(pf != '%'){
 			*pString++ = pf;
 			pFormat++;
-		} else if (irom_char(pFormat + 1) == '%'){
+		} else if(irom_char(pFormat + 1) == '%'){
 			*pString++ = '%';
 			pFormat += 2;
 		} else {

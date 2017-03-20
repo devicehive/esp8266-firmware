@@ -32,10 +32,10 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR uploadable_api_handle(const char *path, c
 		if(os_strcmp(p, "begin") == 0) {
 			if(content_in->len == 0)
 				res = uploadable_page_begin();
-		} else if (os_strcmp(p, "finish") == 0) {
+		} else if(os_strcmp(p, "finish") == 0) {
 			if(content_in->len == 0)
 				res = uploadable_page_finish();
-		} else if (os_strcmp(p, "put") == 0) {
+		} else if(os_strcmp(p, "put") == 0) {
 			if(content_in->len)
 				res = uploadable_page_put(content_in->data, content_in->len);
 		} else {

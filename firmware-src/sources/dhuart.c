@@ -63,7 +63,7 @@ LOCAL ICACHE_FLASH_ATTR void arm_buf_timer() {
 }
 
 LOCAL void dhuart_intr_handler(void *arg) {
-	if (READ_PERI_REG(UART_INTERUPTION_STATE_REGISTER) & BIT(0)) {
+	if(READ_PERI_REG(UART_INTERUPTION_STATE_REGISTER) & BIT(0)) {
 		const char rcvChar = READ_PERI_REG(UART_BASE) & 0xFF;
 		WRITE_PERI_REG(UART_INTERUPTION_REGISTER, BIT(0));
 		switch(mDataMode) {

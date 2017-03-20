@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
 			break;
 		char c[5];
 		term->get(c);
-		if (c[0] == 0x11) {
+		if(c[0] == 0x11) {
 			printf("\r\n");
 			break;
 		}

@@ -43,9 +43,9 @@ LOCAL void ICACHE_FLASH_ATTR printBytes(char *buff, unsigned long long bytes) {
 		snprintf(buff, 16, "%f TiB", bytes/1099511627776.0);
 	else if(bytes > 1073741824)
 		snprintf(buff, 16, "%f GiB", bytes/1073741824.0);
-	else if (bytes > 1048576)
+	else if(bytes > 1048576)
 		snprintf(buff, 16, "%f MiB", bytes/1048576.0);
-	else if (bytes > 1024)
+	else if(bytes > 1024)
 		snprintf(buff, 16, "%f KiB", bytes/1024.0);
 	else
 		snprintf(buff, 16, "%u B", (unsigned long)bytes);
@@ -338,7 +338,7 @@ void ICACHE_FLASH_ATTR dhterminal_commands_echo(const char *args) {
 
 LOCAL void ICACHE_FLASH_ATTR nslookup_res(const char *name, ip_addr_t *ip, void *arg) {
 	char ipstr[16];
-	if (ip == NULL) {
+	if(ip == NULL) {
 		dhuart_send_line("FAILED");
 	} else {
 		sprintIp(ipstr, ip);
@@ -436,7 +436,7 @@ LOCAL void ICACHE_FLASH_ATTR ping_done_cb(void* arg, void *pdata) {
 
 LOCAL void ICACHE_FLASH_ATTR ping_res_cb(const char *name, ip_addr_t *ip, void *arg) {
 	nslookup_res(name, ip, arg);
-	if (ip) {
+	if(ip) {
 		mCurrentPinopt.ip = ip->addr;
 		mCurrentPinopt.count = 4;
 		mCurrentPinopt.coarse_time = 1;
@@ -453,7 +453,7 @@ LOCAL void ICACHE_FLASH_ATTR ping_res_cb(const char *name, ip_addr_t *ip, void *
 LOCAL void ICACHE_FLASH_ATTR ping_nslookup_cb(const char *name, ip_addr_t *ip, void *arg) {
 	if(dhterminal_get_mode() == SM_OUTPUT_MODE) {
 		ping_res_cb(name, ip, arg);
-		if (ip == 0) {
+		if(ip == 0) {
 			mIsCommandWorking = 0;
 			dhterminal_set_mode(SM_NORMAL_MODE, 0, 0, 0, 0);
 		}

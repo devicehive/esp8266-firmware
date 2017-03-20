@@ -60,7 +60,7 @@ SerialPort *SerialPort::open(const char *port) {
     {
        struct termios tio;
        memset(&tio,0,sizeof(tio));
-       if ( tcgetattr ( comp, &tio ) != 0 ) {
+       if( tcgetattr ( comp, &tio ) != 0 ) {
            close(comp);
            return 0;
        }
@@ -77,7 +77,7 @@ SerialPort *SerialPort::open(const char *port) {
 
        tcflush(comp, TCIOFLUSH);
 
-       if ( tcsetattr ( comp, TCSANOW, &tio ) != 0) {
+       if( tcsetattr ( comp, TCSANOW, &tio ) != 0) {
            close(comp);
            return 0;
        }
@@ -118,7 +118,7 @@ void SerialPort::sleep(unsigned int ms) {
 	usleep(ms*1000);
 }
 
-#if ( defined(__APPLE__) || defined(__MACH__) )
+#if( defined(__APPLE__) || defined(__MACH__) )
 const static char TTYUSB_PATTERN[] = "tty.";
 #else
 const static char TTYUSB_PATTERN[] = "ttyUSB";
@@ -160,7 +160,7 @@ unsigned int SerialPort::getTick() {
 void SerialPort::setRts(bool val) {
     int flag;
     if(ioctl(mCom, TIOCMGET, &flag) != -1) {
-		if (val)
+		if(val)
 			flag |= TIOCM_RTS;
 		else
 			flag &= ~TIOCM_RTS;
@@ -171,7 +171,7 @@ void SerialPort::setRts(bool val) {
 void SerialPort::setDtr(bool val) {
     int flag;
     if(ioctl(mCom, TIOCMGET, &flag) != -1) {
-		if (val)
+		if(val)
 			flag |= TIOCM_DTR;
 		else
 			flag &= ~TIOCM_DTR;

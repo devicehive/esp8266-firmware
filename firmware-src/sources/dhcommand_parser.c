@@ -96,7 +96,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 	load_defaults(out, timeout);
 	while (jparser.pos < jparser.len) {
 		type = jsonparse_next(&jparser);
-		if (type == JSON_TYPE_PAIR_NAME) {
+		if(type == JSON_TYPE_PAIR_NAME) {
 			if(strcmp_value(&jparser, "mode") == 0) {
 				if((fields & AF_UARTMODE) == 0 && (fields & AF_SPIMODE) == 0)
 					return UNEXPECTED;
@@ -233,7 +233,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					return UNEXPECTED;
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
-					if (jparser.vlen > sizeof(out->data) - 1)
+					if(jparser.vlen > sizeof(out->data) - 1)
 						return "Text is too long";
 					os_memcpy(out->data, &jparser.json[jparser.vstart], jparser.vlen);
 					out->data[jparser.vlen] = 0;

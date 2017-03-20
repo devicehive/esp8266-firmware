@@ -78,7 +78,7 @@ void ICACHE_FLASH_ATTR dhgpio_open_drain(unsigned int pin_mask_set_od, unsigned 
 		if(pin & pin_mask_set_od) {
 			const unsigned int reg = GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(i))) | GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_ENABLE);
 			GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(i)), reg);
-		} else if (pin & pin_mask_unset_od) {
+		} else if(pin & pin_mask_unset_od) {
 			const unsigned int reg = GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(i))) | GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_DISABLE);
 			GPIO_REG_WRITE(GPIO_PIN_ADDR(GPIO_ID_PIN(i)), reg);
 		}

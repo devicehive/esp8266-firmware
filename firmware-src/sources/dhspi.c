@@ -50,14 +50,14 @@ LOCAL unsigned int mSPICSPin = DHSPI_NOCS;
 LOCAL unsigned char mSPIMode = 0;
 
 LOCAL void ICACHE_FLASH_ATTR dhspi_cs_enable() {
-	if (mSPICSPin == DHSPI_NOCS)
+	if(mSPICSPin == DHSPI_NOCS)
 		return;
 	dhgpio_write(0, (1 << mSPICSPin));
 	os_delay_us(DHSPI_CS_DELAY_US);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhspi_cs_disable() {
-	if (mSPICSPin == DHSPI_NOCS)
+	if(mSPICSPin == DHSPI_NOCS)
 		return;
 	dhgpio_write((1 << mSPICSPin), 0);
 	os_delay_us(DHSPI_CS_DELAY_US);
@@ -77,14 +77,14 @@ LOCAL void ICACHE_FLASH_ATTR dhspi_reinit() {
 	WRITE_PERI_REG(
 			SPI_CLOCK, // 1 MHz
 			((15 & SPI_CLKDIV_PRE) << SPI_CLKDIV_PRE_S) | ((4 & SPI_CLKCNT_N) << SPI_CLKCNT_N_S) | ((1 & SPI_CLKCNT_H) << SPI_CLKCNT_H_S) | ((3 & SPI_CLKCNT_L) << SPI_CLKCNT_L_S));
-	if (mSPIMode & 0x1) { // CPHA
+	if(mSPIMode & 0x1) { // CPHA
 		SET_PERI_REG_MASK(SPI_USER, SPI_CK_OUT_EDGE);
 		CLEAR_PERI_REG_MASK(SPI_USER, SPI_CK_I_EDGE);
 	} else {
 		SET_PERI_REG_MASK(SPI_USER, SPI_CK_I_EDGE);
 		CLEAR_PERI_REG_MASK(SPI_USER, SPI_CK_OUT_EDGE);
 	}
-	if (mSPIMode & 0x2) { // CPOL
+	if(mSPIMode & 0x2) { // CPOL
 		SET_PERI_REG_MASK(SPI_CTRL2,
 				SPI_CK_OUT_HIGH_MODE << SPI_CK_OUT_HIGH_MODE_S);
 		CLEAR_PERI_REG_MASK(SPI_CTRL2,
@@ -103,14 +103,14 @@ LOCAL void ICACHE_FLASH_ATTR dhspi_reinit() {
 }
 
 int ICACHE_FLASH_ATTR dhspi_set_mode(unsigned int mode) {
-	if (mode > 3)
+	if(mode > 3)
 		return 0;
 	mSPIMode = mode;
 	return 1;
 }
 
 int ICACHE_FLASH_ATTR dhspi_set_cs_pin(unsigned int cs_pin) {
-	if (cs_pin != DHSPI_NOCS
+	if(cs_pin != DHSPI_NOCS
 			&& (cs_pin == 12 || cs_pin == 13 || cs_pin == 14
 					|| cs_pin > DHGPIO_MAXGPIONUM
 					|| ((1 << cs_pin) & DHGPIO_SUITABLE_PINS) == 0))
@@ -132,7 +132,7 @@ void ICACHE_FLASH_ATTR dhspi_write(const char *buf, unsigned int len,
 		SET_PERI_REG_MASK(SPI_BASE, SPI_USR);
 	}
 
-	if (disable_cs)
+	if(disable_cs)
 		dhspi_cs_disable();
 }
 
