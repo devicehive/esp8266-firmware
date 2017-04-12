@@ -13,7 +13,7 @@
 #define MAX(x, y) (((x) < (y)) ? (x) : (y))
 
 /** Round value to KiB */
-#define ROUND_KB(x) (((x) / 1024 + 1) * 1024)
+#define ROUND_KB(x) ((((x) + 1023) / 1024) * 1024)
 
 /**
  *	\brief				Convert string to float.
