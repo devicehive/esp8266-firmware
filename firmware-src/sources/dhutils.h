@@ -9,6 +9,9 @@
 #ifndef _DHUTILS_H_
 #define _DHUTILS_H_
 
+#include <c_types.h>
+
+
 /** Find maximum value */
 #define MAX(x, y) (((x) < (y)) ? (x) : (y))
 
@@ -42,21 +45,27 @@ int strToUInt(const char *ptr, unsigned int *result);
  */
 int strToInt(const char *ptr, int *result);
 
-/**
- *	\brief				Convert byte value to two hex chars.
- *	\param[in]	byte	Value for convert.
- *	\param[out]	hexout	Pointer to two chars buffer for output.
- *	\return				Number of written chars. Always 2.
- */
-int byteToHex(unsigned char byte, char *hexout);
 
 /**
- *	\brief				Convert string to byte.
- *	\param[in]	hex		String to convert.
- *	\param[out]	byteout	Pointer to one char for output.
- *	\return				Number of characters that was used from string: 1, 2 or 0 on error.
+ * @brief Convert byte value to hexadecimal string.
+ *
+ * Output is in the range `[0..9A..F]`.
+ *
+ * @param[in] val Value for convert.
+ * @param[out] hex_out Pointer to output buffer. Should be at least 2 characters in length.
+ * @return Number of characters written. Always 2.
  */
-int hexToByte(const char *hex, unsigned char *byteout);
+int byteToHex(uint8_t val, char *hex_out);
+
+
+/**
+ * @brief Convert hexadecimal string to byte.
+ * @param[in] hex String to convert. Should be at least 2 characters in length.
+ * @param[out] val_out Pointer to byte where output result is stored.
+ * @return Number of characters that was used from string: 1, 2 or 0 on error.
+ */
+int hexToByte(const char *hex, uint8_t *val_out);
+
 
 /**
  *	\brief					Util function to find out response code in HTTP response.

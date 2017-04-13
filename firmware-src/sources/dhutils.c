@@ -8,10 +8,8 @@
  * Description: utils for firmware
  *
  */
-
-#include <c_types.h>
-#include <osapi.h>
 #include "dhutils.h"
+#include <osapi.h>
 
 int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 	float res = 0.0f;
@@ -86,16 +84,26 @@ int ICACHE_FLASH_ATTR strToInt(const char *ptr, int *result) {
 	return pos;
 }
 
-int ICACHE_FLASH_ATTR byteToHex(unsigned char byte, char *hexout) {
-	const unsigned char b0 = byte / 0x10;
-	const unsigned char b1 = byte & 0xF;
-	hexout[0] = (b0 < 10) ? b0 + '0' : (b0 - 10 + 'A');
-	hexout[1] = (b1 < 10) ? b1 + '0' : (b1 - 10 + 'A');
+/*
+ * byteToHex() implementation.
+ */
+int ICACHE_FLASH_ATTR byteToHex(uint8_t val, char *hex_out)
+{
+	const int b0 = (val >> 4) & 0x0F; // high nibble
+	const int b1 =  val       & 0x0F; // low nibble
+
+	// WARNING: there is no (hex_out != 0) check!
+	hex_out[0] = (b0 < 10) ? (b0 + '0') : (b0 - 10 + 'A');
+	hex_out[1] = (b1 < 10) ? (b1 + '0') : (b1 - 10 + 'A');
+
 	return 2;
 }
 
+
 /**
- * @brief Convert hexadecimal character into decimal value.
+ * @brief Convert hexadecimal character into nibble.
+ *
+ * [Nibble](https://en.wikipedia.org/wiki/Nibble) is a 4-bits value.
  *
  * - ['A'..'Z'] are converted to [10..15]
  * - ['a'..'z'] are converted to [10..15]
@@ -104,31 +112,41 @@ int ICACHE_FLASH_ATTR byteToHex(unsigned char byte, char *hexout) {
  * @param[in] ch Character to convert.
  * @return Decimal value in range [0..15] or `-1` in case of error.
  */
-LOCAL int ICACHE_FLASH_ATTR hexchar(const char ch) {
+static inline int hex2nibble(char ch)
+{
 	if ('a' <= ch && ch <= 'f')
-		return 10 + (ch - 'a');
+		return ch - 'a' + 10;
 	if ('A' <= ch && ch <= 'F')
-		return 10 + (ch - 'A');
+		return ch - 'A' + 10;
 	if ('0' <= ch && ch <= '9')
 		return (ch - '0');
 
 	return -1; // unknown character
 }
 
-int ICACHE_FLASH_ATTR hexToByte(const char *hex, unsigned char *byteout) {
-	const int b0 = hexchar(hex[0]);
-	if(b0 != -1) {
-		const int b1 = hexchar(hex[1]);
-		if(b1 == -1) {
-			*byteout = b0;
-			return 1;
-		} else {
-			*byteout = b0 * 0x10 + b1;
-			return 2;
-		}
+
+/*
+ * hexToByte() implementation.
+ */
+int ICACHE_FLASH_ATTR hexToByte(const char *hex, uint8_t *val_out)
+{
+	// high nibble
+	const int b0 = hex2nibble(hex[0]);
+	if (b0 < 0)
+		return 0;
+
+	// low nibble
+	const int b1 = hex2nibble(hex[1]);
+	if (b1 < 0) {
+		*val_out = b0; // WARNING: no (val_out != 0) check
+		return 1;
 	}
-	return 0;
+
+	// WARNING: no (val_out != 0) check
+	*val_out = (b0<<4) | b1;
+	return 2;
 }
+
 
 const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned short len) {
 	unsigned short pos = sizeof(uint32);
