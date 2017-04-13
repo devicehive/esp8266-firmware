@@ -57,9 +57,9 @@ LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *it
 
 LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, int len) {
 	sint8 res;
-	ifrom(data) {
+	if (is_irom(data)) {
 		char buf[len];
-		irom_read(buf, data, len);
+		irom_read(buf, len, data);
 		res = espconn_send(conn, buf, len);
 	} else {
 		res = espconn_send(conn, (char *)data, len);

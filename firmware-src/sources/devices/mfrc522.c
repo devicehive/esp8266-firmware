@@ -342,12 +342,9 @@ bool ICACHE_FLASH_ATTR MFRC522_PCD_PerformSelfTest() {
 	}
 	
 	// Verify that the results match up to our expectations
-	for (i = 0; i < 64; i++) {
-		if (result[i] != irom_char(&(reference[i]))) {
-			return false;
-		}
-	}
-	
+    if (0 != irom_cmp(result, 64, reference))
+		return false;
+
 	// Test passed; all is good.
 	return true;
 } // End PCD_PerformSelfTest()
