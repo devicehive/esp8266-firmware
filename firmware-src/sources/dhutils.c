@@ -94,21 +94,25 @@ int ICACHE_FLASH_ATTR byteToHex(unsigned char byte, char *hexout) {
 	return 2;
 }
 
-LOCAL int ICACHE_FLASH_ATTR hexchar(const char c) {
-	if(c > 0x60) {
-		if(c > 0x66)
-			return -1;
-		return c - 0x57;
-	} else if(c > 0x40) {
-		if(c > 0x46)
-			return -1;
-		return c - 0x37;
-	} else if(c > 0x2F) {
-		if(c > 0x39)
-			return -1;
-		return c - 0x30;
-	} else
-		return -1;
+/**
+ * @brief Convert hexadecimal character into decimal value.
+ *
+ * - ['A'..'Z'] are converted to [10..15]
+ * - ['a'..'z'] are converted to [10..15]
+ * - ['0'..'9'] are converted to [0..9]
+ *
+ * @param[in] ch Character to convert.
+ * @return Decimal value in range [0..15] or `-1` in case of error.
+ */
+LOCAL int ICACHE_FLASH_ATTR hexchar(const char ch) {
+	if ('a' <= ch && ch <= 'f')
+		return 10 + (ch - 'a');
+	if ('A' <= ch && ch <= 'F')
+		return 10 + (ch - 'A');
+	if ('0' <= ch && ch <= '9')
+		return (ch - '0');
+
+	return -1; // unknown character
 }
 
 int ICACHE_FLASH_ATTR hexToByte(const char *hex, unsigned char *byteout) {
