@@ -49,7 +49,7 @@ LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-	dhstatistic_inc_network_errors_count();
+	dhstat_got_network_error();
 }
 
 LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
@@ -79,7 +79,7 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 }
 
 LOCAL void ICACHE_FLASH_ATTR ws_error() {
-	dhstatistic_inc_server_errors_count();
+	dhstat_got_server_error();
 	// close connection and restart everything on error
 	espconn_disconnect(&mDHConnector);
 }
@@ -90,11 +90,11 @@ LOCAL void ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
 	if(espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK)
 		ws_error();
 	else
-		dhstatistic_add_bytes_sent(len);
+		dhstat_add_bytes_sent(len);
 }
 
 LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned short len) {
-	dhstatistic_add_bytes_received(len);
+	dhstat_add_bytes_received(len);
 	if(mConnectionState == CS_OPERATE) {
 		dhconnector_websocket_parse(data, len);
 		return;
@@ -134,12 +134,12 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 			dhdebug("Connector HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
 			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
-			dhstatistic_inc_server_errors_count();
+			dhstat_got_server_error();
 		}
 	} else {
 		mConnectionState = CS_DISCONNECT;
 		dhdebug("Connector HTTP magic number is wrong");
-		dhstatistic_inc_server_errors_count();
+		dhstat_got_server_error();
 	}
 	espconn_disconnect(&mDHConnector);
 }
@@ -184,7 +184,7 @@ LOCAL void network_connect_cb(void *arg) {
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
 		espconn_disconnect(&mDHConnector);
 	} else {
-		dhstatistic_add_bytes_sent(request->len);
+		dhstat_add_bytes_sent(request->len);
 	}
 }
 
@@ -228,7 +228,7 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 		dhdebug("Resolve %s failed. Trying again...", name);
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-		dhstatistic_inc_network_errors_count();
+		dhstat_got_network_error();
 		return;
 	}
 	unsigned char *bip = (unsigned char *) ip;
@@ -330,7 +330,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 	} else if(event->event == EVENT_STAMODE_DISCONNECTED) {
 		os_timer_disarm(&mRetryTimer);
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
-		dhstatistic_inc_wifi_lost_count();
+		dhstat_got_wifi_lost();
 		mdnsd_stop();
 	} else {
 		dhesperrors_wifi_state("WiFi event", event->event);

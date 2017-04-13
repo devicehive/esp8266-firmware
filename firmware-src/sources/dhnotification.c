@@ -25,7 +25,7 @@
 
 void ICACHE_FLASH_ATTR dhgpio_int_timeout(unsigned int caused_pins) {
 	if(dhmem_isblock()) {
-		dhstatistic_inc_notifications_dropped_count();
+		dhstat_got_notification_dropped();
 		return;
 	}
 	dhsender_notification(RNT_NOTIFICATION_GPIO, RDT_GPIO, caused_pins, dhgpio_read(), system_get_time(), DHGPIO_SUITABLE_PINS);
@@ -33,7 +33,7 @@ void ICACHE_FLASH_ATTR dhgpio_int_timeout(unsigned int caused_pins) {
 
 void ICACHE_FLASH_ATTR dhadc_loop_value(float value){
 	if(dhmem_isblock()) {
-		dhstatistic_inc_notifications_dropped_count();
+		dhstat_got_notification_dropped();
 		return;
 	}
 	dhsender_notification(RNT_NOTIFICATION_ADC, RDT_FLOAT, value);
@@ -41,7 +41,7 @@ void ICACHE_FLASH_ATTR dhadc_loop_value(float value){
 
 void ICACHE_FLASH_ATTR dhuart_buf_rcv(const char *buf, unsigned int len) {
 	if(dhmem_isblock()) {
-		dhstatistic_inc_notifications_dropped_count();
+		dhstat_got_notification_dropped();
 		return;
 	}
 	dhsender_notification(RNT_NOTIFICATION_UART, RDT_DATA_WITH_LEN, buf, len);
@@ -49,7 +49,7 @@ void ICACHE_FLASH_ATTR dhuart_buf_rcv(const char *buf, unsigned int len) {
 
  void ICACHE_FLASH_ATTR dhonewire_search_result(unsigned int pin_number, char *buf, unsigned long len) {
 	 if(dhmem_isblock()) {
-		dhstatistic_inc_notifications_dropped_count();
+		dhstat_got_notification_dropped();
 		return;
 	}
 	dhsender_notification(RNT_NOTIFICATION_ONEWIRE, RDT_SEARCH64, pin_number, buf, len);

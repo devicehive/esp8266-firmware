@@ -65,10 +65,10 @@ LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, in
 		res = espconn_send(conn, (char *)data, len);
 	}
 	if(res) {
-		dhstatistic_inc_network_errors_count();
+		dhstat_got_network_error();
 		dhesperrors_espconn_result("Httpd espconn_send returned:", res);
 	} else {
-		dhstatistic_add_bytes_sent(len);
+		dhstat_add_bytes_sent(len);
 	}
 }
 
@@ -236,7 +236,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	answer.content.len = 0;
 	answer.free_content = 0;
 	answer.ok = 1;
-	dhstatistic_add_bytes_received(len);
+	dhstat_add_bytes_received(len);
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 
 	if(conn == mCurrentPost) {
@@ -256,7 +256,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 						char redirect[sizeof(redirectresponse) - 2 + redirect_host_len];
 						snprintf(redirect, sizeof(redirect), redirectresponse, mRedirectHost);
 						send_res(conn, redirect, sizeof(redirect) - 1);
-						dhstatistic_inc_httpd_requests_count();
+						dhstat_got_httpd_request();
 						return;
 					}
 					break;
@@ -284,7 +284,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	}
 
 	if(res != HRCS_NOT_FINISHED) {
-		dhstatistic_inc_httpd_requests_count();
+		dhstat_got_httpd_request();
 	}
 
 	switch (res) {
@@ -303,7 +303,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 				dhdebug("Httpd duplicate responses");
 				send_res(conn, internal, sizeof(internal) - 1);
-				dhstatistic_inc_httpd_errors_count();
+				dhstat_got_httpd_error();
 				return;
 			} else if(mContentQueue[i].remote_port == 0) {
 				item = &mContentQueue[i];
@@ -321,7 +321,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		if(item == 0) {
 			dhdebug("Httpd no place for responses");
 			send_res(conn, internal, sizeof(internal) - 1);
-			dhstatistic_inc_httpd_errors_count();
+			dhstat_got_httpd_error();
 			return;
 		}
 		const char *content_type = plain;
@@ -378,7 +378,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		dhdebug("Httpd internal error");
 		send_res(conn, internal, sizeof(internal) - 1);
 	}
-	dhstatistic_inc_httpd_errors_count();
+	dhstat_got_httpd_error();
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_reconnect_cb(void *arg, sint8 err) {

@@ -62,14 +62,14 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 		}
 	}
 	if(answer->ok == 0)
-		dhstatistic_inc_local_rest_responses_errors();
+		dhstat_got_local_rest_response_error();
 	va_end(ap);
 }
 
 HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char *key,
 		HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
 	static const char cint[] = "/int";
-	dhstatistic_inc_local_rest_requests_count();
+	dhstat_got_local_rest_request();
 	if(path[0] == 0) {
 		answer->content.data = desription;
 		answer->content.len = sizeof(desription) - 1;

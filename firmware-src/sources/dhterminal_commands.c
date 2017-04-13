@@ -95,7 +95,7 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	uint8 mac[6];
 	char digitBuff[32];
 
-	const DHSTATISTIC *stat = dhstatistic_get_statistic();
+	const struct DHStat *stat = dhstat_get();
 
 	dhuart_send_str("Network adapter ");
 	if(!wifi_get_macaddr(STATION_IF, mac)) {
