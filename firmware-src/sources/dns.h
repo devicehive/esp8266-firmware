@@ -79,26 +79,6 @@ typedef enum {
 	DNS_TYPE_SRV = 0x21
 } DNS_TYPE;
 
-/**
- *	\brief				Convert host 32 bit value to 32 bit big endian value
- *	\param[in]	n		Host value.
- *	\return				Big endian value.
- */
-uint32_t htobe_32(uint32_t n);
-
-/**
- *	\brief				Convert host 16 bit value to 16 bit big endian value
- *	\param[in]	n		Host value.
- *	\return				Big endian value.
- */
-uint16_t htobe_16(uint16_t n);
-
-/**
- *	\brief				Convert 16 bit big endian value to host 16 bit value
- *	\param[in]	n		Big endian value.
- *	\return				Host value.
- */
-uint16_t betoh_16(uint16_t n);
 
 /**
  *	\brief				Fill response with one record.

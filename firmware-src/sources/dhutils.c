@@ -112,7 +112,7 @@ int ICACHE_FLASH_ATTR byteToHex(uint8_t val, char *hex_out)
  * @param[in] ch Character to convert.
  * @return Decimal value in range [0..15] or `-1` in case of error.
  */
-static inline int hex2nibble(char ch)
+static inline int hex2nibble(int ch)
 {
 	if ('a' <= ch && ch <= 'f')
 		return ch - 'a' + 10;
@@ -157,35 +157,6 @@ const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned
 		return &data[pos];
 	}
 	return NULL;
-}
-
-unsigned int ICACHE_FLASH_ATTR unsignedInt16be(const char *buf, int pos) {
-	return ((int)buf[pos] * 0x100 + (int)buf[pos + 1]);
-}
-
-int ICACHE_FLASH_ATTR signedInt16be(const char *buf, int pos) {
-	int r = unsignedInt16be(buf, pos);
-	if(r <= 0x7FFF)
-		return r;
-	return r - 0x10000;
-}
-
-int ICACHE_FLASH_ATTR signedInt16be_sm(const char *buf, int pos) {
-	int r = unsignedInt16be(buf, pos);
-	if(r <= 0x7FFF)
-		return r;
-	return -(r & 0x7FFF);
-}
-
-unsigned int ICACHE_FLASH_ATTR unsignedInt16le(const char *buf, int pos) {
-	return ((int)buf[pos] + (int)buf[pos + 1] * 0x100);
-}
-
-int ICACHE_FLASH_ATTR signedInt16le(const char *buf, int pos) {
-	int r = unsignedInt16le(buf, pos);
-	if(r <= 0x7FFF)
-		return r;
-	return r - 0x10000;
 }
 
 void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {

@@ -15,6 +15,7 @@
 #include <ip_addr.h>
 #include "mdnsd.h"
 #include "dns.h"
+#include "swab.h"
 #include "snprintf.h"
 #include "dhdebug.h"
 #include "user_config.h"
@@ -54,7 +55,7 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 	uint8_t responsebuff[MDNS_MAX_PACKET_LENGTH];
 	DNS_HEADER *response = (DNS_HEADER *)responsebuff;
 
-	uint16_t qd = betoh_16(request->questionsNumber);
+	uint16_t qd = betoh_u16(request->questionsNumber);
 	uint32_t i;
 	uint32_t offset = 0;
 	uint32_t data_len = len - sizeof(DNS_HEADER);
@@ -104,7 +105,7 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 			case DNS_TYPE_SRV:
 				if(dns_cmp_fqdn_str(&request->data[offset], mName, MDNS_SERVICE)) {
 					SRV_DATA srv;
-					srv.port = htobe_16( MDNS_SERVICE_PORT );
+					srv.port = htobe_u16( MDNS_SERVICE_PORT );
 					srv.priority = 0;
 					srv.weigth = 0;
 					alen += dns_add_answer(&response->data[alen], mName,
@@ -142,7 +143,7 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 		os_memset(response, 0, sizeof(DNS_HEADER));
 		response->flags.authoritiveAnswer = 1;
 		response->flags.responseFlag = 1;
-		response->answersNumber = htobe_16(answersNumber);
+		response->answersNumber = htobe_u16(answersNumber);
 		announce(responsebuff, alen + sizeof(DNS_HEADER));
 	}
 }

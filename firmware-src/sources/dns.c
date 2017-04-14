@@ -9,40 +9,11 @@
 
 
 #include "dns.h"
+#include "swab.h"
 #include <c_types.h>
 
 const uint8_t LOCAL_DOMAIN[] = "local";
 
-uint32_t ICACHE_FLASH_ATTR htobe_32(uint32_t n) {
-	uint32_t res;
-	uint8_t *p = (uint8_t *)&res;
-	p[3] = n & 0xFF;
-	n >>= 8;
-	p[2] = n & 0xFF;
-	n >>= 8;
-	p[1] = n & 0xFF;
-	n >>= 8;
-	p[0] = n & 0xFF;
-	return res;
-}
-
-uint16_t ICACHE_FLASH_ATTR htobe_16(uint16_t n) {
-	uint16_t res;
-	uint8_t *p = (uint8_t *)&res;
-	p[1] = n & 0xFF;
-	n >>= 8;
-	p[0] = n & 0xFF;
-	return res;
-}
-
-uint16_t ICACHE_FLASH_ATTR betoh_16(uint16_t n) {
-	uint16_t res;
-	uint8_t *p = (uint8_t *)&n;
-	res = p[0];
-	res <<= 8;
-	res |= p[1];
-	return res;
-}
 LOCAL uint32_t to_fqdn(uint8_t *buf, const uint8_t *d) {
 	uint32_t pos;
 	pos = 1;
@@ -95,9 +66,9 @@ uint32_t ICACHE_FLASH_ATTR dns_add_answer(uint8_t *buf, const uint8_t *name1,
 		}
 	}
 	DNS_ANSWER *resp = (DNS_ANSWER *)&buf[pos];
-	resp->type = htobe_16(type);
-	resp->class = htobe_16(1); // IN - class
-	resp->ttl = htobe_32(ttl);
+	resp->type = htobe_u16(type);
+	resp->class = htobe_u16(1); // IN - class
+	resp->ttl = htobe_u32(ttl);
 	// resp->size see below
 	pos += sizeof(DNS_ANSWER);
 	uint32_t datapos = pos;
@@ -115,7 +86,7 @@ uint32_t ICACHE_FLASH_ATTR dns_add_answer(uint8_t *buf, const uint8_t *name1,
 			pos--;
 		pos += to_fqdn_local(&buf[pos], data3);
 	}
-	resp->size = htobe_16(pos - datapos);
+	resp->size = htobe_u16(pos - datapos);
 	return pos;
 }
 

@@ -9,7 +9,7 @@
 #ifndef _DHUTILS_H_
 #define _DHUTILS_H_
 
-#include <c_types.h>
+#include "swab.h"
 
 
 /** Find maximum value */
@@ -75,48 +75,67 @@ int hexToByte(const char *hex, uint8_t *val_out);
  */
 const char *find_http_responce_code(const char *data, unsigned short len);
 
-/**
- *	\brief					Read unsigned 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
- */
-unsigned int unsignedInt16be(const char *buf, int pos);
 
 /**
- *	\brief					Read signed 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read unsigned 16-bits integer from pointer. Big-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-int signedInt16be(const char *buf, int pos);
+static inline unsigned int unsignedInt16be(const char *buf, int pos) {
+	return betoh_u16(*(const uint16_t*)(buf + pos));
+}
+
 
 /**
- *	\brief					Read signed 16 bit integer from pointer in sign-magnitude representation. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read signed 16-bits integer from pointer. Big-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-int signedInt16be_sm(const char *buf, int pos);
+static inline int signedInt16be(const char *buf, int pos) {
+	return (int16_t)betoh_u16(*(const uint16_t*)(buf + pos));
+}
+
 
 /**
- *	\brief					Read unsigned 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read signed 16-bits integer from pointer in sign-magnitude representation. Big-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-unsigned int unsignedInt16le(const char *buf, int pos);
+static inline int signedInt16be_sm(const char *buf, int pos) {
+	int r = unsignedInt16be(buf, pos);
+	if(r <= 0x7FFF)
+		return r;
+	return -(r & 0x7FFF);
+}
+
 
 /**
- *	\brief					Read signed 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read unsigned 16-bits integer from pointer. Little-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-int signedInt16le(const char *buf, int pos);
+static inline unsigned int unsignedInt16le(const char *buf, int pos) {
+	return letoh_u16(*(const uint16_t*)(buf + pos));
+}
+
 
 /**
- *	\brief					Delay in milliseconds.
+ * @brief Read signed 16-bits integer from pointer. Little-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
+ */
+static inline int signedInt16le(const char *buf, int pos) {
+	return (int16_t)letoh_u16(*(const uint16_t*)(buf + pos));
+}
+
+
+/**
+ * @brief Delay in milliseconds.
  */
 void delay_ms(unsigned int ms);
 

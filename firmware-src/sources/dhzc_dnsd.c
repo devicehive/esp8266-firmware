@@ -14,6 +14,7 @@
 #include <espconn.h>
 #include <mem.h>
 #include "dns.h"
+#include "swab.h"
 #include "dhdebug.h"
 #include "dhzc_dnsd.h"
 
@@ -27,7 +28,7 @@ LOCAL char *mDNSAnswerBuffer;
 LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 	// always add response with host address data to the end
 	DNS_HEADER *header = (DNS_HEADER *)data;
-	header->answersNumber = htobe_16(1);
+	header->answersNumber = htobe_u16(1);
 	header->authoritiesNumber = 0;
 	header->resourcesNumber = 0;
 	header->flags.responseFlag = 1;

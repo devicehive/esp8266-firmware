@@ -12,6 +12,7 @@
 #include "dht.h"
 #include "dhonewire.h"
 #include "dhdebug.h"
+#include "dhutils.h"
 
 #define DHT_PACKET_SIZE 5
 
