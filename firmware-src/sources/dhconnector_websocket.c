@@ -46,7 +46,7 @@ LOCAL void ICACHE_FLASH_ATTR error(data, len) {
 	dhdebug("%s", b);
 }
 
-LOCAL void ICACHE_FLASH_ATTR mask() {
+LOCAL void ICACHE_FLASH_ATTR mask(void) {
 	uint32_t *mask = (uint32_t *)&mBuf[WEBSOCKET_HEADER_MAX_SIZE];
 	*mask = rand();
 	int i, j;
@@ -57,7 +57,7 @@ LOCAL void ICACHE_FLASH_ATTR mask() {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR send_payload() {
+LOCAL void ICACHE_FLASH_ATTR send_payload(void) {
 	if(mPayLoadBufLen <= 0) {
 		return;
 	} else if(mPayLoadBufLen < 126) {
@@ -75,7 +75,7 @@ LOCAL void ICACHE_FLASH_ATTR send_payload() {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR check_queue() {
+LOCAL void ICACHE_FLASH_ATTR check_queue(void) {
 	dhsender_current_success();
 	SENDER_JSON_DATA *data = dhsender_next();
 	if(data) {

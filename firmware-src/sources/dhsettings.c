@@ -118,7 +118,7 @@ LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 }
 
 
-int ICACHE_FLASH_ATTR dhsettings_commit() {
+int ICACHE_FLASH_ATTR dhsettings_commit(void) {
 	return dhsettings_write(&mSettingsData);
 }
 
@@ -134,27 +134,27 @@ int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
 	return dhsettings_write(NULL);
 }
 
-WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode() {
+WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode(void) {
 	return mSettingsData.mode;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid(void) {
 	return mSettingsData.ssid;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_password() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_password(void) {
 	return mSettingsData.password;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_server() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_server(void) {
 	return mSettingsData.server;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid(void) {
 	return mSettingsData.deviceId;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey(void) {
 	return mSettingsData.accessKey;
 }
 

@@ -17,7 +17,7 @@
  *	\brief	Generate random value.
  *	\return	Value in range of 0..(RAND_MAX - 1).
  */
-int rand();
+int rand(void);
 
 /**
  *	\brief			Generate random device key.

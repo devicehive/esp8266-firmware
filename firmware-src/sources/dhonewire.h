@@ -21,7 +21,7 @@ int dhonewire_set_pin(unsigned int pin);
  *	\brief				Get pin that configured for onewire.
  *	\return				Pin number.
  */
-int dhonewire_get_pin();
+int dhonewire_get_pin(void);
 
 /**
  *	\brief					Write data to onewire bus.

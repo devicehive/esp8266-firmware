@@ -9,6 +9,7 @@
  * Description: GPIO module
  *
  */
+#include "dhgpio.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
@@ -17,26 +18,8 @@
 #include "user_config.h"
 #include "dhdebug.h"
 #include "dhnotification.h"
-#include "dhgpio.h"
 #include "dhpwm.h"
 #include "dhmem.h"
-
-#define PIN_GPIOO (1 << 0)
-#define PIN_GPIO1 (1 << 1)
-#define PIN_GPIO2 (1 << 2)
-#define PIN_GPIO3 (1 << 3)
-#define PIN_GPIO4 (1 << 4)
-#define PIN_GPIO5 (1 << 5)
-#define PIN_GPIO6 (1 << 6)
-#define PIN_GPIO7 (1 << 7)
-#define PIN_GPIO8 (1 << 8)
-#define PIN_GPIO9 (1 << 9)
-#define PIN_GPIO10 (1 << 10)
-#define PIN_GPIO11 (1 << 11)
-#define PIN_GPIO12 (1 << 12)
-#define PIN_GPIO13 (1 << 13)
-#define PIN_GPIO14 (1 << 14)
-#define PIN_GPIO15 (1 << 15)
 
 LOCAL os_timer_t mGPIOTimer;
 LOCAL unsigned int mGPIOTimerTimeout = 250;
@@ -72,7 +55,7 @@ void ICACHE_FLASH_ATTR dhgpio_prepare_pins(unsigned int pin_mask, int disable_pw
 void ICACHE_FLASH_ATTR dhgpio_open_drain(unsigned int pin_mask_set_od, unsigned int pin_mask_unset_od) {
 	int i;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		unsigned int pin = 1 << i;
+		unsigned int pin = BIT(i);
 		if(pin & DHGPIO_SUITABLE_PINS == 0)
 			continue;
 		if(pin & pin_mask_set_od) {
@@ -153,7 +136,7 @@ int ICACHE_FLASH_ATTR dhgpio_initialize(unsigned int init_mask, unsigned int pol
 	return 1;
 }
 
-unsigned int ICACHE_FLASH_ATTR dhgpio_read() {
+unsigned int ICACHE_FLASH_ATTR dhgpio_read(void) {
 	return gpio_input_get() & DHGPIO_SUITABLE_PINS;
 }
 
@@ -223,11 +206,11 @@ int ICACHE_FLASH_ATTR dhgpio_int(unsigned int disable_mask, unsigned int rising_
 	return 1;
 }
 
-unsigned int ICACHE_FLASH_ATTR dhgpio_get_timeout() {
+unsigned int ICACHE_FLASH_ATTR dhgpio_get_timeout(void) {
 	return mGPIOTimerTimeout;
 }
 
-void ICACHE_FLASH_ATTR dhgpio_init() {
+void ICACHE_FLASH_ATTR dhgpio_init(void) {
 	ETS_GPIO_INTR_ATTACH(gpio_intr, NULL);
 	ETS_GPIO_INTR_ENABLE();
 }

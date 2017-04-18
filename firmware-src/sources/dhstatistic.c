@@ -15,7 +15,7 @@ static struct DHStat g_stat = {0};
 /*
  * @brief Get global statistics.
  */
-const struct DHStat* ICACHE_FLASH_ATTR dhstat_get()
+const struct DHStat* ICACHE_FLASH_ATTR dhstat_get(void)
 {
 	return &g_stat;
 }

@@ -13,6 +13,6 @@
 /**
  *	\brief		Initialize DNSD daemon.
  */
-void dhzc_dnsd_init();
+void dhzc_dnsd_init(void);
 
 #endif /* _DHAP_DNS_H_ */

@@ -31,12 +31,12 @@ LOCAL os_timer_t mOWIntTimer;
 #define ONEWIRE_DHT_RESET_LENGTH_US 25000
 #define ONEWIRE_DHT_TIMEOUT_US 200
 
-LOCAL ICACHE_FLASH_ATTR lock_int() {
+LOCAL ICACHE_FLASH_ATTR lock_int(void) {
 	if(mIntPins)
 		dhgpio_subscribe_extra_int(mIntPins, 0, 0, 0);
 }
 
-LOCAL ICACHE_FLASH_ATTR unlock_int() {
+LOCAL ICACHE_FLASH_ATTR unlock_int(void) {
 	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, mIntPins);
 	dhgpio_subscribe_extra_int(0, 0, mIntPins, 0);
 }
@@ -48,7 +48,7 @@ int ICACHE_FLASH_ATTR dhonewire_set_pin(unsigned int pin) {
 	return 1;
 }
 
-int ICACHE_FLASH_ATTR dhonewire_get_pin() {
+int ICACHE_FLASH_ATTR dhonewire_get_pin(void) {
 	return mOneWirePin;
 }
 

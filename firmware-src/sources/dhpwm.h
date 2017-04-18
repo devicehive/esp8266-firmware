@@ -29,7 +29,7 @@ int dhpwm_set_pwm(unsigned int *pinsduty, unsigned int pinsmask, unsigned int pe
  *	\brief		Get current PWM period.
  *	\return		PWM period in microseconds.
  */
-unsigned int dhpwm_get_period_us();
+unsigned int dhpwm_get_period_us(void);
 
 /**
  *	\brief					Stops PWM for specified pins.

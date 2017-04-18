@@ -9,15 +9,34 @@
 #ifndef _DHGPIO_H_
 #define _DHGPIO_H_
 
+#include <c_types.h>
+
 /** Bitwise pin mask for pin that can be used. */
 #define DHGPIO_SUITABLE_PINS 0b1111000000111111 // GPIO0-GPIO5, GPIO12-GPIO15
 /** Last pin number. */
 #define DHGPIO_MAXGPIONUM 15
 
+#define PIN_GPIOO BIT(0)
+#define PIN_GPIO1 BIT(1)
+#define PIN_GPIO2 BIT(2)
+#define PIN_GPIO3 BIT(3)
+#define PIN_GPIO4 BIT(4)
+#define PIN_GPIO5 BIT(5)
+#define PIN_GPIO6 BIT(6)
+#define PIN_GPIO7 BIT(7)
+#define PIN_GPIO8 BIT(8)
+#define PIN_GPIO9 BIT(9)
+#define PIN_GPIO10 BIT(10)
+#define PIN_GPIO11 BIT(11)
+#define PIN_GPIO12 BIT(12)
+#define PIN_GPIO13 BIT(13)
+#define PIN_GPIO14 BIT(14)
+#define PIN_GPIO15 BIT(15)
+
 /**
  *	\brief					Initialize GPIO.
  */
-void dhgpio_init();
+void dhgpio_init(void);
 
 /**
  *	\brief					Prepare pins for using as GPIO.
@@ -61,7 +80,7 @@ int dhgpio_initialize(unsigned int init_mask, unsigned int pollup_mask, unsigned
  *	\brief		Read GPIO pins state
  *	\return 	Bitwise bit mask of input.
  */
-unsigned int dhgpio_read();
+unsigned int dhgpio_read(void);
 
 /**
  *	\brief						Enable GPIO interruption.
@@ -78,7 +97,7 @@ int dhgpio_int(unsigned int disable_mask, unsigned int rising_mask, unsigned int
  *	\brief			Get current GPIO inerruption timeout.
  *	\return 		Timeout in milliseconds.
  */
-unsigned int dhgpio_get_timeout();
+unsigned int dhgpio_get_timeout(void);
 
 /**
  *	\brief					Interruption callback.

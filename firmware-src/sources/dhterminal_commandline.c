@@ -39,7 +39,7 @@ static const DHCOMMAND mCommands[] = {
 		{"help", "print help", command_help}
 };
 
-void ICACHE_FLASH_ATTR command_help() {
+void ICACHE_FLASH_ATTR command_help(void) {
 	dhuart_send_line("Welcome to the DeviceHive firmware. List of accepted command:\r\n");
 	int i;
 	for(i = 0; i < sizeof(mCommands)/sizeof(DHCOMMAND); i++ ) {

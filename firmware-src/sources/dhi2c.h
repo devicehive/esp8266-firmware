@@ -29,7 +29,7 @@ DHI2C_STATUS dhi2c_init(unsigned int sda_pin, unsigned int scl_pin);
 /**
  *	\brief				Prepare last successfully prepared pins for usage with I2C.
  */
-void dhi2c_reinit();
+void dhi2c_reinit(void);
 
 /**
  *	\brief					Write data to I2C bus.

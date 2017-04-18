@@ -36,11 +36,11 @@ int dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *is_notification);
  *	\brief				Getting current queue size.
  *	\return				Number of item currently in queue.
  */
-unsigned int dhsender_queue_length();
+unsigned int dhsender_queue_length(void);
 
 /**
  *	\brief				Initialize queue.
  */
-void dhsender_queue_init();
+void dhsender_queue_init(void);
 
 #endif /* _DHSENDER_QUEUE_H_ */

@@ -35,7 +35,7 @@ DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_init(unsigned int sda_pin, unsigned int scl
 	return DHI2C_OK;
 }
 
-void ICACHE_FLASH_ATTR dhi2c_reinit() {
+void ICACHE_FLASH_ATTR dhi2c_reinit(void) {
 	dhgpio_open_drain(mSDAPin | mSCLPin, 0);
 	dhgpio_prepare_pins(mSDAPin | mSCLPin, 1);
 	dhgpio_pull(mSDAPin | mSCLPin, 0);
@@ -60,7 +60,7 @@ LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_set_pin(unsigned int pin_mask, int va
 	return DHI2C_BUS_BUSY;
 }
 
-LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_start() {
+LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_start(void) {
 	DHI2C_STATUS res;
 	res = dhi2c_set_pin(mSDAPin, 1);
 	if(res != DHI2C_OK)
@@ -77,7 +77,7 @@ LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_start() {
 	return DHI2C_OK;
 }
 
-LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_stop() {
+LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_stop(void) {
 	DHI2C_STATUS res;
 	res = dhi2c_set_pin(mSDAPin, 0);
 	if(res != DHI2C_OK)

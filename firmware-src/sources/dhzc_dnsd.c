@@ -121,7 +121,7 @@ LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_connect_cb(void *arg) {
 	dhdebug("dnsd connected");
 }
 
-void ICACHE_FLASH_ATTR dhzc_dnsd_init() {
+void ICACHE_FLASH_ATTR dhzc_dnsd_init(void) {
 	mDNSAnswerBuffer = (char *)os_malloc(DNS_ANSWER_BUF_SIZE);
 
 	esp_tcp *dnsdTcp = (esp_tcp *)os_zalloc(sizeof(esp_tcp));

@@ -90,7 +90,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	return HRCS_ANSWERED_HTML;
 }
 
-void ICACHE_FLASH_ATTR dhzc_web_init() {
+void ICACHE_FLASH_ATTR dhzc_web_init(void) {
 	httpd_redirect(WEB_CONF_HOST);
 	httpd_init(get_cb, post_cb);
 }

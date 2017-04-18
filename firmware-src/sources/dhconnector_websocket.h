@@ -12,7 +12,7 @@
 /** Function prototype for sending data. */
 typedef void (*dhconnector_websocket_send_proto)(const char *data, unsigned int len);
 /** Function prototype for error callback. */
-typedef void (*dhconnector_websocket_error)();
+typedef void (*dhconnector_websocket_error)(void);
 
 /**
  *	\brief					Initialize devicehive WebSocket protocol exchange

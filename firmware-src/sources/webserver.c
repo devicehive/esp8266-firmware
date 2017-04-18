@@ -76,6 +76,6 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	return uploadable_api_handle(path, key, content_in, answer);
 }
 
-void ICACHE_FLASH_ATTR webserver_init() {
+void ICACHE_FLASH_ATTR webserver_init(void) {
 	httpd_init(get_cb, post_cb);
 }

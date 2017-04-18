@@ -99,7 +99,7 @@ LOCAL int ICACHE_FLASH_ATTR configure_mode_filter(char c) {
 	return 0;
 }
 
-void ICACHE_FLASH_ATTR dhterminal_configure_start() {
+void ICACHE_FLASH_ATTR dhterminal_configure_start(void) {
 	dhuart_send_line("Welcome to the DeviceHive setup utility. Use Ctrl+C to interrupt.");
 	dhuart_send_line("Choose Wi-Fi mode: '0' - WiFi client, '1' - WiFi Access Point.");
 	dhterminal_set_mode(SM_INPUT_MODE, get_mode_cb, 0, configure_mode_filter, 1);

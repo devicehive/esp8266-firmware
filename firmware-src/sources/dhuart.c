@@ -37,7 +37,7 @@ LOCAL unsigned char mBufInterrupt = 0;
 LOCAL os_timer_t mRecoverLEDTimer;
 LOCAL char mKeepLED = 0;
 
-LOCAL ICACHE_FLASH_ATTR void arm_buf_timer();
+LOCAL ICACHE_FLASH_ATTR void arm_buf_timer(void);
 
 LOCAL void ICACHE_FLASH_ATTR buf_timeout(void *arg) {
 	unsigned int sz = mUartBufPos;
@@ -56,7 +56,7 @@ LOCAL void ICACHE_FLASH_ATTR buf_timeout(void *arg) {
 		arm_buf_timer();
 }
 
-LOCAL ICACHE_FLASH_ATTR void arm_buf_timer() {
+LOCAL ICACHE_FLASH_ATTR void arm_buf_timer(void) {
 	os_timer_disarm(&mUartTimer);
 	os_timer_setfn(&mUartTimer, (os_timer_func_t *)buf_timeout, NULL);
 	os_timer_arm(&mUartTimer, (mUartTimerTimeout == 0 | mUartBufPos >= INTERFACES_BUF_SIZE) ? 1 :mUartTimerTimeout, 0);
@@ -121,7 +121,7 @@ LOCAL void ICACHE_FLASH_ATTR led_recover(void *arg) {
 	ETS_INTR_UNLOCK();
 }
 
-LOCAL void ICACHE_FLASH_ATTR led_off() {
+LOCAL void ICACHE_FLASH_ATTR led_off(void) {
 	gpio_output_set(0, 0, 0, 0b0110);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
 	os_delay_us(10000);
@@ -188,7 +188,7 @@ void ICACHE_FLASH_ATTR dhuart_set_mode(DHUART_DATA_MODE mode) {
 	}
 }
 
-unsigned int ICACHE_FLASH_ATTR dhuart_get_callback_timeout() {
+unsigned int ICACHE_FLASH_ATTR dhuart_get_callback_timeout(void) {
 	return mUartTimerTimeout;
 }
 
@@ -201,7 +201,7 @@ unsigned int ICACHE_FLASH_ATTR dhuart_get_buf(char ** buf) {
 	return mUartBufPos;
 }
 
-void ICACHE_FLASH_ATTR dhuart_reset_buf() {
+void ICACHE_FLASH_ATTR dhuart_reset_buf(void) {
 	mUartBufPos = 0;
 }
 

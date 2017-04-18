@@ -188,7 +188,7 @@ int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
 	return 1;
 }
 
-void ICACHE_FLASH_ATTR mdnsd_stop() {
+void ICACHE_FLASH_ATTR mdnsd_stop(void) {
 	if(mMDNSdConn.proto.udp) {
 		espconn_disconnect(&mMDNSdConn);
 		espconn_delete(&mMDNSdConn);

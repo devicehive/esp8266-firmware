@@ -38,7 +38,7 @@ int dhsettings_init(int *saved);
  *	\brief			Saves values to permanent storage.
  *	\return 		Non zero value on success. Zero on error.
  */
-int dhsettings_commit();
+int dhsettings_commit(void);
 
 /**
  *	\brief				Destroy data in permanent storage.
@@ -51,37 +51,37 @@ int dhsettings_clear(int force);
  *	\brief			Get Wi-Fi mode.
  *	\return 		One of DH_MODE enum value.
  */
-WIFI_MODE dhsettings_get_wifi_mode();
+WIFI_MODE dhsettings_get_wifi_mode(void);
 
 /**
  *	\brief			Get Wi-Fi SSID.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_wifi_ssid();
+const char *dhsettings_get_wifi_ssid(void);
 
 /**
  *	\brief			Get Wi-Fi password.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_wifi_password();
+const char *dhsettings_get_wifi_password(void);
 
 /**
  *	\brief			Get DeviceHive server.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_server();
+const char *dhsettings_get_devicehive_server(void);
 
 /**
  *	\brief			Get DeviceHive DeviceId.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_deviceid();
+const char *dhsettings_get_devicehive_deviceid(void);
 
 /**
  *	\brief			Get DeviceHive AccessKey.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_accesskey();
+const char *dhsettings_get_devicehive_accesskey(void);
 
 /**
  *	\brief				Set Wi-Fi mode.

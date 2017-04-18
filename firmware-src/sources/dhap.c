@@ -65,6 +65,6 @@ void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 	dhdebug("Access point is initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
 }
 
-const struct ip_info * dhap_get_ip_info() {
+const struct ip_info * dhap_get_ip_info(void) {
 	return ipinfo;
 }

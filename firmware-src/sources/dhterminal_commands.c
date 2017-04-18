@@ -29,7 +29,7 @@
 int mIsCommandWorking = 0;
 char mHostBuffer[80];
 
-int ICACHE_FLASH_ATTR dhterminal_commands_is_busy() {
+int ICACHE_FLASH_ATTR dhterminal_commands_is_busy(void) {
 	return mIsCommandWorking;
 }
 

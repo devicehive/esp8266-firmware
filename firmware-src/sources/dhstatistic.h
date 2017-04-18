@@ -35,7 +35,7 @@ struct DHStat {
 /**
  * @brief Get global statistics.
  */
-const struct DHStat* dhstat_get();
+const struct DHStat* dhstat_get(void);
 
 
 /**

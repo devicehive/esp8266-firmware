@@ -35,12 +35,12 @@ LOCAL unsigned char mPwmInUse = 0;
 LOCAL unsigned int mTotalCount = 0;
 LOCAL uint32 mUsedPins = 0;
 
-void ICACHE_FLASH_ATTR disarm_pwm_timer() {
+void ICACHE_FLASH_ATTR disarm_pwm_timer(void) {
 	TM1_EDGE_INT_DISABLE();
 	ETS_FRC1_INTR_DISABLE();
 }
 
-void on_timer() {
+void on_timer(void) {
 	if(mCounter == 0) {
 		if(mTotalCount) {
 			mTotalCount--;
@@ -68,7 +68,7 @@ void on_timer() {
 		mCounter = 0;
 }
 
-void ICACHE_FLASH_ATTR arm_pwm_timer() {
+void ICACHE_FLASH_ATTR arm_pwm_timer(void) {
 	// use mFrequency
 	mPwmInUse = 1;
 	mCounter = 1;
@@ -119,7 +119,7 @@ int ICACHE_FLASH_ATTR dhpwm_set_pwm(unsigned int *pinsduty, unsigned int pinsmas
 	return 1;
 }
 
-unsigned int ICACHE_FLASH_ATTR dhpwm_get_period_us() {
+unsigned int ICACHE_FLASH_ATTR dhpwm_get_period_us(void) {
 	return mPeriodUs;
 }
 

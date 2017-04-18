@@ -15,7 +15,7 @@
 #include "c_types.h"
 #include "osapi.h"
 
-HTTP_REQUEST * ICACHE_FLASH_ATTR custom_firmware_request() {
+HTTP_REQUEST * ICACHE_FLASH_ATTR custom_firmware_request(void) {
 	// reimplement this method to return actual HTTP_REQUEST to make custom notification firmware
 	return 0;
 }

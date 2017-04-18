@@ -16,7 +16,7 @@
  *	\brief				Get ADC value.
  *	\return 			Voltage in volts.
  */
-float dhadc_get_value();
+float dhadc_get_value(void);
 
 /**
  *	\brief				Start loop measurement with some interval.

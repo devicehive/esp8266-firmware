@@ -156,11 +156,11 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *i
 	return 1;
 }
 
-unsigned int ICACHE_FLASH_ATTR dhsender_queue_length() {
+unsigned int ICACHE_FLASH_ATTR dhsender_queue_length(void) {
 	return mQueueSize;
 }
 
-void ICACHE_FLASH_ATTR dhsender_queue_init() {
+void ICACHE_FLASH_ATTR dhsender_queue_init(void) {
 	mQueueMaxSize = (system_get_free_heap_size() - MEMORY_RESERVER) / sizeof(DHSENDER_QUEUE);
 	if(mQueueMaxSize > MAX_QUEUE_LENGTH)
 		mQueueMaxSize = MAX_QUEUE_LENGTH;

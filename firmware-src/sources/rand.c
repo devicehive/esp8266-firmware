@@ -15,7 +15,7 @@
 
 static unsigned long seed = 0;
 
-int ICACHE_FLASH_ATTR rand() {
+int ICACHE_FLASH_ATTR rand(void) {
 	if(seed == 0) {
 		seed = system_get_time();
 	}

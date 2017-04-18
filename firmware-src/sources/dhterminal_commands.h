@@ -13,7 +13,7 @@
  *	\brief		Check if command is currently working.
  *	\return 	Non zero value if command is working or zero value if nothing in progress.
  */
-int dhterminal_commands_is_busy();
+int dhterminal_commands_is_busy(void);
 
 /**
  *	\brief				Print firmware version.

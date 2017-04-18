@@ -32,7 +32,7 @@ LOCAL unsigned int isCurrentNotification;
 LOCAL int mSenderTook = 0;
 dhsender_new_item_cb mNewItemCb = NULL;
 
-SENDER_JSON_DATA * ICACHE_FLASH_ATTR dhsender_next() {
+SENDER_JSON_DATA * ICACHE_FLASH_ATTR dhsender_next(void) {
 	if(mSenderTook == 0) {
 		if(dhsender_queue_take(&mDataToSend, &isCurrentNotification) == 0)
 				return NULL;
@@ -41,7 +41,7 @@ SENDER_JSON_DATA * ICACHE_FLASH_ATTR dhsender_next() {
 	return &mDataToSend;
 }
 
-void ICACHE_FLASH_ATTR dhsender_current_fail() {
+void ICACHE_FLASH_ATTR dhsender_current_fail(void) {
 	if(mSenderTook) {
 		if(mSenderTook == 1) {
 			dhdebug("WARNING: Request is not delivered after %u attempts", DHSENDER_RETRY_COUNT);
@@ -54,7 +54,7 @@ void ICACHE_FLASH_ATTR dhsender_current_fail() {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhsender_current_success() {
+void ICACHE_FLASH_ATTR dhsender_current_success(void) {
 	mSenderTook = 0;
 }
 

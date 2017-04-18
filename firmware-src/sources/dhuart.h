@@ -91,7 +91,7 @@ unsigned int dhuart_get_buf(char ** buf);
 /**
  *	\brief				Clean up buffer.
  */
-void dhuart_reset_buf();
+void dhuart_reset_buf(void);
 
 /**
  *	\brief				Enable or disable DUM_PER_BUF callbacks.
@@ -104,7 +104,7 @@ void dhuart_enable_buf_interrupt(int enable);
  *	\brief		Get current timeout value.
  *	\return		Timeout value in milliseconds.
  */
-unsigned int dhuart_get_callback_timeout();
+unsigned int dhuart_get_callback_timeout(void);
 
 /**
  *	\brief			Callback declaration for DUM_PER_BYTE mode.

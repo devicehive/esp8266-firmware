@@ -44,7 +44,7 @@ LOCAL int mInputLimiter = sizeof(mRcvBuff);
 LOCAL os_timer_t mUsageTimer;
 LOCAL int isInUse = 0;
 
-LOCAL void ICACHE_FLASH_ATTR printWelcome() {
+LOCAL void ICACHE_FLASH_ATTR printWelcome(void) {
 	if(mMode == SM_NORMAL_MODE) {
 		dhuart_send_str("$ ");
 	} else if(mMode == SM_INPUT_MODE || mMode == SM_HIDDEN_INPUT_MODE) {
@@ -61,15 +61,15 @@ void ICACHE_FLASH_ATTR dhterminal_set_input(const char *line) {
 	dhuart_send_str(mRcvBuff);
 }
 
-const char * ICACHE_FLASH_ATTR dhterminal_get_history() {
+const char * ICACHE_FLASH_ATTR dhterminal_get_history(void) {
 	return mHistoryBuff;
 }
 
-const char * ICACHE_FLASH_ATTR dhterminal_get_debug_ouput() {
+const char * ICACHE_FLASH_ATTR dhterminal_get_debug_ouput(void) {
 	return mDebugBuff;
 }
 
-DHTERMINAL_MODE ICACHE_FLASH_ATTR dhterminal_get_mode() {
+DHTERMINAL_MODE ICACHE_FLASH_ATTR dhterminal_get_mode(void) {
 	return mMode;
 }
 
@@ -95,7 +95,7 @@ void ICACHE_FLASH_ATTR dhterminal_set_mode(DHTERMINAL_MODE mode, Input_Call_Back
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR trimRcvBuff() {
+LOCAL void ICACHE_FLASH_ATTR trimRcvBuff(void) {
 	char *pos = mRcvBuff;
 	char *from = mRcvBuff;
 	char last = ' ';
@@ -155,7 +155,7 @@ LOCAL void ICACHE_FLASH_ATTR do_command(void *arg) {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR dhterminal_reset() {
+LOCAL void ICACHE_FLASH_ATTR dhterminal_reset(void) {
 	if(mMode == SM_DEBUG_MODE) {
 		mDebugBuff[0] = 0;
 		mDebugBuffPos = 0;
@@ -335,13 +335,13 @@ void dhterminal_debug(const char *pFormat, va_list ap) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhterminal_init() {
+void ICACHE_FLASH_ATTR dhterminal_init(void) {
 	dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
 	dhuart_set_mode(DUM_PER_BYTE);
 	dhuart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
 	dhterminal_reset();
 }
 
-int ICACHE_FLASH_ATTR dhterminal_is_in_use() {
+int ICACHE_FLASH_ATTR dhterminal_is_in_use(void) {
 	return isInUse;
 }

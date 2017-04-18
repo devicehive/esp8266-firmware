@@ -78,7 +78,7 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR ws_error() {
+LOCAL void ICACHE_FLASH_ATTR ws_error(void) {
 	dhstat_got_server_error();
 	// close connection and restart everything on error
 	espconn_disconnect(&mDHConnector);
@@ -260,7 +260,7 @@ LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server(const char *server) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhmem_unblock_cb() {
+void ICACHE_FLASH_ATTR dhmem_unblock_cb(void) {
 	if(mNeedRecover) {
 		set_state(mConnectionState);
 		mNeedRecover = 0;
@@ -337,7 +337,7 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhconnector_init() {
+void ICACHE_FLASH_ATTR dhconnector_init(void) {
 	mConnectionState = CS_DISCONNECT;
 
 	wifi_set_opmode(STATION_MODE);
@@ -369,6 +369,6 @@ void ICACHE_FLASH_ATTR dhconnector_init() {
 	wifi_set_event_handler_cb(wifi_state_cb);
 }
 
-CONNECTION_STATE ICACHE_FLASH_ATTR dhconnector_get_state() {
+CONNECTION_STATE ICACHE_FLASH_ATTR dhconnector_get_state(void) {
 	return mConnectionState;
 }
