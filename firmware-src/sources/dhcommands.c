@@ -11,7 +11,7 @@
 #include "dhcommands.h"
 #include "dhsender_queue.h"
 #include "DH/gpio.h"
-#include "dhadc.h"
+#include "DH/adc.h"
 #include "dhnotification.h"
 #include "snprintf.h"
 #include "dhcommand_parser.h"
@@ -46,15 +46,11 @@
 #include "devices/max31855.h"
 #include "devices/tm1636.h"
 
-#include "DH/cmd_gpio.h"
-
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <user_interface.h>
 #include <ets_forward.h>
-
-#define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
 
 LOCAL int ICACHE_FLASH_ATTR onewire_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins) {
 	if(fields & AF_PIN) {
@@ -135,58 +131,6 @@ LOCAL int ICACHE_FLASH_ATTR uart_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields,
 
 #if 1 // ADC and PWM commands
 
-/**
- * @brief Do "adc/read" command.
- */
-static void ICACHE_FLASH_ATTR do_adc_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_READ, &fields);
-		if(parse_res) {
-			dh_command_fail(cb, parse_res);
-			return;
-		} else if(parse_pins.pins_to_read != DHADC_SUITABLE_PINS) {
-			dh_command_fail(cb, "Unknown ADC channel");
-			return;
-		}
-	}
-
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FLOAT, dhadc_get_value());
-}
-
-
-/**
- * @brief Do "adc/int" command.
- */
-static void ICACHE_FLASH_ATTR do_adc_int(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
-				AF_VALUES, &fields);
-		if(parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		} else if(parse_pins.pin_value_readed != 0x1) {
-			dh_command_fail(cb, "Wrong adc channel");
-			return;
-		} else if((parse_pins.storage.uint_values[0] < ADCNOTIFICATION_MIN_TIMEOUT_MS && parse_pins.storage.uint_values[0] != 0) || parse_pins.storage.uint_values[0] > 0x7fffff) {
-			dh_command_fail(cb, "Wrong period");
-			return;
-		} else {
-			dhadc_loop(parse_pins.storage.uint_values[0]);
-			dh_command_done(cb, "");
-			return;
-		}
-	}
-	dh_command_fail(cb, "Wrong parameters");
-}
-
 
 /**
  * @brief Do "pwm/control" command.
@@ -196,7 +140,7 @@ static void ICACHE_FLASH_ATTR do_pwm_control(COMMAND_RESULT *cb, const char *com
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_VALUES | AF_PERIOD | AF_COUNT, &fields);
 	if(parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -220,7 +164,7 @@ static void ICACHE_FLASH_ATTR do_uart_write(COMMAND_RESULT *cb, const char *comm
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_UARTMODE | AF_DATA, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -243,7 +187,7 @@ static void ICACHE_FLASH_ATTR do_uart_read(COMMAND_RESULT *cb, const char *comma
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_UARTMODE | AF_DATA | AF_TIMEOUT, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -287,7 +231,7 @@ static void ICACHE_FLASH_ATTR do_uart_int(COMMAND_RESULT *cb, const char *comman
 		gpio_command_params parse_pins;
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, dhuart_get_callback_timeout(),
+				&parse_pins, DH_ADC_SUITABLE_PINS, dhuart_get_callback_timeout(),
 				AF_UARTMODE | AF_TIMEOUT, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -333,7 +277,7 @@ static void ICACHE_FLASH_ATTR do_i2c_master_read(COMMAND_RESULT *cb, const char 
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_DATA | AF_ADDRESS | AF_COUNT, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -372,7 +316,7 @@ static void ICACHE_FLASH_ATTR do_i2c_master_write(COMMAND_RESULT *cb, const char
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_DATA | AF_ADDRESS, &fields);
 	if(parse_res) {
 		dh_command_fail(cb, parse_res);
@@ -404,7 +348,7 @@ static void ICACHE_FLASH_ATTR do_spi_master_read(COMMAND_RESULT *cb, const char 
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_CS | AF_SPIMODE | AF_DATA | AF_COUNT, &fields);
 	if(parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -433,7 +377,7 @@ static void ICACHE_FLASH_ATTR do_spi_master_write(COMMAND_RESULT *cb, const char
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_CS | AF_SPIMODE | AF_DATA, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -461,7 +405,7 @@ static void ICACHE_FLASH_ATTR do_onewire_master_read(COMMAND_RESULT *cb, const c
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_PIN | AF_DATA | AF_COUNT, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -494,7 +438,7 @@ static void ICACHE_FLASH_ATTR do_onewire_master_write(COMMAND_RESULT *cb, const 
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char * parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_PIN | AF_DATA, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -518,7 +462,7 @@ static void ICACHE_FLASH_ATTR do_onewire_master_search(COMMAND_RESULT *cb, const
 	ALLOWED_FIELDS fields = 0;
 
 	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
+		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -564,7 +508,7 @@ static void ICACHE_FLASH_ATTR do_onewire_dht_read(COMMAND_RESULT *cb, const char
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
+		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -588,7 +532,7 @@ static void ICACHE_FLASH_ATTR do_onewire_ws2812b_write(COMMAND_RESULT *cb, const
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 
-	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN | AF_DATA, &fields);
+	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN | AF_DATA, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
 		return;
@@ -616,7 +560,7 @@ static void ICACHE_FLASH_ATTR do_devices_ds18b20_read(COMMAND_RESULT *cb, const 
 		gpio_command_params parse_pins;
 		ALLOWED_FIELDS fields = 0;
 		char * parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -643,7 +587,7 @@ static void ICACHE_FLASH_ATTR do_devices_dht11_read(COMMAND_RESULT *cb, const ch
 		gpio_command_params parse_pins;
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -672,7 +616,7 @@ static void ICACHE_FLASH_ATTR do_devices_dht22_read(COMMAND_RESULT *cb, const ch
 		gpio_command_params parse_pins;
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -700,7 +644,7 @@ static void ICACHE_FLASH_ATTR do_devices_bmp180_read(COMMAND_RESULT *cb, const c
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -731,7 +675,7 @@ static void ICACHE_FLASH_ATTR do_devices_bmp280_read(COMMAND_RESULT *cb, const c
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -763,7 +707,7 @@ static void ICACHE_FLASH_ATTR do_devices_bh1750_read(COMMAND_RESULT *cb, const c
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -793,7 +737,7 @@ static void ICACHE_FLASH_ATTR do_devices_mpu6050_read(COMMAND_RESULT *cb, const 
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -827,7 +771,7 @@ static void ICACHE_FLASH_ATTR do_devices_hmc5883l_read(COMMAND_RESULT *cb, const
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -991,7 +935,7 @@ static void ICACHE_FLASH_ATTR do_devices_lm75_read(COMMAND_RESULT *cb, const cha
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -1021,7 +965,7 @@ static void ICACHE_FLASH_ATTR do_devices_si7021_read(COMMAND_RESULT *cb, const c
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -1050,7 +994,7 @@ static void ICACHE_FLASH_ATTR do_devices_ads1115_read(COMMAND_RESULT *cb, const 
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
+		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -1080,7 +1024,7 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_read(COMMAND_RESULT *cb, const 
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -1118,7 +1062,7 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_write(COMMAND_RESULT *cb, const
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -1156,7 +1100,7 @@ static void ICACHE_FLASH_ATTR do_devices_mcp4725_write(COMMAND_RESULT *cb, const
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -1195,7 +1139,7 @@ static void ICACHE_FLASH_ATTR do_devices_ina219_read(COMMAND_RESULT *cb, const c
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-					&parse_pins, DHADC_SUITABLE_PINS, 0,
+					&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 					AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -1236,7 +1180,7 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_read(COMMAND_RESULT *cb, const 
 		gpio_command_params parse_pins;
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_CS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -1282,7 +1226,7 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 	ALLOWED_FIELDS fields = 0;
 	const int check = os_strcmp(command, "devices/mfrc522/mifare/read");
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_CS | AF_ADDRESS | AF_KEY | (check ? AF_DATA : 0), &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -1390,7 +1334,7 @@ static void ICACHE_FLASH_ATTR do_devices_mlx90614_read(COMMAND_RESULT *cb, const
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0,
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
@@ -1420,7 +1364,7 @@ static void ICACHE_FLASH_ATTR do_devices_max6675_read(COMMAND_RESULT *cb, const 
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
+		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_CS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -1444,7 +1388,7 @@ static void ICACHE_FLASH_ATTR do_devices_max31855_read(COMMAND_RESULT *cb, const
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
+				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_CS, &fields);
 		if (parse_res != 0) {
 			dh_command_fail(cb, parse_res);
 			return;
@@ -1467,7 +1411,7 @@ static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const 
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHADC_SUITABLE_PINS, 0,
+			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_DATA | AF_TEXT_DATA, &fields);
 	if (parse_res != 0) {
 		dh_command_fail(cb, parse_res);
@@ -1500,8 +1444,8 @@ RO_DATA struct {
 	{"gpio/read", dh_handle_gpio_read},
 	{"gpio/int", dh_handle_gpio_int},
 
-	{"adc/read", do_adc_read},
-	{"adc/int", do_adc_int},
+	{"adc/read", dh_handle_adc_read},
+	{"adc/int", dh_handle_adc_int},
 	{"pwm/control", do_pwm_control},
 
 	{"uart/write", do_uart_write},

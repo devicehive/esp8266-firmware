@@ -162,4 +162,30 @@ int dh_gpio_subscribe_extra_int(DHGpioPinMask pins_disable,
 // TODO: consider to use callback function pointer
 extern void dh_gpio_extra_int_cb(DHGpioPinMask caused_pins);
 
+
+#if 1 // command handlers
+#include "dhsender_data.h"
+
+/**
+ * @brief Handle "gpio/write" command.
+ */
+void dh_handle_gpio_write(COMMAND_RESULT *cmd_res, const char *command,
+                          const char *params, unsigned int params_len);
+
+
+/**
+ * @brief Handle "gpio/read" command.
+ */
+void dh_handle_gpio_read(COMMAND_RESULT *cmd_res, const char *command,
+                         const char *params, unsigned int params_len);
+
+
+/**
+ * @brief Handle "gpio/int" command.
+ */
+void dh_handle_gpio_int(COMMAND_RESULT *cmd_res, const char *command,
+                        const char *params, unsigned int params_len);
+
+#endif // command handlers
+
 #endif /* _DH_GPIO_H_ */

@@ -11,7 +11,7 @@
 #include "dhnotification.h"
 #include "dhsender.h"
 #include "DH/gpio.h"
-#include "dhadc.h"
+#include "DH/adc.h"
 #include "user_config.h"
 #include "snprintf.h"
 #include "dhdata.h"
@@ -32,7 +32,7 @@ void ICACHE_FLASH_ATTR dh_gpio_int_cb(DHGpioPinMask caused_pins) {
 	dhsender_notification(RNT_NOTIFICATION_GPIO, RDT_GPIO, caused_pins, dh_gpio_read(), system_get_time(), DH_GPIO_SUITABLE_PINS);
 }
 
-void ICACHE_FLASH_ATTR dhadc_loop_value(float value){
+void ICACHE_FLASH_ATTR dh_adc_loop_value_cb(float value){
 	if(dhmem_isblock()) {
 		dhstat_got_notification_dropped();
 		return;
