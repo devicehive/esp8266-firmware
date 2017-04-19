@@ -12,6 +12,7 @@
 #include "user_config.h"
 #include "dhsettings.h"
 #include "dhutils.h"
+#include "irom.h"
 
 #include <stdarg.h>
 
@@ -41,7 +42,7 @@ typedef enum {
 	RNT_NOTIFICATION_ONEWIRE	///< Notification will be marked as onewire.
 } REQUEST_NOTIFICATION_TYPE;
 
-/** Responce status*/
+/** Response status*/
 typedef enum {
 	DHSTATUS_ERROR = 0,	///< Send Error string
 	DHSTATUS_OK			///< Send OK string
@@ -113,5 +114,44 @@ void dhsender_data_parse_va(va_list ap, REQUEST_DATA_TYPE *data_type,
 int dhsender_data_to_json(char *buf, unsigned int buf_len, int is_notification,
 		REQUEST_DATA_TYPE data_type, SENDERDATA *data, unsigned int data_len,
 		unsigned int pin);
+
+
+/**
+ * @brief Report command success.
+ * @param[in] cmd_res Command result.
+ * @param[in] str String message to report.
+ */
+void dh_command_done(COMMAND_RESULT *cmd_res, const char *str);
+
+/*
+ * @brief Report command success (ROM).
+ *
+ * The same as dh_command_done() but uses ROM to store string message.
+ */
+/*#define dh_command_DONE(cmd_res, str)                \
+do {                                                 \
+	static const char static_str[] DH_RO_ATTR = str; \
+	dh_command_done(cmd_res, static_str);            \
+} while(0)*/
+
+
+/**
+ * @brief Report command failure.
+ * @param[in] cmd_res Command result.
+ * @param[in] str String error to report.
+ */
+void dh_command_fail(COMMAND_RESULT *cmd_res, const char *str);
+
+/*
+ * @brief Report command failure (ROM).
+ *
+ * The same as dh_command_fail() but uses ROM to store string message.
+ */
+/*#define dh_command_FAIL(cmd_res, str)                \
+do {                                                 \
+	static const char static_str[] DH_RO_ATTR = str; \
+	dh_command_fail(cmd_res, static_str);            \
+} while(0) */
+
 
 #endif /* _DHSENDER_DATA_H_ */

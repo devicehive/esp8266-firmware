@@ -56,20 +56,10 @@
 
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
 
-LOCAL void ICACHE_FLASH_ATTR responce_ok(COMMAND_RESULT *cb) {
-	cb->callback(cb->data, DHSTATUS_OK, RDT_CONST_STRING, "");
-}
-
-LOCAL const char * ICACHE_FLASH_ATTR responce_error(COMMAND_RESULT *cb, const char *str) {
-	if(str)
-		cb->callback(cb->data, DHSTATUS_ERROR, RDT_CONST_STRING, str);
-	return str;
-}
-
 LOCAL int ICACHE_FLASH_ATTR onewire_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins) {
 	if(fields & AF_PIN) {
 		if(dhonewire_set_pin(parse_pins->pin) == 0) {
-			responce_error(cb, "Wrong onewire pin");
+			dh_command_fail(cb, "Wrong onewire pin");
 			return 1;
 		}
 	}
@@ -79,13 +69,13 @@ LOCAL int ICACHE_FLASH_ATTR onewire_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fiel
 LOCAL int ICACHE_FLASH_ATTR spi_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins) {
 	if(fields & AF_CS) {
 		if(dhspi_set_cs_pin(parse_pins->CS) == 0) {
-			responce_error(cb, "Wrong CS pin");
+			dh_command_fail(cb, "Wrong CS pin");
 			return 1;
 		}
 	}
 	if(fields & AF_SPIMODE) {
 		if(dhspi_set_mode(parse_pins->spi_mode) == 0) {
-			responce_error(cb, "Wrong SPI mode");
+			dh_command_fail(cb, "Wrong SPI mode");
 			return 1;
 		}
 	}
@@ -110,16 +100,18 @@ LOCAL char *ICACHE_FLASH_ATTR i2c_status_tochar(DHI2C_STATUS status) {
 
 LOCAL int ICACHE_FLASH_ATTR i2c_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins) {
 	if((fields & AF_ADDRESS) == 0) {
-		responce_error(cb, "Address not specified");
+		dh_command_fail(cb, "Address not specified");
 		return 1;
 	}
 	int init = ((fields & AF_SDA) ? 1 : 0) + ((fields & AF_SCL) ? 1 : 0);
 	if(init == 2) {
 		char *res = i2c_status_tochar(dhi2c_init(parse_pins->SDA, parse_pins->SCL));
-		if(responce_error(cb, res))
+		if (res != 0) {
+			dh_command_fail(cb, res);
 			return 1;
+		}
 	} else if(init == 1) {
-		responce_error(cb, "Only one pin specified");
+		dh_command_fail(cb, "Only one pin specified");
 		return 1;
 	} else {
 		dhi2c_reinit();
@@ -131,10 +123,10 @@ LOCAL int ICACHE_FLASH_ATTR uart_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields,
 	if(fields & AF_UARTMODE) {
 		if(parse_pins->uart_speed == 0 && isint) {
 			dhuart_enable_buf_interrupt(0);
-			responce_ok(cb);
+			dh_command_done(cb, "");
 			return 1;
 		} else if(!dhuart_init(parse_pins->uart_speed, parse_pins->uart_bits, parse_pins->uart_partity, parse_pins->uart_stopbits)) {
-			responce_error(cb, "Wrong UART mode");
+			dh_command_fail(cb, "Wrong UART mode");
 			return 1;
 		}
 	}
@@ -154,10 +146,10 @@ static void ICACHE_FLASH_ATTR do_adc_read(COMMAND_RESULT *cb, const char *comman
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_READ, &fields);
 		if(parse_res) {
-			responce_error(cb, parse_res);
+			dh_command_fail(cb, parse_res);
 			return;
 		} else if(parse_pins.pins_to_read != DHADC_SUITABLE_PINS) {
-			responce_error(cb, "Unknown ADC channel");
+			dh_command_fail(cb, "Unknown ADC channel");
 			return;
 		}
 	}
@@ -177,21 +169,22 @@ static void ICACHE_FLASH_ATTR do_adc_int(COMMAND_RESULT *cb, const char *command
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_VALUES, &fields);
-		if(responce_error(cb, parse_res)) {
+		if(parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
 		} else if(parse_pins.pin_value_readed != 0x1) {
-			responce_error(cb, "Wrong adc channel");
+			dh_command_fail(cb, "Wrong adc channel");
 			return;
 		} else if((parse_pins.storage.uint_values[0] < ADCNOTIFICATION_MIN_TIMEOUT_MS && parse_pins.storage.uint_values[0] != 0) || parse_pins.storage.uint_values[0] > 0x7fffff) {
-			responce_error(cb, "Wrong period");
+			dh_command_fail(cb, "Wrong period");
 			return;
 		} else {
 			dhadc_loop(parse_pins.storage.uint_values[0]);
-			responce_ok(cb);
+			dh_command_done(cb, "");
 			return;
 		}
 	}
-	responce_error(cb, "Wrong parameters");
+	dh_command_fail(cb, "Wrong parameters");
 }
 
 
@@ -205,12 +198,14 @@ static void ICACHE_FLASH_ATTR do_pwm_control(COMMAND_RESULT *cb, const char *com
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_VALUES | AF_PERIOD | AF_COUNT, &fields);
-	if(responce_error(cb, parse_res))
+	if(parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(dhpwm_set_pwm(&parse_pins.storage.uint_values, parse_pins.pin_value_readed, (fields & AF_PERIOD) ? parse_pins.periodus : dhpwm_get_period_us(),  parse_pins.count))
-		responce_ok(cb);
+		dh_command_done(cb, "");
 	else
-		responce_error(cb, "Wrong parameters");
+		dh_command_fail(cb, "Wrong parameters");
 }
 
 #endif // ADC and PWM commands
@@ -227,13 +222,15 @@ static void ICACHE_FLASH_ATTR do_uart_write(COMMAND_RESULT *cb, const char *comm
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_UARTMODE | AF_DATA, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(uart_init(cb, fields, &parse_pins, 0))
 		return;
 	dhuart_set_mode(DUM_PER_BUF);
 	dhuart_send_buf(parse_pins.data, parse_pins.data_len);
-	responce_ok(cb);
+	dh_command_done(cb, "");
 }
 
 
@@ -248,17 +245,19 @@ static void ICACHE_FLASH_ATTR do_uart_read(COMMAND_RESULT *cb, const char *comma
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_UARTMODE | AF_DATA | AF_TIMEOUT, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(uart_init(cb, fields, &parse_pins, 0))
 			return;
 		if(fields & AF_TIMEOUT) {
 			if(parse_pins.timeout > 1000) {
-				responce_error(cb, "Timeout is too long");
+				dh_command_fail(cb, "Timeout is too long");
 				return;
 			}
 			if((fields & AF_DATA) == 0) {
-				responce_error(cb, "Timeout can be specified only with data");
+				dh_command_fail(cb, "Timeout can be specified only with data");
 				return;
 			}
 		}
@@ -290,10 +289,12 @@ static void ICACHE_FLASH_ATTR do_uart_int(COMMAND_RESULT *cb, const char *comman
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, dhuart_get_callback_timeout(),
 				AF_UARTMODE | AF_TIMEOUT, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if((fields & AF_TIMEOUT) && parse_pins.timeout > 5000) {
-			responce_error(cb, "Timeout is too long");
+			dh_command_fail(cb, "Timeout is too long");
 			return;
 		}
 		if(uart_init(cb, fields, &parse_pins, 1))
@@ -303,7 +304,7 @@ static void ICACHE_FLASH_ATTR do_uart_int(COMMAND_RESULT *cb, const char *comman
 	}
 	dhuart_set_mode(DUM_PER_BUF);
 	dhuart_enable_buf_interrupt(1);
-	responce_ok(cb);
+	dh_command_done(cb, "");
 }
 
 
@@ -313,11 +314,11 @@ static void ICACHE_FLASH_ATTR do_uart_int(COMMAND_RESULT *cb, const char *comman
 static void ICACHE_FLASH_ATTR do_uart_terminal(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
 {
 	if(paramslen) {
-		responce_error(cb, "Command does not have parameters");
+		dh_command_fail(cb, "Command does not have parameters");
 		return;
 	}
 	dhterminal_init();
-	responce_ok(cb);
+	dh_command_done(cb, "");
 }
 
 #endif // UART commands
@@ -334,12 +335,14 @@ static void ICACHE_FLASH_ATTR do_i2c_master_read(COMMAND_RESULT *cb, const char 
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_DATA | AF_ADDRESS | AF_COUNT, &fields);
-	if (responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & AF_COUNT) == 0)
 		parse_pins.count = 2;
 	if(parse_pins.count == 0 || parse_pins.count > INTERFACES_BUF_SIZE) {
-		responce_error(cb, "Wrong read size");
+		dh_command_fail(cb, "Wrong read size");
 		return;
 	}
 	if(i2c_init(cb, fields, &parse_pins))
@@ -348,16 +351,16 @@ static void ICACHE_FLASH_ATTR do_i2c_master_read(COMMAND_RESULT *cb, const char 
 	if(fields & AF_DATA) {
 		res = i2c_status_tochar(dhi2c_write(parse_pins.address, parse_pins.data, parse_pins.data_len, 0));
 		if(res) {
-			responce_error(cb, res);
+			dh_command_fail(cb, res);
 			return;
 		}
 	}
 	res = i2c_status_tochar(dhi2c_read(parse_pins.address, parse_pins.data, parse_pins.count));
 	if(res) {
-		responce_error(cb, res);
-		return;
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
 	}
-	cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
 }
 
 
@@ -371,17 +374,22 @@ static void ICACHE_FLASH_ATTR do_i2c_master_write(COMMAND_RESULT *cb, const char
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_DATA | AF_ADDRESS, &fields);
-	if(responce_error(cb, parse_res))
+	if(parse_res) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & AF_DATA) == 0) {
-		responce_error(cb, "Data not specified");
+		dh_command_fail(cb, "Data not specified");
 		return;
 	}
 	if(i2c_init(cb, fields, &parse_pins))
 		return;
 	char *res = i2c_status_tochar(dhi2c_write(parse_pins.address, parse_pins.data, parse_pins.data_len, 1));
-	if(responce_error(cb, res) == 0)
-		responce_ok(cb);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 #endif // I2C commands
@@ -398,12 +406,14 @@ static void ICACHE_FLASH_ATTR do_spi_master_read(COMMAND_RESULT *cb, const char 
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_CS | AF_SPIMODE | AF_DATA | AF_COUNT, &fields);
-	if(responce_error(cb, parse_res))
+	if(parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & AF_COUNT) == 0)
 		parse_pins.count = 2;
 	if(parse_pins.count == 0 || parse_pins.count > INTERFACES_BUF_SIZE) {
-		responce_error(cb, "Wrong read size");
+		dh_command_fail(cb, "Wrong read size");
 		return;
 	}
 	if(spi_init(cb, fields, &parse_pins))
@@ -425,16 +435,18 @@ static void ICACHE_FLASH_ATTR do_spi_master_write(COMMAND_RESULT *cb, const char
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_CS | AF_SPIMODE | AF_DATA, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(spi_init(cb, fields, &parse_pins))
 		return;
 	if((fields & AF_DATA) == 0) {
-		responce_error(cb, "Data not specified");
+		dh_command_fail(cb, "Data not specified");
 		return;
 	}
 	dhspi_write(parse_pins.data, parse_pins.data_len, 1);
-	responce_ok(cb);
+	dh_command_done(cb, "");
 }
 
 #endif // SPI commands
@@ -451,20 +463,22 @@ static void ICACHE_FLASH_ATTR do_onewire_master_read(COMMAND_RESULT *cb, const c
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_PIN | AF_DATA | AF_COUNT, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & AF_COUNT) == 0 || parse_pins.count == 0 || parse_pins.count > INTERFACES_BUF_SIZE) {
-		responce_error(cb, "Wrong read size");
+		dh_command_fail(cb, "Wrong read size");
 		return;
 	}
 	if((fields & AF_DATA) == 0) {
-		responce_error(cb, "Command for reading is not specified");
+		dh_command_fail(cb, "Command for reading is not specified");
 		return;
 	}
 	if(onewire_init(cb, fields, &parse_pins))
 		return;
 	if(dhonewire_write(parse_pins.data, parse_pins.data_len) == 0) {
-		responce_error(cb, "No response");
+		dh_command_fail(cb, "No response");
 		return;
 	}
 	dhonewire_read(parse_pins.data, parse_pins.count);
@@ -482,15 +496,17 @@ static void ICACHE_FLASH_ATTR do_onewire_master_write(COMMAND_RESULT *cb, const 
 	char * parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_PIN | AF_DATA, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(onewire_init(cb, fields, &parse_pins))
 		return;
 	if(dhonewire_write(parse_pins.data, parse_pins.data_len) == 0) {
-		responce_error(cb, "No response");
+		dh_command_fail(cb, "No response");
 		return;
 	}
-	responce_ok(cb);
+	dh_command_done(cb, "");
 }
 
 /**
@@ -503,8 +519,10 @@ static void ICACHE_FLASH_ATTR do_onewire_master_search(COMMAND_RESULT *cb, const
 
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(onewire_init(cb, fields, &parse_pins))
 			return;
 	}
@@ -514,7 +532,7 @@ static void ICACHE_FLASH_ATTR do_onewire_master_search(COMMAND_RESULT *cb, const
 	if(dhonewire_search(parse_pins.data, (unsigned long *)&parse_pins.data_len, (check == 0) ? 0xF0 : 0xEC, dhonewire_get_pin()))
 		cb->callback(cb->data, DHSTATUS_OK, RDT_SEARCH64, dhonewire_get_pin(), parse_pins.data, parse_pins.data_len);
 	else
-		responce_error(cb, "Error during search");
+		dh_command_fail(cb, "Error during search");
 }
 
 
@@ -528,13 +546,13 @@ static void ICACHE_FLASH_ATTR do_onewire_master_int(COMMAND_RESULT *cb, const ch
 
 	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_GPIO_SUITABLE_PINS, dh_gpio_get_timeout(), AF_DISABLE | AF_PRESENCE, &fields);
 	if(parse_res)
-		responce_error(cb, parse_res);
+		dh_command_fail(cb, parse_res);
 	else if(fields == 0)
-		responce_error(cb, "Wrong action");
+		dh_command_fail(cb, "Wrong action");
 	else if(dhonewire_int(parse_pins.pins_to_presence, parse_pins.pins_to_disable))
-		responce_ok(cb);
+		dh_command_done(cb, "");
 	else
-		responce_error(cb, "Unsuitable pin");
+		dh_command_fail(cb, "Unsuitable pin");
 }
 
 
@@ -547,8 +565,10 @@ static void ICACHE_FLASH_ATTR do_onewire_dht_read(COMMAND_RESULT *cb, const char
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(onewire_init(cb, fields, &parse_pins))
 			return;
 	}
@@ -556,7 +576,7 @@ static void ICACHE_FLASH_ATTR do_onewire_dht_read(COMMAND_RESULT *cb, const char
 	if(parse_pins.count)
 		cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
 	else
-		responce_error(cb, "No response");
+		dh_command_fail(cb, "No response");
 }
 
 
@@ -569,16 +589,18 @@ static void ICACHE_FLASH_ATTR do_onewire_ws2812b_write(COMMAND_RESULT *cb, const
 	ALLOWED_FIELDS fields = 0;
 
 	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN | AF_DATA, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & AF_DATA) == 0) {
-		responce_error(cb, "Data not specified");
+		dh_command_fail(cb, "Data not specified");
 		return;
 	}
 	if(onewire_init(cb, fields, &parse_pins))
 		return;
 	dhonewire_ws2812b_write(parse_pins.data, parse_pins.data_len);
-	responce_ok(cb);
+	dh_command_done(cb, "");
 }
 
 #endif // onewire commands
@@ -595,16 +617,20 @@ static void ICACHE_FLASH_ATTR do_devices_ds18b20_read(COMMAND_RESULT *cb, const 
 		ALLOWED_FIELDS fields = 0;
 		char * parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(onewire_init(cb, fields, &parse_pins))
 			return;
 	}
 	float temperature;
 	char *res = ds18b20_read(DS18B20_NO_PIN, &temperature);
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	if(res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	}
 }
 
 
@@ -618,8 +644,10 @@ static void ICACHE_FLASH_ATTR do_devices_dht11_read(COMMAND_RESULT *cb, const ch
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(onewire_init(cb, fields, &parse_pins))
 			return;
 	}
@@ -627,9 +655,11 @@ static void ICACHE_FLASH_ATTR do_devices_dht11_read(COMMAND_RESULT *cb, const ch
 	int temperature;
 	int humidity;
 	char *res = dht11_read(DHT_NO_PIN, &humidity, &temperature);
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%d, \"humidity\":%d}", temperature, humidity);
+	if(res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%d, \"humidity\":%d}", temperature, humidity);
+	}
 }
 
 
@@ -643,8 +673,10 @@ static void ICACHE_FLASH_ATTR do_devices_dht22_read(COMMAND_RESULT *cb, const ch
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(onewire_init(cb, fields, &parse_pins))
 			return;
 	}
@@ -652,9 +684,11 @@ static void ICACHE_FLASH_ATTR do_devices_dht22_read(COMMAND_RESULT *cb, const ch
 	float temperature;
 	float humidity;
 	char *res = dht22_read(DHT_NO_PIN, &humidity, &temperature);
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
+	}
 }
 
 /**
@@ -668,8 +702,10 @@ static void ICACHE_FLASH_ATTR do_devices_bmp180_read(COMMAND_RESULT *cb, const c
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			bmp180_set_address(parse_pins.address);
 	}
@@ -679,9 +715,11 @@ static void ICACHE_FLASH_ATTR do_devices_bmp180_read(COMMAND_RESULT *cb, const c
 	float temperature;
 	int pressure;
 	char *res = i2c_status_tochar(bmp180_read(BMP180_NO_PIN, BMP180_NO_PIN, &pressure, &temperature));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
+	}
 }
 
 /**
@@ -695,8 +733,10 @@ static void ICACHE_FLASH_ATTR do_devices_bmp280_read(COMMAND_RESULT *cb, const c
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			bmp280_set_address(parse_pins.address);
 	}
@@ -706,9 +746,11 @@ static void ICACHE_FLASH_ATTR do_devices_bmp280_read(COMMAND_RESULT *cb, const c
 	float temperature;
 	float pressure;
 	char *res = i2c_status_tochar(bmp280_read(BMP280_NO_PIN, BMP280_NO_PIN, &pressure, &temperature));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%f}", temperature, pressure);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%f}", temperature, pressure);
+	}
 }
 
 
@@ -723,8 +765,10 @@ static void ICACHE_FLASH_ATTR do_devices_bh1750_read(COMMAND_RESULT *cb, const c
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			bh1750_set_address(parse_pins.address);
 	}
@@ -733,9 +777,11 @@ static void ICACHE_FLASH_ATTR do_devices_bh1750_read(COMMAND_RESULT *cb, const c
 		return;
 	float illuminance;
 	char *res = i2c_status_tochar(bh1750_read(BH1750_NO_PIN, BH1750_NO_PIN, &illuminance));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
+	if(res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
+	}
 }
 
 /**
@@ -749,8 +795,10 @@ static void ICACHE_FLASH_ATTR do_devices_mpu6050_read(COMMAND_RESULT *cb, const 
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			mpu6050_set_address(parse_pins.address);
 	}
@@ -761,11 +809,13 @@ static void ICACHE_FLASH_ATTR do_devices_mpu6050_read(COMMAND_RESULT *cb, const 
 	MPU6050_XYZ gyro;
 	float temperature;
 	char *res = i2c_status_tochar(mpu6050_read(MPU6050_NO_PIN, MPU6050_NO_PIN, &acc, &gyro, &temperature));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-	    "{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
-	    temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
+	if(res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+				"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
+				temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
+	}
 }
 
 /**
@@ -779,8 +829,10 @@ static void ICACHE_FLASH_ATTR do_devices_hmc5883l_read(COMMAND_RESULT *cb, const
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			hmc5883l_set_address(parse_pins.address);
 	}
@@ -789,8 +841,10 @@ static void ICACHE_FLASH_ATTR do_devices_hmc5883l_read(COMMAND_RESULT *cb, const
 		return;
 	HMC5883L_XYZ compass;
 	char *res = i2c_status_tochar(hmc5883l_read(HMC5883L_NO_PIN, HMC5883L_NO_PIN, &compass));
-	if(responce_error(cb, res))
+	if(res != 0) {
+		dh_command_fail(cb, res);
 		return;
+	}
 	char floatbufx[10] = "NaN";
 	char floatbufy[10] = "NaN";
 	char floatbufz[10] = "NaN";
@@ -816,8 +870,10 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_read(COMMAND_RESULT *cb, const 
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, PCF8574_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS | AF_PULLUP, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			pcf8574_set_address(parse_pins.address);
 	}
@@ -826,14 +882,18 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_read(COMMAND_RESULT *cb, const 
 		return;
 	if(fields & AF_PULLUP) {
 		char *res = i2c_status_tochar(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN, parse_pins.pins_to_pullup, 0));
-		if(responce_error(cb, res))
+		if (res != 0) {
+			dh_command_fail(cb, res);
 			return;
+		}
 	}
 	unsigned int pins;
 	char *res = i2c_status_tochar(pcf8574_read(PCF8574_NO_PIN, PCF8574_NO_PIN, &pins));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, pins, system_get_time(), PCF8574_SUITABLE_PINS);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, pins, system_get_time(), PCF8574_SUITABLE_PINS);
+	}
 }
 
 /**
@@ -846,14 +906,15 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_write(COMMAND_RESULT *cb, const
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, PCF8574_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_ADDRESS | AF_SET | AF_CLEAR, &fields);
-	if(responce_error(cb, parse_res)) {
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
 	} else if( (fields & (AF_SET | AF_CLEAR)) == 0) {
-		responce_error(cb, "Dummy request");
+		dh_command_fail(cb, "Dummy request");
 		return;
 	} else if( (parse_pins.pins_to_set | parse_pins.pins_to_clear | PCF8574_SUITABLE_PINS)
 	        != PCF8574_SUITABLE_PINS ) {
-		responce_error(cb, "Unsuitable pin");
+		dh_command_fail(cb, "Unsuitable pin");
 		return;
 	}
 	if(fields & AF_ADDRESS)
@@ -863,9 +924,11 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_write(COMMAND_RESULT *cb, const
 		return;
 	char *res = i2c_status_tochar(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
 	        parse_pins.pins_to_set, parse_pins.pins_to_clear));
-	if(responce_error(cb, res))
-		return;
-	responce_ok(cb);
+	if(res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 /**
@@ -878,10 +941,12 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, PCF8574_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_ADDRESS | AF_DATA | AF_TEXT_DATA, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & (AF_DATA | AF_TEXT_DATA)) == 0 || parse_pins.data_len == 0) {
-		responce_error(cb, "Text not specified");
+		dh_command_fail(cb, "Text not specified");
 		return;
 	}
 	if(fields & AF_ADDRESS)
@@ -891,9 +956,11 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 		return;
 	char *res = i2c_status_tochar(pcf8574_hd44780_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
 	        parse_pins.data, parse_pins.data_len));
-	if(responce_error(cb, res))
-		return;
-	responce_ok(cb);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 /**
@@ -902,14 +969,16 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 static void ICACHE_FLASH_ATTR do_devices_mhz19_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
 {
 	if(paramslen) {
-		responce_error(cb, "Command does not have parameters");
+		dh_command_fail(cb, "Command does not have parameters");
 		return;
 	}
 	int co2;
 	char *res = mhz19_read(&co2);
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
+	}
 }
 
 
@@ -924,8 +993,10 @@ static void ICACHE_FLASH_ATTR do_devices_lm75_read(COMMAND_RESULT *cb, const cha
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			lm75_set_address(parse_pins.address);
 	}
@@ -934,9 +1005,11 @@ static void ICACHE_FLASH_ATTR do_devices_lm75_read(COMMAND_RESULT *cb, const cha
 		return;
 	float temperature;
 	char *res = i2c_status_tochar(lm75_read(LM75_NO_PIN, LM75_NO_PIN, &temperature));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	}
 }
 
 
@@ -949,8 +1022,10 @@ static void ICACHE_FLASH_ATTR do_devices_si7021_read(COMMAND_RESULT *cb, const c
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			si7021_set_address(parse_pins.address);
 	}
@@ -960,9 +1035,11 @@ static void ICACHE_FLASH_ATTR do_devices_si7021_read(COMMAND_RESULT *cb, const c
 	float temperature;
 	float humidity;
 	char *res = i2c_status_tochar(si7021_read(SI7021_NO_PIN, SI7021_NO_PIN, &humidity, &temperature));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
+	}
 }
 
 /**
@@ -974,8 +1051,10 @@ static void ICACHE_FLASH_ATTR do_devices_ads1115_read(COMMAND_RESULT *cb, const 
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			ads1115_set_address(parse_pins.address);
 	}
@@ -984,10 +1063,12 @@ static void ICACHE_FLASH_ATTR do_devices_ads1115_read(COMMAND_RESULT *cb, const 
 		return;
 	float values[4];
 	char *res = i2c_status_tochar(ads1115_read(ADS1115_NO_PIN, ADS1115_NO_PIN, values));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
-	        values[0], values[1], values[2], values[3]);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
+				values[0], values[1], values[2], values[3]);
+	}
 }
 
 /**
@@ -1001,14 +1082,18 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_read(COMMAND_RESULT *cb, const 
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			pcf8591_set_address(parse_pins.address);
 		if(fields & AF_REF) {
 			char *res = i2c_status_tochar(pcf8591_set_vref(parse_pins.ref));
-			if(responce_error(cb, res))
+			if (res != 0) {
+				dh_command_fail(cb, res);
 				return;
+			}
 		}
 	}
 	fields |= AF_ADDRESS;
@@ -1016,10 +1101,12 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_read(COMMAND_RESULT *cb, const 
 		return;
 	float values[4];
 	char *res = i2c_status_tochar(pcf8591_read(ADS1115_NO_PIN, ADS1115_NO_PIN, values));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
-	        values[0], values[1], values[2], values[3]);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
+				values[0], values[1], values[2], values[3]);
+	}
 }
 
 
@@ -1033,26 +1120,32 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_write(COMMAND_RESULT *cb, const
 	char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(parse_pins.pin_value_readed != 1) {
-		responce_error(cb, "Unsuitable pin");
+		dh_command_fail(cb, "Unsuitable pin");
 		return;
 	}
 	if(fields & AF_ADDRESS)
 		pcf8591_set_address(parse_pins.address);
 	if(fields & AF_REF) {
 		char *res = i2c_status_tochar(pcf8591_set_vref(parse_pins.ref));
-		if(responce_error(cb, res))
+		if (res != 0) {
+			dh_command_fail(cb, res);
 			return;
+		}
 	}
 	fields |= AF_ADDRESS;
 	if(i2c_init(cb, fields, &parse_pins))
 		return;
 	char *res = i2c_status_tochar(pcf8591_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.storage.float_values[0]));
-	if(responce_error(cb, res))
-		return;
-	responce_ok(cb);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 /**
@@ -1065,26 +1158,32 @@ static void ICACHE_FLASH_ATTR do_devices_mcp4725_write(COMMAND_RESULT *cb, const
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(parse_pins.pin_value_readed != 1) {
-		responce_error(cb, "Unsuitable pin");
+		dh_command_fail(cb, "Unsuitable pin");
 		return;
 	}
 	if(fields & AF_ADDRESS)
 		mcp4725_set_address(parse_pins.address);
 	if(fields & AF_REF) {
 		char *res = i2c_status_tochar(mcp4725_set_vref(parse_pins.ref));
-		if(responce_error(cb, res))
+		if (res != 0) {
+			dh_command_fail(cb, res);
 			return;
+		}
 	}
 	fields |= AF_ADDRESS;
 	if(i2c_init(cb, fields, &parse_pins))
 		return;
 	char *res = i2c_status_tochar(mcp4725_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.storage.float_values[0]));
-	if(responce_error(cb, res))
-		return;
-	responce_ok(cb);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 /**
@@ -1098,14 +1197,18 @@ static void ICACHE_FLASH_ATTR do_devices_ina219_read(COMMAND_RESULT *cb, const c
 		char *parse_res = parse_params_pins_set(params, paramslen,
 					&parse_pins, DHADC_SUITABLE_PINS, 0,
 					AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			ina219_set_address(parse_pins.address);
 		if(fields & AF_REF) {
 			char *res = i2c_status_tochar(ina219_set_shunt(parse_pins.ref));
-			if(responce_error(cb, res))
+			if (res != 0) {
+				dh_command_fail(cb, res);
 				return;
+			}
 		}
 	}
 	fields |= AF_ADDRESS;
@@ -1115,11 +1218,13 @@ static void ICACHE_FLASH_ATTR do_devices_ina219_read(COMMAND_RESULT *cb, const c
 	float current;
 	float power;
 	char *res = i2c_status_tochar(ina219_read(ADS1115_NO_PIN, ADS1115_NO_PIN, &voltage, &current, &power));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-	        "{\"voltage\":%f, \"current\":%f, \"power\":%f}",
-	        voltage, current, power);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+				"{\"voltage\":%f, \"current\":%f, \"power\":%f}",
+				voltage, current, power);
+	}
 }
 
 /**
@@ -1132,11 +1237,13 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_read(COMMAND_RESULT *cb, const 
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_CS) {
 			if(MFRC522_Set_CS(parse_pins.CS) != MFRC522_STATUS_OK) {
-				responce_error(cb, "Unsuitable pin");
+				dh_command_fail(cb, "Unsuitable pin");
 				return;
 			}
 		}
@@ -1163,7 +1270,7 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_read(COMMAND_RESULT *cb, const 
 	}
 	MFRC522_PICC_HaltA();
 	MFRC522_PCD_AntennaOff();
-	responce_error(cb, MFRC522_GetStatusCodeName(result));
+	dh_command_fail(cb, MFRC522_GetStatusCodeName(result));
 }
 
 /**
@@ -1177,16 +1284,18 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_CS | AF_ADDRESS | AF_KEY | (check ? AF_DATA : 0), &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(fields & AF_CS) {
 		if(MFRC522_Set_CS(parse_pins.CS) != MFRC522_STATUS_OK) {
-			responce_error(cb, "Unsuitable pin");
+			dh_command_fail(cb, "Unsuitable pin");
 			return;
 		}
 	}
 	if((fields & AF_ADDRESS) == 0) {
-		responce_error(cb, "Block address not specified");
+		dh_command_fail(cb, "Block address not specified");
 		return;
 	}
 	if((fields & AF_KEY) == 0) {
@@ -1194,15 +1303,15 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 		os_memset(parse_pins.storage.key.key_data, 0xFF, MF_KEY_SIZE);
 		parse_pins.storage.key.key_len = MF_KEY_SIZE;
 	} else if(parse_pins.storage.key.key_len != MF_KEY_SIZE) {
-		responce_error(cb, "Wrong key length");
+		dh_command_fail(cb, "Wrong key length");
 		return;
 	}
 	if(check) {
 		if((fields & AF_DATA) == 0) {
-			responce_error(cb, "Data not specified");
+			dh_command_fail(cb, "Data not specified");
 			return;
 		} else if(parse_pins.data_len != 16) {
-			responce_error(cb, "Data length should be 16 bytes");
+			dh_command_fail(cb, "Data length should be 16 bytes");
 			return;
 		}
 	}
@@ -1226,7 +1335,7 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 				if(result == MFRC522_STATUS_OK) {
 					parse_pins.count = len;
 					if(check)
-						responce_ok(cb);
+						dh_command_done(cb, "");
 					else
 						cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
 					MFRC522_PICC_HaltA();
@@ -1240,7 +1349,7 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 	MFRC522_PICC_HaltA();
 	MFRC522_PCD_StopCrypto1();
 	MFRC522_PCD_AntennaOff();
-	responce_error(cb, MFRC522_GetStatusCodeName(result));
+	dh_command_fail(cb, MFRC522_GetStatusCodeName(result));
 }
 
 /**
@@ -1253,8 +1362,10 @@ static void ICACHE_FLASH_ATTR do_devices_pca9685_control(COMMAND_RESULT *cb, con
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, PCA9685_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_ADDRESS | AF_FLOATVALUES | AF_PERIOD, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if(fields & AF_ADDRESS)
 		pca9685_set_address(parse_pins.address);
 	fields |= AF_ADDRESS;
@@ -1263,9 +1374,11 @@ static void ICACHE_FLASH_ATTR do_devices_pca9685_control(COMMAND_RESULT *cb, con
 	char *res = i2c_status_tochar(pca9685_control(PCA9685_NO_PIN, PCA9685_NO_PIN,
 	        parse_pins.storage.float_values, parse_pins.pin_value_readed,
 	        (fields & AF_PERIOD) ? parse_pins.periodus : PCA9685_NO_PERIOD));
-	if(responce_error(cb, res))
-		return;
-	responce_ok(cb);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 /**
@@ -1279,8 +1392,10 @@ static void ICACHE_FLASH_ATTR do_devices_mlx90614_read(COMMAND_RESULT *cb, const
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0,
 				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 		if(fields & AF_ADDRESS)
 			mlx90614_set_address(parse_pins.address);
 	}
@@ -1290,9 +1405,11 @@ static void ICACHE_FLASH_ATTR do_devices_mlx90614_read(COMMAND_RESULT *cb, const
 	float ambient;
 	float object;
 	char *res = i2c_status_tochar(mlx90614_read(MLX90614_NO_PIN, MLX90614_NO_PIN, &ambient, &object));
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"ambient\":%f, \"object\":%f}", ambient, object);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"ambient\":%f, \"object\":%f}", ambient, object);
+	}
 }
 
 /**
@@ -1304,14 +1421,18 @@ static void ICACHE_FLASH_ATTR do_devices_max6675_read(COMMAND_RESULT *cb, const 
 	ALLOWED_FIELDS fields = 0;
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 	}
 	float temperature;
 	char *res = max6675_read((fields & AF_CS) ? parse_pins.CS : MAX6675_NO_PIN, &temperature);
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	}
 }
 
 /**
@@ -1324,14 +1445,18 @@ static void ICACHE_FLASH_ATTR do_devices_max31855_read(COMMAND_RESULT *cb, const
 	if(paramslen) {
 		char *parse_res = parse_params_pins_set(params, paramslen,
 				&parse_pins, DHADC_SUITABLE_PINS, 0, AF_CS, &fields);
-		if(responce_error(cb, parse_res))
+		if (parse_res != 0) {
+			dh_command_fail(cb, parse_res);
 			return;
+		}
 	}
 	float temperature;
 	char *res = max31855_read((fields & AF_CS) ? parse_pins.CS : MAX31855_NO_PIN, &temperature);
-	if(responce_error(cb, res))
-		return;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
+	}
 }
 
 /**
@@ -1344,10 +1469,12 @@ static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const 
 	char *parse_res = parse_params_pins_set(params, paramslen,
 			&parse_pins, DHADC_SUITABLE_PINS, 0,
 			AF_SDA | AF_SCL | AF_DATA | AF_TEXT_DATA, &fields);
-	if(responce_error(cb, parse_res))
+	if (parse_res != 0) {
+		dh_command_fail(cb, parse_res);
 		return;
+	}
 	if((fields & (AF_DATA | AF_TEXT_DATA)) == 0 || parse_pins.data_len == 0) {
-		responce_error(cb, "Text not specified");
+		dh_command_fail(cb, "Text not specified");
 		return;
 	}
 	fields |= AF_ADDRESS;
@@ -1355,9 +1482,11 @@ static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const 
 		return;
 	char *res = i2c_status_tochar(tm1636_write(TM1636_NO_PIN, TM1636_NO_PIN,
 	        parse_pins.data, parse_pins.data_len));
-	if(responce_error(cb, res))
-		return;
-	responce_ok(cb);
+	if (res != 0) {
+		dh_command_fail(cb, res);
+	} else {
+		dh_command_done(cb, "");
+	}
 }
 
 #endif // devices commands
@@ -1441,5 +1570,5 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 		}
 	}
 
-	responce_error(cb, "Unknown command");
+	dh_command_fail(cb, "Unknown command");
 }

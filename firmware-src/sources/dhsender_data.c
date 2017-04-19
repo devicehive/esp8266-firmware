@@ -145,3 +145,23 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 	}
 	return -1;
 }
+
+
+/*
+ * dh_command_done() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_command_done(COMMAND_RESULT *cmd_res, const char *str)
+{
+	cmd_res->callback(cmd_res->data, DHSTATUS_OK,
+	                  RDT_CONST_STRING, str);
+}
+
+
+/*
+ * dh_command_fail() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_command_fail(COMMAND_RESULT *cmd_res, const char *str)
+{
+	cmd_res->callback(cmd_res->data, DHSTATUS_ERROR,
+	                  RDT_CONST_STRING, str);
+}
