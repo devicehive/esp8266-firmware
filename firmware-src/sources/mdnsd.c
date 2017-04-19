@@ -32,7 +32,7 @@ LOCAL unsigned long mAddr;
 LOCAL struct espconn mMDNSdConn = { 0 };
 LOCAL struct ip_addr mMDNSAddr = { 0 };
 LOCAL esp_udp mDNSdUdp;
-LOCAL mSendingInProgress = 0;
+LOCAL int mSendingInProgress = 0;
 LOCAL struct ip_addr mMulticastIP = { MDNS_IP };
 
 LOCAL void ICACHE_FLASH_ATTR announce(const uint8_t *data, uint32_t len) {

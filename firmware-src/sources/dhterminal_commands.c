@@ -49,7 +49,7 @@ LOCAL void ICACHE_FLASH_ATTR printBytes(char *buff, unsigned long long bytes) {
 	else if(bytes > 1024)
 		snprintf(buff, 16, "%f KiB", bytes/1024.0);
 	else
-		snprintf(buff, 16, "%u B", (unsigned long)bytes);
+		snprintf(buff, 16, "%u B", (unsigned int)bytes);
 }
 
 LOCAL void ICACHE_FLASH_ATTR sprintMac(char *buff, const uint8 *mac) {
@@ -231,7 +231,7 @@ LOCAL void ICACHE_FLASH_ATTR scan_done_cb (void *arg, STATUS status) {
 		else
 			dhuart_send_line("No wireless networks found.");
 		while(link) {
-			char * auth;
+			char * auth = 0;
 			switch(link->authmode) {
 			case AUTH_OPEN:
 				auth = "open";

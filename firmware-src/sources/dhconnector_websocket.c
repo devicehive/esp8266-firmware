@@ -39,7 +39,7 @@ LOCAL char mBuf[PAYLOAD_BUF_SIZE + WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SI
 LOCAL char *mPayLoadBuf = &mBuf[WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL int mPayLoadBufLen = 0;
 
-LOCAL void ICACHE_FLASH_ATTR error(data, len) {
+LOCAL void ICACHE_FLASH_ATTR error(const char *data, unsigned int len) {
 	mErrFunc();
 	dhsender_current_fail();
 	char b[len + 1];

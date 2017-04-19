@@ -40,6 +40,12 @@
 
 
 /**
+ * @brief Compile time attribute to store data in ROM memory.
+ */
+#define DH_RO_ATTR ICACHE_RODATA_ATTR STORE_ATTR
+
+
+/**
  * @brief Check if pointer is stored in ROM.
  * @param[in] ptr Pointer to check.
  * @return Non-zero if pointer is from ROM area.

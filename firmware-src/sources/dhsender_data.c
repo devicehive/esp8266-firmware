@@ -65,7 +65,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf,
 	unsigned int i;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		const unsigned int pin = 1 << i;
-		const pinvalue = (state & pin) ? 1 : 0;
+		const int pinvalue = (state & pin) ? 1 : 0;
 		if(suitable & pin) {
 			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":%d" : ", \"%d\":%d", i, pinvalue);
 		}
@@ -80,7 +80,7 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf,
 	int comma = 0;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		const unsigned int pin = 1 << i;
-		if(suitable & pin == 0)
+		if((suitable & pin) == 0)
 			continue;
 		if( pin & data->caused) {
 			len += snprintf(&buf[len], buflen - len, comma?", \"%d\"":"\"%d\"", i);

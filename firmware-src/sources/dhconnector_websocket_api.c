@@ -41,7 +41,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	int status_not_success = 1;
 	char action[32];
 	char command[128];
-	const char *params;
+	const char *params = 0;
 	unsigned int paramslen = 0;
 	unsigned int id = 0;
 	action[0] = 0;

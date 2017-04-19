@@ -33,12 +33,12 @@ LOCAL os_timer_t mOWIntTimer;
 #define ONEWIRE_DHT_RESET_LENGTH_US 25000
 #define ONEWIRE_DHT_TIMEOUT_US 200
 
-LOCAL ICACHE_FLASH_ATTR lock_int(void) {
+LOCAL void ICACHE_FLASH_ATTR lock_int(void) {
 	if(mIntPins)
 		dhgpio_subscribe_extra_int(mIntPins, 0, 0, 0);
 }
 
-LOCAL ICACHE_FLASH_ATTR unlock_int(void) {
+LOCAL void ICACHE_FLASH_ATTR unlock_int(void) {
 	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, mIntPins);
 	dhgpio_subscribe_extra_int(0, 0, mIntPins, 0);
 }
@@ -66,7 +66,7 @@ LOCAL int ICACHE_FLASH_ATTR dhonewire_reset(unsigned int pin, unsigned int reset
 		gpio_output_set(pin, 0, pin, 0);
 		os_delay_us(500);
 	}
-	if(gpio_input_get() & pin == 0)
+	if((gpio_input_get() & pin) == 0)
 		return 0;
 	// send RESET
 	gpio_output_set(0, pin, pin, 0);
@@ -186,7 +186,7 @@ int ICACHE_FLASH_ATTR dhonewire_search(char *buf, unsigned long *len, char comma
 		ambiguity = -1;
 		for(i = 0; i < bitCount; i++) {
 			const int byte = i / 8;
-			if(gpio_input_get() & pin == 0) {
+			if((gpio_input_get() & pin) == 0) {
 				unlock_int();
 				return 0;
 			}

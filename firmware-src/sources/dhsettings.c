@@ -86,12 +86,12 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 
 LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 	int res = 1;
-	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
+	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(*settings));
 	if(settings == NULL) {
 		dhdebug("Failed to write settings, no RAM.");
 		return 0;
 	}
-	os_memset(settings, 0x0, sizeof(DH_SETTINGS));
+	os_memset(settings, 0x0, sizeof(*settings));
 	if(data)
 		os_memcpy(&settings->data, data, sizeof(DH_SETTINGS_DATA));
 	settings->crc = getStorageCrc(settings);

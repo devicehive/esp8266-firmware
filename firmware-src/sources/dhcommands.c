@@ -101,6 +101,8 @@ LOCAL char *ICACHE_FLASH_ATTR i2c_status_tochar(DHI2C_STATUS status) {
 			return "Bus is busy";
 		case DHI2C_DEVICE_ERROR:
 			return "Device error";
+		case DHI2C_OK:
+			break;
 	}
 	return 0;
 }

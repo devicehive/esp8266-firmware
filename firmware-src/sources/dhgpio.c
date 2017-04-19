@@ -57,7 +57,7 @@ void ICACHE_FLASH_ATTR dhgpio_open_drain(unsigned int pin_mask_set_od, unsigned 
 	int i;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		unsigned int pin = BIT(i);
-		if(pin & DHGPIO_SUITABLE_PINS == 0)
+		if((pin & DHGPIO_SUITABLE_PINS) == 0)
 			continue;
 		if(pin & pin_mask_set_od) {
 			const unsigned int reg = GPIO_REG_READ(GPIO_PIN_ADDR(GPIO_ID_PIN(i))) | GPIO_PIN_PAD_DRIVER_SET(GPIO_PAD_DRIVER_ENABLE);
@@ -185,7 +185,7 @@ LOCAL int ICACHE_FLASH_ATTR dhgpio_set_int(unsigned int disable_mask, unsigned i
 	int i;
 	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
 		const unsigned int pin = 1 << i;
-		if(pin & DHGPIO_SUITABLE_PINS == 0)
+		if((pin & DHGPIO_SUITABLE_PINS) == 0)
 			continue;
 		else if(pin & disable_mask)
 			gpio_pin_intr_state_set(GPIO_ID_PIN(i), GPIO_PIN_INTR_DISABLE);

@@ -60,7 +60,7 @@ LOCAL void ICACHE_FLASH_ATTR buf_timeout(void *arg) {
 LOCAL ICACHE_FLASH_ATTR void arm_buf_timer(void) {
 	os_timer_disarm(&mUartTimer);
 	os_timer_setfn(&mUartTimer, (os_timer_func_t *)buf_timeout, NULL);
-	os_timer_arm(&mUartTimer, (mUartTimerTimeout == 0 | mUartBufPos >= INTERFACES_BUF_SIZE) ? 1 :mUartTimerTimeout, 0);
+	os_timer_arm(&mUartTimer, (mUartTimerTimeout == 0 || mUartBufPos >= INTERFACES_BUF_SIZE) ? 1 :mUartTimerTimeout, 0);
 }
 
 LOCAL void dhuart_intr_handler(void *arg) {

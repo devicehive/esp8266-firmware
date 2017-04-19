@@ -1430,7 +1430,7 @@ void ICACHE_FLASH_ATTR MFRC522_PICC_DumpMifareClassicSectorToSerial(MFRC522_Uid 
 	// The four CX bits are stored together in a nible cx and an inverted nible cx_.
 	uint8_t c1, c2, c3;		// Nibbles
 	uint8_t c1_, c2_, c3_;		// Inverted nibbles
-	bool invertedError;		// True if one of the inverted nibbles did not match
+	bool invertedError = false;		// True if one of the inverted nibbles did not match
 	uint8_t g[4];				// Access bits for each of the four groups.
 	uint8_t group;				// 0-3 - active group for access bits
 	bool firstInGroup;		// True for the first block dumped in the group
@@ -1701,7 +1701,7 @@ bool ICACHE_FLASH_ATTR MFRC522_MIFARE_SetUid(uint8_t *newUid, uint8_t uidSize, b
 	}
 	
 	// Authenticate for reading
-	MIFARE_Key key = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+	MIFARE_Key key = {.keyByte = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 	MFRC522_StatusCode status = MFRC522_PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, (uint8_t)1, &key, &uid);
 	if (status != MFRC522_STATUS_OK) {
 		

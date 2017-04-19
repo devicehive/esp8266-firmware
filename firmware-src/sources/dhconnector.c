@@ -146,7 +146,7 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 }
 
 LOCAL void network_connect_cb(void *arg) {
-	HTTP_REQUEST *request;
+	HTTP_REQUEST *request = 0;
 	uint32_t keepalive;
 	espconn_set_opt(&mDHConnector, ESPCONN_KEEPALIVE);
 	//set keepalive: 120s = 90 + 10 * 3
@@ -165,8 +165,7 @@ LOCAL void network_connect_cb(void *arg) {
 		request = dhrequest_create_wsrequest(dhsettings_get_devicehive_server(), mWSUrl);
 		dhdebug("Send web socket upgrade request...");
 		break;
-	// TODO TODO TODO
-	/*case CS_POLL:
+	/* TODO case CS_POLL:
 	case CS_CUSTOM:
 		request = custom_firmware_request();
 		if(request) {
@@ -200,8 +199,7 @@ LOCAL void network_disconnect_cb(void *arg) {
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		break;
-/* TODO TODO TODO
-	case CS_CUSTOM:
+/* TODO case CS_CUSTOM:
 		if(dhterminal_is_in_use()) {
 			dhdebug("Terminal is in use, no deep sleep");
 			arm_repeat_timer(CUSTOM_NOTIFICATION_INTERVAL_MS);

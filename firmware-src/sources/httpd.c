@@ -94,7 +94,7 @@ LOCAL int ICACHE_FLASH_ATTR dequeue(struct espconn *conn, int send) {
 				}
 			}
 			if(mContentQueue[i].free_mem) {
-				os_free(mContentQueue[i].content.data);
+				os_free((void*)mContentQueue[i].content.data);
 			}
 			mContentQueue[i].remote_port = 0;
 			return 1;
