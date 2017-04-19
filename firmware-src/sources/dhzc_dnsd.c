@@ -6,6 +6,10 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhzc_dnsd.h"
+#include "dns.h"
+#include "swab.h"
+#include "dhdebug.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
@@ -13,10 +17,7 @@
 #include <user_interface.h>
 #include <espconn.h>
 #include <mem.h>
-#include "dns.h"
-#include "swab.h"
-#include "dhdebug.h"
-#include "dhzc_dnsd.h"
+#include <ets_forward.h>
 
 #define MAX_CONNECTIONS 2
 

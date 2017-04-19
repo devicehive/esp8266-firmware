@@ -8,15 +8,17 @@
  * Description: Module for storing settings in flash
  *
  */
+#include "dhsettings.h"
+#include "snprintf.h"
+#include "crc32.h"
+#include "dhdebug.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <spi_flash.h>
 #include <mem.h>
-#include "dhsettings.h"
-#include "snprintf.h"
-#include "crc32.h"
-#include "dhdebug.h"
+#include <user_interface.h>
+#include <ets_forward.h>
 
 // using main and backup storage to keep old setting in case of power loss during writing
 #define ESP_SETTINGS_MAIN_SEC   0x7A

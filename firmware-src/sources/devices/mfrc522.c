@@ -5,10 +5,12 @@
 */
 
 #include "mfrc522.h"
-#include <osapi.h>
 #include "dhspi.h"
 #include "dhdebug.h"
 #include "snprintf.h"
+
+#include <osapi.h>
+#include <ets_forward.h>
 
 static int _chipSelectPin = 15;		// pin connected to MFRC522's SPI slave select input (Pin 24, NSS, active low)
 // Member variables

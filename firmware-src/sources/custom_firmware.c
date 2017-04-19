@@ -6,14 +6,10 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include "dhdebug.h"
-#include "dhgpio.h"
 #include "dhrequest.h"
-#include "dhconnector.h"
-#include "snprintf.h"
-#include "c_types.h"
-#include "osapi.h"
+#include "dhdebug.h"
+
+#include <c_types.h>
 
 HTTP_REQUEST * ICACHE_FLASH_ATTR custom_firmware_request(void) {
 	// reimplement this method to return actual HTTP_REQUEST to make custom notification firmware

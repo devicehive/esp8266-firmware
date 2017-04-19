@@ -6,15 +6,16 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhpwm.h"
+#include "dhgpio.h"
+#include "dhdebug.h"
+#include "user_config.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <gpio.h>
-#include "dhpwm.h"
-#include "dhgpio.h"
-#include "dhdebug.h"
-#include "user_config.h"
+#include <ets_forward.h>
 
 #define FRC1_ENABLE_TIMER  BIT7
 #define FRC1_AUTO_LOAD  BIT6

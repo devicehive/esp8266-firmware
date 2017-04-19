@@ -6,11 +6,13 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhadc.h"
 
 #include <ets_sys.h>
-#include <osapi.h>
 #include <os_type.h>
-#include "dhadc.h"
+#include <osapi.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 LOCAL os_timer_t mADCTimer;
 

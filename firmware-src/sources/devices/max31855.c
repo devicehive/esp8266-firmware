@@ -6,12 +6,13 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "max31855.h"
 #include "dhspi.h"
 #include "dhutils.h"
+#include "dhgpio.h"
+
+#include <osapi.h>
+#include <c_types.h>
 
 static int mCSPin = 15;
 

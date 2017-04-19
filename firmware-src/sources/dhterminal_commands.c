@@ -8,23 +8,24 @@
  * Description: Commandline command implementation
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <user_interface.h>
-#include <espconn.h>
-#include <ping.h>
+#include "dhterminal_commands.h"
 #include "dhterminal.h"
 #include "dhuart.h"
 #include "snprintf.h"
 #include "dhconnector.h"
-#include "dhterminal_commands.h"
 #include "dhsettings.h"
 #include "dhterminal_configure.h"
 #include "dhutils.h"
 #include "user_config.h"
 #include "dhstatistic.h"
 #include "dhsender_queue.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <user_interface.h>
+#include <espconn.h>
+#include <ping.h>
+#include <ets_forward.h>
 
 int mIsCommandWorking = 0;
 char mHostBuffer[80];

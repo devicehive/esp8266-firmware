@@ -6,12 +6,7 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include "httpd.h"
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <user_interface.h>
+#include "dhzc_web.h"
 #include "httpd.h"
 #include "dhdebug.h"
 #include "dhuart.h"
@@ -19,6 +14,12 @@
 #include "dhsettings.h"
 #include "dhzc_pages.h"
 #include "dhzc_post.h"
+#include "httpd.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 #define WEB_CONF_HOST "devicehive.config"
 #define RECONFIGURE_DELAY_MS 5000

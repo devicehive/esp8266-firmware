@@ -6,11 +6,12 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "pcf8574_hd44780.h"
+#include "pcf8574.h"
 
 #include <osapi.h>
 #include <c_types.h>
-#include "pcf8574_hd44780.h"
-#include "pcf8574.h"
+#include <ets_forward.h>
 
 #define PIN_RS (1 << 0)
 #define PIN_RW (1 << 1)

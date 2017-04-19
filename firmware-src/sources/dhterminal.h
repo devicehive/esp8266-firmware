@@ -8,6 +8,7 @@
 
 #ifndef _DHTERMINAL_H_
 #define _DHTERMINAL_H_
+
 #include <stdarg.h>
 
 /** Current terminal mode. */

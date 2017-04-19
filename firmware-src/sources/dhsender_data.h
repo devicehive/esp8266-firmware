@@ -9,10 +9,11 @@
 #ifndef _DHSENDER_DATA_H_
 #define _DHSENDER_DATA_H_
 
-#include <stdarg.h>
 #include "user_config.h"
 #include "dhsettings.h"
 #include "dhutils.h"
+
+#include <stdarg.h>
 
 /** Data type that should be read from arguments and how it will be formatted in response or notification. */
 typedef enum {

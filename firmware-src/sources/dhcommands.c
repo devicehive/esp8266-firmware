@@ -8,10 +8,6 @@
  * Description: Module for executing server command
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
 #include "dhcommands.h"
 #include "dhsender_queue.h"
 #include "dhgpio.h"
@@ -25,6 +21,7 @@
 #include "dhspi.h"
 #include "dhonewire.h"
 #include "dhdebug.h"
+#include "dhpwm.h"
 #include "dhutils.h"
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
@@ -48,6 +45,12 @@
 #include "devices/max6675.h"
 #include "devices/max31855.h"
 #include "devices/tm1636.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 #define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250

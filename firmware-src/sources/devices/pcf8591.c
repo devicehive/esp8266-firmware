@@ -6,13 +6,14 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "pcf8591.h"
 #include "dhi2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <c_types.h>
+#include <ets_forward.h>
 
 static int mAddress = PCF8591_DEFAULT_ADDRESS;
 static float mVoltage = 3.3f;

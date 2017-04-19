@@ -6,14 +6,15 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhzc_post.h"
+#include "dhsettings.h"
+#include "dhutils.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <user_interface.h>
-#include "dhsettings.h"
-#include "dhutils.h"
-#include "dhzc_post.h"
+#include <ets_forward.h>
 
 typedef int (*Char_Test)(char c);
 

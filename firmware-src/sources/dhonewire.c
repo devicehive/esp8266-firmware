@@ -8,16 +8,18 @@
  * Description: Software onewire implementation
  *
  */
+#include "dhonewire.h"
+#include "dhgpio.h"
+#include "user_config.h"
+#include "dhdebug.h"
 
 #include <c_types.h>
 #include <eagle_soc.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <ets_sys.h>
-#include "dhonewire.h"
-#include "dhgpio.h"
-#include "user_config.h"
-#include "dhdebug.h"
+#include <user_interface.h>
+#include <ets_forward.h>
 
 LOCAL unsigned int mOneWirePin = 0;
 LOCAL unsigned int mIntPins = 0;

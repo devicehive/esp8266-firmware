@@ -8,12 +8,14 @@
  * Description: Command line interpreter
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
 #include "dhterminal_commandline.h"
 #include "dhterminal_commands.h"
 #include "snprintf.h"
+#include "dhuart.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <ets_forward.h>
 
 typedef void (*CommandFunc)(const char *arg);
 

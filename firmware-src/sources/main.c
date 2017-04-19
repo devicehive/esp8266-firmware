@@ -8,17 +8,12 @@
  * Description: DeviceHive firmware for ESP8266
  *
  */
-
-#include <osapi.h>
-#include <os_type.h>
-#include <c_types.h>
-#include <user_interface.h>
-#include "gpio.h"
 #include "dhdebug.h"
 #include "dhuart.h"
 #include "dhsender_queue.h"
 #include "dhterminal.h"
 #include "dhsettings.h"
+#include "dhconnector.h"
 #include "dhap.h"
 #include "dhgpio.h"
 #include "webserver.h"
@@ -26,6 +21,14 @@
 #include "uploadable_page.h"
 #include "dhzc_dnsd.h"
 #include "dhzc_web.h"
+#include "mdnsd.h"
+
+#include <osapi.h>
+#include <os_type.h>
+#include <c_types.h>
+#include <user_interface.h>
+#include <gpio.h>
+#include <ets_forward.h>
 
 typedef struct {
 	unsigned int magic;

@@ -9,6 +9,8 @@
 #ifndef _DHESPERRORS_H_
 #define _DHESPERRORS_H_
 
+#include <c_types.h>
+
 /**
  *	\brief					Print disconnect reason.
  *	\param[in]	descrption	Text that will be printed before error description.

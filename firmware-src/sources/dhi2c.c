@@ -8,14 +8,15 @@
  * Description: I2C module
  *
  */
+#include "dhi2c.h"
+#include "dhgpio.h"
+#include "user_config.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <gpio.h>
 #include <user_interface.h>
-#include "dhi2c.h"
-#include "dhgpio.h"
-#include "user_config.h"
+#include <ets_forward.h>
 
 #define I2C_DELAY_US 5
 #define I2C_ERROR_TIMEOUT_US 50000

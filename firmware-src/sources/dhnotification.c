@@ -8,20 +8,21 @@
  * Description: Module for catching hardware events and preparing notification to DeviceHive server
  *
  */
-
-#include <ets_sys.h>
-#include <os_type.h>
-#include <osapi.h>
-
+#include "dhnotification.h"
 #include "dhsender.h"
 #include "dhgpio.h"
 #include "dhadc.h"
-#include "dhnotification.h"
 #include "user_config.h"
 #include "snprintf.h"
 #include "dhdata.h"
 #include "dhdebug.h"
 #include "dhstatistic.h"
+#include "dhmem.h"
+
+#include <ets_sys.h>
+#include <os_type.h>
+#include <osapi.h>
+#include <user_interface.h>
 
 void ICACHE_FLASH_ATTR dhgpio_int_timeout(unsigned int caused_pins) {
 	if(dhmem_isblock()) {

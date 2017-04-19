@@ -6,12 +6,12 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "ds18b20.h"
 #include "dhonewire.h"
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <c_types.h>
 
 char * ICACHE_FLASH_ATTR ds18b20_read(int pin, float *temperature) {
 	char in_buf[8];

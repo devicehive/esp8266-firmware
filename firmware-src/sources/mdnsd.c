@@ -6,6 +6,12 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "mdnsd.h"
+#include "dns.h"
+#include "swab.h"
+#include "snprintf.h"
+#include "dhdebug.h"
+#include "user_config.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
@@ -13,12 +19,7 @@
 #include <user_interface.h>
 #include <espconn.h>
 #include <ip_addr.h>
-#include "mdnsd.h"
-#include "dns.h"
-#include "swab.h"
-#include "snprintf.h"
-#include "dhdebug.h"
-#include "user_config.h"
+#include <ets_forward.h>
 
 #define MDNS_TTL (60 * 60)
 #define MDNS_MAX_PACKET_LENGTH 1024

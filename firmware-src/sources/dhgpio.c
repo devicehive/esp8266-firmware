@@ -10,16 +10,17 @@
  *
  */
 #include "dhgpio.h"
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <gpio.h>
 #include "user_config.h"
 #include "dhdebug.h"
 #include "dhnotification.h"
 #include "dhpwm.h"
 #include "dhmem.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <gpio.h>
+#include <ets_forward.h>
 
 LOCAL os_timer_t mGPIOTimer;
 LOCAL unsigned int mGPIOTimerTimeout = 250;

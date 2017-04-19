@@ -6,13 +6,13 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "ads1115.h"
 #include "dhi2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <c_types.h>
 
 static int mAddress = ADS1115_DEFAULT_ADDRESS;
 

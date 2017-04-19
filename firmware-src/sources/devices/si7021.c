@@ -6,13 +6,13 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "si7021.h"
 #include "dhi2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <c_types.h>
 
 static int mAddress = SI7021_DEFAULT_ADDRESS;
 

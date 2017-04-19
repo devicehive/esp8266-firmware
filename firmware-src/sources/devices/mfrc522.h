@@ -76,7 +76,6 @@
 #ifndef MFRC522_h
 #define MFRC522_h
 
-#include <c_types.h>
 #include "irom.h"
 
 // Firmware data for self-test

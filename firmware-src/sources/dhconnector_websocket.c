@@ -10,11 +10,6 @@
  */
 
 #include "dhconnector_websocket.h"
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <user_interface.h>
-#include <espconn.h>
 #include "dhsettings.h"
 #include "dhdebug.h"
 #include "rand.h"
@@ -24,6 +19,13 @@
 #include "dhutils.h"
 #include "dhsender_data.h"
 #include "dhsender.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <user_interface.h>
+#include <ets_forward.h>
+#include <espconn.h>
 
 #define PAYLOAD_BUF_SIZE (MAX( \
 	ROUND_KB(DHSETTINGS_DEVICEID_MAX_LENGTH + DHSETTINGS_ACCESSKEY_MAX_LENGTH + 512), \

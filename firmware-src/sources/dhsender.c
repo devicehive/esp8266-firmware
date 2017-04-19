@@ -9,6 +9,15 @@
  *
  */
 
+#include "user_config.h"
+#include "dhsender.h"
+#include "dhsender_queue.h"
+#include "dhrequest.h"
+#include "dhdebug.h"
+#include "dhesperrors.h"
+#include "dhutils.h"
+#include "dhstatistic.h"
+
 #include <stdarg.h>
 #include <ets_sys.h>
 #include <osapi.h>
@@ -17,13 +26,6 @@
 #include <gpio.h>
 #include <user_interface.h>
 #include <espconn.h>
-#include "user_config.h"
-#include "dhsender.h"
-#include "dhrequest.h"
-#include "dhdebug.h"
-#include "dhesperrors.h"
-#include "dhutils.h"
-#include "dhstatistic.h"
 
 #define DHSENDER_RETRY_COUNT 5
 

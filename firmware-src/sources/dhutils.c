@@ -9,7 +9,9 @@
  *
  */
 #include "dhutils.h"
+
 #include <osapi.h>
+#include <ets_forward.h>
 
 int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 	float res = 0.0f;

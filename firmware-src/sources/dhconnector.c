@@ -8,15 +8,6 @@
  * Description: Module for connecting to remote DeviceHive server
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <gpio.h>
-#include <user_interface.h>
-#include <espconn.h>
-#include <json/jsonparse.h>
-#include "dhrequest.h"
 #include "dhconnector.h"
 #include "dhdebug.h"
 #include "dhmem.h"
@@ -26,6 +17,16 @@
 #include "dhstatistic.h"
 #include "mdnsd.h"
 #include "dhconnector_websocket.h"
+#include "dhesperrors.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <gpio.h>
+#include <user_interface.h>
+#include <espconn.h>
+#include <json/jsonparse.h>
+#include <ets_forward.h>
 
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;

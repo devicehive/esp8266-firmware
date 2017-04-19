@@ -10,6 +10,7 @@
 #define _DHCOMMAND_PARSER_H_
 
 #include <c_types.h>
+
 #include "dhgpio.h"
 #include "user_config.h"
 

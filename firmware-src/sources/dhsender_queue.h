@@ -9,8 +9,9 @@
 #ifndef _DHSENDER_QUEUE_H_
 #define _DHSENDER_QUEUE_H_
 
-#include <stdarg.h>
 #include "dhsender_data.h"
+
+#include <stdarg.h>
 
 /**
  *	\brief							Add new request for dhsender in queue.

@@ -8,9 +8,6 @@
  * Description: 'configure' command implementation
  *
  */
-
-#include <osapi.h>
-#include <user_interface.h>
 #include "dhterminal_configure.h"
 #include "dhuart.h"
 #include "dhterminal.h"
@@ -19,6 +16,10 @@
 #include "snprintf.h"
 #include "dhutils.h"
 #include "user_config.h"
+
+#include <osapi.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 LOCAL char mComleaterBuff[48];
 

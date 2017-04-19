@@ -8,12 +8,6 @@
  */
 
 #include "httpd.h"
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <user_interface.h>
-#include <espconn.h>
-#include <mem.h>
 #include "dhdebug.h"
 #include "dhesperrors.h"
 #include "dhsettings.h"
@@ -24,6 +18,14 @@
 #include "dhzc_post.h"
 #include "irom.h"
 #include "user_config.h"
+#include "dhutils.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <user_interface.h>
+#include <espconn.h>
+#include <mem.h>
+#include <ets_forward.h>
 
 #define MAX_CONNECTIONS 5
 #define POST_BUF_SIZE 2048

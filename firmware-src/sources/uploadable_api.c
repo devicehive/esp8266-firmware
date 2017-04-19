@@ -8,11 +8,12 @@
  */
 
 #include "uploadable_api.h"
+#include "dhsettings.h"
+#include "uploadable_page.h"
 
 #include <c_types.h>
 #include <osapi.h>
-#include "dhsettings.h"
-#include "uploadable_page.h"
+#include <ets_forward.h>
 
 HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR uploadable_api_handle(const char *path, const char *key,
 		HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {

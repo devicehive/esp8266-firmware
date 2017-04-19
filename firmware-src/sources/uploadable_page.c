@@ -6,15 +6,17 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "uploadable_page.h"
+#include "dhdebug.h"
+#include "irom.h"
 
 #include <c_types.h>
 #include <spi_flash.h>
 #include <osapi.h>
 #include <os_type.h>
+#include <user_interface.h>
 #include <mem.h>
-#include "irom.h"
-#include "uploadable_page.h"
-#include "dhdebug.h"
+#include <ets_forward.h>
 
 /** Uploadable web page maximum length and ROM addresses. */
 #define UPLOADABLE_PAGE_START_SECTOR 0x68

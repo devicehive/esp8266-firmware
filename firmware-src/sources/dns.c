@@ -6,11 +6,8 @@
  * Author: Nikolay Khabarov
  *
  */
-
-
 #include "dns.h"
 #include "swab.h"
-#include <c_types.h>
 
 const uint8_t LOCAL_DOMAIN[] = "local";
 

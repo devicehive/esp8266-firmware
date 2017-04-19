@@ -8,11 +8,6 @@
  * Description: Queue for dhsender
  *
  */
-
-#include <c_types.h>
-#include <ets_sys.h>
-#include <osapi.h>
-#include <mem.h>
 #include "dhsender_queue.h"
 #include "user_config.h"
 #include "dhdebug.h"
@@ -20,6 +15,13 @@
 #include "snprintf.h"
 #include "dhmem.h"
 #include "dhsender_data.h"
+
+#include <c_types.h>
+#include <ets_sys.h>
+#include <osapi.h>
+#include <mem.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 LOCAL const char STATUS_OK[] = "OK";
 LOCAL const char STATUS_ERROR[] = "Error";

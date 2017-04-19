@@ -10,9 +10,9 @@
  */
 
 #include "snprintf.h"
-
-#include "c_types.h" // ICACHE_FLASH_ATTR
 #include "irom.h"
+
+#include <c_types.h> // ICACHE_FLASH_ATTR
 
 int ICACHE_FLASH_ATTR vsnprintf(char *pString, size_t length, const char *pFormat, va_list ap)
 {

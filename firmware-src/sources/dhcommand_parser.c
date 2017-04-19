@@ -8,14 +8,15 @@
  * Description: Module for parsing server commands
  *
  */
+#include "dhcommand_parser.h"
+#include "dhutils.h"
+#include "dhdata.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <json/jsonparse.h>
-#include "dhcommand_parser.h"
-#include "dhutils.h"
-#include "dhdata.h"
+#include <ets_forward.h>
 
 static char * const UNEXPECTED = "Unexpected parameter";
 static char * const NONINTEGER = "Non integer value";

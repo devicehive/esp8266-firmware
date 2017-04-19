@@ -8,17 +8,19 @@
  * Description: UART terminal implementation
  *
  */
-
-#include <stdarg.h>
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
 #include "dhterminal.h"
 #include "dhuart.h"
 #include "user_config.h"
 #include "snprintf.h"
 #include "dhterminal_commandline.h"
 #include "dhterminal_commands.h"
+
+#include <stdarg.h>
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 #define DEBUG_BUFF_SPACE_FOR_ONE_LINE 128
 LOCAL DHTERMINAL_MODE mMode = SM_NORMAL_MODE;

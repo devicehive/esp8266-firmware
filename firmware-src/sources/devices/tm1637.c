@@ -6,13 +6,14 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "tm1636.h"
 #include "irom.h"
 #include "dhdebug.h"
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <c_types.h>
+#include <ets_forward.h>
 
 RO_DATA const unsigned char segments_table[] = {
 	0b11111100,	// 0

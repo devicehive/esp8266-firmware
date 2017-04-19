@@ -6,13 +6,14 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <osapi.h>
-#include <c_types.h>
 #include "ina219.h"
 #include "dhi2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <c_types.h>
+#include <ets_forward.h>
 
 static int mAddress = INA219_DEFAULT_ADDRESS;
 static float mResistance = 0.1f;

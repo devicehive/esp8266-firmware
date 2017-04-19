@@ -8,12 +8,14 @@
  * Description: SPI implementation
  *
  */
+#include "dhspi.h"
+#include "dhgpio.h"
 
 #include <c_types.h>
 #include <eagle_soc.h>
 #include <osapi.h>
-#include "dhspi.h"
-#include "dhgpio.h"
+#include <gpio.h>
+#include <ets_forward.h>
 
 #define FUNC_HSPI 2
 #define SPI_BASE				0x60000100 // HSPI

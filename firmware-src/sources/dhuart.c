@@ -8,15 +8,16 @@
  * Description: uart hal for esp8266
  *
  */
+#include "dhuart.h"
+#include "user_config.h"
+#include "dhdebug.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <gpio.h>
 #include <user_interface.h>
-#include "dhuart.h"
-#include "user_config.h"
-#include "dhdebug.h"
+#include <ets_forward.h>
 
 #define UART_BASE 0x60000000
 #define UART_INTERUPTION_STATE_REGISTER (UART_BASE + 0x08)

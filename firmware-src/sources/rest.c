@@ -6,11 +6,6 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <stdarg.h>
-#include <c_types.h>
-#include <osapi.h>
-#include <mem.h>
 #include "rest.h"
 #include "dhsettings.h"
 #include "dhcommands.h"
@@ -18,6 +13,13 @@
 #include "user_config.h"
 #include "irom.h"
 #include "dhstatistic.h"
+
+#include <stdarg.h>
+#include <c_types.h>
+#include <osapi.h>
+#include <mem.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 RO_DATA char desription[] = "<html><body>This is firmware RESTfull API endpoint. "\
 	"Please follow the firmware manual to use it.<br><a href='http://devicehive.com/' "\

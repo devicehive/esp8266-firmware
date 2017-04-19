@@ -12,9 +12,9 @@
 #ifndef _DHSENDER_H_
 #define _DHSENDER_H_
 
-#include <ip_addr.h>
-
 #include "dhsender_data.h"
+
+#include <ip_addr.h>
 
 /** Function prototype for new item in queue callback. */
 typedef void (*dhsender_new_item_cb)(void);
