@@ -46,13 +46,14 @@
 #include "devices/max31855.h"
 #include "devices/tm1636.h"
 
+#include "DH/cmd_gpio.h"
+
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <user_interface.h>
 #include <ets_forward.h>
 
-#define GPIONOTIFICATION_MIN_TIMEOUT_MS 50
 #define ADCNOTIFICATION_MIN_TIMEOUT_MS 250
 
 LOCAL void ICACHE_FLASH_ATTR responce_ok(COMMAND_RESULT *cb) {
@@ -139,89 +140,6 @@ LOCAL int ICACHE_FLASH_ATTR uart_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields,
 	}
 	return 0;
 }
-
-#if 1 // GPIO commands
-
-/**
- * @brief Do "gpio/write" command.
- */
-static void ICACHE_FLASH_ATTR do_gpio_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_GPIO_SUITABLE_PINS,
-			0, AF_SET | AF_CLEAR, &fields);
-
-	if (parse_res)
-		responce_error(cb, parse_res);
-	else if( (fields & (AF_SET | AF_CLEAR)) == 0)
-		responce_error(cb, "Dummy request");
-	else if(dh_gpio_write(parse_pins.pins_to_set, parse_pins.pins_to_clear) == 0)
-		responce_ok(cb);
-	else
-		responce_error(cb, "Unsuitable pin");
-}
-
-
-/**
- * @brief Do "gpio/read" command.
- */
-static void ICACHE_FLASH_ATTR do_gpio_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	int init = 0;
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_GPIO_SUITABLE_PINS, 0,
-				AF_INIT | AF_PULLUP | AF_NOPULLUP, &fields);
-
-		if(parse_res) {
-			responce_error(cb, parse_res);
-			// ? init = 0;
-			return;
-		} else {
-			init = dh_gpio_input(parse_pins.pins_to_init, parse_pins.pins_to_pullup, parse_pins.pins_to_nopull);
-		}
-	}
-
-	if(init == 0) {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dh_gpio_read(), system_get_time(), DH_GPIO_SUITABLE_PINS);
-	} else {
-		responce_error(cb, "Wrong initialization parameters");
-	}
-}
-
-
-/**
- * @brief Do "gpio/int" command.
- */
-static void ICACHE_FLASH_ATTR do_gpio_int(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_GPIO_SUITABLE_PINS, dh_gpio_get_timeout(),
-			AF_DISABLE | AF_RISING | AF_FALLING | AF_BOTH | AF_TIMEOUT, &fields);
-
-	if(parse_res)
-		responce_error(cb, parse_res);
-	else if(fields == 0)
-		responce_error(cb, "Wrong action");
-	else if(parse_pins.timeout < GPIONOTIFICATION_MIN_TIMEOUT_MS || parse_pins.timeout > 0x7fffff)
-		responce_error(cb, "Timeout is wrong");
-	else if(0 == dh_gpio_subscribe_int(parse_pins.pins_to_disable,
-	                                   parse_pins.pins_to_rising,
-	                                   parse_pins.pins_to_falling,
-	                                   parse_pins.pins_to_both,
-	                                   parse_pins.timeout))
-		responce_ok(cb);
-	else
-		responce_error(cb, "Unsuitable pin");
-}
-
-#endif // GPIO commands
 
 #if 1 // ADC and PWM commands
 
@@ -1449,9 +1367,9 @@ RO_DATA struct {
 	void (*func)(COMMAND_RESULT*, const char*, const char*, unsigned int);
 } g_command_table[] =
 {
-	{"gpio/write", do_gpio_write},
-	{"gpio/read", do_gpio_read},
-	{"gpio/int", do_gpio_int},
+	{"gpio/write", dh_handle_gpio_write},
+	{"gpio/read", dh_handle_gpio_read},
+	{"gpio/int", dh_handle_gpio_int},
 
 	{"adc/read", do_adc_read},
 	{"adc/int", do_adc_int},

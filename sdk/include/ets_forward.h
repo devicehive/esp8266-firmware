@@ -44,7 +44,6 @@ void ets_timer_setfn(os_timer_t*, ETSTimerFunc*, void*);
 void ets_update_cpu_frequency(int freqmhz);
 void uart_div_modify(int no, unsigned int freq);
 uint8 wifi_get_opmode(void);
-uint32 system_get_time(void);
 int rand(void);
 void ets_delay_us(int ms);
 
