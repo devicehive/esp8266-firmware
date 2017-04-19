@@ -9,7 +9,7 @@
 #ifndef _SNPRINTF_H_
 #define _SNPRINTF_H_
 
-#include <stdio.h>
+#include <c_types.h>
 #include <stdarg.h>
 
 /**

@@ -99,7 +99,7 @@ int ICACHE_FLASH_ATTR vsnprintf(char *pString, size_t length, const char *pForma
 			}
 			break;
 			default:
-				return EOF;
+				return -1; // EOF
 			}
 
 			pFormat++;

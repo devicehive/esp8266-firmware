@@ -22,7 +22,6 @@
 #include <ets_sys.h>
 #include <osapi.h>
 #include <os_type.h>
-#include <ctype.h>
 #include <gpio.h>
 #include <user_interface.h>
 #include <espconn.h>
