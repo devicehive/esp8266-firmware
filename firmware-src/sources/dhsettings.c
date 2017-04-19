@@ -123,7 +123,7 @@ int ICACHE_FLASH_ATTR dhsettings_commit(void) {
 }
 
 int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
-	os_memset(mSettingsData, 0, sizeof(mSettingsData));
+	os_memset(&mSettingsData, 0, sizeof(mSettingsData));
 	if(force) {
 		if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK &&
 				spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) == SPI_FLASH_RESULT_OK) {
