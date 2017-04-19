@@ -9,7 +9,7 @@
  *
  */
 #include "dhonewire.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "user_config.h"
 #include "dhdebug.h"
 
@@ -35,16 +35,16 @@ LOCAL os_timer_t mOWIntTimer;
 
 LOCAL void ICACHE_FLASH_ATTR lock_int(void) {
 	if(mIntPins)
-		dhgpio_subscribe_extra_int(mIntPins, 0, 0, 0);
+		dh_gpio_subscribe_extra_int(mIntPins, 0, 0, 0);
 }
 
 LOCAL void ICACHE_FLASH_ATTR unlock_int(void) {
 	GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, mIntPins);
-	dhgpio_subscribe_extra_int(0, 0, mIntPins, 0);
+	dh_gpio_subscribe_extra_int(0, 0, mIntPins, 0);
 }
 
 int ICACHE_FLASH_ATTR dhonewire_set_pin(unsigned int pin) {
-	if(((1 << pin) & DHGPIO_SUITABLE_PINS) == 0)
+	if((DH_GPIO_PIN(pin) & DH_GPIO_SUITABLE_PINS) == 0)
 		return 0;
 	mOneWirePin = pin;
 	return 1;
@@ -59,9 +59,9 @@ LOCAL int ICACHE_FLASH_ATTR dhonewire_reset(unsigned int pin, unsigned int reset
 	const unsigned int pinstate = gpio_input_get() & pin;
 	unsigned int i;
 	unsigned int presence = 0;
-	dhgpio_open_drain(pin, 0);
-	dhgpio_pull(pin, 0);
-	dhgpio_prepare_pins(pin, 1);
+	dh_gpio_open_drain(pin, 0);
+	dh_gpio_pull_up(pin, 0);
+	dh_gpio_prepare_pins(pin, 1);
 	if(pinstate == 0) {
 		gpio_output_set(pin, 0, pin, 0);
 		os_delay_us(500);
@@ -237,8 +237,8 @@ int ICACHE_FLASH_ATTR dhonewire_search(char *buf, unsigned long *len, char comma
 
 LOCAL void ICACHE_FLASH_ATTR dhonewire_int_search(void *arg) {
 	int i;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		const DHGpioPinMask pin = DH_GPIO_PIN(i);
 		if(pin & mWaitSearchPins) {
 			char buf[INTERFACES_BUF_SIZE];
 			unsigned long len = sizeof(buf);
@@ -265,7 +265,7 @@ LOCAL void ICACHE_FLASH_ATTR dhonewire_int_search(void *arg) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhgpio_extra_int(unsigned int caused_pins) {
+void ICACHE_FLASH_ATTR dh_gpio_extra_int_cb(DHGpioPinMask caused_pins) {
 	os_timer_disarm(&mOWIntTimer);
 	mWaitSearchPins |= caused_pins;
 	os_timer_setfn(&mOWIntTimer, (os_timer_func_t *)dhonewire_int_search, NULL);
@@ -273,7 +273,7 @@ void ICACHE_FLASH_ATTR dhgpio_extra_int(unsigned int caused_pins) {
 }
 
 int ICACHE_FLASH_ATTR dhonewire_int(unsigned int search_pins, unsigned int disable_pins) {
-	if(dhgpio_subscribe_extra_int(disable_pins, 0, search_pins, 0) == 0)
+	if(!!dh_gpio_subscribe_extra_int(disable_pins, 0, search_pins, 0))
 		return 0;
 	mIntPins |= search_pins;
 	mIntPins &= ~disable_pins;

@@ -15,7 +15,7 @@
 #include "dhsettings.h"
 #include "dhconnector.h"
 #include "dhap.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "webserver.h"
 #include "irom.h"
 #include "uploadable_page.h"
@@ -118,7 +118,7 @@ void ICACHE_FLASH_ATTR system_init_done(void) {
 
 void user_init(void) {
 	int ever_saved;
-	gpio_output_set(0, 0, 0, DHGPIO_SUITABLE_PINS);
+	gpio_output_set(0, 0, 0, DH_GPIO_SUITABLE_PINS);
 	dhsettings_init(&ever_saved);
 	if(ever_saved == 0) { // if first run on this chip
 		uploadable_page_delete();
@@ -136,7 +136,7 @@ void user_init(void) {
 		if(dhsettings_get_wifi_mode() == WIFI_MODE_CLIENT) {
 			dhsender_queue_init();
 			dhconnector_init();
-			dhgpio_init();
+			dh_gpio_init();
 		} else if(dhsettings_get_wifi_mode() == WIFI_MODE_AP) {
 			dhap_init(dhsettings_get_wifi_ssid(), dhsettings_get_wifi_password());
 		}

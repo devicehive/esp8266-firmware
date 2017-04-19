@@ -9,7 +9,7 @@
 #include "max31855.h"
 #include "dhspi.h"
 #include "dhutils.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 
 #include <osapi.h>
 #include <c_types.h>
@@ -31,7 +31,7 @@ char * ICACHE_FLASH_ATTR max31855_read(int pin, float *temperature) {
 	dhspi_set_mode(SPI_CPOL0CPHA0);
 
 	//start converting
-	dhgpio_write((1 << mCSPin), 0);
+	dh_gpio_write(DH_GPIO_PIN(mCSPin), 0);
 	delay_ms(100);
 
 	dhspi_read((char *)&buf, sizeof(buf));

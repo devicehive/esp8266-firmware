@@ -11,7 +11,6 @@
 #include "dhsender_queue.h"
 #include "user_config.h"
 #include "dhdebug.h"
-#include "dhgpio.h"
 #include "snprintf.h"
 #include "dhmem.h"
 #include "dhsender_data.h"

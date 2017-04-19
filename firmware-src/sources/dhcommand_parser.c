@@ -250,7 +250,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				pinnum = -1;
 			} else {
 				const int res = strToUInt(&jparser.json[jparser.vstart], &pinnum);
-				if(!res || pinnum < 0 || pinnum > DHGPIO_MAXGPIONUM || (pins_found & (1 << pinnum)))
+				if(!res || pinnum < 0 || pinnum >= DH_GPIO_PIN_COUNT || (pins_found & DH_GPIO_PIN(pinnum)))
 					return "Wrong argument";
 				pins_found |= (1 << pinnum);
 				pinmask =  (1 << pinnum);
@@ -282,7 +282,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						int i;
 						if(pinnum > 0 )
 							out->storage.uint_values[pinnum] = 0;
-						else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
+						else for(i = 0; i < DH_GPIO_PIN_COUNT; i++)
 							out->storage.uint_values[i] = 0;
 						out->pin_value_readed |= pinmask;
 						*readedfields |= AF_VALUES;
@@ -291,7 +291,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						int i;
 						if(pinnum > 0 )
 							out->storage.float_values[pinnum] = 0;
-						else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
+						else for(i = 0; i < DH_GPIO_PIN_COUNT; i++)
 							out->storage.float_values[i] = 0;
 						out->pin_value_readed |= pinmask;
 						*readedfields |= AF_FLOATVALUES;
@@ -332,7 +332,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						return NONFLOAT;
 					if(pinnum > 0 )
 						out->storage.float_values[pinnum] = value;
-					else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
+					else for(i = 0; i < DH_GPIO_PIN_COUNT; i++)
 						out->storage.float_values[i] = value;
 					out->pin_value_readed |= pinmask;
 					*readedfields |= AF_FLOATVALUES;
@@ -342,7 +342,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						return NONINTEGER;
 					if(pinnum > 0 )
 						out->storage.uint_values[pinnum] = value;
-					else for(i = 0; i <= DHGPIO_MAXGPIONUM; i++)
+					else for(i = 0; i < DH_GPIO_PIN_COUNT; i++)
 						out->storage.uint_values[i] = value;
 					out->pin_value_readed |= pinmask;
 					*readedfields |= AF_VALUES;

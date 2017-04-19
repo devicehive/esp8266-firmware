@@ -9,7 +9,7 @@
  *
  */
 #include "dhspi.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 
 #include <c_types.h>
 #include <eagle_soc.h>
@@ -54,21 +54,21 @@ LOCAL unsigned char mSPIMode = 0;
 LOCAL void ICACHE_FLASH_ATTR dhspi_cs_enable() {
 	if(mSPICSPin == DHSPI_NOCS)
 		return;
-	dhgpio_write(0, (1 << mSPICSPin));
+	dh_gpio_write(0, DH_GPIO_PIN(mSPICSPin));
 	os_delay_us(DHSPI_CS_DELAY_US);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhspi_cs_disable() {
 	if(mSPICSPin == DHSPI_NOCS)
 		return;
-	dhgpio_write((1 << mSPICSPin), 0);
+	dh_gpio_write(DH_GPIO_PIN(mSPICSPin), 0);
 	os_delay_us(DHSPI_CS_DELAY_US);
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhspi_reinit() {
-	const unsigned int spipins = (1 << 12) | (1 << 13) | (1 << 14);
-	dhgpio_open_drain(0, spipins);
-	dhgpio_pull(0, spipins);
+	const DHGpioPinMask spipins = DH_GPIO_PIN(12) | DH_GPIO_PIN(13) | DH_GPIO_PIN(14);
+	dh_gpio_open_drain(0, spipins);
+	dh_gpio_pull_up(0, spipins);
 	gpio_output_set(0, 0, 0, spipins);
 
 	WRITE_PERI_REG(PERIPHS_IO_MUX, 0x105);
@@ -114,8 +114,8 @@ int ICACHE_FLASH_ATTR dhspi_set_mode(unsigned int mode) {
 int ICACHE_FLASH_ATTR dhspi_set_cs_pin(unsigned int cs_pin) {
 	if(cs_pin != DHSPI_NOCS
 			&& (cs_pin == 12 || cs_pin == 13 || cs_pin == 14
-					|| cs_pin > DHGPIO_MAXGPIONUM
-					|| ((1 << cs_pin) & DHGPIO_SUITABLE_PINS) == 0))
+					|| cs_pin >= DH_GPIO_PIN_COUNT
+					|| (DH_GPIO_PIN(cs_pin) & DH_GPIO_SUITABLE_PINS) == 0))
 		return 0;
 	mSPICSPin = cs_pin;
 	return 1;

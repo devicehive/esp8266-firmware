@@ -9,7 +9,7 @@
  *
  */
 #include "dhi2c.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "user_config.h"
 
 #include <c_types.h>
@@ -27,7 +27,7 @@ LOCAL unsigned int mSCLPin = (1 << 2);
 DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_init(unsigned int sda_pin, unsigned int scl_pin) {
 	const unsigned int SDA = (1 << sda_pin);
 	const unsigned int SCL = (1 << scl_pin);
-	if((SDA & DHGPIO_SUITABLE_PINS) == 0 || (SCL & DHGPIO_SUITABLE_PINS) == 0 || SDA == SCL)
+	if((SDA & DH_GPIO_SUITABLE_PINS) == 0 || (SCL & DH_GPIO_SUITABLE_PINS) == 0 || SDA == SCL)
 		return DHI2C_WRONG_PARAMETERS;
 
 	mSDAPin = SDA;
@@ -37,9 +37,9 @@ DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_init(unsigned int sda_pin, unsigned int scl
 }
 
 void ICACHE_FLASH_ATTR dhi2c_reinit(void) {
-	dhgpio_open_drain(mSDAPin | mSCLPin, 0);
-	dhgpio_prepare_pins(mSDAPin | mSCLPin, 1);
-	dhgpio_pull(mSDAPin | mSCLPin, 0);
+	dh_gpio_open_drain(mSDAPin | mSCLPin, 0);
+	dh_gpio_prepare_pins(mSDAPin | mSCLPin, 1);
+	dh_gpio_pull_up(mSDAPin | mSCLPin, 0);
 	gpio_output_set(mSDAPin | mSCLPin, 0, mSDAPin | mSCLPin, 0);
 }
 

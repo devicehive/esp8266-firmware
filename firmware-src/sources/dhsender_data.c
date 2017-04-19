@@ -11,7 +11,7 @@
 #include "dhsender_data.h"
 #include "dhdata.h"
 #include "dhdebug.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "snprintf.h"
 
 #include <c_types.h>
@@ -63,8 +63,8 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf,
 		unsigned int buflen, unsigned int state, unsigned int suitable) {
 	unsigned int len = snprintf(buf, buflen, "{");
 	unsigned int i;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		const DHGpioPinMask pin = DH_GPIO_PIN(i);
 		const int pinvalue = (state & pin) ? 1 : 0;
 		if(suitable & pin) {
 			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":%d" : ", \"%d\":%d", i, pinvalue);
@@ -78,9 +78,10 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf,
 	unsigned int len = snprintf(buf, buflen, "{\"caused\":[");
 	unsigned int i;
 	int comma = 0;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
-		if((suitable & pin) == 0)
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		const DHGpioPinMask pin = DH_GPIO_PIN(i);
+		if(!(suitable & pin))
+
 			continue;
 		if( pin & data->caused) {
 			len += snprintf(&buf[len], buflen - len, comma?", \"%d\"":"\"%d\"", i);

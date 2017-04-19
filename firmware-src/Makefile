@@ -14,7 +14,7 @@ TARGETELF		= $(OBJDIR)/devicehive.elf
 INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include $(CURDIR)/sources)
 LIBDIR			= $(addprefix -L,$(SDKPATH)/lib)
 LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto)
-SOURCES			= $(wildcard sources/*.c) $(wildcard drivers/*.c) $(wildcard sources/devices/*.c) 
+SOURCES			= $(wildcard sources/*.c) $(wildcard drivers/*.c) $(wildcard sources/devices/*.c) $(wildcard sources/DH/*.c)
 OBJECTS			= $(addprefix $(OBJDIR)/, $(SOURCES:%.c=%.o))
 GITVER			= $(shell git rev-parse HEAD 2> /dev/null || echo \"not a git repo\")
 CFLAGS			= -O2 -Wall -mlongcalls -mtext-section-literals -D__ets__ -DICACHE_FLASH -nostdlib -std=gnu89 -DFIRMWARE_GIT_REVISION=\"$(GITVER)\"

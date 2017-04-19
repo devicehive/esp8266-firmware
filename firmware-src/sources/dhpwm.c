@@ -7,7 +7,7 @@
  *
  */
 #include "dhpwm.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "dhdebug.h"
 #include "user_config.h"
 
@@ -90,11 +90,11 @@ void ICACHE_FLASH_ATTR arm_pwm_timer(void) {
 	dhdebug("PWM enable with period %u us, timer %u/%u tacts", mPeriodUs, tacts, 1 << timer_div);
 }
 
-int ICACHE_FLASH_ATTR dhpwm_set_pwm(unsigned int *pinsduty, unsigned int pinsmask, unsigned int periodus, unsigned int count) {
+int ICACHE_FLASH_ATTR dhpwm_set_pwm(uint32_t *pinsduty, unsigned int pinsmask, unsigned int periodus, unsigned int count) {
 	int i;
-	if((pinsmask | DHGPIO_SUITABLE_PINS) != DHGPIO_SUITABLE_PINS || periodus < 500 || periodus >= 2000004000)
+	if((pinsmask | DH_GPIO_SUITABLE_PINS) != DH_GPIO_SUITABLE_PINS || periodus < 500 || periodus >= 2000004000)
 		return 0;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
 		if(pinsduty[i] > DHPWM_DEPTH)
 			return 0;
 	}
@@ -102,8 +102,8 @@ int ICACHE_FLASH_ATTR dhpwm_set_pwm(unsigned int *pinsduty, unsigned int pinsmas
 	mPeriodUs = periodus;
 	mTotalCount = count;
 	dhpwm_disable_pins(pinsmask);
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		if((pinsmask & (1 << i))) {
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		if((pinsmask & DH_GPIO_PIN(i))) {
 			dhdebug("PWM for %d pin, duty: %d", i, pinsduty[i]);
 			if(pinsduty[i]) {
 				mUsedPins |= (1 << i);
@@ -113,7 +113,7 @@ int ICACHE_FLASH_ATTR dhpwm_set_pwm(unsigned int *pinsduty, unsigned int pinsmas
 			}
 		}
 	}
-	dhgpio_prepare_pins(mUsedPins | mDisablePinOn[0], 0);
+	dh_gpio_prepare_pins(mUsedPins | mDisablePinOn[0], 0);
 	gpio_output_set(mUsedPins, mDisablePinOn[0], mUsedPins | mDisablePinOn[0], 0);
 	if(mUsedPins)
 		arm_pwm_timer();

@@ -11,7 +11,7 @@
 
 #include <c_types.h>
 
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "user_config.h"
 
 /** Structure with parsing result */
@@ -30,10 +30,10 @@ typedef struct {
 	uint32_t periodus;								///< converted frequency field value.
 	uint32_t count;									///< count field value.
 	union {
-		uint32_t uint_values[DHGPIO_MAXGPIONUM + 1];///< Pin values.
-		float float_values[DHGPIO_MAXGPIONUM + 1];	///< Pin values.
+		uint32_t uint_values[DH_GPIO_PIN_COUNT];///< Pin values.
+		float float_values[DH_GPIO_PIN_COUNT];	///< Pin values.
 		struct {
-			uint8_t key_data[DHGPIO_MAXGPIONUM * 4];///< Key for authentication.
+			uint8_t key_data[(DH_GPIO_PIN_COUNT-1) * 4];///< Key for authentication.
 			uint8_t key_len;						///< Key length.
 		} key;
 	} storage;

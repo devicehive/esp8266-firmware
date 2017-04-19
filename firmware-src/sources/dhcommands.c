@@ -10,7 +10,7 @@
  */
 #include "dhcommands.h"
 #include "dhsender_queue.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "dhadc.h"
 #include "dhnotification.h"
 #include "snprintf.h"
@@ -150,14 +150,14 @@ static void ICACHE_FLASH_ATTR do_gpio_write(COMMAND_RESULT *cb, const char *comm
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHGPIO_SUITABLE_PINS,
+			&parse_pins, DH_GPIO_SUITABLE_PINS,
 			0, AF_SET | AF_CLEAR, &fields);
 
 	if (parse_res)
 		responce_error(cb, parse_res);
 	else if( (fields & (AF_SET | AF_CLEAR)) == 0)
 		responce_error(cb, "Dummy request");
-	else if(dhgpio_write(parse_pins.pins_to_set, parse_pins.pins_to_clear))
+	else if(dh_gpio_write(parse_pins.pins_to_set, parse_pins.pins_to_clear) == 0)
 		responce_ok(cb);
 	else
 		responce_error(cb, "Unsuitable pin");
@@ -169,12 +169,12 @@ static void ICACHE_FLASH_ATTR do_gpio_write(COMMAND_RESULT *cb, const char *comm
  */
 static void ICACHE_FLASH_ATTR do_gpio_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
 {
-	int init = 1;
+	int init = 0;
 	if(paramslen) {
 		gpio_command_params parse_pins;
 		ALLOWED_FIELDS fields = 0;
 		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DHGPIO_SUITABLE_PINS, 0,
+				&parse_pins, DH_GPIO_SUITABLE_PINS, 0,
 				AF_INIT | AF_PULLUP | AF_NOPULLUP, &fields);
 
 		if(parse_res) {
@@ -182,12 +182,12 @@ static void ICACHE_FLASH_ATTR do_gpio_read(COMMAND_RESULT *cb, const char *comma
 			// ? init = 0;
 			return;
 		} else {
-			init = dhgpio_initialize(parse_pins.pins_to_init, parse_pins.pins_to_pullup, parse_pins.pins_to_nopull);
+			init = dh_gpio_input(parse_pins.pins_to_init, parse_pins.pins_to_pullup, parse_pins.pins_to_nopull);
 		}
 	}
 
-	if(init) {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dhgpio_read(), system_get_time(), DHGPIO_SUITABLE_PINS);
+	if(init == 0) {
+		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, dh_gpio_read(), system_get_time(), DH_GPIO_SUITABLE_PINS);
 	} else {
 		responce_error(cb, "Wrong initialization parameters");
 	}
@@ -202,7 +202,7 @@ static void ICACHE_FLASH_ATTR do_gpio_int(COMMAND_RESULT *cb, const char *comman
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DHGPIO_SUITABLE_PINS, dhgpio_get_timeout(),
+			&parse_pins, DH_GPIO_SUITABLE_PINS, dh_gpio_get_timeout(),
 			AF_DISABLE | AF_RISING | AF_FALLING | AF_BOTH | AF_TIMEOUT, &fields);
 
 	if(parse_res)
@@ -211,8 +211,11 @@ static void ICACHE_FLASH_ATTR do_gpio_int(COMMAND_RESULT *cb, const char *comman
 		responce_error(cb, "Wrong action");
 	else if(parse_pins.timeout < GPIONOTIFICATION_MIN_TIMEOUT_MS || parse_pins.timeout > 0x7fffff)
 		responce_error(cb, "Timeout is wrong");
-	else if(dhgpio_int(parse_pins.pins_to_disable, parse_pins.pins_to_rising, parse_pins.pins_to_falling, \
-	        parse_pins.pins_to_both, parse_pins.timeout))
+	else if(0 == dh_gpio_subscribe_int(parse_pins.pins_to_disable,
+	                                   parse_pins.pins_to_rising,
+	                                   parse_pins.pins_to_falling,
+	                                   parse_pins.pins_to_both,
+	                                   parse_pins.timeout))
 		responce_ok(cb);
 	else
 		responce_error(cb, "Unsuitable pin");
@@ -605,7 +608,7 @@ static void ICACHE_FLASH_ATTR do_onewire_master_int(COMMAND_RESULT *cb, const ch
 	gpio_command_params parse_pins;
 	ALLOWED_FIELDS fields = 0;
 
-	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DHGPIO_SUITABLE_PINS, dhgpio_get_timeout(), AF_DISABLE | AF_PRESENCE, &fields);
+	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_GPIO_SUITABLE_PINS, dh_gpio_get_timeout(), AF_DISABLE | AF_PRESENCE, &fields);
 	if(parse_res)
 		responce_error(cb, parse_res);
 	else if(fields == 0)

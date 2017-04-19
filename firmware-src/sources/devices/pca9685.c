@@ -8,7 +8,7 @@
  */
 #include "pca9685.h"
 #include "dhi2c.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "dhdebug.h"
 #include "dhutils.h"
 
@@ -22,8 +22,8 @@ DHI2C_STATUS ICACHE_FLASH_ATTR pca9685_control(int sda, int scl, float *pinsduty
 	DHI2C_STATUS status;
 	unsigned int i;
 
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		if(pinsmask & (1 << i)) {
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		if(pinsmask & DH_GPIO_PIN(i)) {
 			if(pinsduty[i] > 100.0f || pinsduty[i] < 0.0f)
 				return DHI2C_WRONG_PARAMETERS;
 		}
@@ -75,8 +75,8 @@ DHI2C_STATUS ICACHE_FLASH_ATTR pca9685_control(int sda, int scl, float *pinsduty
 	buf[1] = 0; // LED_OFF_L
 	buf[2] = 0; // LED_OFF_H
 	unsigned short *v = (unsigned short *)&buf[3]; // LED_ON_HL
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		if(pinsmask & (1 << i)) {
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		if(pinsmask & DH_GPIO_PIN(i)) {
 			*v = pinsduty[i] * 40.95f;
 			buf[0] = 0x06 + 4 * i;
 			if((status = dhi2c_write(mAddress, buf, 5, 1)) != DHI2C_OK) {
