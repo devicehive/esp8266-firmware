@@ -62,9 +62,9 @@ LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, in
 	if (is_irom(data)) {
 		char buf[len];
 		irom_read(buf, len, data);
-		res = espconn_send(conn, buf, len);
+		res = espconn_send(conn, (uint8_t*)buf, len);
 	} else {
-		res = espconn_send(conn, (char *)data, len);
+		res = espconn_send(conn, (uint8_t*)data, len);
 	}
 	if(res) {
 		dhstat_got_network_error();

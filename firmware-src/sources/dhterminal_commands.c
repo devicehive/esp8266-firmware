@@ -116,7 +116,7 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 		struct station_config stationConfig;
 		if(!wifi_station_get_config(&stationConfig)) {
 			os_memset(&stationConfig, 0, sizeof(stationConfig));
-			os_strcpy(stationConfig.ssid, "[Can not get SSID]");
+			os_strcpy((char*)stationConfig.ssid, "[Can not get SSID]");
 		}
 		const char *ssid = (const char*)stationConfig.ssid;
 		switch(wifi_station_get_connect_status()) {

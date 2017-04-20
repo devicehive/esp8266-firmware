@@ -179,7 +179,7 @@ LOCAL void network_connect_cb(void *arg) {
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
 	int res;
-	if( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
+	if( (res = espconn_send(&mDHConnector, (uint8_t*)request->data, request->len)) != ESPCONN_OK) {
 		mConnectionState = CS_DISCONNECT;
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
 		espconn_disconnect(&mDHConnector);
@@ -347,8 +347,8 @@ void ICACHE_FLASH_ATTR dhconnector_init(void) {
 	wifi_set_phy_mode(PHY_MODE_11N);
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
-	snprintf(stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
-	snprintf(stationConfig.password, sizeof(stationConfig.password), "%s", dhsettings_get_wifi_password());
+	snprintf((char*)stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
+	snprintf((char*)stationConfig.password, sizeof(stationConfig.password), "%s", dhsettings_get_wifi_password());
 	if(dhsettings_get_devicehive_deviceid()[0]) {
 		char hostname[33];
 		// limit length to 32 chars due to the sdk limit

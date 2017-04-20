@@ -157,7 +157,7 @@ int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
 	if(mMDNSdConn.proto.udp)
 		mdnsd_stop();
 
-	mName = name;
+	mName = (const uint8_t*)name;
 	mAddr = addr;
 
 	mMDNSAddr.addr = addr;

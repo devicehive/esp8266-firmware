@@ -33,18 +33,18 @@ LOCAL char * ICACHE_FLASH_ATTR dht_read(int pin, char *buf) {
 }
 
 char * ICACHE_FLASH_ATTR dht11_read(int pin, int *humidity, int *temperature) {
-	unsigned char buf[DHT_PACKET_SIZE];
+	char buf[DHT_PACKET_SIZE];
 	char *r = dht_read(pin, buf);
 	if(r)
 		return r;
-	*humidity = buf[0];
+	*humidity = (uint8_t)buf[0];
 	if(temperature)
-		*temperature = buf[2];
+		*temperature = (uint8_t)buf[2];
 	return NULL;
 }
 
 char * ICACHE_FLASH_ATTR dht22_read(int pin, float *humidity, float *temperature) {
-	unsigned char buf[DHT_PACKET_SIZE];
+	char buf[DHT_PACKET_SIZE];
 	char *r = dht_read(pin, buf);
 	if(r)
 		return r;

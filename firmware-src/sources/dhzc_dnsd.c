@@ -40,7 +40,7 @@ LOCAL int ICACHE_FLASH_ATTR dnsd_answer(char *data, unsigned int len) {
 	struct ip_info info;
 	if(wifi_get_ip_info(SOFTAP_IF, &info) == 0)
 		info.ip.addr = 0;
-	return len + dns_add_answer(&data[len], NULL, NULL, DNS_TYPE_A, 60,
+	return len + dns_add_answer((uint8_t*)&data[len], NULL, NULL, DNS_TYPE_A, 60,
 			sizeof(info.ip.addr), (uint8_t *)&info.ip.addr, NULL, NULL);
 }
 
@@ -87,7 +87,7 @@ LOCAL void ICACHE_FLASH_ATTR dhzc_dnsd_recv_cb(void *arg, char *data, unsigned s
 						sizeof(premot->remote_ip));
 			}
 
-			if(espconn_send(conn, mDNSAnswerBuffer, rlen)) {
+			if(espconn_send(conn, (uint8_t*)mDNSAnswerBuffer, rlen)) {
 				dhdebug("Failed to send response");
 				mSendingInProgress = 0;
 				if(conn->type & ESPCONN_TCP)

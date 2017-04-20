@@ -175,7 +175,7 @@ LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR dhi2c_act(unsigned int address, char *buf, 
 	for(i = 0; i < len; i++) {
 		system_soft_wdt_feed();
 		if(is_read)	{
-			res = dhi2c_readbyte(&buf[i], (i + 1) == len);
+			res = dhi2c_readbyte((unsigned char*)&buf[i], (i + 1) == len);
 		} else {
 			res = dhi2c_writebyte(buf[i]);
 		}

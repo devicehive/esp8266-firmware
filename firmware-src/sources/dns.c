@@ -14,7 +14,7 @@ const uint8_t LOCAL_DOMAIN[] = "local";
 LOCAL uint32_t to_fqdn(uint8_t *buf, const uint8_t *d) {
 	uint32_t pos;
 	pos = 1;
-	char *sp = buf;
+	uint8_t *sp = buf;
 	uint32_t len = 0;
 	while(*d) {
 		if(*d == '.') {

@@ -59,7 +59,7 @@ LOCAL char * ICACHE_FLASH_ATTR readUIntField(struct jsonparse_state *jparser, AL
 			*readedfields |= field;
 			return 0;
 		}
-		const int res = strToUInt(&jparser->json[jparser->vstart], &value);
+		const int res = strToUInt(&jparser->json[jparser->vstart], (unsigned int*)&value);
 		if(!res)
 			return NONINTEGER;
 		*out = value;
@@ -109,7 +109,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						out->uart_speed = 0;
 						continue;
 					}
-					int res = strToUInt(&jparser.json[jparser.vstart], &val);
+					int res = strToUInt(&jparser.json[jparser.vstart], (unsigned int*)&val);
 					if(!res)
 						return "Wrong mode integer value";
 					if(fields & AF_UARTMODE) {
@@ -175,7 +175,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 						p = 2;
 					else
 						p = 0;
-					const int res = hexToByte(&jparser.json[jparser.vstart + p], &c);
+					const int res = hexToByte(&jparser.json[jparser.vstart + p], (uint8_t*)&c);
 					if(res != (jparser.vlen - p))
 						return "Address is wrong";
 					out->address = c;
@@ -223,7 +223,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					return UNEXPECTED;
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
-					out->storage.key.key_len = dhdata_decode(&jparser.json[jparser.vstart], jparser.vlen, out->storage.key.key_data, sizeof(out->storage.key.key_data));
+					out->storage.key.key_len = dhdata_decode(&jparser.json[jparser.vstart], jparser.vlen, (char*)out->storage.key.key_data, sizeof(out->storage.key.key_data));
 					if(out->storage.key.key_len == 0)
 						return "Key is broken";
 					*readedfields |= AF_KEY;
@@ -249,7 +249,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				pinmask = all;
 				pinnum = -1;
 			} else {
-				const int res = strToUInt(&jparser.json[jparser.vstart], &pinnum);
+				const int res = strToUInt(&jparser.json[jparser.vstart], (unsigned int*)&pinnum);
 				if(!res || pinnum < 0 || pinnum >= DH_GPIO_PIN_COUNT || (pins_found & DH_GPIO_PIN(pinnum)))
 					return "Wrong argument";
 				pins_found |= (1 << pinnum);
@@ -338,7 +338,7 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 					*readedfields |= AF_FLOATVALUES;
 				} else if((fields & AF_VALUES)) { // BE CAREFULL, all digits values have to be under this if
 					int value, i;
-					if(!strToUInt(&jparser.json[jparser.vstart], &value))
+					if(!strToUInt(&jparser.json[jparser.vstart], (unsigned int*)&value))
 						return NONINTEGER;
 					if(pinnum > 0 )
 						out->storage.uint_values[pinnum] = value;

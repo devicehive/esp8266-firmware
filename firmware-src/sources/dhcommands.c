@@ -1121,9 +1121,9 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 			if(result == MFRC522_STATUS_OK) {
 				uint8_t len = (sizeof(parse_pins.data) > 0xFF) ? 0xFF : sizeof(parse_pins.data);
 				if(check)
-					result = MFRC522_MIFARE_Write(parse_pins.address, parse_pins.data, parse_pins.data_len);
+					result = MFRC522_MIFARE_Write(parse_pins.address, (uint8_t*)parse_pins.data, parse_pins.data_len);
 				else
-					result = MFRC522_MIFARE_Read(parse_pins.address, parse_pins.data, &len);
+					result = MFRC522_MIFARE_Read(parse_pins.address, (uint8_t*)parse_pins.data, &len);
 				if(result == MFRC522_STATUS_OK) {
 					parse_pins.count = len;
 					if(check)
