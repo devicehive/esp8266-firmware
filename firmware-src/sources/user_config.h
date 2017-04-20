@@ -36,4 +36,12 @@
 /** HTTP webserver and RESTful service port. */
 #define HTTPD_PORT 80
 
+// customize command set
+#define DH_COMMANDS_GPIO // enable GPIO commands
+#define DH_COMMANDS_ADC  // enable ADC commands
+#define DH_COMMANDS_PWM  // enable PWM commands
+#define DH_COMMANDS_UART // enable UART commands
+#define DH_COMMANDS_I2C  // enable I2C commands
+#define DH_COMMANDS_SPI  // enable SPI commands
+
 #endif /* _USER_CONFIG_H_ */

@@ -341,7 +341,7 @@ int ICACHE_FLASH_ATTR dh_gpio_subscribe_extra_int(DHGpioPinMask pins_disable,
 }
 
 
-#if 1 // command handlers
+#ifdef DH_COMMANDS_GPIO // GPIO command handlers
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
@@ -444,4 +444,4 @@ void ICACHE_FLASH_ATTR dh_handle_gpio_int(COMMAND_RESULT *cmd_res, const char *c
 	}
 }
 
-#endif // command handlers
+#endif /* DH_COMMANDS_GPIO */

@@ -1440,12 +1440,17 @@ RO_DATA struct {
 	void (*func)(COMMAND_RESULT*, const char*, const char*, unsigned int);
 } g_command_table[] =
 {
+#ifdef DH_COMMANDS_GPIO
 	{"gpio/write", dh_handle_gpio_write},
 	{"gpio/read", dh_handle_gpio_read},
 	{"gpio/int", dh_handle_gpio_int},
+#endif /* DH_COMMANDS_GPIO */
 
+#ifdef DH_COMMANDS_ADC
 	{"adc/read", dh_handle_adc_read},
 	{"adc/int", dh_handle_adc_int},
+#endif /* DH_COMMANDS_ADC */
+
 	{"pwm/control", do_pwm_control},
 
 	{"uart/write", do_uart_write},

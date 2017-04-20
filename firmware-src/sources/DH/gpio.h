@@ -8,6 +8,7 @@
 #define _DH_GPIO_H_
 
 #include <c_types.h>
+#include "user_config.h"
 
 /**
  * @brief Pin mask type.
@@ -163,7 +164,7 @@ int dh_gpio_subscribe_extra_int(DHGpioPinMask pins_disable,
 extern void dh_gpio_extra_int_cb(DHGpioPinMask caused_pins);
 
 
-#if 1 // command handlers
+#ifdef DH_COMMANDS_GPIO // GPIO command handlers
 #include "dhsender_data.h"
 
 /**
@@ -186,6 +187,5 @@ void dh_handle_gpio_read(COMMAND_RESULT *cmd_res, const char *command,
 void dh_handle_gpio_int(COMMAND_RESULT *cmd_res, const char *command,
                         const char *params, unsigned int params_len);
 
-#endif // command handlers
-
+#endif /* DH_COMMANDS_GPIO */
 #endif /* _DH_GPIO_H_ */

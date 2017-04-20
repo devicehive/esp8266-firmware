@@ -47,7 +47,7 @@ void ICACHE_FLASH_ATTR dh_adc_loop(unsigned int period_ms)
 }
 
 
-#if 1 // command handlers
+#ifdef DH_COMMANDS_ADC // ADC command handlers
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
@@ -121,4 +121,4 @@ void ICACHE_FLASH_ATTR dh_handle_adc_int(COMMAND_RESULT *cmd_res, const char *co
 	}
 }
 
-#endif // command handlers
+#endif /* DH_COMMANDS_ADC */
