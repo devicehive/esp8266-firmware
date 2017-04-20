@@ -9,7 +9,7 @@
  *
  */
 #include "dhdebug.h"
-#include "dhuart.h"
+#include "DH/uart.h"
 #include "dhsender_queue.h"
 #include "dhterminal.h"
 #include "dhsettings.h"
@@ -126,7 +126,7 @@ void user_init(void) {
 	}
 	dhdebug("*****************************");
 	if(mSpecialMode) { // if special mode was called by user or if there is no settings
-		dhuart_leds(DHUART_LEDS_ON);
+		dh_uart_leds(DH_UART_LEDS_ON);
 		dhdebug("Wi-Fi Zero Configuration Mode");
 		dhap_init(WIFI_CONFIGURATION_SSID, NULL);
 		dhzc_dnsd_init();

@@ -9,7 +9,6 @@
 #include "dhzc_web.h"
 #include "httpd.h"
 #include "dhdebug.h"
-#include "dhuart.h"
 #include "dhesperrors.h"
 #include "dhsettings.h"
 #include "dhzc_pages.h"

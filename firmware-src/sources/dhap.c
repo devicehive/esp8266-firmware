@@ -10,7 +10,6 @@
 #include "snprintf.h"
 #include "user_config.h"
 #include "dhdebug.h"
-#include "dhuart.h"
 
 #include <ets_sys.h>
 #include <osapi.h>

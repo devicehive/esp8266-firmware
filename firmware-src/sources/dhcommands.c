@@ -12,11 +12,11 @@
 #include "dhsender_queue.h"
 #include "DH/gpio.h"
 #include "DH/adc.h"
+#include "DH/uart.h"
 #include "dhnotification.h"
 #include "snprintf.h"
 #include "dhcommand_parser.h"
 #include "dhterminal.h"
-#include "dhuart.h"
 #include "dhi2c.h"
 #include "dhspi.h"
 #include "dhonewire.h"
@@ -114,133 +114,6 @@ LOCAL int ICACHE_FLASH_ATTR i2c_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, 
 	}
 	return 0;
 }
-
-LOCAL int ICACHE_FLASH_ATTR uart_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins, unsigned int isint) {
-	if(fields & AF_UARTMODE) {
-		if(parse_pins->uart_speed == 0 && isint) {
-			dhuart_enable_buf_interrupt(0);
-			dh_command_done(cb, "");
-			return 1;
-		} else if(!dhuart_init(parse_pins->uart_speed, parse_pins->uart_bits, parse_pins->uart_partity, parse_pins->uart_stopbits)) {
-			dh_command_fail(cb, "Wrong UART mode");
-			return 1;
-		}
-	}
-	return 0;
-}
-
-#if 1 // UART commands
-
-/**
- * @brief Do "uart/write" command.
- */
-static void ICACHE_FLASH_ATTR do_uart_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_UARTMODE | AF_DATA, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(uart_init(cb, fields, &parse_pins, 0))
-		return;
-	dhuart_set_mode(DUM_PER_BUF);
-	dhuart_send_buf(parse_pins.data, parse_pins.data_len);
-	dh_command_done(cb, "");
-}
-
-
-/**
- * @brief Do "uart/read" command.
- */
-static void ICACHE_FLASH_ATTR do_uart_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_UARTMODE | AF_DATA | AF_TIMEOUT, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(uart_init(cb, fields, &parse_pins, 0))
-			return;
-		if(fields & AF_TIMEOUT) {
-			if(parse_pins.timeout > 1000) {
-				dh_command_fail(cb, "Timeout is too long");
-				return;
-			}
-			if((fields & AF_DATA) == 0) {
-				dh_command_fail(cb, "Timeout can be specified only with data");
-				return;
-			}
-		}
-	}
-	if(fields & AF_DATA) {
-		dhuart_set_mode(DUM_PER_BUF);
-		dhuart_send_buf(parse_pins.data, parse_pins.data_len);
-		system_soft_wdt_feed();
-		delay_ms((fields & AF_TIMEOUT) ? parse_pins.timeout : 250);
-		system_soft_wdt_feed();
-	}
-	char *buf;
-	int len = dhuart_get_buf(&buf);
-	if(len > INTERFACES_BUF_SIZE)
-		len = INTERFACES_BUF_SIZE;
-	cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, buf, len);
-	dhuart_set_mode(DUM_PER_BUF);
-}
-
-
-/**
- * @brief Do "uart/int" command.
- */
-static void ICACHE_FLASH_ATTR do_uart_int(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, dhuart_get_callback_timeout(),
-				AF_UARTMODE | AF_TIMEOUT, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if((fields & AF_TIMEOUT) && parse_pins.timeout > 5000) {
-			dh_command_fail(cb, "Timeout is too long");
-			return;
-		}
-		if(uart_init(cb, fields, &parse_pins, 1))
-			return;
-		if(fields & AF_TIMEOUT)
-			dhuart_set_callback_timeout(parse_pins.timeout);
-	}
-	dhuart_set_mode(DUM_PER_BUF);
-	dhuart_enable_buf_interrupt(1);
-	dh_command_done(cb, "");
-}
-
-
-/**
- * @brief Do "uart/terminal" command.
- */
-static void ICACHE_FLASH_ATTR do_uart_terminal(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		dh_command_fail(cb, "Command does not have parameters");
-		return;
-	}
-	dhterminal_init();
-	dh_command_done(cb, "");
-}
-
-#endif // UART commands
 
 #if 1 // I2C commands
 
@@ -1430,10 +1303,12 @@ RO_DATA struct {
 	{"pwm/control", dh_handle_pwm_control},
 #endif /* DH_COMMANDS_PWM */
 
-	{"uart/write", do_uart_write},
-	{"uart/read", do_uart_read},
-	{"uart/int", do_uart_int},
-	{"uart/terminal", do_uart_terminal},
+#ifdef DH_COMMANDS_UART
+	{"uart/write", dh_handle_uart_write},
+	{"uart/read", dh_handle_uart_read},
+	{"uart/int", dh_handle_uart_int},
+	{"uart/terminal", dh_handle_uart_terminal},
+#endif /* DH_COMMANDS_UART */
 
 	{ "i2c/master/read", do_i2c_master_read},
 	{ "i2c/master/write", do_i2c_master_write},

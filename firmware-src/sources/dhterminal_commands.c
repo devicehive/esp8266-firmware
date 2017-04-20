@@ -10,7 +10,7 @@
  */
 #include "dhterminal_commands.h"
 #include "dhterminal.h"
-#include "dhuart.h"
+#include "DH/uart.h"
 #include "snprintf.h"
 #include "dhconnector.h"
 #include "dhsettings.h"
@@ -63,32 +63,32 @@ LOCAL void ICACHE_FLASH_ATTR sprintMac(char *buff, const uint8 *mac) {
 
 void ICACHE_FLASH_ATTR dhterminal_commands_uname(const char *args) {
 	char digitBuff[32];
-	dhuart_send_line("DeviceHive ESP8266 firmware v"FIRMWARE_VERSION" [Built: "__TIME__" "__DATE__"]");
-	dhuart_send_line("Git revision: "FIRMWARE_GIT_REVISION);
-	dhuart_send_line("Created by Nikolay Khabarov.");
-	dhuart_send_str("ChipID: 0x");
+	dh_uart_send_line("DeviceHive ESP8266 firmware v"FIRMWARE_VERSION" [Built: "__TIME__" "__DATE__"]");
+	dh_uart_send_line("Git revision: "FIRMWARE_GIT_REVISION);
+	dh_uart_send_line("Created by Nikolay Khabarov.");
+	dh_uart_send_str("ChipID: 0x");
 	snprintf(digitBuff, sizeof(digitBuff), "%X", system_get_chip_id());
-	dhuart_send_str(digitBuff);
-	dhuart_send_str(", SDK version: ");
-	dhuart_send_str(system_get_sdk_version());
-	dhuart_send_line("");
+	dh_uart_send_str(digitBuff);
+	dh_uart_send_str(", SDK version: ");
+	dh_uart_send_str(system_get_sdk_version());
+	dh_uart_send_line("");
 }
 
 LOCAL void ICACHE_FLASH_ATTR printIpInfo(uint8 if_index) {
 	struct ip_info info;
 	char digitBuff[32];
 	if(!wifi_get_ip_info(if_index, &info)) {
-		dhuart_send_line("Failed to get ip info");
+		dh_uart_send_line("Failed to get ip info");
 	} else {
-		dhuart_send_str("IP: ");
+		dh_uart_send_str("IP: ");
 		sprintIp(digitBuff, &info.ip);
-		dhuart_send_str(digitBuff);
-		dhuart_send_str(", netmask: ");
+		dh_uart_send_str(digitBuff);
+		dh_uart_send_str(", netmask: ");
 		sprintIp(digitBuff, &info.netmask);
-		dhuart_send_str(digitBuff);
-		dhuart_send_str(", gateway: ");
+		dh_uart_send_str(digitBuff);
+		dh_uart_send_str(", gateway: ");
 		sprintIp(digitBuff, &info.gw);
-		dhuart_send_line(digitBuff);
+		dh_uart_send_line(digitBuff);
 	}
 }
 
@@ -98,19 +98,19 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 
 	const struct DHStat *stat = dhstat_get();
 
-	dhuart_send_str("Network adapter ");
+	dh_uart_send_str("Network adapter ");
 	if(!wifi_get_macaddr(STATION_IF, mac)) {
-		dhuart_send_str("[Failed to get mac address]");
+		dh_uart_send_str("[Failed to get mac address]");
 	} else {
 		sprintMac(digitBuff, mac);
-		dhuart_send_str(digitBuff);
+		dh_uart_send_str(digitBuff);
 	}
 
 	if(wifi_get_opmode() == SOFTAP_MODE) {
 		struct softap_config softapConfig;
-		dhuart_send_str(" is in AP mode, SSID ");
+		dh_uart_send_str(" is in AP mode, SSID ");
 		wifi_softap_get_config(&softapConfig);
-		dhuart_send_line(softapConfig.ssid);
+		dh_uart_send_line((const char*)softapConfig.ssid);
 		printIpInfo(SOFTAP_IF);
 	} else {
 		struct station_config stationConfig;
@@ -118,101 +118,102 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 			os_memset(&stationConfig, 0, sizeof(stationConfig));
 			os_strcpy(stationConfig.ssid, "[Can not get SSID]");
 		}
+		const char *ssid = (const char*)stationConfig.ssid;
 		switch(wifi_station_get_connect_status()) {
 		case STATION_IDLE:
-			dhuart_send_line(" is in idle");
+			dh_uart_send_line(" is in idle");
 			break;
 		case STATION_CONNECTING:
-			dhuart_send_str(" is connecting to ");
-			dhuart_send_line(stationConfig.ssid);
+			dh_uart_send_str(" is connecting to ");
+			dh_uart_send_line(ssid);
 			break;
 		case STATION_WRONG_PASSWORD:
-			dhuart_send_str(" has wrong password for ");
-			dhuart_send_line(stationConfig.ssid);
+			dh_uart_send_str(" has wrong password for ");
+			dh_uart_send_line(ssid);
 			break;
 		case STATION_NO_AP_FOUND:
-			dhuart_send_str(" can not find AP with SSID ");
-			dhuart_send_line(stationConfig.ssid);
+			dh_uart_send_str(" can not find AP with SSID ");
+			dh_uart_send_line(ssid);
 			break;
 		case STATION_CONNECT_FAIL:
-			dhuart_send_str(" has fail while connecting to ");
-			dhuart_send_line(stationConfig.ssid);
+			dh_uart_send_str(" has fail while connecting to ");
+			dh_uart_send_line(ssid);
 			break;
 		case STATION_GOT_IP:
 		{
-			dhuart_send_str(" is connected to ");
-			dhuart_send_line(stationConfig.ssid);
+			dh_uart_send_str(" is connected to ");
+			dh_uart_send_line(ssid);
 			printIpInfo(STATION_IF);
 			break;
 		}
 		default:
-			dhuart_send_line(" is in unknown state");
+			dh_uart_send_line(" is in unknown state");
 			break;
 		}
-		dhuart_send_str("Wi-Fi disconnect count: ");
+		dh_uart_send_str("Wi-Fi disconnect count: ");
 		snprintf(digitBuff, sizeof(digitBuff), "%u", stat->wifiLosts);
-		dhuart_send_line(digitBuff);
+		dh_uart_send_line(digitBuff);
 	}
 
-	dhuart_send_str("Bytes received: ");
+	dh_uart_send_str("Bytes received: ");
 	printBytes(digitBuff, stat->bytesReceived);
-	dhuart_send_str(digitBuff);
-	dhuart_send_str(", sent: ");
+	dh_uart_send_str(digitBuff);
+	dh_uart_send_str(", sent: ");
 	printBytes(digitBuff, stat->bytesSent);
-	dhuart_send_str(digitBuff);
-	dhuart_send_str(", errors: ");
+	dh_uart_send_str(digitBuff);
+	dh_uart_send_str(", errors: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->networkErrors);
-	dhuart_send_line(digitBuff);
+	dh_uart_send_line(digitBuff);
 
-	dhuart_send_str("Httpd requests received: ");
+	dh_uart_send_str("Httpd requests received: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->httpdRequestsCount);
-	dhuart_send_str(digitBuff);
-	dhuart_send_str(", errors: ");
+	dh_uart_send_str(digitBuff);
+	dh_uart_send_str(", errors: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->httpdErrorsCount);
-	dhuart_send_line(digitBuff);
+	dh_uart_send_line(digitBuff);
 
-	dhuart_send_str("DeviceHive: ");
+	dh_uart_send_str("DeviceHive: ");
 	switch(dhconnector_get_state()) {
 	case CS_DISCONNECT:
-		dhuart_send_str("connection is not established");
+		dh_uart_send_str("connection is not established");
 		break;
 	case CS_GETINFO:
-		dhuart_send_str("getting info from server");
+		dh_uart_send_str("getting info from server");
 		break;
 	case CS_RESOLVEWEBSOCKET:
 	case CS_WEBSOCKET:
-		dhuart_send_str("connecting to web socket");
+		dh_uart_send_str("connecting to web socket");
 		break;
 	case CS_OPERATE:
-		dhuart_send_str("successfully connected to server");
+		dh_uart_send_str("successfully connected to server");
 		break;
 	default:
-		dhuart_send_str("unknown state");
+		dh_uart_send_str("unknown state");
 		break;
 	}
-	dhuart_send_str(", errors count: ");
+	dh_uart_send_str(", errors count: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u", stat->serverErrors);
-	dhuart_send_line(digitBuff);
+	dh_uart_send_line(digitBuff);
 
-	dhuart_send_str("Responses created/dropped: ");
+	dh_uart_send_str("Responses created/dropped: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->responcesTotal, stat->responcesDroppedCount);
-	dhuart_send_str(digitBuff);
-	dhuart_send_str(", notification created/dropped: ");
+	dh_uart_send_str(digitBuff);
+	dh_uart_send_str(", notification created/dropped: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->notificationsTotal, stat->notificationsDroppedCount);
-	dhuart_send_line(digitBuff);
+	dh_uart_send_line(digitBuff);
 
-	dhuart_send_str("Local REST requests/errors: ");
+	dh_uart_send_str("Local REST requests/errors: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%u/%u", stat->localRestRequestsCount, stat->localRestResponcesErrors);
-	dhuart_send_line(digitBuff);
+	dh_uart_send_line(digitBuff);
 
-	dhuart_send_str("Free heap size: ");
+	dh_uart_send_str("Free heap size: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%d", system_get_free_heap_size());
-	dhuart_send_str(digitBuff);
-	dhuart_send_str(" bytes");
+	dh_uart_send_str(digitBuff);
+	dh_uart_send_str(" bytes");
 
-	dhuart_send_str(", request queue size: ");
+	dh_uart_send_str(", request queue size: ");
 	snprintf(digitBuff, sizeof(digitBuff), "%d", dhsender_queue_length());
-	dhuart_send_line(digitBuff);
+	dh_uart_send_line(digitBuff);
 
 }
 
@@ -221,15 +222,15 @@ LOCAL void ICACHE_FLASH_ATTR scan_done_cb (void *arg, STATUS status) {
 	int i;
 	if(dhterminal_get_mode() == SM_OUTPUT_MODE) {
 		if(status != OK) {
-			dhuart_send_line("scan failed");
+			dh_uart_send_line("scan failed");
 			return;
 		}
 		struct bss_info *link = (struct bss_info *)arg;
 		link = link->next.stqe_next; //ignore first according to the sdk manual
 		if(link)
-			dhuart_send_line("SSID                             Rssi      Channel  Auth      BSSID");
+			dh_uart_send_line("SSID                             Rssi      Channel  Auth      BSSID");
 		else
-			dhuart_send_line("No wireless networks found.");
+			dh_uart_send_line("No wireless networks found.");
 		while(link) {
 			char * auth = 0;
 			switch(link->authmode) {
@@ -263,7 +264,7 @@ LOCAL void ICACHE_FLASH_ATTR scan_done_cb (void *arg, STATUS status) {
 				if(buff[i] == 0)
 					buff[i] = ' ';
 			}
-			dhuart_send_line(buff);
+			dh_uart_send_line(buff);
 			link = link->next.stqe_next;
 		}
 		dhterminal_set_mode(SM_NORMAL_MODE, 0, 0, 0, 0);
@@ -274,59 +275,59 @@ LOCAL void ICACHE_FLASH_ATTR scan_done_cb (void *arg, STATUS status) {
 void ICACHE_FLASH_ATTR dhterminal_commands_scan(const char *args) {
 	static struct scan_config config = {0, 0, 0, 1};
 	if(wifi_station_scan(&config, scan_done_cb)) {
-		dhuart_send_line("Scanning...");
+		dh_uart_send_line("Scanning...");
 		mIsCommandWorking = 1;
 		dhterminal_set_mode(SM_OUTPUT_MODE, 0, 0, 0, 0);
 	} else {
-		dhuart_send_line("Failed to start scan.");
+		dh_uart_send_line("Failed to start scan.");
 	}
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_debug(const char *args) {
-	dhuart_send_line("Debug output enabled. Press 'q' for exit.");
+	dh_uart_send_line("Debug output enabled. Press 'q' for exit.");
 	dhterminal_set_mode(SM_DEBUG_MODE, 0, 0, 0, 0);
-	dhuart_send_str(dhterminal_get_debug_ouput());
+	dh_uart_send_str(dhterminal_get_debug_ouput());
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_history(const char *args) {
 	const char *tmp = dhterminal_get_history();
 	while(*tmp) {
-		dhuart_send_line(tmp);
+		dh_uart_send_line(tmp);
 		while(*tmp++);
 	}
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_reboot(const char *args) {
-	dhuart_send_line("Rebooting...");
+	dh_uart_send_line("Rebooting...");
 	system_restart();
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_config(const char *args) {
-	dhuart_send_str("Wi-Fi Mode: ");
+	dh_uart_send_str("Wi-Fi Mode: ");
 	switch(dhsettings_get_wifi_mode()) {
 	case WIFI_MODE_CLIENT:
-		dhuart_send_line("Client");
+		dh_uart_send_line("Client");
 		break;
 	case WIFI_MODE_AP:
-		dhuart_send_line("Access Point");
+		dh_uart_send_line("Access Point");
 		break;
 	}
-	dhuart_send_str("Wi-Fi SSID: ");
-	dhuart_send_line(dhsettings_get_wifi_ssid());
-	dhuart_send_str("DeviceHive Server: ");
-	dhuart_send_line(dhsettings_get_devicehive_server());
-	dhuart_send_str("DeviceHive DeviceId: ");
-	dhuart_send_line(dhsettings_get_devicehive_deviceid());
+	dh_uart_send_str("Wi-Fi SSID: ");
+	dh_uart_send_line(dhsettings_get_wifi_ssid());
+	dh_uart_send_str("DeviceHive Server: ");
+	dh_uart_send_line(dhsettings_get_devicehive_server());
+	dh_uart_send_str("DeviceHive DeviceId: ");
+	dh_uart_send_line(dhsettings_get_devicehive_deviceid());
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_configure(const char *args) {
 	int force = (os_strcmp(args, "--force-clear") == 0) ? 1 : 0;
 	if(force || os_strcmp(args, "--clear") == 0) {
 		if(dhsettings_clear(force)) {
-			dhuart_send_line("Settings was cleared, rebooting...");
+			dh_uart_send_line("Settings was cleared, rebooting...");
 			system_restart();
 		} else {
-			dhuart_send_line("Error while cleaning settings.");
+			dh_uart_send_line("Error while cleaning settings.");
 		}
 	} else {
 		dhterminal_configure_start();
@@ -334,19 +335,19 @@ void ICACHE_FLASH_ATTR dhterminal_commands_configure(const char *args) {
 }
 
 void ICACHE_FLASH_ATTR dhterminal_commands_echo(const char *args) {
-	dhuart_send_line(args);
+	dh_uart_send_line(args);
 }
 
 LOCAL void ICACHE_FLASH_ATTR nslookup_res(const char *name, ip_addr_t *ip, void *arg) {
 	char ipstr[16];
 	if(ip == NULL) {
-		dhuart_send_line("FAILED");
+		dh_uart_send_line("FAILED");
 	} else {
 		sprintIp(ipstr, ip);
-		dhuart_send_str("Host ");
-		dhuart_send_str(name);
-		dhuart_send_str(" IP is ");
-		dhuart_send_line(ipstr);
+		dh_uart_send_str("Host ");
+		dh_uart_send_str(name);
+		dh_uart_send_str(" IP is ");
+		dh_uart_send_line(ipstr);
 	}
 }
 
@@ -362,11 +363,11 @@ LOCAL void ICACHE_FLASH_ATTR startResolve(const char *domain, dns_found_callback
 	static ip_addr_t ip;
 	static struct espconn connector = {0};
 	err_t r = espconn_gethostbyname(&connector, domain, &ip, output_mode_cb);
-	dhuart_send_line("Resolving...");
+	dh_uart_send_line("Resolving...");
 	if(r == ESPCONN_OK) {
 		res_cb(domain, &ip, &connector);
 	} else if(r != ESPCONN_INPROGRESS) {
-		dhuart_send_line("ERROR: illegal request");
+		dh_uart_send_line("ERROR: illegal request");
 	} else {
 		mIsCommandWorking = 1;
 		dhterminal_set_mode(SM_OUTPUT_MODE, 0, 0, 0, 0);
@@ -391,21 +392,21 @@ LOCAL void ICACHE_FLASH_ATTR ping_cb(void* arg, void *pdata) {
 			mRecieved++;
 			mTotalDelay += pingresp->resp_time;
 			snprintf(digitbuf, sizeof(digitbuf), "%d", pingresp->bytes);
-			dhuart_send_str(digitbuf);
-			dhuart_send_str(" bytes received from ");
+			dh_uart_send_str(digitbuf);
+			dh_uart_send_str(" bytes received from ");
 			sprintIp(digitbuf, (const struct ip_addr *)&pingopt->ip);
-			dhuart_send_str(digitbuf);
-			dhuart_send_str(" in ");
+			dh_uart_send_str(digitbuf);
+			dh_uart_send_str(" in ");
 			snprintf(digitbuf, sizeof(digitbuf), "%d", pingresp->resp_time);
-			dhuart_send_str(digitbuf);
-			dhuart_send_str(" ms, icmp_seq = ");
+			dh_uart_send_str(digitbuf);
+			dh_uart_send_str(" ms, icmp_seq = ");
 			snprintf(digitbuf, sizeof(digitbuf), "%d", mSent);
-			dhuart_send_line(digitbuf);
+			dh_uart_send_line(digitbuf);
 		} else {
 			mLost++;
-			dhuart_send_str("Request timed out, icmp_seq = ");
+			dh_uart_send_str("Request timed out, icmp_seq = ");
 			snprintf(digitbuf, sizeof(digitbuf), "%d", mSent);
-			dhuart_send_line(digitbuf);
+			dh_uart_send_line(digitbuf);
 		}
 	}
 }
@@ -413,22 +414,22 @@ LOCAL void ICACHE_FLASH_ATTR ping_cb(void* arg, void *pdata) {
 LOCAL void ICACHE_FLASH_ATTR ping_done_cb(void* arg, void *pdata) {
 	char digitbuf[16];
 	if(dhterminal_get_mode() == SM_OUTPUT_MODE) {
-		dhuart_send_str("Total sent: ");
+		dh_uart_send_str("Total sent: ");
 		snprintf(digitbuf, sizeof(digitbuf), "%d", mSent);
-		dhuart_send_str(digitbuf);
-		dhuart_send_str(", received: ");
+		dh_uart_send_str(digitbuf);
+		dh_uart_send_str(", received: ");
 		snprintf(digitbuf, sizeof(digitbuf), "%d", mRecieved);
-		dhuart_send_str(digitbuf);
-		dhuart_send_str(", lost: ");
+		dh_uart_send_str(digitbuf);
+		dh_uart_send_str(", lost: ");
 		snprintf(digitbuf, sizeof(digitbuf), "%d", mLost);
-		dhuart_send_str(digitbuf);
+		dh_uart_send_str(digitbuf);
 		if(mRecieved) {
-			dhuart_send_str(", average time: ");
+			dh_uart_send_str(", average time: ");
 			snprintf(digitbuf, sizeof(digitbuf), "%d", mTotalDelay/mRecieved);
-			dhuart_send_str(digitbuf);
-			dhuart_send_line(" ms");
+			dh_uart_send_str(digitbuf);
+			dh_uart_send_line(" ms");
 		} else {
-			dhuart_send_line("");
+			dh_uart_send_line("");
 		}
 		dhterminal_set_mode(SM_NORMAL_MODE, 0, 0, 0, 0);
 	}

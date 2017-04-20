@@ -40,11 +40,12 @@ void ICACHE_FLASH_ATTR dh_adc_loop_value_cb(float value){
 	dhsender_notification(RNT_NOTIFICATION_ADC, RDT_FLOAT, value);
 }
 
-void ICACHE_FLASH_ATTR dhuart_buf_rcv(const char *buf, unsigned int len) {
+void ICACHE_FLASH_ATTR dh_uart_buf_rcv_cb(const void *buf, size_t len) {
 	if(dhmem_isblock()) {
 		dhstat_got_notification_dropped();
 		return;
 	}
+
 	dhsender_notification(RNT_NOTIFICATION_UART, RDT_DATA_WITH_LEN, buf, len);
 }
 

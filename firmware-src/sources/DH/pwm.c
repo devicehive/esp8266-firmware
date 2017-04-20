@@ -180,7 +180,7 @@ void ICACHE_FLASH_ATTR dh_pwm_disable(DHGpioPinMask pins)
 }
 
 
-#ifdef DH_COMMANDS_PWM // PWMcommand handlers
+#ifdef DH_COMMANDS_PWM // PWM command handlers
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 

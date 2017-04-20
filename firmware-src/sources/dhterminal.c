@@ -9,7 +9,7 @@
  *
  */
 #include "dhterminal.h"
-#include "dhuart.h"
+#include "DH/uart.h"
 #include "user_config.h"
 #include "snprintf.h"
 #include "dhterminal_commandline.h"
@@ -48,19 +48,19 @@ LOCAL int isInUse = 0;
 
 LOCAL void ICACHE_FLASH_ATTR printWelcome(void) {
 	if(mMode == SM_NORMAL_MODE) {
-		dhuart_send_str("$ ");
+		dh_uart_send_str("$ ");
 	} else if(mMode == SM_INPUT_MODE || mMode == SM_HIDDEN_INPUT_MODE) {
-		dhuart_send_str("> ");
+		dh_uart_send_str("> ");
 	}
 	mRcvBuffPos = 0;
 	os_memset(mRcvBuff, 0, sizeof(mRcvBuff));
 }
 
 void ICACHE_FLASH_ATTR dhterminal_set_input(const char *line) {
-	dhuart_send_str("\r\x1B[K");
+	dh_uart_send_str("\r\x1B[K");
 	printWelcome();
 	mRcvBuffPos = snprintf(mRcvBuff, sizeof(mRcvBuff), "%s", line);
-	dhuart_send_str(mRcvBuff);
+	dh_uart_send_str(mRcvBuff);
 }
 
 const char * ICACHE_FLASH_ATTR dhterminal_get_history(void) {
@@ -151,7 +151,7 @@ LOCAL void ICACHE_FLASH_ATTR do_command(void *arg) {
 	if(mInputCallBack)
 		mInputCallBack(mRcvBuff);
 	else
-		dhuart_send_line("\r\nNo callback specified.");
+		dh_uart_send_line("\r\nNo callback specified.");
 	if(mode == SM_NORMAL_MODE && mMode == SM_NORMAL_MODE) {
 		printWelcome();
 	}
@@ -175,7 +175,7 @@ LOCAL void ICACHE_FLASH_ATTR usage_timer(void *arg) {
 	isInUse = 0;
 }
 
-void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
+void ICACHE_FLASH_ATTR dh_uart_char_rcv_cb(int c) {
 	isInUse = 1;
 	os_timer_disarm(&mUsageTimer);
 	os_timer_setfn(&mUsageTimer, (os_timer_func_t *)usage_timer, NULL);
@@ -192,10 +192,10 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 	if(mMode == SM_DEBUG_MODE || mMode == SM_OUTPUT_MODE || mMode == SM_AWATING_MODE) {
 		if(c == 'Q' || c == 'q' || c == 0x3 /*Ctrl+C*/) {
 			if(c == 0x3)
-				dhuart_send_str("^C\r\n");
+				dh_uart_send_str("^C\r\n");
 			dhterminal_reset();
 		} else if(c == '\n' && mMode == SM_DEBUG_MODE) {
-			dhuart_send_str("\r\n");
+			dh_uart_send_str("\r\n");
 		}
 		return;
 	}
@@ -241,18 +241,18 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 			} else if(os_strcmp(mEscSequence, "[C") == 0) { // Right
 				if(mRcvBuff[mRcvBuffPos]) {
 					mRcvBuffPos++;
-					dhuart_send_str("\x1B");
-					dhuart_send_str(mEscSequence);
+					dh_uart_send_str("\x1B");
+					dh_uart_send_str(mEscSequence);
 				}
 			} else if(os_strcmp(mEscSequence, "[D") == 0) { // Left
 				if(mRcvBuffPos) {
 					mRcvBuffPos--;
-					dhuart_send_str("\x1B");
-					dhuart_send_str(mEscSequence);
+					dh_uart_send_str("\x1B");
+					dh_uart_send_str(mEscSequence);
 				}
 			} else if(os_strcmp(mEscSequence, "[3~") == 0) { // Delete
 				if(mRcvBuff[mRcvBuffPos])
-					dhuart_send_str("\x1B[1P");
+					dh_uart_send_str("\x1B[1P");
 				for(i = mRcvBuffPos + 1; i < sizeof(mRcvBuff); i++) {
 					if(mRcvBuff[i - 1] == 0)
 						break;
@@ -264,7 +264,7 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 	}
 
 	if(c == '\n') {
-		dhuart_send_str("\r\n");
+		dh_uart_send_str("\r\n");
 		do_command(0);
 	} else {
 		if(c == 0x09) { // Tab
@@ -277,7 +277,7 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 					dhterminal_set_input(a);
 			}
 		} else if(c == 0x03) { // Ctrl+C
-			dhuart_send_str("^C\r\n");
+			dh_uart_send_str("^C\r\n");
 			dhterminal_reset();
 		} else if(c == 0x1B) { // ESC character
 			mEscRecieving = 1;
@@ -290,19 +290,19 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 					break;
 			}
 			mRcvBuffPos--;
-			dhuart_send_str("\x1B[D\x1B[1P");
+			dh_uart_send_str("\x1B[D\x1B[1P");
 		} else if(mRcvBuff[mInputLimiter - 2] == 0) { // if we have space
 			if(c > 0x1F) {
 				if(mFilterCallback)
 					if(mFilterCallback(c) == 0)
 						return;
 				if(mRcvBuff[mRcvBuffPos] !=0)
-					dhuart_send_str("\x1B[@");
+					dh_uart_send_str("\x1B[@");
 				if(mMode == SM_HIDDEN_INPUT_MODE) {
-					dhuart_send_str("*");
+					dh_uart_send_str("*");
 				} else {
 					char b[] = {c,0};
-					dhuart_send_str(b);
+					dh_uart_send_str(b);
 				}
 				char next = c;
 				for(i = mRcvBuffPos; i < sizeof(mRcvBuff); i++) {
@@ -321,7 +321,7 @@ void ICACHE_FLASH_ATTR dhuart_char_rcv(char c) {
 void dhterminal_debug(const char *pFormat, va_list ap) {
 	int len = vsnprintf(&mDebugBuff[mDebugBuffPos], sizeof(mDebugBuff) - mDebugBuffPos - 2, pFormat, ap);
 	if(mMode == SM_DEBUG_MODE) {
-		dhuart_send_line(&mDebugBuff[mDebugBuffPos]);
+		dh_uart_send_line(&mDebugBuff[mDebugBuffPos]);
 	} else {
 		mDebugBuffPos += len;
 		mDebugBuff[mDebugBuffPos++] = '\r';
@@ -338,9 +338,9 @@ void dhterminal_debug(const char *pFormat, va_list ap) {
 }
 
 void ICACHE_FLASH_ATTR dhterminal_init(void) {
-	dhuart_init(UART_BAUND_RATE, 8, 'N', 1);
-	dhuart_set_mode(DUM_PER_BYTE);
-	dhuart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
+	dh_uart_init(UART_BAUND_RATE, 8, 'N', 1);
+	dh_uart_set_mode(DH_UART_MODE_PER_BYTE);
+	dh_uart_send_str("\r\n**********************************\r\nUart terminal ready.\r\n");
 	dhterminal_reset();
 }
 

@@ -7,7 +7,7 @@
  *
  */
 #include "mhz19.h"
-#include "dhuart.h"
+#include "DH/uart.h"
 #include "dhdebug.h"
 #include "dhutils.h"
 
@@ -20,12 +20,12 @@ char * ICACHE_FLASH_ATTR mhz19_read(int *co2) {
 	char *result;
 	int i;
 	char cs = 0;
-	dhuart_set_mode(DUM_PER_BUF);
-	if(dhuart_init(9600, 8, 'N', 1) == 0)
-		return "Uart init failed";
-	dhuart_send_buf(request, sizeof(request));
+	dh_uart_set_mode(DH_UART_MODE_PER_BUF);
+	if(dh_uart_init(9600, 8, 'N', 1) != 0)
+		return "failed to init UART";
+	dh_uart_send_buf(request, sizeof(request));
 	delay_ms(20);
-	int len = dhuart_get_buf(&result);
+	size_t len = dh_uart_get_buf((void**)&result);
 	if(len != 9){
 		if(len)
 			return "Response length mismatch";

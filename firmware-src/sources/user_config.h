@@ -21,7 +21,7 @@
 #ifndef FIRMWARE_GIT_REVISION
 	#define FIRMWARE_GIT_REVISION "unknown"
 #endif
-/** Buffer size for data that uses for commands which require data transmition via interfaces like UART, I2C etc. */
+/** Buffer size for data that uses for commands which require data transmission via interfaces like UART, I2C etc. */
 #define INTERFACES_BUF_SIZE 264
 /** Encode type for data field in commands. Can be DATAENCODEBASE64 or DATAENCODEHEX.*/
 #define DATAENCODEBASE64
