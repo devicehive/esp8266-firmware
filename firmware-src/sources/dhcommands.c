@@ -21,7 +21,7 @@
 #include "dhspi.h"
 #include "dhonewire.h"
 #include "dhdebug.h"
-#include "dhpwm.h"
+#include "DH/pwm.h"
 #include "dhutils.h"
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
@@ -128,31 +128,6 @@ LOCAL int ICACHE_FLASH_ATTR uart_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields,
 	}
 	return 0;
 }
-
-#if 1 // ADC and PWM commands
-
-
-/**
- * @brief Do "pwm/control" command.
- */
-static void ICACHE_FLASH_ATTR do_pwm_control(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_VALUES | AF_PERIOD | AF_COUNT, &fields);
-	if(parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(dhpwm_set_pwm(&parse_pins.storage.uint_values, parse_pins.pin_value_readed, (fields & AF_PERIOD) ? parse_pins.periodus : dhpwm_get_period_us(),  parse_pins.count))
-		dh_command_done(cb, "");
-	else
-		dh_command_fail(cb, "Wrong parameters");
-}
-
-#endif // ADC and PWM commands
 
 #if 1 // UART commands
 
@@ -1451,7 +1426,9 @@ RO_DATA struct {
 	{"adc/int", dh_handle_adc_int},
 #endif /* DH_COMMANDS_ADC */
 
-	{"pwm/control", do_pwm_control},
+#ifdef DH_COMMANDS_PWM
+	{"pwm/control", dh_handle_pwm_control},
+#endif /* DH_COMMANDS_PWM */
 
 	{"uart/write", do_uart_write},
 	{"uart/read", do_uart_read},

@@ -5,9 +5,7 @@
  * @author Nikolay Khabarov
  */
 #include "DH/gpio.h"
-
-#include "user_config.h"
-#include "dhpwm.h"
+#include "DH/pwm.h"
 #include "dhmem.h"
 
 #include <ets_sys.h>
@@ -44,7 +42,7 @@ void ICACHE_FLASH_ATTR dh_gpio_init(void)
 void ICACHE_FLASH_ATTR dh_gpio_prepare_pins(DHGpioPinMask pins, bool disable_pwm)
 {
 	if (disable_pwm)
-		dhpwm_disable_pins(pins);
+		dh_pwm_disable(pins);
 
 	// only suitable pins are checked: GPIO0..GPIO5
 	if (pins & DH_GPIO_PIN(0))
