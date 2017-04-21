@@ -13,12 +13,12 @@
 #include "DH/gpio.h"
 #include "DH/adc.h"
 #include "DH/uart.h"
+#include "DH/spi.h"
 #include "dhnotification.h"
 #include "snprintf.h"
 #include "dhcommand_parser.h"
 #include "dhterminal.h"
 #include "dhi2c.h"
-#include "dhspi.h"
 #include "dhonewire.h"
 #include "dhdebug.h"
 #include "DH/pwm.h"
@@ -56,22 +56,6 @@ LOCAL int ICACHE_FLASH_ATTR onewire_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fiel
 	if(fields & AF_PIN) {
 		if(dhonewire_set_pin(parse_pins->pin) == 0) {
 			dh_command_fail(cb, "Wrong onewire pin");
-			return 1;
-		}
-	}
-	return 0;
-}
-
-LOCAL int ICACHE_FLASH_ATTR spi_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins) {
-	if(fields & AF_CS) {
-		if(dhspi_set_cs_pin(parse_pins->CS) == 0) {
-			dh_command_fail(cb, "Wrong CS pin");
-			return 1;
-		}
-	}
-	if(fields & AF_SPIMODE) {
-		if(dhspi_set_mode(parse_pins->spi_mode) == 0) {
-			dh_command_fail(cb, "Wrong SPI mode");
 			return 1;
 		}
 	}
@@ -185,63 +169,6 @@ static void ICACHE_FLASH_ATTR do_i2c_master_write(COMMAND_RESULT *cb, const char
 }
 
 #endif // I2C commands
-
-#if 1 // SPI commands
-
-/**
- * @brief Do "spi/master/read" command.
- */
-static void ICACHE_FLASH_ATTR do_spi_master_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_CS | AF_SPIMODE | AF_DATA | AF_COUNT, &fields);
-	if(parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if((fields & AF_COUNT) == 0)
-		parse_pins.count = 2;
-	if(parse_pins.count == 0 || parse_pins.count > INTERFACES_BUF_SIZE) {
-		dh_command_fail(cb, "Wrong read size");
-		return;
-	}
-	if(spi_init(cb, fields, &parse_pins))
-		return;
-	if(fields & AF_DATA)
-		dhspi_write(parse_pins.data, parse_pins.data_len, 0);
-	dhspi_read(parse_pins.data, parse_pins.count);
-	cb->callback(cb->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, parse_pins.data, parse_pins.count);
-}
-
-
-/**
- * @brief Do "spi/master/write" command.
- */
-static void ICACHE_FLASH_ATTR do_spi_master_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_CS | AF_SPIMODE | AF_DATA, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(spi_init(cb, fields, &parse_pins))
-		return;
-	if((fields & AF_DATA) == 0) {
-		dh_command_fail(cb, "Data not specified");
-		return;
-	}
-	dhspi_write(parse_pins.data, parse_pins.data_len, 1);
-	dh_command_done(cb, "");
-}
-
-#endif // SPI commands
 
 #if 1 // onewire commands
 
@@ -1313,8 +1240,10 @@ RO_DATA struct {
 	{ "i2c/master/read", do_i2c_master_read},
 	{ "i2c/master/write", do_i2c_master_write},
 
-	{ "spi/master/read", do_spi_master_read},
-	{ "spi/master/write", do_spi_master_write},
+#ifdef DH_COMMANDS_SPI
+	{ "spi/master/read", dh_handle_spi_master_read},
+	{ "spi/master/write", dh_handle_spi_master_write},
+#endif /* DH_COMMANDS_SPI */
 
 	{ "onewire/master/read", do_onewire_master_read},
 	{ "onewire/master/write", do_onewire_master_write},

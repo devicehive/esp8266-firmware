@@ -7,8 +7,8 @@
  *
  */
 #include "max6675.h"
-#include "dhspi.h"
 #include "DH/gpio.h"
+#include "DH/spi.h"
 #include "dhutils.h"
 
 #include <osapi.h>
@@ -19,22 +19,22 @@ static int mCSPin = 15;
 char * ICACHE_FLASH_ATTR max6675_read(int pin, float *temperature) {
 	char buf[2];
 	if(pin == MAX6675_NO_PIN) {
-		dhspi_set_cs_pin(mCSPin);
+		dh_spi_set_cs_pin(mCSPin);
 	} else {
-		int ok = (pin != DHSPI_NOCS);
+		int ok = (pin != DH_SPI_NO_CS);
 		if(ok)
-			ok = dhspi_set_cs_pin(pin);
+			ok = (0 == dh_spi_set_cs_pin(pin));
 		if(!ok)
 			return "Wrong CS pin";
 		mCSPin = pin;
 	}
-	dhspi_set_mode(SPI_CPOL0CPHA0);
+	dh_spi_set_mode(DH_SPI_CPOL0CPHA0);
 
 	//start converting
 	dh_gpio_write(DH_GPIO_PIN(mCSPin), 0);
 	delay_ms(250);
 
-	dhspi_read((char *)&buf, sizeof(buf));
+	dh_spi_read((char *)&buf, sizeof(buf));
 
 	if((buf[0] & 0x80) || (buf[1] & 0x02))
 		return "Protocol error";
