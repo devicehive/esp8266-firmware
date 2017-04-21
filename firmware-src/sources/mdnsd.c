@@ -38,9 +38,10 @@ LOCAL struct ip_addr mMulticastIP = { MDNS_IP };
 LOCAL void ICACHE_FLASH_ATTR announce(const uint8_t *data, uint32_t len) {
 	mSendingInProgress = 1;
 
-	*(unsigned long *)mMDNSdConn.proto.udp->remote_ip = MDNS_IP;
+	const struct ip_addr mdns_ip = { MDNS_IP };
+	os_memcpy(mMDNSdConn.proto.udp->remote_ip, &mdns_ip, sizeof(mdns_ip));
 	mMDNSdConn.proto.udp->remote_port = MDNS_PORT;
-	*(unsigned long *)mMDNSdConn.proto.udp->local_ip = mMulticastIP.addr;
+	os_memcpy(mMDNSdConn.proto.udp->local_ip, &mMulticastIP, sizeof(mMulticastIP));
 	mMDNSdConn.proto.udp->local_port = MDNS_PORT;
 	espconn_send(&mMDNSdConn, (uint8_t *)data, len);
 }

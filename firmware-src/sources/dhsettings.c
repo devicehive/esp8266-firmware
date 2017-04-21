@@ -41,7 +41,7 @@ typedef struct {
 	};
 } DH_SETTINGS;
 
-static DH_SETTINGS_DATA mSettingsData = {0};
+static DH_SETTINGS_DATA mSettingsData = {{0}};
 
 LOCAL uint32_t ICACHE_FLASH_ATTR getStorageCrc(DH_SETTINGS *storage) {
 	return crc32(storage->storage, sizeof(storage->storage));
