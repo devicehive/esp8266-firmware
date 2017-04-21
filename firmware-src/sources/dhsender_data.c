@@ -158,6 +158,16 @@ void ICACHE_FLASH_ATTR dh_command_done(COMMAND_RESULT *cmd_res, const char *str)
 
 
 /*
+ * dh_command_done_buf() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_command_done_buf(COMMAND_RESULT *cmd_res, const void *buf, size_t len)
+{
+	cmd_res->callback(cmd_res->data, DHSTATUS_OK,
+	                  RDT_DATA_WITH_LEN, buf, len);
+}
+
+
+/*
  * dh_command_fail() implementation.
  */
 void ICACHE_FLASH_ATTR dh_command_fail(COMMAND_RESULT *cmd_res, const char *str)

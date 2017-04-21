@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_PCA9685_H_
 #define SOURCES_DEVICES_PCA9685_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default i2c address*/
 #define PCA9685_DEFAULT_ADDRESS 0x80
@@ -27,9 +27,9 @@
  *	\param[in]	pinsduty	Array with pins duty cycles for each pin.
  *	\param[in]	pinsmask	Bitwise pins mask with pins that should be enabled, this pins have to have correct value in pinsduty array.
  *	\param[in]	periodus	PWM period. Can be PCA9685_NO_PERIOD to use current.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS pca9685_control(int sda, int scl, float *pinsduty, unsigned int pinsmask, unsigned int periodus);
+DH_I2C_Status pca9685_control(int sda, int scl, float *pinsduty, unsigned int pinsmask, unsigned int periodus);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

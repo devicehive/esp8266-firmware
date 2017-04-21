@@ -204,7 +204,6 @@ void ICACHE_FLASH_ATTR dh_spi_read(void *buf_, size_t len)
 }
 
 
-
 #ifdef DH_COMMANDS_SPI // SPI command handlers
 #include "dhcommand_parser.h"
 #include <user_interface.h>
@@ -263,7 +262,7 @@ void ICACHE_FLASH_ATTR dh_handle_spi_master_read(COMMAND_RESULT *cmd_res, const 
 		dh_spi_write(info.data, info.data_len, 0);
 	dh_spi_read(info.data, info.count);
 
-	cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, info.data, info.count);
+	dh_command_done_buf(cmd_res, info.data, info.count);
 }
 
 

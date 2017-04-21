@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_TM1636_H_
 #define SOURCES_DEVICES_TM1636_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Do not initialize pin */
 #define TM1636_NO_PIN -1
@@ -23,6 +23,6 @@
   *	\param[in]	len		Number of chars to write.
  *	\return 			NULL on success, text description on error.
  */
-DHI2C_STATUS tm1636_write(int sda, int scl, const char *text, unsigned int len);
+DH_I2C_Status tm1636_write(int sda, int scl, const char *text, unsigned int len);
 
 #endif /* SOURCES_DEVICES_TM1636_H_ */

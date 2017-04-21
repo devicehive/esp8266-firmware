@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_MLX90614_H_
 #define SOURCES_DEVICES_MLX90614_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define MLX90614_DEFAULT_ADDRESS 0xB4
@@ -22,9 +22,9 @@
  *	\param[in]	scl			Pin for I2C's SCL.
  *	\param[out]	ambient		Pointer for storing ambient temperature result measure in Celsius.
  *	\param[out]	object		Pointer for storing object temperature result measure in Celsius.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS mlx90614_read(int sda, int scl, float *ambient, float *object);
+DH_I2C_Status mlx90614_read(int sda, int scl, float *ambient, float *object);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

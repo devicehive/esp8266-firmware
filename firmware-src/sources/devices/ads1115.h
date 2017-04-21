@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_ADS1115_H_
 #define SOURCES_DEVICES_ADS1115_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define ADS1115_DEFAULT_ADDRESS 0x90
@@ -21,9 +21,9 @@
  *	\param[in]	sda			Pin for I2C's SDA.
  *	\param[in]	scl			Pin for I2C's SCL.
  *	\param[out]	values		Pointer to four float values to store result in Volts.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS ads1115_read(int sda, int scl, float *values);
+DH_I2C_Status ads1115_read(int sda, int scl, float *values);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

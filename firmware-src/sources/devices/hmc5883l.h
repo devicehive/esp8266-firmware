@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_HMC5883L_H_
 #define SOURCES_DEVICES_HMC5883L_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define HMC5883L_DEFAULT_ADDRESS 0x3C
@@ -32,7 +32,7 @@ typedef struct {
  *	\param[out]	compass			Compass data in normalized vector. If axis is overflowed during measure, HMC5883l_OVERFLOWED is a value.
  *	\return 					NULL on success, text description on error.
  */
-DHI2C_STATUS hmc5883l_read(int sda, int scl, HMC5883L_XYZ *compass);
+DH_I2C_Status hmc5883l_read(int sda, int scl, HMC5883L_XYZ *compass);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_MCP4725_H_
 #define SOURCES_DEVICES_MCP4725_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define MCP4725_DEFAULT_ADDRESS 0xC0
@@ -21,9 +21,9 @@
  *	\param[in]	sda			Pin for I2C's SDA.
  *	\param[in]	scl			Pin for I2C's SCL.
  *	\param[out]	value		Voltage in Volts.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS mcp4725_write(int sda, int scl, float value);
+DH_I2C_Status mcp4725_write(int sda, int scl, float value);
 
 /**
  *	\brief					Set sensor address which should be used while reading.
@@ -35,8 +35,8 @@ void mcp4725_set_address(int address);
  *	\brief					Set reference voltage in volts.
  *	\note					Default is 3.3V.
  *	\param[in]	voltage		Voltage in Volts.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS mcp4725_set_vref(float voltage);
+DH_I2C_Status mcp4725_set_vref(float voltage);
 
 #endif /* SOURCES_DEVICES_MCP4725_H_ */

@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_BMP180_H_
 #define SOURCES_DEVICES_BMP180_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define BMP180_DEFAULT_ADDRESS 0xEE
@@ -22,9 +22,9 @@
  *	\param[in]	scl			Pin for I2C's SCL.
  *	\param[out]	pressure	Pointer for storing pressure result measure in Pascals.
  *	\param[out]	temperature	Pointer for storing temperature result measure in degree Celsius. Can be NULL.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS bmp180_read(int sda, int scl, int *pressure, float *temperature);
+DH_I2C_Status bmp180_read(int sda, int scl, int *pressure, float *temperature);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

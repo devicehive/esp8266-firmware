@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_INA219_H_
 #define SOURCES_DEVICES_INA219_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define INA219_DEFAULT_ADDRESS 0x80
@@ -23,9 +23,9 @@
  *	\param[out]	voltage		Input voltage in Volts.
  *	\param[out]	current		Current in Amperes.
  *	\param[out]	power		Total power since first call.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS ina219_read(int sda, int scl, float *voltage, float *current, float *power);
+DH_I2C_Status ina219_read(int sda, int scl, float *voltage, float *current, float *power);
 
 /**
  *	\brief					Set sensor address which should be used while reading.
@@ -37,8 +37,8 @@ void ina219_set_address(int address);
  *	\brief					Set reference shunt resistance.
  *	\note					Default is 0.1 Ohm.
  *	\param[in]	resistance	Resistance in Ohms.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS ina219_set_shunt(float resistance);
+DH_I2C_Status ina219_set_shunt(float resistance);
 
 #endif /* SOURCES_DEVICES_INA219_H_ */

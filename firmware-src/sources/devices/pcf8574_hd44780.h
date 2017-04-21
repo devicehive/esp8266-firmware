@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_PCF8574_HD44780_H_
 #define SOURCES_DEVICES_PCF8574_HD44780_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /**
  *	\brief				Set text on screen.
@@ -20,6 +20,6 @@
   *	\param[in]	len		Number of chars to write. Data more then 80 bytes is ignored.
  *	\return 			NULL on success, text description on error.
  */
-DHI2C_STATUS pcf8574_hd44780_write(int sda, int scl, const char *text, unsigned int len);
+DH_I2C_Status pcf8574_hd44780_write(int sda, int scl, const char *text, unsigned int len);
 
 #endif /* SOURCES_DEVICES_PCF8574_HD44780_H_ */

@@ -1,0 +1,404 @@
+/**
+ * @file
+ * @brief Software I2C implementation for ESP8266 firmware.
+ * @copyright 2015 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
+ */
+#include "DH/i2c.h"
+#include "DH/gpio.h"
+#include "DH/adc.h"
+
+#include <c_types.h>
+#include <osapi.h>
+#include <gpio.h>
+#include <user_interface.h>
+#include <ets_forward.h>
+
+#define I2C_DELAY_US         5
+#define I2C_ERROR_TIMEOUT_US 50000
+
+// module variables
+static DHGpioPinMask mSDAPin = DH_GPIO_PIN(0);
+static DHGpioPinMask mSCLPin = DH_GPIO_PIN(2);
+
+
+/*
+ * dh_i2c_error_string() implementation.
+ */
+const char* ICACHE_FLASH_ATTR dh_i2c_error_string(int status)
+{
+	switch(status) {
+		case DH_I2C_OK:
+			return 0;
+		case DH_I2C_NOACK:
+			return "no ACK response";
+		case DH_I2C_WRONG_PARAMETERS:
+			return "Wrong parameters";
+		case DH_I2C_BUS_BUSY:
+			return "Bus is busy";
+		case DH_I2C_DEVICE_ERROR:
+			return "Device error";
+	}
+
+	return 0;
+}
+
+
+/*
+ * dh_i2c_init() implementation.
+ */
+int ICACHE_FLASH_ATTR dh_i2c_init(unsigned int sda_pin, unsigned int scl_pin)
+{
+	const DHGpioPinMask SDA = DH_GPIO_PIN(sda_pin);
+	const DHGpioPinMask SCL = DH_GPIO_PIN(scl_pin);
+	if (!(SDA&DH_GPIO_SUITABLE_PINS) || !(SCL&DH_GPIO_SUITABLE_PINS) || SDA == SCL)
+		return DH_I2C_WRONG_PARAMETERS;
+
+	mSDAPin = SDA;
+	mSCLPin = SCL;
+	dh_i2c_reinit();
+	return DH_I2C_OK;
+}
+
+
+/*
+ * dh_i2c_reinit() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_i2c_reinit(void)
+{
+	dh_gpio_open_drain(mSDAPin | mSCLPin, 0);
+	dh_gpio_prepare_pins(mSDAPin | mSCLPin, true/*disable_pwm*/);
+	dh_gpio_pull_up(mSDAPin | mSCLPin, 0);
+	gpio_output_set(mSDAPin | mSCLPin, 0, mSDAPin | mSCLPin, 0);
+}
+
+
+/**
+ * @brief Set pin value.
+ */
+static int ICACHE_FLASH_ATTR i2c_set_pin(DHGpioPinMask pin_mask, int val)
+{
+	if (val) {
+		gpio_output_set(pin_mask, 0, pin_mask, 0);
+	} else {
+		gpio_output_set(0, pin_mask, pin_mask, 0);
+	}
+	os_delay_us(I2C_DELAY_US);
+
+	int i; // busy-wait loop
+	for(i = 0; i < I2C_ERROR_TIMEOUT_US; i++) {
+		const int vv = (gpio_input_get()&pin_mask) != 0;
+		if (vv ^ val) {
+			// values are still different
+			os_delay_us(1); // wait a bit
+		} else {
+			return DH_I2C_OK;
+		}
+	}
+
+	return DH_I2C_BUS_BUSY;
+}
+
+
+/**
+ * @brief Start I2C communication.
+ */
+static int ICACHE_FLASH_ATTR i2c_start(void)
+{
+	int res;
+
+	res = i2c_set_pin(mSDAPin, 1);
+	if (res != DH_I2C_OK)
+		return res;
+	res = i2c_set_pin(mSCLPin, 1);
+	if (res != DH_I2C_OK)
+		return res;
+
+	res = i2c_set_pin(mSDAPin, 0);
+	if (res != DH_I2C_OK)
+		return res;
+	res = i2c_set_pin(mSCLPin, 0);
+	if (res != DH_I2C_OK)
+		return res;
+
+	return DH_I2C_OK;
+}
+
+
+/**
+ * @brief Stop I2C communication.
+ */
+static int ICACHE_FLASH_ATTR i2c_stop(void)
+{
+	int res;
+
+	res = i2c_set_pin(mSDAPin, 0);
+	if (res != DH_I2C_OK)
+		return res;
+	res = i2c_set_pin(mSCLPin, 1);
+	if (res != DH_I2C_OK)
+		return res;
+	res = i2c_set_pin(mSDAPin, 1);
+	if (res != DH_I2C_OK)
+		return res;
+
+	return DH_I2C_OK;
+}
+
+
+/**
+ * @brief Write one byte to I2C bus.
+ */
+static int ICACHE_FLASH_ATTR i2c_writebyte(int ch)
+{
+	int res, i;
+
+	// msb-first
+	for (i = 7; i >= 0; i--) {
+		res = i2c_set_pin(mSDAPin, (ch>>i)&1);
+		if (res != DH_I2C_OK)
+			return res;
+		res = i2c_set_pin(mSCLPin, 1);
+		if (res != DH_I2C_OK)
+			return res;
+		os_delay_us(I2C_DELAY_US);
+		res = i2c_set_pin(mSCLPin, 0);
+		if (res != DH_I2C_OK)
+			return res;
+	}
+
+	// check ACK
+	gpio_output_set(mSDAPin, 0, mSDAPin, 0);
+	os_delay_us(I2C_DELAY_US);
+	res = i2c_set_pin(mSCLPin, 1);
+	if (res != DH_I2C_OK)
+		return res;
+	os_delay_us(I2C_DELAY_US);
+	const int nack = (gpio_input_get() & mSDAPin) != 0;
+	res = i2c_set_pin(mSCLPin, 0);
+	if (res != DH_I2C_OK)
+		return res;
+	if (nack)
+		return DH_I2C_NOACK;
+
+	return DH_I2C_OK;
+}
+
+
+/**
+ * @brief Read one byte from I2C bus.
+ */
+static int ICACHE_FLASH_ATTR i2c_readbyte(int *byte, int ack_bit)
+{
+	int res, i;
+
+	gpio_output_set(mSDAPin, 0, mSDAPin, 0);
+	os_delay_us(I2C_DELAY_US);
+
+	// msb-first
+	for (i = 7; i >= 0; i--) {
+		res = i2c_set_pin(mSCLPin, 1);
+		if (res != DH_I2C_OK)
+			return res;
+		os_delay_us(I2C_DELAY_US);
+		const int bit = (gpio_input_get() & mSDAPin) != 0;
+		*byte |= bit << i;
+		res = i2c_set_pin(mSCLPin, 0);
+		if (res != DH_I2C_OK)
+			return res;
+	}
+
+	// send ACK
+	res = i2c_set_pin(mSDAPin, ack_bit);
+	if (res != DH_I2C_OK)
+		return res;
+	res = i2c_set_pin(mSCLPin, 1);
+	if (res != DH_I2C_OK)
+		return res;
+	os_delay_us(I2C_DELAY_US);
+	res = i2c_set_pin(mSCLPin, 0);
+	if (res != DH_I2C_OK)
+		return res;
+
+	return DH_I2C_OK;
+}
+
+
+/**
+ * @brief Do I2C bus communication.
+ */
+static int ICACHE_FLASH_ATTR i2c_act(unsigned int address, uint8_t *buf, size_t len, int send_stop, int is_read)
+{
+	if (len > INTERFACES_BUF_SIZE || address > 0xFF)
+		return DH_I2C_WRONG_PARAMETERS;
+
+	// start
+	int res = i2c_start();
+	if (res != DH_I2C_OK)
+		return res;
+
+	// write address
+	res = i2c_writebyte(is_read ? (address |  0x01)
+	                            : (address & ~0x01));
+	if (res != DH_I2C_OK) {
+		i2c_stop();
+		return res;
+	}
+
+	while (len--) {
+		system_soft_wdt_feed();
+		if (is_read) {
+			int byte = 0;
+			res = i2c_readbyte(&byte, 0 == len);
+			*buf++ = byte;
+		} else {
+			res = i2c_writebyte(*buf++);
+		}
+		if (res != DH_I2C_OK) {
+			i2c_stop();
+			return res;
+		}
+	}
+
+	if (send_stop) {
+		return i2c_stop();
+	} else {
+		return DH_I2C_OK;
+	}
+}
+
+
+/*
+ * dh_i2c_write() implementation.
+ */
+int ICACHE_FLASH_ATTR dh_i2c_write(unsigned int address, const void *buf, size_t len, int send_stop)
+{
+	return i2c_act(address, (uint8_t*)buf, len, send_stop, 0);
+}
+
+
+/*
+ * dh_i2c_read() implementation.
+ */
+int ICACHE_FLASH_ATTR dh_i2c_read(unsigned int address, void *buf, size_t len)
+{
+	return i2c_act(address, (uint8_t*)buf, len, 1/*send_stop*/, 1);
+}
+
+
+
+#ifdef DH_COMMANDS_I2C // I2C command handlers
+#include "dhcommand_parser.h"
+#include <user_interface.h>
+
+
+/*
+ * dh_i2c_init_helper() implementation.
+ */
+int ICACHE_FLASH_ATTR dh_i2c_init_helper(COMMAND_RESULT *cmd_res, ALLOWED_FIELDS fields, const gpio_command_params *params)
+{
+	if ((fields & AF_ADDRESS) == 0) {
+		dh_command_fail(cmd_res, "Address not specified");
+		return 1; // FAILED
+	}
+
+	int init = ((fields & AF_SDA) != 0) + ((fields & AF_SCL) != 0);
+	if (init == 2) {
+		const int res = dh_i2c_init(params->SDA, params->SCL);
+		const char *err = dh_i2c_error_string(res);
+		if (err != 0) {
+			dh_command_fail(cmd_res, err);
+			return 1; // FAILED
+		}
+	} else if(init == 1) {
+		dh_command_fail(cmd_res, "Only one pin specified");
+		return 1; // FAILED
+	} else {
+		dh_i2c_reinit();
+	}
+
+	return 0; // continue
+}
+
+
+/*
+ * dh_handle_i2c_master_read() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_handle_i2c_master_read(COMMAND_RESULT *cmd_res, const char *command,
+                                                 const char *params, unsigned int params_len)
+{
+	gpio_command_params info;
+	ALLOWED_FIELDS fields = 0;
+	const char *err_msg = parse_params_pins_set(params, params_len,
+			&info, DH_ADC_SUITABLE_PINS, 0,
+			AF_SDA | AF_SCL | AF_DATA | AF_ADDRESS | AF_COUNT, &fields);
+	if (err_msg != 0) {
+		dh_command_fail(cmd_res, err_msg);
+		return;
+	}
+
+	if (!(fields & AF_COUNT))
+		info.count = 2;
+	if (info.count == 0 || info.count > INTERFACES_BUF_SIZE) {
+		dh_command_fail(cmd_res, "Wrong read size");
+		return;
+	}
+
+	if (dh_i2c_init_helper(cmd_res, fields, &info))
+		return;
+
+	// write
+	if (fields & AF_DATA) {
+		int res = dh_i2c_write(info.address, info.data, info.data_len, 0);
+		err_msg = dh_i2c_error_string(res);
+		if (err_msg) {
+			dh_command_fail(cmd_res, err_msg);
+			return;
+		}
+	}
+
+	// read
+	int res = dh_i2c_read(info.address, info.data, info.count);
+	err_msg = dh_i2c_error_string(res);
+	if (err_msg) {
+		dh_command_fail(cmd_res, err_msg);
+	} else {
+		dh_command_done_buf(cmd_res, info.data, info.count);
+	}
+}
+
+
+/*
+ * dh_handle_i2c_master_write() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_handle_i2c_master_write(COMMAND_RESULT *cmd_res, const char *command,
+                                                  const char *params, unsigned int params_len)
+{
+	gpio_command_params info;
+	ALLOWED_FIELDS fields = 0;
+	const char *err_msg = parse_params_pins_set(params, params_len,
+			&info, DH_ADC_SUITABLE_PINS, 0,
+			AF_SDA | AF_SCL | AF_DATA | AF_ADDRESS, &fields);
+	if (err_msg != 0) {
+		dh_command_fail(cmd_res, err_msg);
+		return;
+	}
+
+	if((fields & AF_DATA) == 0) {
+		dh_command_fail(cmd_res, "Data not specified");
+		return;
+	}
+
+	if (dh_i2c_init_helper(cmd_res, fields, &info))
+		return;
+
+	const int res = dh_i2c_write(info.address, info.data, info.data_len, 1);
+	err_msg = dh_i2c_error_string(res);
+	if (err_msg != 0) {
+		dh_command_fail(cmd_res, err_msg);
+	} else {
+		dh_command_done(cmd_res, "");
+	}
+}
+
+#endif /* DH_COMMANDS_I2C */

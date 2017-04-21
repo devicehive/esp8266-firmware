@@ -39,7 +39,7 @@ void ICACHE_FLASH_ATTR dh_gpio_init(void)
 /*
  * dh_gpio_prepare_pins() implementation.
  */
-void ICACHE_FLASH_ATTR dh_gpio_prepare_pins(DHGpioPinMask pins, bool disable_pwm)
+void ICACHE_FLASH_ATTR dh_gpio_prepare_pins(DHGpioPinMask pins, int disable_pwm)
 {
 	if (disable_pwm)
 		dh_pwm_disable(pins);

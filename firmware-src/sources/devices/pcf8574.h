@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_PCF8574_H_
 #define SOURCES_DEVICES_PCF8574_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define PCF8574_DEFAULT_ADDRESS 0x4E
@@ -23,9 +23,9 @@
  *  \param[in]  sda     Pin for I2C's SDA.
  *  \param[in]  scl     Pin for I2C's SCL.
  *	\param[out]	pins	Pointer where pin mask will be stored.
- *	\return 			Status value, one of DHI2C_STATUS enum.
+ *	\return 			Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS pcf8574_read(int sda, int scl, unsigned int *pins);
+DH_I2C_Status pcf8574_read(int sda, int scl, unsigned int *pins);
 
 /**
  *  \brief              		Write data on extender pins.
@@ -33,18 +33,18 @@ DHI2C_STATUS pcf8574_read(int sda, int scl, unsigned int *pins);
  *  \param[in]  scl     		Pin for I2C's SCL.
  *  \param[in]  pins_to_set		Pin mask to set up high level.
  *  \param[in]  pins_to_clear	Pin mask to set up low level.
- *  \return             		Status value, one of DHI2C_STATUS enum.
+ *  \return             		Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS pcf8574_write(int sda, int scl, unsigned int pins_to_set, unsigned int pins_to_clear);
+DH_I2C_Status pcf8574_write(int sda, int scl, unsigned int pins_to_set, unsigned int pins_to_clear);
 
 /**
  *  \brief              Set all pins.
  *  \param[in]  sda     Pin for I2C's SDA.
  *  \param[in]  scl     Pin for I2C's SCL.
  *  \param[in]  pins	Pin mask of pins state.
- *  \return             Status value, one of DHI2C_STATUS enum.
+ *  \return             Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS pcf8574_set(int sda, int scl, unsigned int pins);
+DH_I2C_Status pcf8574_set(int sda, int scl, unsigned int pins);
 
 /**
  *	\brief					Set extender address which should be used while reading.

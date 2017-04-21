@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_SI7021_H_
 #define SOURCES_DEVICES_SI7021_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define SI7021_DEFAULT_ADDRESS 0x80
@@ -22,9 +22,9 @@
  *	\param[in]	scl			Pin for I2C's SCL.
  *	\param[out]	humidity	Pointer for storing relative humidity result measure in percents.
  *	\param[out]	temperature	Pointer for storing temperature result measure in degree Celsius. Can be NULL.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS si7021_read(int sda, int scl, float *humidity, float *temperature);
+DH_I2C_Status si7021_read(int sda, int scl, float *humidity, float *temperature);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

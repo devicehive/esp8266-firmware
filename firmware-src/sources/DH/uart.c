@@ -400,11 +400,11 @@ void ICACHE_FLASH_ATTR dh_handle_uart_read(COMMAND_RESULT *cmd_res, const char *
 		system_soft_wdt_feed();
 	}
 
-	char *buf = 0;
-	size_t len = dh_uart_get_buf((void**)&buf);
+	void *buf = 0;
+	size_t len = dh_uart_get_buf(&buf);
 	if (len > INTERFACES_BUF_SIZE)
 		len = INTERFACES_BUF_SIZE;
-	cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_DATA_WITH_LEN, buf, len);
+	dh_command_done_buf(cmd_res, buf, len);
 	dh_uart_set_mode(DH_UART_MODE_PER_BUF);
 }
 

@@ -136,6 +136,15 @@ do {                                                 \
 
 
 /**
+ * @brief Report command success with data buffer.
+ * @param[in] cmd_res Command result.
+ * @param[in] buf Buffer to report.
+ * @param[in] len Buffer length in bytes.
+ */
+void dh_command_done_buf(COMMAND_RESULT *cmd_res, const void *buf, size_t len);
+
+
+/**
  * @brief Report command failure.
  * @param[in] cmd_res Command result.
  * @param[in] str String error to report.

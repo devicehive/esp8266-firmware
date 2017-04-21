@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_BH1750_H_
 #define SOURCES_DEVICES_BH1750_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define BH1750_DEFAULT_ADDRESS 0x46
@@ -21,9 +21,9 @@
  *	\param[in]	sda			Pin for I2C's SDA.
  *	\param[in]	scl			Pin for I2C's SCL.
  *	\param[in]	illuminance	Illuminance in lux.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ *	\return 				Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS bh1750_read(int sda, int scl, float *illuminance);
+DH_I2C_Status bh1750_read(int sda, int scl, float *illuminance);
 
 /**
  *	\brief					Set sensor address which should be used while reading.

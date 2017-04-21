@@ -54,7 +54,7 @@ void dh_gpio_init(void);
  * @param[in] pin_mask Bitwise pin mask to use as GPIO pins.
  * @param[in] disable_pwm Flag to disable PWM if it was enabled before.
  */
-void dh_gpio_prepare_pins(DHGpioPinMask pins, bool disable_pwm);
+void dh_gpio_prepare_pins(DHGpioPinMask pins, int disable_pwm);
 
 
 /**

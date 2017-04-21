@@ -9,7 +9,7 @@
 #ifndef SOURCES_DEVICES_MPU6050_H_
 #define SOURCES_DEVICES_MPU6050_H_
 
-#include "dhi2c.h"
+#include "DH/i2c.h"
 
 /** Default sensor i2c address*/
 #define MPU6050_DEFAULT_ADDRESS 0xD0
@@ -32,7 +32,7 @@ typedef struct {
  *	\param[out]	temparature		Gyroscope data in degree per second. Can be NULL.
  *	\return 					NULL on success, text description on error.
  */
-DHI2C_STATUS mpu6050_read(int sda, int scl, MPU6050_XYZ *acceleromter, MPU6050_XYZ *gyroscope, float *temparature);
+DH_I2C_Status mpu6050_read(int sda, int scl, MPU6050_XYZ *acceleromter, MPU6050_XYZ *gyroscope, float *temparature);
 
 /**
  *	\brief					Set sensor address which should be used while reading.
