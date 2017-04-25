@@ -7,7 +7,7 @@
  *
  */
 #include "ds18b20.h"
-#include "dhonewire.h"
+#include "DH/onewire.h"
 #include "dhutils.h"
 
 #include <osapi.h>
@@ -19,22 +19,22 @@ char * ICACHE_FLASH_ATTR ds18b20_read(int pin, float *temperature) {
 	int16_t *res = (int16_t *)&in_buf[0];
 	out_buf[0] = 0xCC;
 	if(pin != DS18B20_NO_PIN) {
-		if(!dhonewire_set_pin(pin)) {
+		if(!!dh_onewire_set_pin(pin)) {
 			return "Failed to set up onewire pin";
 		}
 	}
 	out_buf[1] = 0x44; // start measure, use defaults
-	if(!dhonewire_write(out_buf, sizeof(out_buf))) {
+	if (!!dh_onewire_write(out_buf, sizeof(out_buf))) {
 		return "No response";
 	}
 
 	delay_ms(750); // maximum possible time for measure
 
 	out_buf[1] = 0xBE; // read memory
-	if(!dhonewire_write(out_buf, sizeof(out_buf))) {
+	if (!!dh_onewire_write(out_buf, sizeof(out_buf))) {
 		return "Failed to read";
 	}
-	if(!dhonewire_read(in_buf, sizeof(in_buf))) {
+	if (!!dh_onewire_read(in_buf, sizeof(in_buf))) {
 		return "Failed to read data";
 	}
 	*temperature = (*res / 16.0f); // default precision

@@ -49,10 +49,15 @@ void ICACHE_FLASH_ATTR dh_uart_buf_rcv_cb(const void *buf, size_t len) {
 	dhsender_notification(RNT_NOTIFICATION_UART, RDT_DATA_WITH_LEN, buf, len);
 }
 
- void ICACHE_FLASH_ATTR dhonewire_search_result(unsigned int pin_number, char *buf, unsigned long len) {
-	 if(dhmem_isblock()) {
+
+/*
+ * dh_onewire_search_result() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_onewire_search_result(unsigned int pin, const void *buf, size_t len)
+{
+	if (dhmem_isblock()) {
 		dhstat_got_notification_dropped();
 		return;
 	}
-	dhsender_notification(RNT_NOTIFICATION_ONEWIRE, RDT_SEARCH64, pin_number, buf, len);
- }
+	dhsender_notification(RNT_NOTIFICATION_ONEWIRE, RDT_SEARCH64, pin, buf, len);
+}

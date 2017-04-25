@@ -15,13 +15,13 @@
 #include "DH/uart.h"
 #include "DH/spi.h"
 #include "DH/i2c.h"
+#include "DH/pwm.h"
+#include "DH/onewire.h"
 #include "dhnotification.h"
 #include "snprintf.h"
 #include "dhcommand_parser.h"
 #include "dhterminal.h"
-#include "dhonewire.h"
 #include "dhdebug.h"
-#include "DH/pwm.h"
 #include "dhutils.h"
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
@@ -52,170 +52,6 @@
 #include <user_interface.h>
 #include <ets_forward.h>
 
-LOCAL int ICACHE_FLASH_ATTR onewire_init(COMMAND_RESULT *cb, ALLOWED_FIELDS fields, gpio_command_params *parse_pins) {
-	if(fields & AF_PIN) {
-		if(dhonewire_set_pin(parse_pins->pin) == 0) {
-			dh_command_fail(cb, "Wrong onewire pin");
-			return 1;
-		}
-	}
-	return 0;
-}
-
-#if 1 // onewire commands
-
-/**
- * @brief Do "onewire/master/read" command.
- */
-static void ICACHE_FLASH_ATTR do_onewire_master_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_PIN | AF_DATA | AF_COUNT, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if((fields & AF_COUNT) == 0 || parse_pins.count == 0 || parse_pins.count > INTERFACES_BUF_SIZE) {
-		dh_command_fail(cb, "Wrong read size");
-		return;
-	}
-	if((fields & AF_DATA) == 0) {
-		dh_command_fail(cb, "Command for reading is not specified");
-		return;
-	}
-	if(onewire_init(cb, fields, &parse_pins))
-		return;
-	if(dhonewire_write(parse_pins.data, parse_pins.data_len) == 0) {
-		dh_command_fail(cb, "No response");
-		return;
-	}
-	dhonewire_read(parse_pins.data, parse_pins.count);
-	dh_command_done_buf(cb, parse_pins.data, parse_pins.count);
-}
-
-
-/**
- * @brief Do "onewire/master/write" commands.
- */
-static void ICACHE_FLASH_ATTR do_onewire_master_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char * parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_PIN | AF_DATA, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(onewire_init(cb, fields, &parse_pins))
-		return;
-	if(dhonewire_write(parse_pins.data, parse_pins.data_len) == 0) {
-		dh_command_fail(cb, "No response");
-		return;
-	}
-	dh_command_done(cb, "");
-}
-
-/**
- * Do "onewire/master/search" or "onewire/master/alarm" commands.
- */
-static void ICACHE_FLASH_ATTR do_onewire_master_search(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(onewire_init(cb, fields, &parse_pins))
-			return;
-	}
-	parse_pins.data_len = sizeof(parse_pins.data) ;
-
-	int check = os_strcmp(command, "onewire/master/search");
-	if(dhonewire_search(parse_pins.data, (unsigned long *)&parse_pins.data_len, (check == 0) ? 0xF0 : 0xEC, dhonewire_get_pin()))
-		cb->callback(cb->data, DHSTATUS_OK, RDT_SEARCH64, dhonewire_get_pin(), parse_pins.data, parse_pins.data_len);
-	else
-		dh_command_fail(cb, "Error during search");
-}
-
-
-/**
- * @brief Do "onewire/master/int" command.
- */
-static void ICACHE_FLASH_ATTR do_onewire_master_int(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-
-	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_GPIO_SUITABLE_PINS, dh_gpio_get_timeout(), AF_DISABLE | AF_PRESENCE, &fields);
-	if(parse_res)
-		dh_command_fail(cb, parse_res);
-	else if(fields == 0)
-		dh_command_fail(cb, "Wrong action");
-	else if(dhonewire_int(parse_pins.pins_to_presence, parse_pins.pins_to_disable))
-		dh_command_done(cb, "");
-	else
-		dh_command_fail(cb, "Unsuitable pin");
-}
-
-
-/**
- * @brief Do "onewire/dht/read" command.
- */
-static void ICACHE_FLASH_ATTR do_onewire_dht_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(onewire_init(cb, fields, &parse_pins))
-			return;
-	}
-	parse_pins.count = dhonewire_dht_read(parse_pins.data, sizeof(parse_pins.data));
-	if(parse_pins.count)
-		dh_command_done_buf(cb, parse_pins.data, parse_pins.count);
-	else
-		dh_command_fail(cb, "No response");
-}
-
-
-/**
- * @brief Do "onewire/ws2812b/write" command.
- */
-static void ICACHE_FLASH_ATTR do_onewire_ws2812b_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-
-	char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN | AF_DATA, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if((fields & AF_DATA) == 0) {
-		dh_command_fail(cb, "Data not specified");
-		return;
-	}
-	if(onewire_init(cb, fields, &parse_pins))
-		return;
-	dhonewire_ws2812b_write(parse_pins.data, parse_pins.data_len);
-	dh_command_done(cb, "");
-}
-
-#endif // onewire commands
-
 #if 1 // devices commands
 
 /**
@@ -232,7 +68,7 @@ static void ICACHE_FLASH_ATTR do_devices_ds18b20_read(COMMAND_RESULT *cb, const 
 			dh_command_fail(cb, parse_res);
 			return;
 		}
-		if(onewire_init(cb, fields, &parse_pins))
+		if(dh_onewire_init_helper(cb, fields, &parse_pins))
 			return;
 	}
 	float temperature;
@@ -259,7 +95,7 @@ static void ICACHE_FLASH_ATTR do_devices_dht11_read(COMMAND_RESULT *cb, const ch
 			dh_command_fail(cb, parse_res);
 			return;
 		}
-		if(onewire_init(cb, fields, &parse_pins))
+		if(dh_onewire_init_helper(cb, fields, &parse_pins))
 			return;
 	}
 
@@ -288,7 +124,7 @@ static void ICACHE_FLASH_ATTR do_devices_dht22_read(COMMAND_RESULT *cb, const ch
 			dh_command_fail(cb, parse_res);
 			return;
 		}
-		if(onewire_init(cb, fields, &parse_pins))
+		if(dh_onewire_init_helper(cb, fields, &parse_pins))
 			return;
 	}
 
@@ -1139,13 +975,15 @@ RO_DATA struct {
 	{ "spi/master/write", dh_handle_spi_master_write},
 #endif /* DH_COMMANDS_SPI */
 
-	{ "onewire/master/read", do_onewire_master_read},
-	{ "onewire/master/write", do_onewire_master_write},
-	{ "onewire/master/search", do_onewire_master_search},
-	{ "onewire/master/alarm", do_onewire_master_search},
-	{ "onewire/master/int", do_onewire_master_int},
-	{ "onewire/dht/read", do_onewire_dht_read},
-	{ "onewire/ws2812b/write", do_onewire_ws2812b_write},
+#ifdef DH_COMMANDS_ONEWIRE
+	{ "onewire/master/read", dh_handle_onewire_master_read},
+	{ "onewire/master/write", dh_handle_onewire_master_write},
+	{ "onewire/master/search", dh_handle_onewire_master_search},
+	{ "onewire/master/alarm", dh_handle_onewire_master_search},
+	{ "onewire/master/int", dh_handle_onewire_master_int},
+	{ "onewire/dht/read", dh_handle_onewire_dht_read},
+	{ "onewire/ws2812b/write", dh_handle_onewire_ws2812b_write},
+#endif /* DH_COMMANDS_ONEWIRE */
 
 	{ "devices/ds18b20/read", do_devices_ds18b20_read},
 	{ "devices/dht11/read", do_devices_dht11_read},

@@ -43,5 +43,6 @@
 #define DH_COMMANDS_UART // enable UART commands
 #define DH_COMMANDS_I2C  // enable I2C commands
 #define DH_COMMANDS_SPI  // enable SPI commands
+#define DH_COMMANDS_ONEWIRE // enable onewire commands
 
 #endif /* _USER_CONFIG_H_ */
