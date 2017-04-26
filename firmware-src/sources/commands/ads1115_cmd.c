@@ -37,7 +37,7 @@ void ICACHE_FLASH_ATTR dh_handle_devices_ads1115_read(COMMAND_RESULT *cmd_res, c
 		return; // FAILED
 
 	float values[4];
-	int status = ads1115_read(DH_I2C_NO_PIN, DH_I2C_NO_PIN, values);
+	const int status = ads1115_read(DH_I2C_NO_PIN, DH_I2C_NO_PIN, values);
 	const char *err_msg = dh_i2c_error_string(status);
 	if (err_msg != 0) {
 		dh_command_fail(cmd_res, err_msg);

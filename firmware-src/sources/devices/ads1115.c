@@ -4,7 +4,7 @@
  * @copyright 2016 [DeviceHive](http://devicehive.com)
  * @author Nikolay Khabarov
  */
-#include "ads1115.h"
+#include "devices/ads1115.h"
 #include "DH/i2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"

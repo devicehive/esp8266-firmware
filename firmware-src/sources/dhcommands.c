@@ -30,7 +30,7 @@
 #include "devices/dht.h"
 #include "devices/bmp180.h"
 #include "devices/bmp280.h"
-#include "devices/bh1750.h"
+#include "commands/bh1750_cmd.h"
 #include "devices/mpu6050.h"
 #include "devices/hmc5883l.h"
 #include "devices/pcf8574.h"
@@ -38,7 +38,6 @@
 #include "devices/mhz19.h"
 #include "devices/lm75.h"
 #include "devices/si7021.h"
-#include "commands/ads1115_cmd.h"
 #include "commands/ads1115_cmd.h"
 #include "devices/pcf8591.h"
 #include "devices/mcp4725.h"
@@ -204,36 +203,6 @@ static void ICACHE_FLASH_ATTR do_devices_bmp280_read(COMMAND_RESULT *cb, const c
 	}
 }
 
-
-/**
- * @brief Do "devices/bh1750/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_bh1750_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			bh1750_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float illuminance;
-	const char *res = dh_i2c_error_string(bh1750_read(BH1750_NO_PIN, BH1750_NO_PIN, &illuminance));
-	if(res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
-	}
-}
 
 /**
  * @brief Do "devices/mpu6050/read" command.
@@ -965,7 +934,7 @@ RO_DATA struct {
 	{ "devices/dht22/read", do_devices_dht22_read},
 	{ "devices/bmp180/read", do_devices_bmp180_read},
 	{ "devices/bmp280/read", do_devices_bmp280_read},
-	{ "devices/bh1750/read", do_devices_bh1750_read},
+	{ "devices/bh1750/read", dh_handle_devices_bh1750_read},
 	{ "devices/mpu6050/read", do_devices_mpu6050_read},
 	{ "devices/hmc5883l/read", do_devices_hmc5883l_read},
 	{ "devices/pcf8574/read", do_devices_pcf8574_read},
