@@ -40,7 +40,4 @@ char *dht22_read(int pin, float *humidity, float *temperature);
  */
 int dhonewire_dht_read(char *buf, unsigned int len);
 
-#include "dhsender_data.h"
-void dh_handle_onewire_dht_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen);
-
 #endif /* SOURCES_DEVICES_DHT_H_ */

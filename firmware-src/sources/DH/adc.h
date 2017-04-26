@@ -7,8 +7,6 @@
 #ifndef _DH_ADC_H_
 #define _DH_ADC_H_
 
-#include "user_config.h"
-
 /**
  * @brief ADC suitable channels.
  */
@@ -36,22 +34,4 @@ void dh_adc_loop(unsigned int period_ms);
 // TODO: consider to use callback function pointer
 extern void dh_adc_loop_value_cb(float value);
 
-
-#ifdef DH_COMMANDS_ADC // ADC command handlers
-#include "dhsender_data.h"
-
-/**
- * @brief Handle "adc/read" command.
- */
-void dh_handle_adc_read(COMMAND_RESULT *cmd_res, const char *command,
-                        const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "adc/int" command.
- */
-void dh_handle_adc_int(COMMAND_RESULT *cmd_res, const char *command,
-                       const char *params, unsigned int params_len);
-
-#endif /* DH_COMMANDS_ADC */
 #endif /* _DH_ADC_H_ */

@@ -17,7 +17,6 @@
 #define _DH_UART_H_
 
 #include <c_types.h>
-#include "user_config.h"
 
 /**
  * @brief UART mode.
@@ -152,37 +151,4 @@ extern void dh_uart_char_rcv_cb(int ch);
  */
 extern void dh_uart_buf_rcv_cb(const void *buf, size_t len);
 
-
-#ifdef DH_COMMANDS_UART // UART command handlers
-#include "dhsender_data.h"
-
-
-/**
- * @brief Handle "uart/write" command.
- */
-void ICACHE_FLASH_ATTR dh_handle_uart_write(COMMAND_RESULT *cmd_res, const char *command,
-                                            const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "uart/read" command.
- */
-void ICACHE_FLASH_ATTR dh_handle_uart_read(COMMAND_RESULT *cmd_res, const char *command,
-                                           const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "uart/int" command.
- */
-void ICACHE_FLASH_ATTR dh_handle_uart_int(COMMAND_RESULT *cmd_res, const char *command,
-                                          const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "uart/terminal" command.
- */
-void ICACHE_FLASH_ATTR dh_handle_uart_terminal(COMMAND_RESULT *cmd_res, const char *command,
-                                               const char *params, unsigned int params_len);
-
-#endif /* DH_COMMANDS_UART */
 #endif /* _DH_UART_H_ */

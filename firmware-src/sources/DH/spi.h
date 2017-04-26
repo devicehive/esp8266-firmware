@@ -7,8 +7,6 @@
 #ifndef _DH_SPI_H_
 #define _DH_SPI_H_
 
-#include "user_config.h"
-
 #include <c_types.h>
 
 /**
@@ -70,22 +68,4 @@ void dh_spi_write(const void *buf, size_t len, int disable_cs);
  */
 void dh_spi_read(void *buf, size_t len);
 
-
-#ifdef DH_COMMANDS_SPI // SPI command handlers
-#include "dhsender_data.h"
-
-/**
- * @brief Handle "spi/master/read" command.
- */
-void dh_handle_spi_master_read(COMMAND_RESULT *cmd_res, const char *command,
-                               const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "spi/master/write" command.
- */
-void dh_handle_spi_master_write(COMMAND_RESULT *cmd_res, const char *command,
-                                const char *params, unsigned int params_len);
-
-#endif /* DH_COMMANDS_SPI */
 #endif /* _DH_SPI_H_ */

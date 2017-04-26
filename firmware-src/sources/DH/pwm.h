@@ -11,7 +11,6 @@
 #define _DH_PWM_H_
 
 #include "DH/gpio.h"
-#include "user_config.h"
 
 /**
  * @brief Default PWM frequency in microseconds.
@@ -55,15 +54,4 @@ unsigned int dh_pwm_get_period_us(void);
  */
 void dh_pwm_disable(DHGpioPinMask pins);
 
-
-#ifdef DH_COMMANDS_PWM // PWM command handlers
-#include "dhsender_data.h"
-
-/**
- * @brief Handle "pwm/control" command.
- */
-void dh_handle_pwm_control(COMMAND_RESULT *cmd_res, const char *command,
-                           const char *params, unsigned int params_len);
-
-#endif /* DH_COMMANDS_PWM */
 #endif /* _DH_PWM_H_ */

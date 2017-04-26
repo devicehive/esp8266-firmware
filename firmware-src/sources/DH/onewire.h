@@ -7,7 +7,6 @@
 #ifndef _DH_ONEWIRE_H_
 #define _DH_ONEWIRE_H_
 
-#include "user_config.h"
 #include "DH/gpio.h"
 
 #include <c_types.h>
@@ -91,55 +90,5 @@ int dh_onewire_int(DHGpioPinMask search_pins, DHGpioPinMask disable_pins);
  */
 // TODO: consider to use callback function pointer
 extern void dh_onewire_search_result(unsigned int pin, const void* buf, size_t len);
-
-
-#ifdef DH_COMMANDS_ONEWIRE // onewire command handlers
-#include "dhsender_data.h"
-#include "dhcommand_parser.h"
-
-/**
- * @brief Initialization helper.
- * @return Non-zero if onewire was initialized. Zero otherwise.
- */
-int dh_onewire_init_helper(COMMAND_RESULT *cmd_res, ALLOWED_FIELDS fields,
-                           const gpio_command_params *params);
-
-
-/**
- * @brief Handle "onewire/master/read" command.
- */
-void dh_handle_onewire_master_read(COMMAND_RESULT *cmd_res, const char *command,
-                                   const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "onewire/master/write" commands.
- */
-void dh_handle_onewire_master_write(COMMAND_RESULT *cmd_res, const char *command,
-                                    const char *params, unsigned int params_len);
-
-
-/**
- * Handle "onewire/master/search" or "onewire/master/alarm" commands.
- */
-void dh_handle_onewire_master_search(COMMAND_RESULT *cmd_res, const char *command,
-                                     const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "onewire/master/int" command.
- */
-void dh_handle_onewire_master_int(COMMAND_RESULT *cmd_res, const char *command,
-                                  const char *params, unsigned int params_len);
-
-
-/**
- * @brief Handle "onewire/ws2812b/write" command.
- */
-// TODO: move this code to dedicated device file!
-void dh_handle_onewire_ws2812b_write(COMMAND_RESULT *cmd_res, const char *command,
-                                     const char *params, unsigned int params_len);
-
-#endif /* DH_COMMANDS_ONEWIRE */
 
 #endif /* _DH_ONEWIRE_H_ */

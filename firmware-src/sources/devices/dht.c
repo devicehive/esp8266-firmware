@@ -107,27 +107,3 @@ int ICACHE_FLASH_ATTR dhonewire_dht_read(char *buf, unsigned int len) {
 	return i / 8;
 }
 
-
-/**
- * @brief Do "onewire/dht/read" command.
- */
-void ICACHE_FLASH_ATTR dh_handle_onewire_dht_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(dh_onewire_init_helper(cb, fields, &parse_pins))
-			return;
-	}
-	parse_pins.count = dhonewire_dht_read(parse_pins.data, sizeof(parse_pins.data));
-	if(parse_pins.count)
-		dh_command_done_buf(cb, parse_pins.data, parse_pins.count);
-	else
-		dh_command_fail(cb, "No response");
-}
-
