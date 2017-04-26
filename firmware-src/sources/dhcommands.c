@@ -38,7 +38,8 @@
 #include "devices/mhz19.h"
 #include "devices/lm75.h"
 #include "devices/si7021.h"
-#include "devices/ads1115.h"
+#include "commands/ads1115_cmd.h"
+#include "commands/ads1115_cmd.h"
 #include "devices/pcf8591.h"
 #include "devices/mcp4725.h"
 #include "devices/ina219.h"
@@ -493,35 +494,6 @@ static void ICACHE_FLASH_ATTR do_devices_si7021_read(COMMAND_RESULT *cb, const c
 }
 
 /**
- * @brief Do "devices/ads1115/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_ads1115_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			ads1115_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float values[4];
-	const char *res = dh_i2c_error_string(ads1115_read(ADS1115_NO_PIN, ADS1115_NO_PIN, values));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
-				values[0], values[1], values[2], values[3]);
-	}
-}
-
-/**
  * @brief Do "devices/pcf8591/read" command.
  */
 static void ICACHE_FLASH_ATTR do_devices_pcf8591_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
@@ -550,7 +522,7 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_read(COMMAND_RESULT *cb, const 
 	if(dh_i2c_init_helper(cb, fields, &parse_pins))
 		return;
 	float values[4];
-	const char *res = dh_i2c_error_string(pcf8591_read(ADS1115_NO_PIN, ADS1115_NO_PIN, values));
+	const char *res = dh_i2c_error_string(pcf8591_read(DH_I2C_NO_PIN, DH_I2C_NO_PIN, values));
 	if (res != 0) {
 		dh_command_fail(cb, res);
 	} else {
@@ -667,7 +639,7 @@ static void ICACHE_FLASH_ATTR do_devices_ina219_read(COMMAND_RESULT *cb, const c
 	float voltage;
 	float current;
 	float power;
-	const char *res = dh_i2c_error_string(ina219_read(ADS1115_NO_PIN, ADS1115_NO_PIN, &voltage, &current, &power));
+	const char *res = dh_i2c_error_string(ina219_read(DH_I2C_NO_PIN, DH_I2C_NO_PIN, &voltage, &current, &power));
 	if (res != 0) {
 		dh_command_fail(cb, res);
 	} else {
@@ -1002,7 +974,7 @@ RO_DATA struct {
 	{ "devices/mhz19/read", do_devices_mhz19_read},
 	{ "devices/lm75/read", do_devices_lm75_read},
 	{ "devices/si7021/read", do_devices_si7021_read},
-	{ "devices/ads1115/read", do_devices_ads1115_read},
+	{ "devices/ads1115/read", dh_handle_devices_ads1115_read},
 	{ "devices/pcf8591/read", do_devices_pcf8591_read},
 	{ "devices/pcf8591/write", do_devices_pcf8591_write},
 	{ "devices/mcp4725/write", do_devices_mcp4725_write},

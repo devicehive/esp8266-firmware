@@ -22,6 +22,12 @@ typedef enum {
 
 
 /**
+ * @brief Do not initialize pin indicator.
+ */
+#define DH_I2C_NO_PIN (-1)
+
+
+/**
  * @brief Get error message based on status.
  * @return NULL if status is OK, error message otherwise.
  */
