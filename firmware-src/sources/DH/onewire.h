@@ -11,6 +11,11 @@
 
 #include <c_types.h>
 
+/**
+ * @brief Do not initialize pin indicator.
+ */
+#define DH_ONEWIRE_NO_PIN (-1)
+
 
 /**
  * @brief Set pin for onewire, but not initialize it.

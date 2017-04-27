@@ -83,64 +83,6 @@ static void ICACHE_FLASH_ATTR do_devices_ds18b20_read(COMMAND_RESULT *cb, const 
 	}
 }
 
-
-/**
- * @brief Do "devices/dht11/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_dht11_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(dh_onewire_init_helper(cb, fields, &parse_pins))
-			return;
-	}
-
-	int temperature;
-	int humidity;
-	char *res = dht11_read(DHT_NO_PIN, &humidity, &temperature);
-	if(res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%d, \"humidity\":%d}", temperature, humidity);
-	}
-}
-
-
-/**
- * @brief Do "devices/dht22/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_dht22_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(dh_onewire_init_helper(cb, fields, &parse_pins))
-			return;
-	}
-
-	float temperature;
-	float humidity;
-	char *res = dht22_read(DHT_NO_PIN, &humidity, &temperature);
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
-	}
-}
-
 /**
  * @brief Do "devices/mpu6050/read" command.
  */
@@ -867,8 +809,8 @@ RO_DATA struct {
 #endif /* DH_COMMANDS_ONEWIRE */
 
 	{ "devices/ds18b20/read", do_devices_ds18b20_read},
-	{ "devices/dht11/read", do_devices_dht11_read},
-	{ "devices/dht22/read", do_devices_dht22_read},
+	{ "devices/dht11/read", dh_handle_devices_dht11_read},
+	{ "devices/dht22/read", dh_handle_devices_dht22_read},
 	{ "devices/bmp180/read", dh_handle_devices_bmp180_read},
 	{ "devices/bmp280/read", dh_handle_devices_bmp280_read},
 	{ "devices/bh1750/read", dh_handle_devices_bh1750_read},

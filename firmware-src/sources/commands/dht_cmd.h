@@ -15,4 +15,18 @@
 void dh_handle_onewire_dht_read(COMMAND_RESULT *cmd_res, const char *command,
                                 const char *params, unsigned int params_len);
 
+
+/**
+ * @brief Handle "devices/dht11/read" command.
+ */
+void ICACHE_FLASH_ATTR dh_handle_devices_dht11_read(COMMAND_RESULT *cmd_res, const char *command,
+                                                    const char *params, unsigned int params_len);
+
+
+/**
+ * @brief Handle "devices/dht22/read" command.
+ */
+void ICACHE_FLASH_ATTR dh_handle_devices_dht22_read(COMMAND_RESULT *cmd_res, const char *command,
+                                                    const char *params, unsigned int params_len);
+
 #endif /* _COMMANDS_DHT_CMD_H_ */
