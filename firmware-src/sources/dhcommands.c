@@ -28,8 +28,8 @@
 #include "dhutils.h"
 #include "devices/ds18b20.h"
 #include "devices/dht.h"
-#include "devices/bmp180.h"
-#include "devices/bmp280.h"
+#include "commands/bmp180_cmd.h"
+#include "commands/bmp280_cmd.h"
 #include "commands/bh1750_cmd.h"
 #include "devices/mpu6050.h"
 #include "devices/hmc5883l.h"
@@ -140,69 +140,6 @@ static void ICACHE_FLASH_ATTR do_devices_dht22_read(COMMAND_RESULT *cb, const ch
 		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
 	}
 }
-
-/**
- * @brief Do "devices/bmp180/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_bmp180_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			bmp180_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float temperature;
-	int pressure;
-	const char *res = dh_i2c_error_string(bmp180_read(BMP180_NO_PIN, BMP180_NO_PIN, &pressure, &temperature));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
-	}
-}
-
-/**
- * @brief Do "devices/bmp280/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_bmp280_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			bmp280_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float temperature;
-	float pressure;
-	const char *res = dh_i2c_error_string(bmp280_read(BMP280_NO_PIN, BMP280_NO_PIN, &pressure, &temperature));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%f}", temperature, pressure);
-	}
-}
-
 
 /**
  * @brief Do "devices/mpu6050/read" command.
@@ -932,8 +869,8 @@ RO_DATA struct {
 	{ "devices/ds18b20/read", do_devices_ds18b20_read},
 	{ "devices/dht11/read", do_devices_dht11_read},
 	{ "devices/dht22/read", do_devices_dht22_read},
-	{ "devices/bmp180/read", do_devices_bmp180_read},
-	{ "devices/bmp280/read", do_devices_bmp280_read},
+	{ "devices/bmp180/read", dh_handle_devices_bmp180_read},
+	{ "devices/bmp280/read", dh_handle_devices_bmp280_read},
 	{ "devices/bh1750/read", dh_handle_devices_bh1750_read},
 	{ "devices/mpu6050/read", do_devices_mpu6050_read},
 	{ "devices/hmc5883l/read", do_devices_hmc5883l_read},

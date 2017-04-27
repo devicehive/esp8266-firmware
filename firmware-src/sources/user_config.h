@@ -45,4 +45,6 @@
 #define DH_COMMANDS_SPI  // enable SPI commands
 #define DH_COMMANDS_ONEWIRE // enable onewire commands
 
+// TODO: customize device list
+
 #endif /* _USER_CONFIG_H_ */

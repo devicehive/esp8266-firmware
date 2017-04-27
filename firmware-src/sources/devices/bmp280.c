@@ -1,36 +1,43 @@
-/*
- * bmp280.c
- *
- * Copyright 2016 DeviceHive
- *
- * Author: Nikolay Khabarov
- *
+/**
+ * @file
+ * @brief Simple communication with BMP280 pressure sensor.
+ * @copyright 2016 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
-
-#include "bmp280.h"
+#include "devices/bmp280.h"
+#include "DH/i2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"
 
 #include <osapi.h>
-#include <c_types.h>
 
+/** @brief Default sensor i2c address*/
+#define BMP280_DEFAULT_ADDRESS 0xEC
+
+// module variables
 static int mAddress = BMP280_DEFAULT_ADDRESS;
 
-DH_I2C_Status ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, float *temperature) {
-	char buf[24];
-	DH_I2C_Status status;
-	if(sda != BMP280_NO_PIN && scl != BMP280_NO_PIN) {
-		if((status = dh_i2c_init(sda, scl)) != DH_I2C_OK) {
+
+/*
+ * bmp280_read() implementation.
+ */
+int ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, float *temperature)
+{
+	int status;
+	if (sda != DH_I2C_NO_PIN && scl != DH_I2C_NO_PIN) {
+		if ((status = dh_i2c_init(sda, scl)) != DH_I2C_OK) {
 			dhdebug("bmp280: failed to set up pins");
 			return status;
 		}
 	}
+
+	char buf[24];
 	buf[0] = 0x88; // get factory parameters
-	if((status = dh_i2c_write(mAddress, buf, 1, 0)) != DH_I2C_OK) {
+	if ((status = dh_i2c_write(mAddress, buf, 1, 0)) != DH_I2C_OK) {
 		dhdebug("bmp280: failed to write get coefficients command");
 		return status;
 	}
-	if((status = dh_i2c_read(mAddress, buf, sizeof(buf))) != DH_I2C_OK) {
+	if ((status = dh_i2c_read(mAddress, buf, sizeof(buf))) != DH_I2C_OK) {
 		dhdebug("bmp280: failed to read coefficients");
 		return status;
 	}
@@ -50,35 +57,35 @@ DH_I2C_Status ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, f
 	// configure
 	buf[0] = 0xF5; // config
 	buf[1] = 0x0C; // filter coefficient 8, spi off, duration 0
-	if((status = dh_i2c_write(mAddress, buf, 2, 1)) != DH_I2C_OK) {
+	if ((status = dh_i2c_write(mAddress, buf, 2, 1)) != DH_I2C_OK) {
 		dhdebug("bmp280: failed to configure");
 		return status;
 	}
 	buf[0] = 0xF4; // control
 	buf[1] = 0xB7; // both oversampling to x16, normal mode
-	if((status = dh_i2c_write(mAddress, buf, 2, 1)) != DH_I2C_OK) {
-		dhdebug("bmp280: failed to configure");
+	if ((status = dh_i2c_write(mAddress, buf, 2, 1)) != DH_I2C_OK) {
+		dhdebug("bmp280: failed to control");
 		return status;
 	}
 
 	do { // wait until data is ready
 		buf[0] = 0xF3; // status
-		if((status = dh_i2c_write(mAddress, buf, 1, 0)) != DH_I2C_OK) {
+		if ((status = dh_i2c_write(mAddress, buf, 1, 0)) != DH_I2C_OK) {
 			dhdebug("bmp280: failed to get status");
 			return status;
 		}
-		if((status = dh_i2c_read(mAddress, buf, 1)) != DH_I2C_OK) {
+		if ((status = dh_i2c_read(mAddress, buf, 1)) != DH_I2C_OK) {
 			dhdebug("bmp280: failed to read status");
 			return status;
 		}
-	} while(buf[0] & (1<<3));
+	} while (buf[0] & BIT(3));
 
 	buf[0] = 0xF7; // read press and temp result
-	if((status = dh_i2c_write(mAddress, buf, 1, 0)) != DH_I2C_OK) {
+	if ((status = dh_i2c_write(mAddress, buf, 1, 0)) != DH_I2C_OK) {
 		dhdebug("bmp280: failed to start reading");
 		return status;
 	}
-	if((status = dh_i2c_read(mAddress, buf, 6)) != DH_I2C_OK) {
+	if ((status = dh_i2c_read(mAddress, buf, 6)) != DH_I2C_OK) {
 		dhdebug("bmp280: failed to read");
 		return status;
 	}
@@ -91,18 +98,18 @@ DH_I2C_Status ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, f
 	double v1 = (raw_temperature / 16384.0 - T1 / 1024.0) * T2;
 	double v2 = raw_temperature / 131072.0 - T1 / 8192.0;
 	v2 = v2 * v2 * (double)T3;
-	long int t_fine = v1 + v2;
-	if(temperature) {
+	double t_fine = v1 + v2;
+	if (temperature) {
 		*temperature = (float)t_fine / 5120.0f;
 	}
 
-	v1 = ((double)t_fine) / 2.0 - 64000.0;
+	v1 = (t_fine) / 2.0 - 64000.0;
 	v2 = v1 * v1 * P6 / 32768.0;
 	v2 = v2 + v1 * P5 * 2.0;
 	v2 = v2 / 4.0 + P4 * 65536.0;
 	v1 = (P3 * v1 * v1 / 524288.0 + P2 * v1) / 524288.0;
 	v1 = (1.0 + v1 / 32768.0) * P1;
-	if(v1 == 0.0) {
+	if (v1 == 0.0) { // TODO: fix this condition
 		return DH_I2C_DEVICE_ERROR;
 	}
 	double p = 1048576.0 - raw_pressure;
@@ -114,13 +121,19 @@ DH_I2C_Status ICACHE_FLASH_ATTR bmp280_read(int sda, int scl, float *pressure, f
 
 	buf[0] = 0xF4; // control
 	buf[1] = 0x0;  // sleep mode
-	if((status = dh_i2c_write(mAddress, buf, 2, 1)) != DH_I2C_OK) {
+	if ((status = dh_i2c_write(mAddress, buf, 2, 1)) != DH_I2C_OK) {
 		dhdebug("bmp280: failed to shutdown");
 		return status;
 	}
+
 	return DH_I2C_OK;
 }
 
-void ICACHE_FLASH_ATTR bmp280_set_address(int address) {
+
+/*
+ * bmp280_set_address() implementation.
+ */
+void ICACHE_FLASH_ATTR bmp280_set_address(int address)
+{
 	mAddress = address;
 }

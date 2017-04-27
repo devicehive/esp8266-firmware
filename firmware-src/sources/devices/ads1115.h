@@ -9,8 +9,8 @@
 
 /**
  * @brief Get ADC voltages.
- * @param[in] sda Pin for I2C's SDA.
- * @param[in] scl Pin for I2C's SCL.
+ * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
+ * @param[in] scl Pin for I2C's SCL. Can be DH_I2C_NO_PIN.
  * @param[out] values Pointer to four float values to store result in Volts.
  * @return Status value, one of DH_I2C_Status enum.
  */

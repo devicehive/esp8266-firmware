@@ -10,8 +10,8 @@
 
 /**
  * @brief Measure illuminance one time.
- * @param[in] sda Pin for I2C's SDA.
- * @param[in] scl Pin for I2C's SCL.
+ * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
+ * @param[in] scl Pin for I2C's SCL. Can be DH_I2C_NO_PIN.
  * @param[out] illuminance Illuminance in lux.
  * @return Status value, one of DH_I2C_Status enum.
  */
