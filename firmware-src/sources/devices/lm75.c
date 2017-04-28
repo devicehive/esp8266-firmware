@@ -43,7 +43,7 @@ int ICACHE_FLASH_ATTR lm75_read(int sda, int scl, float *temperature)
 		return status;
 	}
 
-	const int raw = signedInt16be(buf, 0);
+	const int raw = signedInt16be((const char*)buf, 0);
 	*temperature = (float)raw / 256.0f;
 	return DH_I2C_OK;
 }

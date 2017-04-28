@@ -29,6 +29,12 @@ typedef enum {
 
 
 /**
+ * @brief Do not initialize pin indicator.
+ */
+#define DH_SPI_NO_PIN (-2)
+
+
+/**
  * @brief Set SPI mode.
  * @param[in] mode SPI mode.
  * @return Zero on success.

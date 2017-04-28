@@ -45,8 +45,8 @@
 #include "devices/mfrc522.h"
 #include "devices/pca9685.h"
 #include "devices/mlx90614.h"
-#include "devices/max6675.h"
-#include "devices/max31855.h"
+#include "commands/max6675_cmd.h"
+#include "commands/max31855_cmd.h"
 #include "devices/tm1636.h"
 
 #include <ets_sys.h>
@@ -545,53 +545,6 @@ static void ICACHE_FLASH_ATTR do_devices_mlx90614_read(COMMAND_RESULT *cb, const
 }
 
 /**
- * @brief Do "devices/max6675/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_max6675_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_CS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-	}
-	float temperature;
-	char *res = max6675_read((fields & AF_CS) ? parse_pins.CS : MAX6675_NO_PIN, &temperature);
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-	}
-}
-
-/**
- * @brief Do "devices/max31855/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_max31855_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_CS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-	}
-	float temperature;
-	char *res = max31855_read((fields & AF_CS) ? parse_pins.CS : MAX31855_NO_PIN, &temperature);
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-	}
-}
-
-/**
  * @brief Do "devices/tm1637/write" command.
  */
 static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
@@ -694,8 +647,8 @@ RO_DATA struct {
 	{ "devices/mfrc522/mifare/write", do_devices_mfrc522_mifare_read_write},
 	{ "devices/pca9685/control", do_devices_pca9685_control},
 	{ "devices/mlx90614/read", do_devices_mlx90614_read},
-	{ "devices/max6675/read", do_devices_max6675_read},
-	{ "devices/max31855/read", do_devices_max31855_read},
+	{ "devices/max6675/read", dh_handle_devices_max6675_read},
+	{ "devices/max31855/read", dh_handle_devices_max31855_read},
 	{ "devices/tm1637/write", do_devices_tm1637_write}
 };
 
