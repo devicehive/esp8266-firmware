@@ -36,12 +36,12 @@
 #include "devices/pcf8574.h"
 #include "devices/pcf8574_hd44780.h"
 #include "devices/mhz19.h"
-#include "devices/lm75.h"
+#include "commands/lm75_cmd.h"
 #include "devices/si7021.h"
 #include "commands/ads1115_cmd.h"
 #include "devices/pcf8591.h"
 #include "devices/mcp4725.h"
-#include "devices/ina219.h"
+#include "commands/ina219_cmd.h"
 #include "devices/mfrc522.h"
 #include "devices/pca9685.h"
 #include "devices/mlx90614.h"
@@ -215,37 +215,6 @@ static void ICACHE_FLASH_ATTR do_devices_mhz19_read(COMMAND_RESULT *cb, const ch
 
 
 /**
- * @brief Do "devices/lm75/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_lm75_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			lm75_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float temperature;
-	const char *res = dh_i2c_error_string(lm75_read(LM75_NO_PIN, LM75_NO_PIN, &temperature));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-	}
-}
-
-
-/**
  * @brief Do "devices/si7021/read" command.
  */
 static void ICACHE_FLASH_ATTR do_devices_si7021_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
@@ -389,46 +358,6 @@ static void ICACHE_FLASH_ATTR do_devices_mcp4725_write(COMMAND_RESULT *cb, const
 	}
 }
 
-/**
- * @brief Do "devices/ina219/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_ina219_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-					&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-					AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			ina219_set_address(parse_pins.address);
-		if(fields & AF_REF) {
-			const char *res = dh_i2c_error_string(ina219_set_shunt(parse_pins.ref));
-			if (res != 0) {
-				dh_command_fail(cb, res);
-				return;
-			}
-		}
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float voltage;
-	float current;
-	float power;
-	const char *res = dh_i2c_error_string(ina219_read(DH_I2C_NO_PIN, DH_I2C_NO_PIN, &voltage, &current, &power));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-				"{\"voltage\":%f, \"current\":%f, \"power\":%f}",
-				voltage, current, power);
-	}
-}
 
 /**
  * @brief Do "devices/mfrc522/read" command.
@@ -753,13 +682,13 @@ RO_DATA struct {
 	{ "devices/pcf8574/write", do_devices_pcf8574_write},
 	{ "devices/pcf8574/hd44780/write", do_devices_pcf8574_hd44780_write},
 	{ "devices/mhz19/read", do_devices_mhz19_read},
-	{ "devices/lm75/read", do_devices_lm75_read},
+	{ "devices/lm75/read", dh_handle_devices_lm75_read},
 	{ "devices/si7021/read", do_devices_si7021_read},
 	{ "devices/ads1115/read", dh_handle_devices_ads1115_read},
 	{ "devices/pcf8591/read", do_devices_pcf8591_read},
 	{ "devices/pcf8591/write", do_devices_pcf8591_write},
 	{ "devices/mcp4725/write", do_devices_mcp4725_write},
-	{ "devices/ina219/read", do_devices_ina219_read},
+	{ "devices/ina219/read", dh_handle_devices_ina219_read},
 	{ "devices/mfrc522/read", do_devices_mfrc522_read},
 	{ "devices/mfrc522/mifare/read", do_devices_mfrc522_mifare_read_write},
 	{ "devices/mfrc522/mifare/write", do_devices_mfrc522_mifare_read_write},

@@ -24,7 +24,7 @@ typedef struct {
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
  * @param[in] scl Pin for I2C's SCL. Can be DH_I2C_NO_PIN.
  * @param[out] compass Compass data in normalized vector. If axis is overflowed during measure, HMC5883l_OVERFLOWED is a value.
- *	\return 					NULL on success, text description on error.
+ * @return NULL on success, text description on error.
  */
 int hmc5883l_read(int sda, int scl, HMC5883L_XYZ *compass);
 
