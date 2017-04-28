@@ -1,23 +1,18 @@
 /**
- *	\file		ds18b20.h
- *	\brief		Simple communication with DS18B20 temperature sensor
- *	\author		Nikolay Khabarov
- *	\date		2016
- *	\copyright	DeviceHive MIT
+ * @file
+ * @brief Simple communication with DS18B20 temperature sensor.
+ * @copyright 2016 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
-
-#ifndef SOURCES_DEVICES_DS18B20_H_
-#define SOURCES_DEVICES_DS18B20_H_
-
-/** Do not initialize pin */
-#define DS18B20_NO_PIN -1
+#ifndef _DEVICES_DS18B20_H_
+#define _DEVICES_DS18B20_H_
 
 /**
- *	\brief					Measure temperature one time.
- *	\param[in]	pin			1-wire pin for communication.
- *	\param[out]	temperature	Pointer to store measure result in degree Celsius.
- *	\return 				NULL on success, text description on error.
+ * @brief Measure temperature one time.
+ * @param[in] pin 1-wire pin for communication. Can be DH_ONEWIRE_NO_PIN.
+ * @param[out] temperature Pointer to store measure result in degree Celsius.
+ * @return NULL on success, text description on error.
  */
-char *ds18b20_read(int pin, float *temperature);
+const char* ds18b20_read(int pin, float *temperature);
 
-#endif /* SOURCES_DEVICES_DS18B20_H_ */
+#endif /* _DEVICES_DS18B20_H_ */

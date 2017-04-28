@@ -26,7 +26,7 @@
 #include "dhterminal.h"
 #include "dhdebug.h"
 #include "dhutils.h"
-#include "devices/ds18b20.h"
+#include "commands/ds18b20_cmd.h"
 #include "devices/dht.h"
 #include "commands/bmp180_cmd.h"
 #include "commands/bmp280_cmd.h"
@@ -56,32 +56,6 @@
 #include <ets_forward.h>
 
 #if 1 // devices commands
-
-/**
- * @brief Do "devices/ds18b20/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_ds18b20_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char * parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_PIN, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(dh_onewire_init_helper(cb, fields, &parse_pins))
-			return;
-	}
-	float temperature;
-	char *res = ds18b20_read(DS18B20_NO_PIN, &temperature);
-	if(res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
-	}
-}
 
 /**
  * @brief Do "devices/mpu6050/read" command.
@@ -808,7 +782,7 @@ RO_DATA struct {
 	{ "onewire/ws2812b/write", dh_handle_onewire_ws2812b_write},
 #endif /* DH_COMMANDS_ONEWIRE */
 
-	{ "devices/ds18b20/read", do_devices_ds18b20_read},
+	{ "devices/ds18b20/read", dh_handle_devices_ds18b20_read},
 	{ "devices/dht11/read", dh_handle_devices_dht11_read},
 	{ "devices/dht22/read", dh_handle_devices_dht22_read},
 	{ "devices/bmp180/read", dh_handle_devices_bmp180_read},
