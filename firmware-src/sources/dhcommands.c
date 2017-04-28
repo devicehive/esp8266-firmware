@@ -32,7 +32,7 @@
 #include "commands/bmp280_cmd.h"
 #include "commands/bh1750_cmd.h"
 #include "devices/mpu6050.h"
-#include "devices/hmc5883l.h"
+#include "commands/hmc5883l_cmd.h"
 #include "devices/pcf8574.h"
 #include "devices/pcf8574_hd44780.h"
 #include "devices/mhz19.h"
@@ -89,47 +89,6 @@ static void ICACHE_FLASH_ATTR do_devices_mpu6050_read(COMMAND_RESULT *cb, const 
 				"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
 				temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
 	}
-}
-
-/**
- * @brief Do "devices/hmc5883l/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_hmc5883l_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			hmc5883l_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	HMC5883L_XYZ compass;
-	const char *res = dh_i2c_error_string(hmc5883l_read(HMC5883L_NO_PIN, HMC5883L_NO_PIN, &compass));
-	if(res != 0) {
-		dh_command_fail(cb, res);
-		return;
-	}
-	char floatbufx[10] = "NaN";
-	char floatbufy[10] = "NaN";
-	char floatbufz[10] = "NaN";
-	if(compass.X != HMC5883l_OVERFLOWED)
-		snprintf(floatbufx, sizeof(floatbufx), "%f", compass.X);
-	if(compass.Y != HMC5883l_OVERFLOWED)
-		snprintf(floatbufy, sizeof(floatbufy), "%f", compass.Y);
-	if(compass.Z != HMC5883l_OVERFLOWED)
-		snprintf(floatbufz, sizeof(floatbufz), "%f", compass.Z);
-	cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-	    "{\"magnetometer\":{\"X\":%s, \"Y\":%s, \"Z\":%s}}",
-	    floatbufx, floatbufy, floatbufz);
 }
 
 /**
@@ -789,7 +748,7 @@ RO_DATA struct {
 	{ "devices/bmp280/read", dh_handle_devices_bmp280_read},
 	{ "devices/bh1750/read", dh_handle_devices_bh1750_read},
 	{ "devices/mpu6050/read", do_devices_mpu6050_read},
-	{ "devices/hmc5883l/read", do_devices_hmc5883l_read},
+	{ "devices/hmc5883l/read", dh_handle_devices_hmc5883l_read},
 	{ "devices/pcf8574/read", do_devices_pcf8574_read},
 	{ "devices/pcf8574/write", do_devices_pcf8574_write},
 	{ "devices/pcf8574/hd44780/write", do_devices_pcf8574_hd44780_write},
