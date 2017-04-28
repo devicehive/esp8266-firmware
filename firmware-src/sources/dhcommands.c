@@ -31,7 +31,7 @@
 #include "commands/bmp180_cmd.h"
 #include "commands/bmp280_cmd.h"
 #include "commands/bh1750_cmd.h"
-#include "devices/mpu6050.h"
+#include "commands/mpu6050_cmd.h"
 #include "commands/hmc5883l_cmd.h"
 #include "devices/pcf8574.h"
 #include "devices/pcf8574_hd44780.h"
@@ -44,7 +44,7 @@
 #include "commands/ina219_cmd.h"
 #include "devices/mfrc522.h"
 #include "devices/pca9685.h"
-#include "devices/mlx90614.h"
+#include "commands/mlx90614_cmd.h"
 #include "commands/max6675_cmd.h"
 #include "commands/max31855_cmd.h"
 #include "devices/tm1636.h"
@@ -56,40 +56,6 @@
 #include <ets_forward.h>
 
 #if 1 // devices commands
-
-/**
- * @brief Do "devices/mpu6050/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_mpu6050_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			mpu6050_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	MPU6050_XYZ acc;
-	MPU6050_XYZ gyro;
-	float temperature;
-	const char *res = dh_i2c_error_string(mpu6050_read(MPU6050_NO_PIN, MPU6050_NO_PIN, &acc, &gyro, &temperature));
-	if(res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-				"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
-				temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
-	}
-}
 
 /**
  * @brief Do "devices/pcf8574/read" command.
@@ -457,37 +423,6 @@ static void ICACHE_FLASH_ATTR do_devices_pca9685_control(COMMAND_RESULT *cb, con
 }
 
 /**
- * @brief Do "devices/mlx90614/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_mlx90614_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			mlx90614_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float ambient;
-	float object;
-	const char *res = dh_i2c_error_string(mlx90614_read(MLX90614_NO_PIN, MLX90614_NO_PIN, &ambient, &object));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"ambient\":%f, \"object\":%f}", ambient, object);
-	}
-}
-
-/**
  * @brief Do "devices/tm1637/write" command.
  */
 static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
@@ -572,7 +507,7 @@ RO_DATA struct {
 	{ "devices/bmp180/read", dh_handle_devices_bmp180_read},
 	{ "devices/bmp280/read", dh_handle_devices_bmp280_read},
 	{ "devices/bh1750/read", dh_handle_devices_bh1750_read},
-	{ "devices/mpu6050/read", do_devices_mpu6050_read},
+	{ "devices/mpu6050/read", dh_handle_devices_mpu6050_read},
 	{ "devices/hmc5883l/read", dh_handle_devices_hmc5883l_read},
 	{ "devices/pcf8574/read", do_devices_pcf8574_read},
 	{ "devices/pcf8574/write", do_devices_pcf8574_write},
@@ -589,7 +524,7 @@ RO_DATA struct {
 	{ "devices/mfrc522/mifare/read", do_devices_mfrc522_mifare_read_write},
 	{ "devices/mfrc522/mifare/write", do_devices_mfrc522_mifare_read_write},
 	{ "devices/pca9685/control", do_devices_pca9685_control},
-	{ "devices/mlx90614/read", do_devices_mlx90614_read},
+	{ "devices/mlx90614/read", dh_handle_devices_mlx90614_read},
 	{ "devices/max6675/read", dh_handle_devices_max6675_read},
 	{ "devices/max31855/read", dh_handle_devices_max31855_read},
 	{ "devices/tm1637/write", do_devices_tm1637_write}
