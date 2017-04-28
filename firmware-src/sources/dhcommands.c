@@ -43,7 +43,7 @@
 #include "commands/mcp4725_cmd.h"
 #include "commands/ina219_cmd.h"
 #include "devices/mfrc522.h"
-#include "devices/pca9685.h"
+#include "commands/pca9685_cmd.h"
 #include "commands/mlx90614_cmd.h"
 #include "commands/max6675_cmd.h"
 #include "commands/max31855_cmd.h"
@@ -394,35 +394,6 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 }
 
 /**
- * @brief Do "devices/pca9685/control" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_pca9685_control(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, PCA9685_SUITABLE_PINS, 0,
-			AF_SDA | AF_SCL | AF_ADDRESS | AF_FLOATVALUES | AF_PERIOD, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(fields & AF_ADDRESS)
-		pca9685_set_address(parse_pins.address);
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	const char *res = dh_i2c_error_string(pca9685_control(PCA9685_NO_PIN, PCA9685_NO_PIN,
-	        parse_pins.storage.float_values, parse_pins.pin_value_readed,
-	        (fields & AF_PERIOD) ? parse_pins.periodus : PCA9685_NO_PERIOD));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		dh_command_done(cb, "");
-	}
-}
-
-/**
  * @brief Do "devices/tm1637/write" command.
  */
 static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
@@ -523,7 +494,7 @@ RO_DATA struct {
 	{ "devices/mfrc522/read", do_devices_mfrc522_read},
 	{ "devices/mfrc522/mifare/read", do_devices_mfrc522_mifare_read_write},
 	{ "devices/mfrc522/mifare/write", do_devices_mfrc522_mifare_read_write},
-	{ "devices/pca9685/control", do_devices_pca9685_control},
+	{ "devices/pca9685/control", dh_handle_devices_pca9685_control},
 	{ "devices/mlx90614/read", dh_handle_devices_mlx90614_read},
 	{ "devices/max6675/read", dh_handle_devices_max6675_read},
 	{ "devices/max31855/read", dh_handle_devices_max31855_read},

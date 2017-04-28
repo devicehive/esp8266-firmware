@@ -12,7 +12,6 @@
 /**
  * @brief Handle "devices/bh1750/read" command.
  */
-
 void dh_handle_devices_bh1750_read(COMMAND_RESULT *cmd_res, const char *command,
                                    const char *params, unsigned int params_len);
 

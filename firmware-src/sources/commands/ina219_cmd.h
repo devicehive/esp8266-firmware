@@ -12,7 +12,6 @@
 /**
  * @brief Handle "devices/ina219/read" command.
  */
-
 void dh_handle_devices_ina219_read(COMMAND_RESULT *cmd_res, const char *command,
                                      const char *params, unsigned int params_len);
 
