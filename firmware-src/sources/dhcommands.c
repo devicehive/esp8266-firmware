@@ -40,7 +40,7 @@
 #include "devices/si7021.h"
 #include "commands/ads1115_cmd.h"
 #include "devices/pcf8591.h"
-#include "devices/mcp4725.h"
+#include "commands/mcp4725_cmd.h"
 #include "commands/ina219_cmd.h"
 #include "devices/mfrc522.h"
 #include "devices/pca9685.h"
@@ -312,52 +312,13 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8591_write(COMMAND_RESULT *cb, const
 	fields |= AF_ADDRESS;
 	if(dh_i2c_init_helper(cb, fields, &parse_pins))
 		return;
-	const char *res = dh_i2c_error_string(pcf8591_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.storage.float_values[0]));
+	const char *res = dh_i2c_error_string(pcf8591_write(DH_I2C_NO_PIN, DH_I2C_NO_PIN, parse_pins.storage.float_values[0]));
 	if (res != 0) {
 		dh_command_fail(cb, res);
 	} else {
 		dh_command_done(cb, "");
 	}
 }
-
-/**
- * @brief Do "devices/mcp4725/write" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_mcp4725_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(parse_pins.pin_value_readed != 1) {
-		dh_command_fail(cb, "Unsuitable pin");
-		return;
-	}
-	if(fields & AF_ADDRESS)
-		mcp4725_set_address(parse_pins.address);
-	if(fields & AF_REF) {
-		const char *res = dh_i2c_error_string(mcp4725_set_vref(parse_pins.ref));
-		if (res != 0) {
-			dh_command_fail(cb, res);
-			return;
-		}
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	const char *res = dh_i2c_error_string(mcp4725_write(MCP4725_NO_PIN, MCP4725_NO_PIN, parse_pins.storage.float_values[0]));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		dh_command_done(cb, "");
-	}
-}
-
 
 /**
  * @brief Do "devices/mfrc522/read" command.
@@ -640,7 +601,7 @@ RO_DATA struct {
 	{ "devices/ads1115/read", dh_handle_devices_ads1115_read},
 	{ "devices/pcf8591/read", do_devices_pcf8591_read},
 	{ "devices/pcf8591/write", do_devices_pcf8591_write},
-	{ "devices/mcp4725/write", do_devices_mcp4725_write},
+	{ "devices/mcp4725/write", dh_handle_devices_mcp4725_write},
 	{ "devices/ina219/read", dh_handle_devices_ina219_read},
 	{ "devices/mfrc522/read", do_devices_mfrc522_read},
 	{ "devices/mfrc522/mifare/read", do_devices_mfrc522_mifare_read_write},

@@ -47,7 +47,7 @@ const char* ICACHE_FLASH_ATTR max31855_read(int pin, float *temperature)
 		return "Short to Vcc";
 
 	buf[1] &= 0xFC;
-	int v = signedInt16be(buf, 0);
+	int v = signedInt16be((const char*)buf, 0);
 	*temperature = v / 16.0f;
 
 	return NULL; // OK
