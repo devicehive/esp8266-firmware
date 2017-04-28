@@ -35,7 +35,7 @@
 #include "commands/hmc5883l_cmd.h"
 #include "devices/pcf8574.h"
 #include "devices/pcf8574_hd44780.h"
-#include "devices/mhz19.h"
+#include "commands/mhz19_cmd.h"
 #include "commands/lm75_cmd.h"
 #include "devices/si7021.h"
 #include "commands/ads1115_cmd.h"
@@ -192,24 +192,6 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 		dh_command_fail(cb, res);
 	} else {
 		dh_command_done(cb, "");
-	}
-}
-
-/**
- * @brief Do "devices/mhz19/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_mhz19_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		dh_command_fail(cb, "Command does not have parameters");
-		return;
-	}
-	int co2;
-	char *res = mhz19_read(&co2);
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
 	}
 }
 
@@ -595,7 +577,7 @@ RO_DATA struct {
 	{ "devices/pcf8574/read", do_devices_pcf8574_read},
 	{ "devices/pcf8574/write", do_devices_pcf8574_write},
 	{ "devices/pcf8574/hd44780/write", do_devices_pcf8574_hd44780_write},
-	{ "devices/mhz19/read", do_devices_mhz19_read},
+	{ "devices/mhz19/read", dh_handle_devices_mhz19_read},
 	{ "devices/lm75/read", dh_handle_devices_lm75_read},
 	{ "devices/si7021/read", do_devices_si7021_read},
 	{ "devices/ads1115/read", dh_handle_devices_ads1115_read},
