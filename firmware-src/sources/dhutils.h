@@ -140,10 +140,13 @@ static inline int signedInt16le(const char *buf, int pos) {
 void delay_ms(unsigned int ms);
 
 /**
- *	\brief					Reverse bits in byte.
- *	\param[in]	v			Byte.
- *	\return					Byte in reverse bit order.
+ * @brief Reverse bits in byte.
+ * @param[in] v Byte.
+ * @return Byte in reverse bit order.
  */
-unsigned char bitwise_reverse_byte(unsigned char v);
+static inline uint8_t bitwise_reverse_byte(uint8_t v)
+{
+	return ((v * 0x0802LU & 0x22110LU) | (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
+}
 
 #endif /* _DHUTILS_H_ */

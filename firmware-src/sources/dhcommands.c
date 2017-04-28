@@ -37,7 +37,7 @@
 #include "devices/pcf8574_hd44780.h"
 #include "commands/mhz19_cmd.h"
 #include "commands/lm75_cmd.h"
-#include "devices/si7021.h"
+#include "commands/si7021_cmd.h"
 #include "commands/ads1115_cmd.h"
 #include "devices/pcf8591.h"
 #include "commands/mcp4725_cmd.h"
@@ -47,7 +47,7 @@
 #include "commands/mlx90614_cmd.h"
 #include "commands/max6675_cmd.h"
 #include "commands/max31855_cmd.h"
-#include "devices/tm1636.h"
+#include "commands/tm1637_cmd.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
@@ -161,35 +161,6 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 	}
 }
 
-
-/**
- * @brief Do "devices/si7021/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_si7021_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen, &parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_SDA | AF_SCL | AF_ADDRESS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			si7021_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float temperature;
-	float humidity;
-	const char *res = dh_i2c_error_string(si7021_read(SI7021_NO_PIN, SI7021_NO_PIN, &humidity, &temperature));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
-	}
-}
 
 /**
  * @brief Do "devices/pcf8591/read" command.
@@ -393,36 +364,6 @@ static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 	dh_command_fail(cb, MFRC522_GetStatusCodeName(result));
 }
 
-/**
- * @brief Do "devices/tm1637/write" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_tm1637_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_SDA | AF_SCL | AF_DATA | AF_TEXT_DATA, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if((fields & (AF_DATA | AF_TEXT_DATA)) == 0 || parse_pins.data_len == 0) {
-		dh_command_fail(cb, "Text not specified");
-		return;
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	const char *res = dh_i2c_error_string(tm1636_write(TM1636_NO_PIN, TM1636_NO_PIN,
-	        parse_pins.data, parse_pins.data_len));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		dh_command_done(cb, "");
-	}
-}
-
 #endif // devices commands
 
 RO_DATA struct {
@@ -485,7 +426,7 @@ RO_DATA struct {
 	{ "devices/pcf8574/hd44780/write", do_devices_pcf8574_hd44780_write},
 	{ "devices/mhz19/read", dh_handle_devices_mhz19_read},
 	{ "devices/lm75/read", dh_handle_devices_lm75_read},
-	{ "devices/si7021/read", do_devices_si7021_read},
+	{ "devices/si7021/read", dh_handle_devices_si7021_read},
 	{ "devices/ads1115/read", dh_handle_devices_ads1115_read},
 	{ "devices/pcf8591/read", do_devices_pcf8591_read},
 	{ "devices/pcf8591/write", do_devices_pcf8591_write},
@@ -498,7 +439,7 @@ RO_DATA struct {
 	{ "devices/mlx90614/read", dh_handle_devices_mlx90614_read},
 	{ "devices/max6675/read", dh_handle_devices_max6675_read},
 	{ "devices/max31855/read", dh_handle_devices_max31855_read},
-	{ "devices/tm1637/write", do_devices_tm1637_write}
+	{ "devices/tm1637/write", dh_handle_devices_tm1637_write}
 };
 
 
