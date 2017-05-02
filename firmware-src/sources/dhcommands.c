@@ -9,15 +9,8 @@
  *
  */
 #include "dhcommands.h"
-#include "dhsender_queue.h"
-#include "DH/adc.h"
-#include "dhnotification.h"
-#include "snprintf.h"
-#include "dhcommand_parser.h"
-#include "dhterminal.h"
 #include "dhdebug.h"
-#include "dhutils.h"
-#include "devices/dht.h"
+
 #include "commands/gpio_cmd.h"
 #include "commands/adc_cmd.h"
 #include "commands/uart_cmd.h"
@@ -42,147 +35,16 @@
 #include "commands/pcf8591_cmd.h"
 #include "commands/mcp4725_cmd.h"
 #include "commands/ina219_cmd.h"
-#include "devices/mfrc522.h"
+#include "commands/mfrc522_cmd.h"
 #include "commands/pca9685_cmd.h"
 #include "commands/mlx90614_cmd.h"
 #include "commands/max6675_cmd.h"
 #include "commands/max31855_cmd.h"
 #include "commands/tm1637_cmd.h"
 
-#include <ets_sys.h>
 #include <osapi.h>
-#include <os_type.h>
 #include <user_interface.h>
 #include <ets_forward.h>
-
-#if 1 // devices commands
-
-/**
- * @brief Do "devices/mfrc522/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_mfrc522_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	if(paramslen) {
-		gpio_command_params parse_pins;
-		ALLOWED_FIELDS fields = 0;
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0, AF_CS, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_CS) {
-			if(MFRC522_Set_CS(parse_pins.CS) != MFRC522_STATUS_OK) {
-				dh_command_fail(cb, "Unsuitable pin");
-				return;
-			}
-		}
-	}
-	MFRC522_PCD_Init();
-	uint8_t bufferATQA[2];
-	uint8_t bufferSize = sizeof(bufferATQA);
-	MFRC522_StatusCode result = MFRC522_PICC_RequestA(bufferATQA, &bufferSize);
-	if(result == MFRC522_STATUS_OK || result == MFRC522_STATUS_COLLISION) {
-		MFRC522_Uid *uid = MFRC522_Get_Uid();
-		result = MFRC522_PICC_Select(uid, 0);
-		if(result == MFRC522_STATUS_OK) {
-			char hexbuf[uid->size * 2 + 1];
-			unsigned int i;
-			for(i = 0; i < uid->size; i++)
-			byteToHex(uid->uidByte[i], &hexbuf[i * 2]);
-			hexbuf[sizeof(hexbuf) - 1] = 0;
-			cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING,
-			                "{\"uid\":\"0x%s\", \"type\":\"%s\"}", hexbuf,
-			                MFRC522_PICC_GetTypeName(MFRC522_PICC_GetType(uid->sak)));
-			MFRC522_PCD_AntennaOff();
-			return;
-		}
-	}
-	MFRC522_PICC_HaltA();
-	MFRC522_PCD_AntennaOff();
-	dh_command_fail(cb, MFRC522_GetStatusCodeName(result));
-}
-
-/**
- * @brief Do "devices/mfrc522/mifare/read" and "devices/mfrc522/mifare/write" commands.
- */
-static void ICACHE_FLASH_ATTR do_devices_mfrc522_mifare_read_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	const int check = os_strcmp(command, "devices/mfrc522/mifare/read");
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-			AF_CS | AF_ADDRESS | AF_KEY | (check ? AF_DATA : 0), &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(fields & AF_CS) {
-		if(MFRC522_Set_CS(parse_pins.CS) != MFRC522_STATUS_OK) {
-			dh_command_fail(cb, "Unsuitable pin");
-			return;
-		}
-	}
-	if((fields & AF_ADDRESS) == 0) {
-		dh_command_fail(cb, "Block address not specified");
-		return;
-	}
-	if((fields & AF_KEY) == 0) {
-		// default key
-		os_memset(parse_pins.storage.key.key_data, 0xFF, MF_KEY_SIZE);
-		parse_pins.storage.key.key_len = MF_KEY_SIZE;
-	} else if(parse_pins.storage.key.key_len != MF_KEY_SIZE) {
-		dh_command_fail(cb, "Wrong key length");
-		return;
-	}
-	if(check) {
-		if((fields & AF_DATA) == 0) {
-			dh_command_fail(cb, "Data not specified");
-			return;
-		} else if(parse_pins.data_len != 16) {
-			dh_command_fail(cb, "Data length should be 16 bytes");
-			return;
-		}
-	}
-	MFRC522_PCD_Init();
-	uint8_t bufferATQA[2];
-	uint8_t bufferSize = sizeof(bufferATQA);
-	MFRC522_StatusCode result = MFRC522_PICC_RequestA(bufferATQA, &bufferSize);
-	if(result == MFRC522_STATUS_OK || result == MFRC522_STATUS_COLLISION) {
-		MFRC522_Uid *uid = MFRC522_Get_Uid();
-		result = MFRC522_PICC_Select(uid, 0);
-		MIFARE_Key key;
-		os_memcpy(key.keyByte, parse_pins.storage.key.key_data, MF_KEY_SIZE);
-		if(result == MFRC522_STATUS_OK) {
-			result = MFRC522_PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, parse_pins.address, &key, uid);
-			if(result == MFRC522_STATUS_OK) {
-				uint8_t len = (sizeof(parse_pins.data) > 0xFF) ? 0xFF : sizeof(parse_pins.data);
-				if(check)
-					result = MFRC522_MIFARE_Write(parse_pins.address, (uint8_t*)parse_pins.data, parse_pins.data_len);
-				else
-					result = MFRC522_MIFARE_Read(parse_pins.address, (uint8_t*)parse_pins.data, &len);
-				if(result == MFRC522_STATUS_OK) {
-					parse_pins.count = len;
-					if(check)
-						dh_command_done(cb, "");
-					else
-						dh_command_done_buf(cb, parse_pins.data, parse_pins.count);
-					MFRC522_PICC_HaltA();
-					MFRC522_PCD_StopCrypto1();
-					MFRC522_PCD_AntennaOff();
-					return;
-				}
-			}
-		}
-	}
-	MFRC522_PICC_HaltA();
-	MFRC522_PCD_StopCrypto1();
-	MFRC522_PCD_AntennaOff();
-	dh_command_fail(cb, MFRC522_GetStatusCodeName(result));
-}
-
-#endif // devices commands
 
 RO_DATA struct {
 	const char *name;
@@ -250,14 +112,16 @@ RO_DATA struct {
 	{ "devices/pcf8591/write", dh_handle_devices_pcf8591_write},
 	{ "devices/mcp4725/write", dh_handle_devices_mcp4725_write},
 	{ "devices/ina219/read", dh_handle_devices_ina219_read},
-	{ "devices/mfrc522/read", do_devices_mfrc522_read},
-	{ "devices/mfrc522/mifare/read", do_devices_mfrc522_mifare_read_write},
-	{ "devices/mfrc522/mifare/write", do_devices_mfrc522_mifare_read_write},
+	{ "devices/mfrc522/read", dh_handle_devices_mfrc522_read},
+	{ "devices/mfrc522/mifare/read", dh_handle_devices_mfrc522_mifare_read_write},
+	{ "devices/mfrc522/mifare/write", dh_handle_devices_mfrc522_mifare_read_write},
 	{ "devices/pca9685/control", dh_handle_devices_pca9685_control},
 	{ "devices/mlx90614/read", dh_handle_devices_mlx90614_read},
 	{ "devices/max6675/read", dh_handle_devices_max6675_read},
 	{ "devices/max31855/read", dh_handle_devices_max31855_read},
-	{ "devices/tm1637/write", dh_handle_devices_tm1637_write}
+	{ "devices/tm1637/write", dh_handle_devices_tm1637_write},
+
+	{ "-", 0 } // END
 };
 
 
@@ -272,7 +136,7 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 
 	dhdebug("Got command: %s %d", command, cb->data.id);
 	for (i = 0; i < NUM_OF_COMMANDS; ++i) {
-		if (0 == os_strcmp(command, g_command_table[i].name)) {
+		if (0 == os_strcmp(command, g_command_table[i].name) && g_command_table[i].func) {
 			g_command_table[i].func(cb, command, params, paramslen);
 			return; // done
 		}
