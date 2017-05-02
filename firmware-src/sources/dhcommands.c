@@ -10,6 +10,14 @@
  */
 #include "dhcommands.h"
 #include "dhsender_queue.h"
+#include "DH/adc.h"
+#include "dhnotification.h"
+#include "snprintf.h"
+#include "dhcommand_parser.h"
+#include "dhterminal.h"
+#include "dhdebug.h"
+#include "dhutils.h"
+#include "devices/dht.h"
 #include "commands/gpio_cmd.h"
 #include "commands/adc_cmd.h"
 #include "commands/uart_cmd.h"
@@ -19,22 +27,14 @@
 #include "commands/onewire_cmd.h"
 #include "commands/ws2812b_cmd.h"
 #include "commands/dht_cmd.h"
-#include "DH/adc.h"
-#include "dhnotification.h"
-#include "snprintf.h"
-#include "dhcommand_parser.h"
-#include "dhterminal.h"
-#include "dhdebug.h"
-#include "dhutils.h"
 #include "commands/ds18b20_cmd.h"
-#include "devices/dht.h"
 #include "commands/bmp180_cmd.h"
 #include "commands/bmp280_cmd.h"
 #include "commands/bh1750_cmd.h"
 #include "commands/mpu6050_cmd.h"
 #include "commands/hmc5883l_cmd.h"
-#include "devices/pcf8574.h"
-#include "devices/pcf8574_hd44780.h"
+#include "commands/pcf8574_cmd.h"
+#include "commands/pcf8574_hd44780_cmd.h"
 #include "commands/mhz19_cmd.h"
 #include "commands/lm75_cmd.h"
 #include "commands/si7021_cmd.h"
@@ -56,111 +56,6 @@
 #include <ets_forward.h>
 
 #if 1 // devices commands
-
-/**
- * @brief Do "devices/pcf8574/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_pcf8574_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, PCF8574_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS | AF_PULLUP, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			pcf8574_set_address(parse_pins.address);
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	if(fields & AF_PULLUP) {
-		const char *res = dh_i2c_error_string(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN, parse_pins.pins_to_pullup, 0));
-		if (res != 0) {
-			dh_command_fail(cb, res);
-			return;
-		}
-	}
-	unsigned int pins;
-	const char *res = dh_i2c_error_string(pcf8574_read(PCF8574_NO_PIN, PCF8574_NO_PIN, &pins));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_GPIO, 0, pins, system_get_time(), PCF8574_SUITABLE_PINS);
-	}
-}
-
-/**
- * @brief Do "devices/pcf8574/write" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_pcf8574_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, PCF8574_SUITABLE_PINS, 0,
-			AF_SDA | AF_SCL | AF_ADDRESS | AF_SET | AF_CLEAR, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	} else if( (fields & (AF_SET | AF_CLEAR)) == 0) {
-		dh_command_fail(cb, "Dummy request");
-		return;
-	} else if( (parse_pins.pins_to_set | parse_pins.pins_to_clear | PCF8574_SUITABLE_PINS)
-	        != PCF8574_SUITABLE_PINS ) {
-		dh_command_fail(cb, "Unsuitable pin");
-		return;
-	}
-	if(fields & AF_ADDRESS)
-		pcf8574_set_address(parse_pins.address);
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	const char *res = dh_i2c_error_string(pcf8574_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
-	        parse_pins.pins_to_set, parse_pins.pins_to_clear));
-	if(res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		dh_command_done(cb, "");
-	}
-}
-
-/**
- * @brief Do "devices/pcf8574/hd44780/write" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-			&parse_pins, PCF8574_SUITABLE_PINS, 0,
-			AF_SDA | AF_SCL | AF_ADDRESS | AF_DATA | AF_TEXT_DATA, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if((fields & (AF_DATA | AF_TEXT_DATA)) == 0 || parse_pins.data_len == 0) {
-		dh_command_fail(cb, "Text not specified");
-		return;
-	}
-	if(fields & AF_ADDRESS)
-		pcf8574_set_address(parse_pins.address);
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	const char *res = dh_i2c_error_string(pcf8574_hd44780_write(PCF8574_NO_PIN, PCF8574_NO_PIN,
-	        parse_pins.data, parse_pins.data_len));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		dh_command_done(cb, "");
-	}
-}
-
 
 /**
  * @brief Do "devices/mfrc522/read" command.
@@ -344,9 +239,9 @@ RO_DATA struct {
 	{ "devices/bh1750/read", dh_handle_devices_bh1750_read},
 	{ "devices/mpu6050/read", dh_handle_devices_mpu6050_read},
 	{ "devices/hmc5883l/read", dh_handle_devices_hmc5883l_read},
-	{ "devices/pcf8574/read", do_devices_pcf8574_read},
-	{ "devices/pcf8574/write", do_devices_pcf8574_write},
-	{ "devices/pcf8574/hd44780/write", do_devices_pcf8574_hd44780_write},
+	{ "devices/pcf8574/read", dh_handle_devices_pcf8574_read},
+	{ "devices/pcf8574/write", dh_handle_devices_pcf8574_write},
+	{ "devices/pcf8574/hd44780/write", dh_handle_devices_pcf8574_hd44780_write},
 	{ "devices/mhz19/read", dh_handle_devices_mhz19_read},
 	{ "devices/lm75/read", dh_handle_devices_lm75_read},
 	{ "devices/si7021/read", dh_handle_devices_si7021_read},
