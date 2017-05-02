@@ -7,6 +7,9 @@
 #ifndef _DEVICES_HMC5883L_H_
 #define _DEVICES_HMC5883L_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_HMC5883L)
+
 /** Measurements in three dimensions. */
 typedef struct {
 	float X;	///< @brief X axis.
@@ -35,4 +38,5 @@ int hmc5883l_read(int sda, int scl, HMC5883L_XYZ *compass);
  */
 void hmc5883l_set_address(int address);
 
+#endif /* DH_DEVICE_HMC5883L */
 #endif /* _DEVICES_HMC5883L_H_ */

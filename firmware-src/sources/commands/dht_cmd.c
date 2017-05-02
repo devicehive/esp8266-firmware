@@ -13,6 +13,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_ONEWIRE)
 
 /*
  * dh_handle_onewire_dht_read() implementation.
@@ -40,7 +41,10 @@ void ICACHE_FLASH_ATTR dh_handle_onewire_dht_read(COMMAND_RESULT *cmd_res, const
 		dh_command_fail(cmd_res, "No response");
 }
 
+#endif /* DH_COMMANDS_ONEWIRE */
 
+
+#if defined(DH_COMMANDS_DHT11) && defined(DH_DEVICE_DHT11)
 
 /*
  * dh_handle_devices_dht11_read() implementation.
@@ -72,6 +76,10 @@ void ICACHE_FLASH_ATTR dh_handle_devices_dht11_read(COMMAND_RESULT *cmd_res, con
 	}
 }
 
+#endif /* DH_COMMANDS_DHT11 && DH_DEVICE_DHT11 */
+
+
+#if defined(DH_COMMANDS_DHT22) && defined(DH_DEVICE_DHT22)
 
 /*
  * dh_handle_devices_dht22_read() implementation.
@@ -102,3 +110,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_dht22_read(COMMAND_RESULT *cmd_res, con
 				"{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
 	}
 }
+
+#endif /* DH_COMMANDS_DHT22 || DH_DEVICE_DHT22 */

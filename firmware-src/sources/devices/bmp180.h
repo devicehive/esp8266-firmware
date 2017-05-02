@@ -7,6 +7,9 @@
 #ifndef _DEVICES_BMP180_H_
 #define _DEVICES_BMP180_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_BMP180)
+
 /**
  * @brief Measure pressure one time.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -26,4 +29,5 @@ int bmp180_read(int sda, int scl,
  */
 void bmp180_set_address(int address);
 
+#endif /* DH_DEVICE_BMP180 */
 #endif /* _DEVICES_BMP180_H_ */

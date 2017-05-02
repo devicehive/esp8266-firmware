@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_MAX31855)
+
 // module variables
 static int mCSPin = 15;
 
@@ -52,3 +54,5 @@ const char* ICACHE_FLASH_ATTR max31855_read(int pin, float *temperature)
 
 	return NULL; // OK
 }
+
+#endif /* DH_DEVICE_MAX31855 */

@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_MLX90614)
+
 /** @brief Default sensor i2c address*/
 #define MLX90614_DEFAULT_ADDRESS 0xB4
 
@@ -69,3 +71,5 @@ void ICACHE_FLASH_ATTR mlx90614_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_MLX90614 */

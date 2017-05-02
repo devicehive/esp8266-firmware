@@ -13,6 +13,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_MCP4725) && defined(DH_DEVICE_MCP4725)
 
 /*
  * dh_handle_devices_mcp4725_read() implementation.
@@ -56,3 +57,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mcp4725_write(COMMAND_RESULT *cmd_res, 
 		dh_command_done(cmd_res, "");
 	}
 }
+
+#endif /* DH_COMMANDS_MCP4725 && DH_DEVICE_MCP4725 */

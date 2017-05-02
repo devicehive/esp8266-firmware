@@ -13,6 +13,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_MPU6050) && defined(DH_DEVICE_MPU6050)
+
 /*
  * dh_handle_devices_mpu6050_read() implementation.
  */
@@ -50,3 +52,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mpu6050_read(COMMAND_RESULT *cmd_res, c
 				temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
 	}
 }
+
+#endif /* DH_COMMANDS_MPU6050 && DH_DEVICE_MPU6050 */

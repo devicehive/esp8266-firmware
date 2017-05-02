@@ -12,6 +12,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_MAX6675) && defined(DH_DEVICE_MAX6675)
 
 /*
  * dh_handle_devices_max6675_read() implementation.
@@ -39,3 +40,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_max6675_read(COMMAND_RESULT *cmd_res, c
 				"{\"temperature\":%f}", temperature);
 	}
 }
+
+#endif /* DH_COMMANDS_MAX6675 && DH_DEVICE_MAX6675 */

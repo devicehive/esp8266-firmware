@@ -13,6 +13,7 @@
 #include <osapi.h>
 #include <ets_forward.h>
 
+#if defined(DH_COMMANDS_MFRC522) && defined(DH_DEVICE_MFRC522)
 
 /**
  * @brief Do "devices/mfrc522/read" command.
@@ -145,3 +146,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mfrc522_mifare_read_write(COMMAND_RESUL
 	MFRC522_PCD_AntennaOff();
 	dh_command_fail(cmd_res, MFRC522_GetStatusCodeName(result));
 }
+
+#endif /* DH_COMMANDS_MFRC522 && DH_DEVICE_MFRC522 */

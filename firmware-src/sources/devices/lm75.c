@@ -12,6 +12,8 @@
 #include <osapi.h>
 #include <c_types.h>
 
+#if defined(DH_DEVICE_LM75)
+
 /** @brief Default sensor i2c address*/
 #define LM75_DEFAULT_ADDRESS 0x90
 
@@ -56,3 +58,5 @@ void ICACHE_FLASH_ATTR lm75_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_LM75 */

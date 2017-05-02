@@ -7,6 +7,9 @@
 #ifndef _DEVICES_MAX31855_H_
 #define _DEVICES_MAX31855_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_MAX31855)
+
 /**
  * @brief Measure temperature one time.
  * @param[in] cs Chip select pin. Can be DH_SPI_NO_PIN to disable CS.
@@ -15,4 +18,5 @@
  */
 const char* max31855_read(int pin, float *temperature);
 
+#endif /* DH_DEVICE_MAX31855 */
 #endif /* _DEVICES_MAX31855_H_ */

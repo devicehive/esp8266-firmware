@@ -14,6 +14,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_HMC5883L) && defined(DH_DEVICE_HMC5883L)
+
 /*
  * dh_handle_devices_hmc5883l_read() implementation.
  */
@@ -60,3 +62,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_hmc5883l_read(COMMAND_RESULT *cmd_res, 
 			"{\"magnetometer\":{\"X\":%s, \"Y\":%s, \"Z\":%s}}",
 			floatbufx, floatbufy, floatbufz);
 }
+
+#endif /* DH_COMMANDS_HMC5883L && DH_DEVICE_HMC5883L */

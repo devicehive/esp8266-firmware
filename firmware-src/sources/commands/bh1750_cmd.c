@@ -13,6 +13,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_BH1750) && defined(DH_DEVICE_BH1750)
+
 /*
  * dh_handle_devices_bh1750_read() implementation.
  */
@@ -46,3 +48,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_bh1750_read(COMMAND_RESULT *cmd_res, co
 		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
 	}
 }
+
+#endif /* DH_COMMANDS_BH1750 && DH_DEVICE_BH1750 */

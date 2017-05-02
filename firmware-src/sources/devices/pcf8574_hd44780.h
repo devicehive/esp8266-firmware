@@ -7,6 +7,9 @@
 #ifndef _DEVICES_PCF8574_HD44780_H_
 #define _DEVICES_PCF8574_HD44780_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_PCF8574_HD44780)
+
 #include <c_types.h>
 
 /**
@@ -22,4 +25,5 @@
  */
 int pcf8574_hd44780_write(int sda, int scl, const char *text, int len);
 
+#endif /* DH_DEVICE_PCF8574_HD44780 */
 #endif /* _DEVICES_PCF8574_HD44780_H_ */

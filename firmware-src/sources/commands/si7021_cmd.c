@@ -13,6 +13,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_SI7021) && defined(DH_DEVICE_SI7021)
+
 /*
  * dh_handle_devices_si7021_read() implementation.
  */
@@ -47,3 +49,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_si7021_read(COMMAND_RESULT *cmd_res, co
 				"{\"temperature\":%f, \"humidity\":%f}", temperature, humidity);
 	}
 }
+
+#endif /* DH_COMMANDS_SI7021 && DH_DEVICE_SI7021 */

@@ -7,6 +7,9 @@
 #ifndef _DEVICES_PCF8591_H_
 #define _DEVICES_PCF8591_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_PCF8591)
+
 /**
  * @brief Get ADC voltages.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -44,4 +47,5 @@ void pcf8591_set_address(int address);
  */
 int pcf8591_set_vref(float voltage);
 
+#endif /* DH_DEVICE_PCF8591 */
 #endif /* _DEVICES_PCF8591_H_ */

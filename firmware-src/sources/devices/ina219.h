@@ -7,6 +7,9 @@
 #ifndef _DEVICES_INA219_H_
 #define _DEVICES_INA219_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_INA219)
+
 /**
  * @brief Get measurements.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -35,4 +38,5 @@ void ina219_set_address(int address);
  */
 int ina219_set_shunt(float resistance);
 
+#endif /* DH_DEVICE_INA219 */
 #endif /* _DEVICES_INA219_H_ */

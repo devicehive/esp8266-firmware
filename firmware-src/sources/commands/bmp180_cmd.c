@@ -13,6 +13,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_BMP180) && defined(DH_DEVICE_BMP180)
 
 /*
  * dh_handle_devices_bmp180_read() implementation.
@@ -48,3 +49,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_bmp180_read(COMMAND_RESULT *cmd_res, co
 		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f, \"pressure\":%d}", temperature, pressure);
 	}
 }
+
+#endif /* DH_COMMANDS_BMP180 && DH_DEVICE_BMP180 */

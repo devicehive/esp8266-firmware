@@ -7,6 +7,9 @@
 #ifndef _DEVICES_MLX90614_H_
 #define _DEVICES_MLX90614_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_MLX90614)
+
 /**
  * @brief Measure temperature one time.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -24,4 +27,5 @@ int mlx90614_read(int sda, int scl, float *ambient, float *object);
  */
 void mlx90614_set_address(int address);
 
+#endif /* DH_DEVICE_MLX90614 */
 #endif /* _DEVICES_MLX90614_H_ */

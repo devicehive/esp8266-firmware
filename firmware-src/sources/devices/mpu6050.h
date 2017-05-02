@@ -7,6 +7,9 @@
 #ifndef _DEVICES_MPU6050_H_
 #define _DEVICES_MPU6050_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_MPU6050)
+
 /** @brief Measurements in three dimensions. */
 typedef struct {
 	float X;	///< @brief X axis.
@@ -33,4 +36,5 @@ int mpu6050_read(int sda, int scl, MPU6050_XYZ *acceleromter, MPU6050_XYZ *gyros
  */
 void mpu6050_set_address(int address);
 
+#endif /* DH_DEVICE_MPU6050 */
 #endif /* _DEVICES_MPU6050_H_ */

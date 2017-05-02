@@ -12,6 +12,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_PCA9685) && defined(DH_DEVICE_PCA9685)
+
 /*
  * dh_handle_devices_pca9685_control() implementation.
  */
@@ -44,3 +46,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_pca9685_control(COMMAND_RESULT *cmd_res
 		dh_command_done(cmd_res, "");
 	}
 }
+
+#endif /* DH_COMMANDS_PCA9685 && DH_DEVICE_PCA9685 */

@@ -7,6 +7,8 @@
 #ifndef _DEVICES_BH1750_H_
 #define _DEVICES_BH1750_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_BH1750)
 
 /**
  * @brief Measure illuminance one time.
@@ -24,5 +26,5 @@ int bh1750_read(int sda, int scl, float illuminance[1]);
  */
 void bh1750_set_address(int address);
 
-
+#endif /* DH_DEVICE_BH1750 */
 #endif /* _DEVICES_BH1750_H_ */

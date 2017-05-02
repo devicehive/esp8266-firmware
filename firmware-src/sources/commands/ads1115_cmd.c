@@ -13,6 +13,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_ADS1115) && defined(DH_DEVICE_ADS1115)
 
 /*
  * dh_handle_devices_ads1115_read() implementation.
@@ -47,3 +48,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_ads1115_read(COMMAND_RESULT *cmd_res, c
 				values[0], values[1], values[2], values[3]);
 	}
 }
+
+#endif /* DH_COMMANDS_ADS1115 && DH_DEVICE_ADS1115 */

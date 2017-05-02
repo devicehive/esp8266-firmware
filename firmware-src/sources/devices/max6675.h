@@ -7,6 +7,8 @@
 #ifndef _DEVICES_MAX6675_H_
 #define _DEVICES_MAX6675_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_MAX6675)
 
 /**
  * @brief Measure temperature one time.
@@ -16,4 +18,5 @@
  */
 const char* max6675_read(int pin, float *temperature);
 
+#endif /* DH_DEVICE_MAX6675 */
 #endif /* SOURCES_DEVICES_MAX6675_H_ */

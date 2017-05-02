@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_HMC5883L)
+
 /** @brief Default sensor i2c address*/
 #define HMC5883L_DEFAULT_ADDRESS 0x3C
 
@@ -72,3 +74,5 @@ void ICACHE_FLASH_ATTR hmc5883l_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_HMC5883L */

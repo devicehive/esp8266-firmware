@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_ADS1115)
+
 /** Default sensor i2c address*/
 #define ADS1115_DEFAULT_ADDRESS 0x90
 
@@ -76,3 +78,5 @@ void ICACHE_FLASH_ATTR ads1115_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_ADS1115 */

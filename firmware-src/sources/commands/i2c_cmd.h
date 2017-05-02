@@ -8,8 +8,7 @@
 #define _COMMANDS_I2C_CMD_H_
 
 #include "user_config.h"
-
-#ifdef DH_COMMANDS_I2C // I2C command handlers
+#if defined(DH_COMMANDS_I2C) // I2C command handlers
 #include "dhcommand_parser.h"
 #include "dhsender_data.h"
 

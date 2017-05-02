@@ -11,6 +11,8 @@
 #include <osapi.h>
 #include <ets_forward.h>
 
+#if defined(DH_DEVICE_PCF8574_HD44780)
+
 #define PIN_RS        BIT(0)
 #define PIN_RW        BIT(1)
 #define PIN_E         BIT(2)
@@ -159,3 +161,5 @@ int ICACHE_FLASH_ATTR pcf8574_hd44780_write(int sda, int scl, const char *text, 
 
 	return DH_I2C_OK;
 }
+
+#endif /* DH_DEVICE_PCF8574_HD44780 */

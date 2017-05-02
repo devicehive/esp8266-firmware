@@ -7,6 +7,9 @@
 #ifndef _DEVICES_TM1637_H_
 #define _DEVICES_TM1637_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_TM1637)
+
 #include <c_types.h>
 
 /**
@@ -22,4 +25,5 @@
  */
 int tm1636_write(int sda, int scl, const char *text, size_t len);
 
+#endif /* DH_DEVICE_TM1637 */
 #endif /* _DEVICES_TM1637_H_ */

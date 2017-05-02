@@ -7,6 +7,9 @@
 #ifndef _SOURCES_DEVICES_ADS1115_H_
 #define _SOURCES_DEVICES_ADS1115_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_ADS1115)
+
 /**
  * @brief Get ADC voltages.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -23,4 +26,5 @@ int ads1115_read(int sda, int scl, float values[4]);
  */
 void ads1115_set_address(int address);
 
+#endif /* DH_DEVICE_ADS1115 */
 #endif /* _SOURCES_DEVICES_ADS1115_H_ */

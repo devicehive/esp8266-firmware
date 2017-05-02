@@ -12,6 +12,8 @@
 #include <osapi.h>
 #include <ets_forward.h>
 
+#if defined(DH_DEVICE_INA219)
+
 /** @brief Default sensor i2c address*/
 #define INA219_DEFAULT_ADDRESS 0x80
 
@@ -88,3 +90,5 @@ int ICACHE_FLASH_ATTR ina219_set_shunt(float resistance)
 	mResistance = resistance;
 	return DH_I2C_OK;
 }
+
+#endif /* DH_DEVICE_INA219 */

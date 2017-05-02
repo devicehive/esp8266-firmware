@@ -13,6 +13,8 @@
 #include <osapi.h>
 #include <ets_forward.h>
 
+#if defined(DH_DEVICE_TM1637)
+
 // segments table for digits
 RO_DATA const uint8_t segments_table[] = {
 	0b11111100,	// 0
@@ -96,3 +98,5 @@ int ICACHE_FLASH_ATTR tm1636_write(int sda, int scl, const char *text, size_t le
 
 	return DH_I2C_OK;
 }
+
+#endif /* DH_DEVICE_TM1637 */

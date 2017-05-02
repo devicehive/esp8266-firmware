@@ -7,6 +7,9 @@
 #ifndef _DEVICES_PCF8574_H_
 #define _DEVICES_PCF8574_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_PCF8574)
+
 /** @brief Pins which can be used with extender. */
 #define PCF8574_SUITABLE_PINS 0b11111111
 
@@ -51,4 +54,5 @@ int pcf8574_set(int sda, int scl,
  */
 void pcf8574_set_address(int address);
 
+#endif /* DH_DEVICE_PCF8574 */
 #endif /* _DEVICES_PCF8574_H_ */

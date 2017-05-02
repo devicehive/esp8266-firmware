@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_BH1750)
+
 /** Default sensor i2c address*/
 #define BH1750_DEFAULT_ADDRESS 0x46
 
@@ -56,3 +58,5 @@ void ICACHE_FLASH_ATTR bh1750_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_BH1750 */

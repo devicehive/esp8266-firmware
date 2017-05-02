@@ -7,6 +7,9 @@
 #ifndef _DEVICES_PCA9685_H_
 #define _DEVICES_PCA9685_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_PCA9685)
+
 #include "DH/gpio.h"
 
 /** @brief Do not change frequency */
@@ -36,4 +39,5 @@ int pca9685_control(int sda, int scl, const float pins_duty[DH_GPIO_PIN_COUNT],
  */
 void pca9685_set_address(int address);
 
+#endif /* DH_DEVICE_PCA9685 */
 #endif /* _DEVICES_PCA9685_H_ */

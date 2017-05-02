@@ -8,8 +8,7 @@
 #define _COMMANDS_GPIO_CMD_H_
 
 #include "user_config.h"
-
-#ifdef DH_COMMANDS_GPIO // GPIO command handlers
+#if defined(DH_COMMANDS_GPIO) // GPIO command handlers
 #include "dhsender_data.h"
 
 /**

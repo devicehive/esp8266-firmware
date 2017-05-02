@@ -7,6 +7,9 @@
 #ifndef _DEVICES_MCP4725_H_
 #define _DEVICES_MCP4725_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_MCP4725)
+
 /**
  * @brief Set DAC voltages.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -34,4 +37,5 @@ void mcp4725_set_address(int address);
  */
 int mcp4725_set_vref(float voltage);
 
+#endif /* DH_DEVICE_MCP4725 */
 #endif /* _DEVICES_MCP4725_H_ */

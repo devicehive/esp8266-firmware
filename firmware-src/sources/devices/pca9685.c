@@ -11,6 +11,7 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_PCA9685)
 
 /** @brief Default i2c address*/
 #define PCA9685_DEFAULT_ADDRESS 0x80
@@ -103,3 +104,5 @@ void ICACHE_FLASH_ATTR pca9685_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_PCA9685 */

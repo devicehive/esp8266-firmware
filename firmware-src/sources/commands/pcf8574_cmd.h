@@ -7,6 +7,8 @@
 #ifndef _COMMANDS_PCF8574_CMD_H_
 #define _COMMANDS_PCF8574_CMD_H_
 
+#include "user_config.h"
+#if defined(DH_COMMANDS_PCF8574) && defined(DH_DEVICE_PCF8574)
 #include "dhsender_data.h"
 
 /**
@@ -22,4 +24,5 @@ void dh_handle_devices_pcf8574_read(COMMAND_RESULT *cmd_res, const char *command
 void dh_handle_devices_pcf8574_write(COMMAND_RESULT *cmd_res, const char *command,
                                      const char *params, unsigned int params_len);
 
+#endif /* DH_COMMANDS_PCF8574 && DH_DEVICE_PCF8574 */
 #endif /* _COMMANDS_PCF8574_CMD_H_ */

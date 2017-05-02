@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_BMP180)
+
 /** @brief Default sensor i2c address*/
 #define BMP180_DEFAULT_ADDRESS 0xEE
 
@@ -128,3 +130,5 @@ void ICACHE_FLASH_ATTR bmp180_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_BMP180 */

@@ -12,6 +12,8 @@
 #include <osapi.h>
 #include <ets_forward.h>
 
+#if defined(DH_DEVICE_PCF8591)
+
 /** @brief Default sensor i2c address. */
 #define PCF8591_DEFAULT_ADDRESS 0x90
 
@@ -110,3 +112,5 @@ int ICACHE_FLASH_ATTR pcf8591_set_vref(float voltage)
 	mVoltage = voltage;
 	return DH_I2C_OK;
 }
+
+#endif /* DH_DEVICE_PCF8591 */

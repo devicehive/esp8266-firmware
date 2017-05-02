@@ -7,6 +7,9 @@
 #ifndef _DEVICES_SI7021_H_
 #define _DEVICES_SI7021_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_SI7021)
+
 /**
  * @brief Measure temperature and relative humidity one time.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -24,4 +27,5 @@ int si7021_read(int sda, int scl, float *humidity, float *temperature);
  */
 void si7021_set_address(int address);
 
+#endif /* DH_DEVICE_SI7021 */
 #endif /* _DEVICES_SI7021_H_ */

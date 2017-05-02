@@ -8,6 +8,7 @@
 #define _COMMANDS_MAX31855_CMD_H_
 
 #include "user_config.h"
+#if defined(DH_COMMANDS_MAX31855) && defined(DH_DEVICE_MAX31855)
 #include "dhsender_data.h"
 
 /**
@@ -16,4 +17,5 @@
 void dh_handle_devices_max31855_read(COMMAND_RESULT *cmd_res, const char *command,
                                      const char *params, unsigned int params_len);
 
+#endif /* DH_COMMANDS_MAX31855 && DH_DEVICE_MAX31855 */
 #endif /* _COMMANDS_MAX31855_CMD_H_ */

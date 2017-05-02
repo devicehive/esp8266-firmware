@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_SI7021)
+
 /** @brief Default sensor i2c address*/
 #define SI7021_DEFAULT_ADDRESS 0x80
 
@@ -67,3 +69,5 @@ void ICACHE_FLASH_ATTR si7021_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_SI7021 */

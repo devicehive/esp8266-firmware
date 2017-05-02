@@ -10,6 +10,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_MHZ19) && defined(DH_DEVICE_MHZ19)
 
 /*
  * dh_handle_devices_mhz19_read() implementation.
@@ -31,3 +32,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mhz19_read(COMMAND_RESULT *cmd_res, con
 				RDT_FORMAT_STRING, "{\"co2\":%d}", co2);
 	}
 }
+
+#endif /* DH_COMMANDS_MHZ19 && DH_DEVICE_MHZ19 */

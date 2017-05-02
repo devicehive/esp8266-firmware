@@ -20,6 +20,8 @@
 #define DHT_RESET_LENGTH_US     25000
 #define DHT_TIMEOUT_US          200
 
+#if defined(DH_DEVICE_DHT11) || defined(DH_DEVICE_DHT22)
+
 /**
  * @brief Read DHT packet of 5 bytes.
  */
@@ -43,6 +45,10 @@ static const char* ICACHE_FLASH_ATTR dht_read_pkt(int pin, uint8_t buf[DHT_PACKE
 	return 0; // OK
 }
 
+#endif /* DH_DEVICE_DHT11 || DH_DEVICE_DHT22 */
+
+
+#if defined(DH_DEVICE_DHT11)
 
 /*
  * dht11_read() implementation.
@@ -61,6 +67,10 @@ const char* ICACHE_FLASH_ATTR dht11_read(int pin, int *humidity, int *temperatur
 	return NULL; // OK
 }
 
+#endif /* DH_DEVICE_DHT11 */
+
+
+#if defined(DH_DEVICE_DHT22)
 
 /*
  * dht22_read() implementation.
@@ -79,6 +89,10 @@ const char* ICACHE_FLASH_ATTR dht22_read(int pin, float *humidity, float *temper
 	return NULL; // OK
 }
 
+#endif /* DH_DEVICE_DHT22 */
+
+
+#if defined(DH_COMMANDS_ONEWIRE)
 
 /**
  * @brief Measure high-level interval.
@@ -138,3 +152,5 @@ int ICACHE_FLASH_ATTR dht_read(void *buf_, size_t len)
 	ETS_INTR_UNLOCK();
 	return i/8;
 }
+
+#endif /* DH_COMMANDS_ONEWIRE */

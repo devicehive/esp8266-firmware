@@ -7,6 +7,9 @@
 #ifndef _DEVICES_LM75_H_
 #define _DEVICES_LM75_H_
 
+#include "user_config.h"
+#if defined(DH_DEVICE_LM75)
+
 /**
  * @brief Measure temperature one time.
  * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
@@ -23,4 +26,5 @@ int lm75_read(int sda, int scl, float *temperature);
  */
 void lm75_set_address(int address);
 
+#endif /* DH_DEVICE_LM75 */
 #endif /* _DEVICES_LM75_H_ */

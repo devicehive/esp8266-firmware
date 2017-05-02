@@ -8,8 +8,7 @@
 #define _COMMANDS_WS2812B_CMD_H_
 
 #include "user_config.h"
-
-#ifdef DH_COMMANDS_ONEWIRE // onewire WS2812B command handlers
+#if defined(DH_COMMANDS_ONEWIRE) // onewire WS2812B command handlers
 #include "dhsender_data.h"
 #include "dhcommand_parser.h"
 

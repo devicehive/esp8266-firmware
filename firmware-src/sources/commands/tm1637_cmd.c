@@ -13,6 +13,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_TM1637) && defined(DH_DEVICE_TM1637)
+
 /*
  * dh_handle_devices_tm1637_write() implementation.
  */
@@ -45,3 +47,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_tm1637_write(COMMAND_RESULT *cmd_res, c
 		dh_command_done(cmd_res, "");
 	}
 }
+
+#endif /* DH_COMMANDS_TM1637 && DH_DEVICE_TM1637 */

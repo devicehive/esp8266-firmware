@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_MPU6050)
+
 /** @brief Default sensor i2c address*/
 #define MPU6050_DEFAULT_ADDRESS 0xD0
 
@@ -99,3 +101,5 @@ void ICACHE_FLASH_ATTR mpu6050_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_MPU6050 */

@@ -14,6 +14,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_PCF8574_HD44780) && defined(DH_DEVICE_PCF8574_HD44780)
 
 /*
  * dh_handle_devices_pcf8574_hd44780_write() implementation.
@@ -51,3 +52,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 		dh_command_done(cmd_res, "");
 	}
 }
+
+#endif /* DH_COMMANDS_PCF8574_HD44780 && DH_DEVICE_PCF8574_HD44780 */

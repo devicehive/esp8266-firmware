@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_MCP4725)
+
 /** @brief Default sensor i2c address*/
 #define MCP4725_DEFAULT_ADDRESS 0xC0
 
@@ -70,3 +72,5 @@ int ICACHE_FLASH_ATTR mcp4725_set_vref(float voltage)
 	mVoltage = voltage;
 	return DH_I2C_OK;
 }
+
+#endif /* DH_DEVICE_MCP4725 */

@@ -14,6 +14,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_INA219) && defined(DH_DEVICE_INA219)
+
 /*
  * dh_handle_devices_ina219_read() implementation.
  */
@@ -60,3 +62,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_ina219_read(COMMAND_RESULT *cmd_res, co
 				voltage, current, power);
 	}
 }
+
+#endif /* DH_COMMANDS_INA219 && DH_DEVICE_INA219 */

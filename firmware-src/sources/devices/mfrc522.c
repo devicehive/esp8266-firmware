@@ -4,13 +4,15 @@
 * Released into the public domain.
 */
 
-#include "mfrc522.h"
+#include "devices/mfrc522.h"
 #include "DH/spi.h"
 #include "dhdebug.h"
 #include "snprintf.h"
 
 #include <osapi.h>
 #include <ets_forward.h>
+
+#if defined(DH_DEVICE_MFRC522)
 
 static int _chipSelectPin = 15;		// pin connected to MFRC522's SPI slave select input (Pin 24, NSS, active low)
 // Member variables
@@ -1834,3 +1836,5 @@ bool ICACHE_FLASH_ATTR MFRC522_PICC_ReadCardSerial() {
 	MFRC522_StatusCode result = MFRC522_PICC_Select(&uid, 0);
 	return (result == MFRC522_STATUS_OK);
 } // End 
+
+#endif /* DH_DEVICE_MFRC522 */

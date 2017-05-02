@@ -13,6 +13,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_MLX90614) && defined(DH_DEVICE_MLX90614)
+
 /*
  * dh_handle_devices_mlx90614_read() implementation.
  */
@@ -47,3 +49,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mlx90614_read(COMMAND_RESULT *cmd_res, 
 				"{\"ambient\":%f, \"object\":%f}", ambient, object);
 	}
 }
+
+#endif /* DH_COMMANDS_MLX90614 && DH_DEVICE_MLX90614 */

@@ -13,6 +13,7 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_DS18B20) && defined(DH_DEVICE_DS18B20)
 
 /*
  * dh_handle_devices_ds18b20_read() implementation.
@@ -41,3 +42,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_ds18b20_read(COMMAND_RESULT *cmd_res, c
 		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"temperature\":%f}", temperature);
 	}
 }
+
+#endif /* DH_COMMANDS_DS18B20 && DH_DEVICE_DS18B20 */

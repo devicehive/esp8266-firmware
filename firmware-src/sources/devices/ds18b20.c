@@ -10,6 +10,7 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_DS18B20)
 
 /*
  * ds18b20_read() implementation.
@@ -45,3 +46,5 @@ const char* ICACHE_FLASH_ATTR ds18b20_read(int pin, float *temperature)
 
 	return NULL; // OK
 }
+
+#endif /* DH_DEVICE_DS18B20 */

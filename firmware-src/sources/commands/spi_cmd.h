@@ -8,8 +8,7 @@
 #define _COMMANDS_SPI_CMD_H_
 
 #include "user_config.h"
-
-#ifdef DH_COMMANDS_SPI // SPI command handlers
+#if defined(DH_COMMANDS_SPI) // SPI command handlers
 #include "dhsender_data.h"
 
 /**

@@ -13,6 +13,8 @@
 #include "dhcommand_parser.h"
 #include <user_interface.h>
 
+#if defined(DH_COMMANDS_LM75) && defined(DH_DEVICE_LM75)
+
 /*
  * dh_handle_devices_lm75_read() implementation.
  */
@@ -47,3 +49,5 @@ void ICACHE_FLASH_ATTR dh_handle_devices_lm75_read(COMMAND_RESULT *cmd_res, cons
 				"{\"temperature\":%f}", temperature);
 	}
 }
+
+#endif /* DH_COMMANDS_LM75 && DH_DEVICE_LM75 */

@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_MHZ19)
+
 /*
  * mhz19_read() implementation.
  */
@@ -45,3 +47,5 @@ const char* ICACHE_FLASH_ATTR mhz19_read(int *co2)
 	*co2 = unsignedInt16be((const char*)result, 2);
 	return NULL; // OK
 }
+
+#endif /* DH_DEVICE_MHZ19 */

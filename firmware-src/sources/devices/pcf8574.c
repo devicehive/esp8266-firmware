@@ -11,6 +11,8 @@
 
 #include <osapi.h>
 
+#if defined(DH_DEVICE_PCF8574)
+
 /** @brief Default sensor i2c address. */
 #define PCF8574_DEFAULT_ADDRESS 0x4E
 
@@ -96,3 +98,5 @@ void ICACHE_FLASH_ATTR pcf8574_set_address(int address)
 {
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_PCF8574 */
