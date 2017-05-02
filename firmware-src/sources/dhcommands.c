@@ -39,7 +39,7 @@
 #include "commands/lm75_cmd.h"
 #include "commands/si7021_cmd.h"
 #include "commands/ads1115_cmd.h"
-#include "devices/pcf8591.h"
+#include "commands/pcf8591_cmd.h"
 #include "commands/mcp4725_cmd.h"
 #include "commands/ina219_cmd.h"
 #include "devices/mfrc522.h"
@@ -161,83 +161,6 @@ static void ICACHE_FLASH_ATTR do_devices_pcf8574_hd44780_write(COMMAND_RESULT *c
 	}
 }
 
-
-/**
- * @brief Do "devices/pcf8591/read" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_pcf8591_read(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	if(paramslen) {
-		char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS | AF_REF, &fields);
-		if (parse_res != 0) {
-			dh_command_fail(cb, parse_res);
-			return;
-		}
-		if(fields & AF_ADDRESS)
-			pcf8591_set_address(parse_pins.address);
-		if(fields & AF_REF) {
-			const char *res = dh_i2c_error_string(pcf8591_set_vref(parse_pins.ref));
-			if (res != 0) {
-				dh_command_fail(cb, res);
-				return;
-			}
-		}
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	float values[4];
-	const char *res = dh_i2c_error_string(pcf8591_read(DH_I2C_NO_PIN, DH_I2C_NO_PIN, values));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		cb->callback(cb->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
-				values[0], values[1], values[2], values[3]);
-	}
-}
-
-
-/**
- * @brief Do "devices/pcf8591/write" command.
- */
-static void ICACHE_FLASH_ATTR do_devices_pcf8591_write(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen)
-{
-	gpio_command_params parse_pins;
-	ALLOWED_FIELDS fields = 0;
-	char *parse_res = parse_params_pins_set(params, paramslen,
-				&parse_pins, DH_ADC_SUITABLE_PINS, 0,
-				AF_SDA | AF_SCL | AF_ADDRESS | AF_REF | AF_FLOATVALUES, &fields);
-	if (parse_res != 0) {
-		dh_command_fail(cb, parse_res);
-		return;
-	}
-	if(parse_pins.pin_value_readed != 1) {
-		dh_command_fail(cb, "Unsuitable pin");
-		return;
-	}
-	if(fields & AF_ADDRESS)
-		pcf8591_set_address(parse_pins.address);
-	if(fields & AF_REF) {
-		const char *res = dh_i2c_error_string(pcf8591_set_vref(parse_pins.ref));
-		if (res != 0) {
-			dh_command_fail(cb, res);
-			return;
-		}
-	}
-	fields |= AF_ADDRESS;
-	if(dh_i2c_init_helper(cb, fields, &parse_pins))
-		return;
-	const char *res = dh_i2c_error_string(pcf8591_write(DH_I2C_NO_PIN, DH_I2C_NO_PIN, parse_pins.storage.float_values[0]));
-	if (res != 0) {
-		dh_command_fail(cb, res);
-	} else {
-		dh_command_done(cb, "");
-	}
-}
 
 /**
  * @brief Do "devices/mfrc522/read" command.
@@ -428,8 +351,8 @@ RO_DATA struct {
 	{ "devices/lm75/read", dh_handle_devices_lm75_read},
 	{ "devices/si7021/read", dh_handle_devices_si7021_read},
 	{ "devices/ads1115/read", dh_handle_devices_ads1115_read},
-	{ "devices/pcf8591/read", do_devices_pcf8591_read},
-	{ "devices/pcf8591/write", do_devices_pcf8591_write},
+	{ "devices/pcf8591/read", dh_handle_devices_pcf8591_read},
+	{ "devices/pcf8591/write", dh_handle_devices_pcf8591_write},
 	{ "devices/mcp4725/write", dh_handle_devices_mcp4725_write},
 	{ "devices/ina219/read", dh_handle_devices_ina219_read},
 	{ "devices/mfrc522/read", do_devices_mfrc522_read},
