@@ -36,6 +36,10 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 	if(data_type == RDT_CONST_STRING) { // optimization
 		answer->content.data = va_arg(ap, const char *);;
 		answer->content.len = os_strlen(answer->content.data);
+	} else if (data_type == RDT_MALLOC_PTR) { // optimization
+		answer->content.data = va_arg(ap, const char *);
+		answer->content.len = va_arg(ap, size_t);
+		answer->free_content = 1;
 	} else {
 		SENDERDATA data;
 		unsigned int data_len;

@@ -43,8 +43,13 @@
 #include "commands/tm1637_cmd.h"
 
 #include <osapi.h>
+#include <mem.h>
 #include <user_interface.h>
 #include <ets_forward.h>
+
+static void do_handle_command_list(COMMAND_RESULT *cmd_res, const char *command,
+                                   const char *params, unsigned int params_len);
+
 
 RO_DATA struct {
 	const char *name;
@@ -189,7 +194,7 @@ RO_DATA struct {
 	{ "devices/tm1637/write", dh_handle_devices_tm1637_write},
 #endif
 
-	{ "-", 0 } // END
+	{ "command/list", do_handle_command_list } // END
 };
 
 
@@ -211,4 +216,44 @@ void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, co
 	}
 
 	dh_command_fail(cb, "Unknown command");
+}
+
+
+/**
+ * @brief Handle "command/list" command.
+ *
+ * Just prints out all available commands.
+ */
+static void ICACHE_FLASH_ATTR do_handle_command_list(COMMAND_RESULT *cmd_res, const char *command,
+                                                     const char *params, unsigned int params_len)
+{
+	// estimate memory space
+	int i, n = 2; // note []
+	for (i = 0; i < NUM_OF_COMMANDS; ++i) {
+		n += os_strlen(g_command_table[i].name) + 2+1; // note ,""
+	}
+
+	// allocate buffer
+	void *buf = os_malloc(n);
+	if (!buf) {
+		dh_command_fail(cmd_res, "Out of memory");
+		return;
+	}
+
+	// format response
+	char *p = (char*)buf;
+	*p++ = '[';
+	for (i = 0; i < NUM_OF_COMMANDS; ++i) {
+		if (i) *p++ = ',';
+		*p++ = '"';
+		int nn = os_strlen(g_command_table[i].name);
+		os_memcpy(p, g_command_table[i].name, nn); p += nn;
+		*p++ = '"';
+	}
+	*p++ = ']';
+	*p = 0; // guard
+
+	cmd_res->callback(cmd_res->data,
+			DHSTATUS_OK, RDT_MALLOC_PTR,
+			buf, p - (char*)buf);
 }
