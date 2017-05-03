@@ -58,7 +58,7 @@ void ICACHE_FLASH_ATTR dh_handle_devices_hmc5883l_read(COMMAND_RESULT *cmd_res, 
 		snprintf(floatbufy, sizeof(floatbufy), "%f", compass.Y);
 	if (compass.Z != HMC5883l_OVERFLOWED)
 		snprintf(floatbufz, sizeof(floatbufz), "%f", compass.Z);
-	cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+	cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_JSON,
 			"{\"magnetometer\":{\"X\":%s, \"Y\":%s, \"Z\":%s}}",
 			floatbufx, floatbufy, floatbufz);
 }

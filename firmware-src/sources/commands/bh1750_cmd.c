@@ -45,7 +45,8 @@ void ICACHE_FLASH_ATTR dh_handle_devices_bh1750_read(COMMAND_RESULT *cmd_res, co
 	if (err_msg != 0) {
 		dh_command_fail(cmd_res, err_msg);
 	} else {
-		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING, "{\"illuminance\":%f}", illuminance);
+		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_JSON,
+				"{\"illuminance\":%f}", illuminance);
 	}
 }
 

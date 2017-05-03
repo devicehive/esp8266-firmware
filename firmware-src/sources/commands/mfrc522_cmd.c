@@ -51,7 +51,7 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mfrc522_read(COMMAND_RESULT *cmd_res, c
 			for (i = 0; i < uid->size; i++)
 				byteToHex(uid->uidByte[i], &hexbuf[i * 2]);
 			hexbuf[sizeof(hexbuf) - 1] = 0;
-			cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+			cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_JSON,
 					"{\"uid\":\"0x%s\", \"type\":\"%s\"}", hexbuf,
 					MFRC522_PICC_GetTypeName(MFRC522_PICC_GetType(uid->sak)));
 			MFRC522_PCD_AntennaOff();

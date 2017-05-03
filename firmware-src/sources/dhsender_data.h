@@ -23,7 +23,7 @@ typedef enum {
 	RDT_FLOAT,			///< Float should be passed. Will be formatted as json with this value.
 	RDT_GPIO,			///< Four 32bit value should be passed(caused, state, tick, suitable). Will be formatted as json.
 	RDT_SEARCH64,		///< Data with groups of 64bit addresses. Pin number, pointer to data and integer length of data should be passed.
-	RDT_FORMAT_STRING	///< Formated string, like sprintf. Text should be valid json.
+	RDT_FORMAT_JSON		///< Formated JSON, with sprintf syntax. Text should be valid JSON.
 } REQUEST_DATA_TYPE;
 
 /** Request type. */

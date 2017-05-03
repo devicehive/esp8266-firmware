@@ -47,7 +47,7 @@ void ICACHE_FLASH_ATTR dh_handle_devices_mpu6050_read(COMMAND_RESULT *cmd_res, c
 	if (err_msg != 0) {
 		dh_command_fail(cmd_res, err_msg);
 	} else {
-		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_JSON,
 				"{\"temperature\":%f, \"acceleration\":{\"X\":%f, \"Y\":%f, \"Z\":%f}, \"rotation\":{\"X\":%f, \"Y\":%f, \"Z\":%f}}",
 				temperature, acc.X, acc.Y, acc.Z, gyro.X, gyro.Y, gyro.Z);
 	}

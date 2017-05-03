@@ -49,7 +49,7 @@ void ICACHE_FLASH_ATTR dhsender_data_parse_va(va_list ap,
 				*d++ = *s++;
 		}
 			break;
-		case RDT_FORMAT_STRING:
+		case RDT_FORMAT_JSON:
 			*data_len = vsnprintf(data->array, sizeof(data->array), va_arg(ap, char *), ap);
 			break;
 		default:
@@ -98,8 +98,8 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 		int is_notification, REQUEST_DATA_TYPE data_type, SENDERDATA *data,
 		unsigned int data_len, unsigned int pin) {
 	switch(data_type) {
-		case RDT_FORMAT_STRING:
-			return snprintf(buf, buf_len, "\"%s\"", data->array);
+		case RDT_FORMAT_JSON:
+			return snprintf(buf, buf_len, "%s", data->array); // TODO: strncpy to simple string copy!
 		case RDT_CONST_STRING:
 			return snprintf(buf, buf_len, "\"%s\"", data->string);
 		case RDT_DATA_WITH_LEN:

@@ -54,7 +54,7 @@ void ICACHE_FLASH_ATTR dh_handle_devices_pcf8591_read(COMMAND_RESULT *cmd_res, c
 	if (err_msg != 0) {
 		dh_command_fail(cmd_res, err_msg);
 	} else {
-		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_STRING,
+		cmd_res->callback(cmd_res->data, DHSTATUS_OK, RDT_FORMAT_JSON,
 				"{\"0\":%f, \"1\":%f, \"2\":%f, \"3\":%f}",
 				values[0], values[1], values[2], values[3]);
 	}
