@@ -38,7 +38,7 @@ static const char* ICACHE_FLASH_ATTR dht_read_pkt(int pin, uint8_t buf[DHT_PACKE
 	}
 
 	int cs = ((int)buf[0] + (int)buf[1] + (int)buf[2] + (int)buf[3]);
-	if (cs*0xFF != (int)buf[4]) {
+	if ((cs&0xFF) != (int)buf[4]) {
 		return "Bad checksum";
 	}
 
