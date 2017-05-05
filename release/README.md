@@ -1,4 +1,5 @@
-Binary fimrware release in repository is depricated. To download firmware binaries follow this link: https://github.com/devicehive/esp8266-firmware/releases  
+Binary fimrware release in repository is deprecated. To download firmware binaries follow
+[this link](https://github.com/devicehive/esp8266-firmware/releases).
 
 This directory contains script for generating releases. There are some tools which should be installed.
 
