@@ -37,6 +37,3 @@ pin).
 
 # License
 See [LICENSE](./LICENSE) file.
-
-# Authors
-- Nikolay Khabarov

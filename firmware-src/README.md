@@ -39,6 +39,3 @@ This directory contains web pages which will be embedded into firmware. Rebuild
 
 # License
 MIT. See [LICENSE](./LICENSE) file.
-
-# Authors
-- Nikolay Khabarov

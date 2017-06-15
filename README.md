@@ -77,5 +77,6 @@ License, see [sdk/License](./sdk/License) file for details.
 
 # Authors
 - Nikolay Khabarov
+- Sergey Polichnoy
 - Igor Malovitsa
 - Maksim Kleshchevnikov
