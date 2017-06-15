@@ -6,14 +6,15 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhzc_post.h"
+#include "dhsettings.h"
+#include "dhutils.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <user_interface.h>
-#include "dhsettings.h"
-#include "dhutils.h"
-#include "dhzc_post.h"
+#include <ets_forward.h>
 
 typedef int (*Char_Test)(char c);
 
@@ -36,7 +37,7 @@ LOCAL int ICACHE_FLASH_ATTR read_value(const char *data, unsigned int len, char 
 				b[0] = data[pos + 1];
 			if(pos + 2 < len)
 				b[1] = data[pos + 2];
-			set = hexToByte(b, &c);
+			set = hexToByte(b, (uint8_t*)&c);
 			pos += set;
 		} else {
 			c = data[pos];

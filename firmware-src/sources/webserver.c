@@ -6,9 +6,6 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <c_types.h>
-#include <osapi.h>
 #include "webserver.h"
 #include "httpd.h"
 #include "rest.h"
@@ -16,6 +13,10 @@
 #include "uploadable_page.h"
 #include "uploadable_api.h"
 #include "irom.h"
+
+#include <c_types.h>
+#include <osapi.h>
+#include <ets_forward.h>
 
 LOCAL int ICACHE_FLASH_ATTR check_rest(HTTP_RESPONSE_STATUS *res, const char *path,
 		const char *key, HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
@@ -76,6 +77,6 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	return uploadable_api_handle(path, key, content_in, answer);
 }
 
-void ICACHE_FLASH_ATTR webserver_init() {
+void ICACHE_FLASH_ATTR webserver_init(void) {
 	httpd_init(get_cb, post_cb);
 }

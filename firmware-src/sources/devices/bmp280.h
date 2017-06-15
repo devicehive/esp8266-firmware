@@ -1,35 +1,33 @@
 /**
- *	\file		bmp280.h
- *	\brief		Simple communication with BMP280 pressure sensor
- *	\author		Nikolay Khabarov
- *	\date		2016
- *	\copyright	DeviceHive MIT
+ * @file
+ * @brief Simple communication with BMP280 pressure sensor.
+ * @copyright 2016 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
+#ifndef _DEVICES_BMP280_H_
+#define _DEVICES_BMP280_H_
 
-#ifndef SOURCES_DEVICES_BMP280_H_
-#define SOURCES_DEVICES_BMP280_H_
-
-#include "dhi2c.h"
-
-/** Default sensor i2c address*/
-#define BMP280_DEFAULT_ADDRESS 0xEC
-/** Do not initialize pin */
-#define BMP280_NO_PIN -1
+#include "user_config.h"
+#if defined(DH_DEVICE_BMP280)
 
 /**
- *	\brief					Measure pressure one time.
- *	\param[in]	sda			Pin for I2C's SDA.
- *	\param[in]	scl			Pin for I2C's SCL.
- *	\param[out]	pressure	Pointer for storing pressure result measure in Pascals.
- *	\param[out]	temperature	Pointer for storing temperature result measure in degree Celsius. Can be NULL.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ * @brief Measure pressure one time.
+ * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
+ * @param[in] scl Pin for I2C's SCL. Can be DH_I2C_NO_PIN.
+ * @param[out] pressure Pointer for storing pressure result measure in Pascals.
+ * @param[out] temperature Pointer for storing temperature result measure in degree Celsius. Can be NULL.
+ * @return Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS bmp280_read(int sda, int scl, float *pressure, float *temperature);
+int bmp280_read(int sda, int scl,
+                float *pressure,
+                float *temperature);
+
 
 /**
- *	\brief					Set sensor address which should be used while reading.
- *	\param[in]	address		Pin for I2C's SDA.
+ * @brief Set sensor address which should be used while reading.
+ * @param[in] address I2C end device address.
  */
 void bmp280_set_address(int address);
 
-#endif /* SOURCES_DEVICES_BMP280_H_ */
+#endif /* DH_DEVICE_BMP280 */
+#endif /* _DEVICES_BMP280_H_ */

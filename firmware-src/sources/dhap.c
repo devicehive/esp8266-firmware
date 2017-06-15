@@ -6,17 +6,19 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhap.h"
+#include "snprintf.h"
+#include "user_config.h"
+#include "dhdebug.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
 #include <user_interface.h>
 #include <mem.h>
 #include <c_types.h>
-#include "dhap.h"
-#include "snprintf.h"
-#include "user_config.h"
-#include "dhdebug.h"
-#include "dhuart.h"
+#include <espconn.h>
+#include <ets_forward.h>
+
 
 static struct ip_info *ipinfo = NULL;
 struct softap_config *apconfig = NULL;
@@ -31,12 +33,12 @@ void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 	apconfig = (struct softap_config *)os_zalloc(sizeof(struct softap_config));;
 	if(!wifi_softap_dhcps_stop())
 		dhdebug("Failed to wifi_softap_dhcps_stop()");
-	apconfig->ssid_len = snprintf(apconfig->ssid, sizeof(apconfig->ssid), "%s", ssid);
+	apconfig->ssid_len = snprintf((char*)apconfig->ssid, sizeof(apconfig->ssid), "%s", ssid);
 	apconfig->authmode = AUTH_OPEN;
 	if(password) {
 		if(os_strlen(password) >= 8) {
 			apconfig->authmode = AUTH_WPA_WPA2_PSK;
-			snprintf(apconfig->password, sizeof(apconfig->password), "%s", password);
+			snprintf((char*)apconfig->password, sizeof(apconfig->password), "%s", password);
 		} else {
 			dhdebug("AP password is too short, use open network");
 		}
@@ -65,6 +67,6 @@ void ICACHE_FLASH_ATTR dhap_init(const char *ssid, const char *password) {
 	dhdebug("Access point is initialized at %d.%d.%d.%d", bip[0], bip[1], bip[2], bip[3]);
 }
 
-const struct ip_info * dhap_get_ip_info() {
+const struct ip_info * dhap_get_ip_info(void) {
 	return ipinfo;
 }

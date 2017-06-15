@@ -8,12 +8,14 @@
  * Description: Command line interpreter
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
 #include "dhterminal_commandline.h"
 #include "dhterminal_commands.h"
 #include "snprintf.h"
+#include "DH/uart.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <ets_forward.h>
 
 typedef void (*CommandFunc)(const char *arg);
 
@@ -39,13 +41,13 @@ static const DHCOMMAND mCommands[] = {
 		{"help", "print help", command_help}
 };
 
-void ICACHE_FLASH_ATTR command_help() {
-	dhuart_send_line("Welcome to the DeviceHive firmware. List of accepted command:\r\n");
+void ICACHE_FLASH_ATTR command_help(void) {
+	dh_uart_send_line("Welcome to the DeviceHive firmware. List of accepted command:\r\n");
 	int i;
 	for(i = 0; i < sizeof(mCommands)/sizeof(DHCOMMAND); i++ ) {
-		dhuart_send_str(mCommands[i].name);
-		dhuart_send_str(" - ");
-		dhuart_send_line(mCommands[i].help);
+		dh_uart_send_str(mCommands[i].name);
+		dh_uart_send_str(" - ");
+		dh_uart_send_line(mCommands[i].help);
 	}
 }
 
@@ -76,8 +78,8 @@ void ICACHE_FLASH_ATTR dhterminal_commandline_do(const char *command) {
 			return;
 		}
 	}
-	dhuart_send_str(command);
-	dhuart_send_line(": Unknown command. Type 'help' for help.");
+	dh_uart_send_str(command);
+	dh_uart_send_line(": Unknown command. Type 'help' for help.");
 }
 
 char * ICACHE_FLASH_ATTR dhterminal_commandline_autocompleter(const char *pattern) {

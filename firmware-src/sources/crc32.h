@@ -8,6 +8,7 @@
 
 #ifndef _CRC32_H_
 #define _CRC32_H_
+
 #include <c_types.h>
 
 /**

@@ -6,19 +6,19 @@
  * Author: Nikolay Khabarov
  *
  */
-
+#include "dhzc_web.h"
+#include "httpd.h"
+#include "dhdebug.h"
+#include "dhesperrors.h"
+#include "dhsettings.h"
+#include "dhzc_pages.h"
+#include "dhzc_post.h"
 #include "httpd.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
 #include <user_interface.h>
-#include "httpd.h"
-#include "dhdebug.h"
-#include "dhuart.h"
-#include "dhesperrors.h"
-#include "dhsettings.h"
-#include "dhzc_pages.h"
-#include "dhzc_post.h"
+#include <ets_forward.h>
 
 #define WEB_CONF_HOST "devicehive.config"
 #define RECONFIGURE_DELAY_MS 5000
@@ -90,7 +90,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR post_cb(const char *path,
 	return HRCS_ANSWERED_HTML;
 }
 
-void ICACHE_FLASH_ATTR dhzc_web_init() {
+void ICACHE_FLASH_ATTR dhzc_web_init(void) {
 	httpd_redirect(WEB_CONF_HOST);
 	httpd_init(get_cb, post_cb);
 }

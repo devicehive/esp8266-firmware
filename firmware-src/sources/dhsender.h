@@ -12,28 +12,28 @@
 #ifndef _DHSENDER_H_
 #define _DHSENDER_H_
 
-#include <ip_addr.h>
-
 #include "dhsender_data.h"
 
+#include <ip_addr.h>
+
 /** Function prototype for new item in queue callback. */
-typedef void (*dhsender_new_item_cb)();
+typedef void (*dhsender_new_item_cb)(void);
 
 /**
  *	\brief				Notify that current data was failed to send.
  */
-void dhsender_current_fail();
+void dhsender_current_fail(void);
 
 /**
  *	\brief				Notify that current data was sent.
  */
-void dhsender_current_success();
+void dhsender_current_success(void);
 
 /**
  *	\brief				Get next struct SENDER_JSON_DATA which should be sent.
  *	\return				Pointer to SENDER_JSON_DATA or NULL if there is no data to send.
  */
-SENDER_JSON_DATA *dhsender_next();
+SENDER_JSON_DATA *dhsender_next(void);
 
 /**
  *	\brief					Set callbacks.

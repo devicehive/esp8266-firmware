@@ -8,15 +8,6 @@
  * Description: Module for connecting to remote DeviceHive server
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <gpio.h>
-#include <user_interface.h>
-#include <espconn.h>
-#include <json/jsonparse.h>
-#include "dhrequest.h"
 #include "dhconnector.h"
 #include "dhdebug.h"
 #include "dhmem.h"
@@ -26,6 +17,16 @@
 #include "dhstatistic.h"
 #include "mdnsd.h"
 #include "dhconnector_websocket.h"
+#include "dhesperrors.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <gpio.h>
+#include <user_interface.h>
+#include <espconn.h>
+#include <json/jsonparse.h>
+#include <ets_forward.h>
 
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
@@ -49,7 +50,7 @@ LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-	dhstatistic_inc_network_errors_count();
+	dhstat_got_network_error();
 }
 
 LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
@@ -78,8 +79,8 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR ws_error() {
-	dhstatistic_inc_server_errors_count();
+LOCAL void ICACHE_FLASH_ATTR ws_error(void) {
+	dhstat_got_server_error();
 	// close connection and restart everything on error
 	espconn_disconnect(&mDHConnector);
 }
@@ -90,11 +91,11 @@ LOCAL void ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
 	if(espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK)
 		ws_error();
 	else
-		dhstatistic_add_bytes_sent(len);
+		dhstat_add_bytes_sent(len);
 }
 
 LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned short len) {
-	dhstatistic_add_bytes_received(len);
+	dhstat_add_bytes_received(len);
 	if(mConnectionState == CS_OPERATE) {
 		dhconnector_websocket_parse(data, len);
 		return;
@@ -134,18 +135,18 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 			dhdebug("Connector HTTP response bad status %c%c%c", rc[0],rc[1],rc[2]);
 			dhdebug_ram(data);
 			dhdebug("--------------------------------------");
-			dhstatistic_inc_server_errors_count();
+			dhstat_got_server_error();
 		}
 	} else {
 		mConnectionState = CS_DISCONNECT;
 		dhdebug("Connector HTTP magic number is wrong");
-		dhstatistic_inc_server_errors_count();
+		dhstat_got_server_error();
 	}
 	espconn_disconnect(&mDHConnector);
 }
 
 LOCAL void network_connect_cb(void *arg) {
-	HTTP_REQUEST *request;
+	HTTP_REQUEST *request = 0;
 	uint32_t keepalive;
 	espconn_set_opt(&mDHConnector, ESPCONN_KEEPALIVE);
 	//set keepalive: 120s = 90 + 10 * 3
@@ -164,8 +165,7 @@ LOCAL void network_connect_cb(void *arg) {
 		request = dhrequest_create_wsrequest(dhsettings_get_devicehive_server(), mWSUrl);
 		dhdebug("Send web socket upgrade request...");
 		break;
-	// TODO TODO TODO
-	/*case CS_POLL:
+	/* TODO case CS_POLL:
 	case CS_CUSTOM:
 		request = custom_firmware_request();
 		if(request) {
@@ -179,12 +179,12 @@ LOCAL void network_connect_cb(void *arg) {
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
 	int res;
-	if( (res = espconn_send(&mDHConnector, request->data, request->len)) != ESPCONN_OK) {
+	if( (res = espconn_send(&mDHConnector, (uint8_t*)request->data, request->len)) != ESPCONN_OK) {
 		mConnectionState = CS_DISCONNECT;
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
 		espconn_disconnect(&mDHConnector);
 	} else {
-		dhstatistic_add_bytes_sent(request->len);
+		dhstat_add_bytes_sent(request->len);
 	}
 }
 
@@ -199,8 +199,7 @@ LOCAL void network_disconnect_cb(void *arg) {
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		break;
-/* TODO TODO TODO
-	case CS_CUSTOM:
+/* TODO case CS_CUSTOM:
 		if(dhterminal_is_in_use()) {
 			dhdebug("Terminal is in use, no deep sleep");
 			arm_repeat_timer(CUSTOM_NOTIFICATION_INTERVAL_MS);
@@ -228,7 +227,7 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 		dhdebug("Resolve %s failed. Trying again...", name);
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
-		dhstatistic_inc_network_errors_count();
+		dhstat_got_network_error();
 		return;
 	}
 	unsigned char *bip = (unsigned char *) ip;
@@ -260,7 +259,7 @@ LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server(const char *server) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhmem_unblock_cb() {
+void ICACHE_FLASH_ATTR dhmem_unblock_cb(void) {
 	if(mNeedRecover) {
 		set_state(mConnectionState);
 		mNeedRecover = 0;
@@ -330,14 +329,14 @@ LOCAL void ICACHE_FLASH_ATTR wifi_state_cb(System_Event_t *event) {
 	} else if(event->event == EVENT_STAMODE_DISCONNECTED) {
 		os_timer_disarm(&mRetryTimer);
 		dhesperrors_disconnect_reason("WiFi disconnected", event->event_info.disconnected.reason);
-		dhstatistic_inc_wifi_lost_count();
+		dhstat_got_wifi_lost();
 		mdnsd_stop();
 	} else {
 		dhesperrors_wifi_state("WiFi event", event->event);
 	}
 }
 
-void ICACHE_FLASH_ATTR dhconnector_init() {
+void ICACHE_FLASH_ATTR dhconnector_init(void) {
 	mConnectionState = CS_DISCONNECT;
 
 	wifi_set_opmode(STATION_MODE);
@@ -348,8 +347,8 @@ void ICACHE_FLASH_ATTR dhconnector_init() {
 	wifi_set_phy_mode(PHY_MODE_11N);
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
-	snprintf(stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
-	snprintf(stationConfig.password, sizeof(stationConfig.password), "%s", dhsettings_get_wifi_password());
+	snprintf((char*)stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());
+	snprintf((char*)stationConfig.password, sizeof(stationConfig.password), "%s", dhsettings_get_wifi_password());
 	if(dhsettings_get_devicehive_deviceid()[0]) {
 		char hostname[33];
 		// limit length to 32 chars due to the sdk limit
@@ -369,6 +368,6 @@ void ICACHE_FLASH_ATTR dhconnector_init() {
 	wifi_set_event_handler_cb(wifi_state_cb);
 }
 
-CONNECTION_STATE ICACHE_FLASH_ATTR dhconnector_get_state() {
+CONNECTION_STATE ICACHE_FLASH_ATTR dhconnector_get_state(void) {
 	return mConnectionState;
 }

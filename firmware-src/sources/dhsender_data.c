@@ -8,13 +8,14 @@
  * Description: Helper function for sender data
  *
  */
+#include "dhsender_data.h"
+#include "dhdata.h"
+#include "dhdebug.h"
+#include "DH/gpio.h"
+#include "snprintf.h"
 
 #include <c_types.h>
 #include <osapi.h>
-#include "dhsender_data.h"
-#include "dhdebug.h"
-#include "dhgpio.h"
-#include "snprintf.h"
 
 void ICACHE_FLASH_ATTR dhsender_data_parse_va(va_list ap,
 		REQUEST_DATA_TYPE *data_type, SENDERDATA *data, unsigned int *data_len,
@@ -48,7 +49,7 @@ void ICACHE_FLASH_ATTR dhsender_data_parse_va(va_list ap,
 				*d++ = *s++;
 		}
 			break;
-		case RDT_FORMAT_STRING:
+		case RDT_FORMAT_JSON:
 			*data_len = vsnprintf(data->array, sizeof(data->array), va_arg(ap, char *), ap);
 			break;
 		default:
@@ -62,9 +63,9 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_state(char *buf,
 		unsigned int buflen, unsigned int state, unsigned int suitable) {
 	unsigned int len = snprintf(buf, buflen, "{");
 	unsigned int i;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
-		const pinvalue = (state & pin) ? 1 : 0;
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		const DHGpioPinMask pin = DH_GPIO_PIN(i);
+		const int pinvalue = (state & pin) ? 1 : 0;
 		if(suitable & pin) {
 			len += snprintf(&buf[len], buflen - len, (i == 0) ? "\"%d\":%d" : ", \"%d\":%d", i, pinvalue);
 		}
@@ -77,9 +78,10 @@ LOCAL unsigned int ICACHE_FLASH_ATTR gpio_notification(char *buf,
 	unsigned int len = snprintf(buf, buflen, "{\"caused\":[");
 	unsigned int i;
 	int comma = 0;
-	for(i = 0; i <= DHGPIO_MAXGPIONUM; i++) {
-		const unsigned int pin = 1 << i;
-		if(suitable & pin == 0)
+	for(i = 0; i < DH_GPIO_PIN_COUNT; i++) {
+		const DHGpioPinMask pin = DH_GPIO_PIN(i);
+		if(!(suitable & pin))
+
 			continue;
 		if( pin & data->caused) {
 			len += snprintf(&buf[len], buflen - len, comma?", \"%d\"":"\"%d\"", i);
@@ -96,8 +98,8 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 		int is_notification, REQUEST_DATA_TYPE data_type, SENDERDATA *data,
 		unsigned int data_len, unsigned int pin) {
 	switch(data_type) {
-		case RDT_FORMAT_STRING:
-			return snprintf(buf, buf_len, "\"%s\"", data->array);
+		case RDT_FORMAT_JSON:
+			return snprintf(buf, buf_len, "%s", data->array); // TODO: strncpy to simple string copy!
 		case RDT_CONST_STRING:
 			return snprintf(buf, buf_len, "\"%s\"", data->string);
 		case RDT_DATA_WITH_LEN:
@@ -142,4 +144,34 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 			dhdebug("ERROR: Unknown data type of request %d", data_type);
 	}
 	return -1;
+}
+
+
+/*
+ * dh_command_done() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_command_done(COMMAND_RESULT *cmd_res, const char *str)
+{
+	cmd_res->callback(cmd_res->data, DHSTATUS_OK,
+	                  RDT_CONST_STRING, str);
+}
+
+
+/*
+ * dh_command_done_buf() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_command_done_buf(COMMAND_RESULT *cmd_res, const void *buf, size_t len)
+{
+	cmd_res->callback(cmd_res->data, DHSTATUS_OK,
+	                  RDT_DATA_WITH_LEN, buf, len);
+}
+
+
+/*
+ * dh_command_fail() implementation.
+ */
+void ICACHE_FLASH_ATTR dh_command_fail(COMMAND_RESULT *cmd_res, const char *str)
+{
+	cmd_res->callback(cmd_res->data, DHSTATUS_ERROR,
+	                  RDT_CONST_STRING, str);
 }

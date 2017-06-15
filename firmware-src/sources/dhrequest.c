@@ -8,17 +8,18 @@
  * Description: Module for creating HTTP requests for DeviceHive server
  *
  */
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <user_interface.h>
-#include <mem.h>
 #include "dhrequest.h"
 #include "user_config.h"
 #include "dhdebug.h"
 #include "snprintf.h"
 #include "dhsettings.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <user_interface.h>
+#include <ets_forward.h>
+#include <mem.h>
 
 RO_DATA char HTTP_INFO_REQUEST_PATTERN[] =
 		"GET %s/info HTTP/1.1\r\n"

@@ -8,12 +8,6 @@
  */
 
 #include "httpd.h"
-
-#include <ets_sys.h>
-#include <osapi.h>
-#include <user_interface.h>
-#include <espconn.h>
-#include <mem.h>
 #include "dhdebug.h"
 #include "dhesperrors.h"
 #include "dhsettings.h"
@@ -24,6 +18,14 @@
 #include "dhzc_post.h"
 #include "irom.h"
 #include "user_config.h"
+#include "dhutils.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <user_interface.h>
+#include <espconn.h>
+#include <mem.h>
+#include <ets_forward.h>
 
 #define MAX_CONNECTIONS 5
 #define POST_BUF_SIZE 2048
@@ -45,7 +47,7 @@ LOCAL char *mPostBuf = 0;
 LOCAL unsigned int mPostBufPos = 0;
 LOCAL HttpRequestCb mGetHttpRequestCb = 0;
 LOCAL HttpRequestCb mPostHttpRequestCb = 0;
-LOCAL CONTENT_ITEM mContentQueue[MAX_CONNECTIONS] = {0};
+LOCAL CONTENT_ITEM mContentQueue[MAX_CONNECTIONS] = {{{0}}};
 
 LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *item) {
 	if(os_memcmp(tcp->remote_ip, item->remote_ip, sizeof(tcp->remote_ip)) == 0
@@ -57,18 +59,18 @@ LOCAL int ICACHE_FLASH_ATTR is_remote_equal(const esp_tcp *tcp, CONTENT_ITEM *it
 
 LOCAL void ICACHE_FLASH_ATTR send_res(struct espconn *conn, const char *data, int len) {
 	sint8 res;
-	ifrom(data) {
+	if (is_irom(data)) {
 		char buf[len];
-		irom_read(buf, data, len);
-		res = espconn_send(conn, buf, len);
+		irom_read(buf, len, data);
+		res = espconn_send(conn, (uint8_t*)buf, len);
 	} else {
-		res = espconn_send(conn, (char *)data, len);
+		res = espconn_send(conn, (uint8_t*)data, len);
 	}
 	if(res) {
-		dhstatistic_inc_network_errors_count();
+		dhstat_got_network_error();
 		dhesperrors_espconn_result("Httpd espconn_send returned:", res);
 	} else {
-		dhstatistic_add_bytes_sent(len);
+		dhstat_add_bytes_sent(len);
 	}
 }
 
@@ -92,7 +94,7 @@ LOCAL int ICACHE_FLASH_ATTR dequeue(struct espconn *conn, int send) {
 				}
 			}
 			if(mContentQueue[i].free_mem) {
-				os_free(mContentQueue[i].content.data);
+				os_free((void*)mContentQueue[i].content.data);
 			}
 			mContentQueue[i].remote_port = 0;
 			return 1;
@@ -236,7 +238,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	answer.content.len = 0;
 	answer.free_content = 0;
 	answer.ok = 1;
-	dhstatistic_add_bytes_received(len);
+	dhstat_add_bytes_received(len);
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 
 	if(conn == mCurrentPost) {
@@ -256,7 +258,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 						char redirect[sizeof(redirectresponse) - 2 + redirect_host_len];
 						snprintf(redirect, sizeof(redirect), redirectresponse, mRedirectHost);
 						send_res(conn, redirect, sizeof(redirect) - 1);
-						dhstatistic_inc_httpd_requests_count();
+						dhstat_got_httpd_request();
 						return;
 					}
 					break;
@@ -284,7 +286,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	}
 
 	if(res != HRCS_NOT_FINISHED) {
-		dhstatistic_inc_httpd_requests_count();
+		dhstat_got_httpd_request();
 	}
 
 	switch (res) {
@@ -303,7 +305,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 				dhdebug("Httpd duplicate responses");
 				send_res(conn, internal, sizeof(internal) - 1);
-				dhstatistic_inc_httpd_errors_count();
+				dhstat_got_httpd_error();
 				return;
 			} else if(mContentQueue[i].remote_port == 0) {
 				item = &mContentQueue[i];
@@ -321,7 +323,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		if(item == 0) {
 			dhdebug("Httpd no place for responses");
 			send_res(conn, internal, sizeof(internal) - 1);
-			dhstatistic_inc_httpd_errors_count();
+			dhstat_got_httpd_error();
 			return;
 		}
 		const char *content_type = plain;
@@ -378,7 +380,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		dhdebug("Httpd internal error");
 		send_res(conn, internal, sizeof(internal) - 1);
 	}
-	dhstatistic_inc_httpd_errors_count();
+	dhstat_got_httpd_error();
 }
 
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_reconnect_cb(void *arg, sint8 err) {

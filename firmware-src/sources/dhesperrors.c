@@ -8,14 +8,14 @@
  * Description: Module for printing error description in debug output
  *
  */
+#include "dhesperrors.h"
+#include "dhdebug.h"
 
 #include <c_types.h>
 #include <user_interface.h>
 #include <espconn.h>
-#include "dhesperrors.h"
-#include "dhdebug.h"
 
-void ICACHE_FLASH_ATTR dhesperrors_disconnect_reason(const char *descrption, uint8 reason) {
+void ICACHE_FLASH_ATTR dhesperrors_disconnect_reason(const char *descrption, uint8_t reason) {
 	char *errdescr = 0;
 	switch(reason) {
 	case REASON_UNSPECIFIED:
@@ -149,7 +149,7 @@ void ICACHE_FLASH_ATTR dhesperrors_espconn_result(const char *descrption, int re
 		dhdebug("%s %d", descrption, reason);
 }
 
-void ICACHE_FLASH_ATTR dhesperrors_wifi_state(const char *descrption, uint8 reason) {
+void ICACHE_FLASH_ATTR dhesperrors_wifi_state(const char *descrption, uint8_t reason) {
 	char *errdescr = 0;
 	switch(reason) {
 	case EVENT_STAMODE_CONNECTED:

@@ -48,7 +48,20 @@
 		}
 
 		function init() {
-			byId('accesskey').value = localStorage['accesskey'];
+			var key = localStorage['accesskey'];
+			byId('accesskey').value = key;
+
+			var base = location.protocol + '//' + location.host;
+			ajax('POST', '/api/command/list', '', key, function (xmlhttp) {
+				if (xmlhttp.status == 200) {
+					var cmd_list = JSON.parse(xmlhttp.responseText);
+					var options = '';
+					for (var i = 0; i < cmd_list.length; i++) {
+						options += '<option value="' + cmd_list[i] + '"/>';
+					}
+					byId('commands').innerHTML = options;
+				}
+			});
 		}
 	</script>
 </head>
@@ -66,7 +79,8 @@
 		simple converter <a href='./base64.html' target='_blank'>base64.html</a>.
 	</div>
 	<div class="form-block">
-		<label class="pin-label">Command: <input class="input-data" type="text" id="command" value="gpio/read"></label>
+		<label class="pin-label">Command: <input class="input-data" type="text" id="command" value="gpio/read" list="commands"></label>
+		<datalist id="commands"></datalist>
 		<label class="pin-label">Parameters:
 		<textarea class="margin-reset" id="parameters" rows="10"></textarea>
 		</label>

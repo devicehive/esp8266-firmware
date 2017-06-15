@@ -1,73 +1,102 @@
-/*
- * pcf8574.c
- *
- * Copyright 2016 DeviceHive
- *
- * Author: Nikolay Khabarov
- *
+/**
+ * @file
+ * @brief Simple communication with PCF8574 GPIO extender.
+ * @copyright 2016 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
-
-#include <osapi.h>
-#include <c_types.h>
-#include "pcf8574.h"
-#include "dhi2c.h"
+#include "devices/pcf8574.h"
+#include "DH/i2c.h"
 #include "dhdebug.h"
 #include "dhutils.h"
 
+#include <osapi.h>
+
+#if defined(DH_DEVICE_PCF8574)
+
+/** @brief Default sensor i2c address. */
+#define PCF8574_DEFAULT_ADDRESS 0x4E
+
+// module variables
 static int mAddress = PCF8574_DEFAULT_ADDRESS;
 
-DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_read(int sda, int scl, unsigned int *pins) {
-	char buf;
-	DHI2C_STATUS status;
-	if(sda != PCF8574_NO_PIN && scl != PCF8574_NO_PIN) {
-		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
+
+/*
+ * pcf8574_read() implementation.
+ */
+int ICACHE_FLASH_ATTR pcf8574_read(int sda, int scl, unsigned int *pins)
+{
+	int status;
+	if (sda != DH_I2C_NO_PIN && scl != DH_I2C_NO_PIN) {
+		if ((status = dh_i2c_init(sda, scl)) != DH_I2C_OK) {
 			dhdebug("pcf8574: failed to set up pins");
 			return status;
 		}
 	}
-	if((status = dhi2c_read(mAddress, &buf, 1)) != DHI2C_OK) {
+
+	uint8_t buf;
+	if ((status = dh_i2c_read(mAddress, &buf, 1)) != DH_I2C_OK) {
 		dhdebug("pcf8574: failed to read");
 		return status;
 	}
 
-	*pins = (unsigned char)buf;
-	return DHI2C_OK;
+	*pins = buf;
+	return DH_I2C_OK;
 }
 
-DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_write(int sda, int scl, unsigned int pins_to_set, unsigned int pins_to_clear) {
-	char buf;
-	DHI2C_STATUS status;
+
+/*
+ * pcf8574_write() implementation.
+ */
+int ICACHE_FLASH_ATTR pcf8574_write(int sda, int scl, unsigned int pins_to_set, unsigned int pins_to_clear)
+{
+	if (pins_to_set & pins_to_clear)
+		return DH_I2C_WRONG_PARAMETERS;
+
+	int status;
 	unsigned int current_state;
-	if(pins_to_set & pins_to_clear)
-		return DHI2C_WRONG_PARAMETERS;
-	if((status = pcf8574_read(sda, scl, &current_state)) != DHI2C_OK) {
+	if ((status = pcf8574_read(sda, scl, &current_state)) != DH_I2C_OK) {
 		return status;
 	}
-	buf = (char)((current_state | pins_to_set) & (~pins_to_clear) & PCF8574_SUITABLE_PINS);
-	if((status = dhi2c_write(mAddress, &buf, 1, 1)) != DHI2C_OK) {
+
+	uint8_t buf = ((current_state | pins_to_set) & ~pins_to_clear) & PCF8574_SUITABLE_PINS;
+	if ((status = dh_i2c_write(mAddress, &buf, 1, 1)) != DH_I2C_OK) {
 		dhdebug("pcf8574: failed to write");
 		return status;
 	}
-	return DHI2C_OK;
+
+	return DH_I2C_OK;
 }
 
-DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_set(int sda, int scl, unsigned int pins) {
-	char buf;
-	DHI2C_STATUS status;
-	if(sda != PCF8574_NO_PIN && scl != PCF8574_NO_PIN) {
-		if((status = dhi2c_init(sda, scl)) != DHI2C_OK) {
+
+/*
+ * pcf8574_set() implementation.
+ */
+int ICACHE_FLASH_ATTR pcf8574_set(int sda, int scl, unsigned int pins)
+{
+	int status;
+	if (sda != DH_I2C_NO_PIN && scl != DH_I2C_NO_PIN) {
+		if ((status = dh_i2c_init(sda, scl)) != DH_I2C_OK) {
 			dhdebug("pcf8574: failed to set up pins");
 			return status;
 		}
 	}
-	buf = pins & PCF8574_SUITABLE_PINS;
-	if((status = dhi2c_write(mAddress, &buf, 1, 1)) != DHI2C_OK) {
+
+	uint8_t buf = pins & PCF8574_SUITABLE_PINS;
+	if ((status = dh_i2c_write(mAddress, &buf, 1, 1)) != DH_I2C_OK) {
 		dhdebug("pcf8574: failed to write");
 		return status;
 	}
-	return DHI2C_OK;
+
+	return DH_I2C_OK;
 }
 
-void ICACHE_FLASH_ATTR pcf8574_set_address(int address) {
+
+/*
+ * pcf8574_set_address() implementation.
+ */
+void ICACHE_FLASH_ATTR pcf8574_set_address(int address)
+{
 	mAddress = address;
 }
+
+#endif /* DH_DEVICE_PCF8574 */

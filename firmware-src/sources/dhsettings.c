@@ -8,15 +8,17 @@
  * Description: Module for storing settings in flash
  *
  */
+#include "dhsettings.h"
+#include "snprintf.h"
+#include "crc32.h"
+#include "dhdebug.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <spi_flash.h>
 #include <mem.h>
-#include "dhsettings.h"
-#include "snprintf.h"
-#include "crc32.h"
-#include "dhdebug.h"
+#include <user_interface.h>
+#include <ets_forward.h>
 
 // using main and backup storage to keep old setting in case of power loss during writing
 #define ESP_SETTINGS_MAIN_SEC   0x7A
@@ -39,7 +41,7 @@ typedef struct {
 	};
 } DH_SETTINGS;
 
-static DH_SETTINGS_DATA mSettingsData = {0};
+static DH_SETTINGS_DATA mSettingsData = {{0}};
 
 LOCAL uint32_t ICACHE_FLASH_ATTR getStorageCrc(DH_SETTINGS *storage) {
 	return crc32(storage->storage, sizeof(storage->storage));
@@ -84,12 +86,12 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 
 LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 	int res = 1;
-	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
+	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(*settings));
 	if(settings == NULL) {
 		dhdebug("Failed to write settings, no RAM.");
 		return 0;
 	}
-	os_memset(settings, 0x0, sizeof(DH_SETTINGS));
+	os_memset(settings, 0x0, sizeof(*settings));
 	if(data)
 		os_memcpy(&settings->data, data, sizeof(DH_SETTINGS_DATA));
 	settings->crc = getStorageCrc(settings);
@@ -118,12 +120,12 @@ LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 }
 
 
-int ICACHE_FLASH_ATTR dhsettings_commit() {
+int ICACHE_FLASH_ATTR dhsettings_commit(void) {
 	return dhsettings_write(&mSettingsData);
 }
 
 int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
-	os_memset(mSettingsData, 0, sizeof(mSettingsData));
+	os_memset(&mSettingsData, 0, sizeof(mSettingsData));
 	if(force) {
 		if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK &&
 				spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) == SPI_FLASH_RESULT_OK) {
@@ -134,27 +136,27 @@ int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
 	return dhsettings_write(NULL);
 }
 
-WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode() {
+WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode(void) {
 	return mSettingsData.mode;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid(void) {
 	return mSettingsData.ssid;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_password() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_password(void) {
 	return mSettingsData.password;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_server() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_server(void) {
 	return mSettingsData.server;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid(void) {
 	return mSettingsData.deviceId;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey(void) {
 	return mSettingsData.accessKey;
 }
 

@@ -1,102 +1,134 @@
 /**
- *	\file		dhstatistic.h
- *	\brief		Module fo collecting statistic data
- *	\author		Nikolay Khabarov
- *	\date		2015
- *	\copyright	DeviceHive MIT
+ * @file
+ * @brief Module to collect various statistic data.
+ * @copyright 2017 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
-
 #ifndef _DHSTATISTIC_H_
 #define _DHSTATISTIC_H_
 
-/** Struct will all statistic data*/
-typedef struct {
-		unsigned long long bytesSent;			///< Total bytes sent.
-		unsigned long long bytesReceived;		///< Total bytes received.
-		unsigned int networkErrors;				///< Number of network errors.
-		unsigned int httpdRequestsCount;			///< Number of REST requests.
-		unsigned int httpdErrorsCount;			///< Number of REST errors.
-		unsigned int wifiLosts;					///< Number of Wi-Fi disconnects.
-		unsigned int serverErrors;				///< Number of errors from server.
-		unsigned int notificationsTotal;		///< Attempts number of creating notifications.
-		unsigned int responcesTotal;			///< Attempts number of creating responses.
-		unsigned int notificationsDroppedCount;	///< Number of dropped notifications.
-		unsigned int responcesDroppedCount;		///< Number of dropped responses.
-		unsigned int localRestRequestsCount;	///< Number of requests received via local REST.
-		unsigned int localRestResponcesErrors;	///< Number of errors in responses to local REST.
-} DHSTATISTIC;
 
 /**
- *	\brief				Add some numver of sent bytes.
- *	\param[in]	bytes	Number of bytes to add.
+ * @brief Various statistic data.
  */
-void dhstatistic_add_bytes_sent(unsigned int bytes);
+struct DHStat {
+	unsigned long long bytesSent;           ///< Total bytes sent.
+	unsigned long long bytesReceived;       ///< Total bytes received.
+	unsigned int networkErrors;             ///< Number of network errors.
+
+	unsigned int httpdRequestsCount;        ///< Number of REST requests.
+	unsigned int httpdErrorsCount;          ///< Number of REST errors.
+
+	unsigned int wifiLosts;                 ///< Number of Wi-Fi disconnects.
+
+	unsigned int serverErrors;              ///< Number of errors from server.
+	unsigned int notificationsTotal;        ///< Number of attempts to create notifications.
+	unsigned int responcesTotal;            ///< Number of attempts to create responses.
+	unsigned int notificationsDroppedCount; ///< Number of dropped notifications.
+	unsigned int responcesDroppedCount;     ///< Number of dropped responses.
+
+	unsigned int localRestRequestsCount;    ///< Number of requests received via local REST.
+	unsigned int localRestResponcesErrors;  ///< Number of errors in responses to local REST.
+};
+
 
 /**
- *	\brief				Add some numver of received bytes.
- *	\param[in]	bytes	Number of bytes to add.
+ * @brief Get global statistics.
  */
-void dhstatistic_add_bytes_received(unsigned int bytes);
+const struct DHStat* dhstat_get(void);
+
 
 /**
- *	\brief				Increment number of network errors.
+ * @brief Add some number of bytes sent.
+ * @param[in] stat Statistics to update.
+ * @param[in] no_bytes Number of bytes sent.
  */
-void dhstatistic_inc_network_errors_count();
+void dhstat_add_bytes_sent(unsigned int no_bytes);
+
 
 /**
- *	\brief				Increment number of REST requests.
+ * @brief Add some number of bytes received.
+ * @param[in] stat Statistics to update.
+ * @param[in] no_bytes Number of bytes received.
  */
-void dhstatistic_inc_httpd_requests_count();
+void dhstat_add_bytes_received(unsigned int no_bytes);
+
 
 /**
- *	\brief				Increment number of REST errors.
+ * @brief Increment number of network errors.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_httpd_errors_count();
+void dhstat_got_network_error(void);
+
 
 /**
- *	\brief				Increment number of Wi-Fi disconnections.
+ * @brief Increment number of REST requests.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_wifi_lost_count();
+void dhstat_got_httpd_request(void);
+
 
 /**
- *	\brief				Increment number of server errors.
+ * @brief Increment number of REST errors.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_server_errors_count();
+void dhstat_got_httpd_error(void);
+
 
 /**
- *	\brief				Increment number of notifications.
+ * @brief Increment number of Wi-Fi disconnections.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_notifications_count();
+void dhstat_got_wifi_lost(void);
+
 
 /**
- *	\brief				Increment number of dropped notifications.
+ * @brief Increment number of server errors.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_notifications_dropped_count();
+void dhstat_got_server_error(void);
+
 
 /**
- *	\brief				Increment number of responses.
+ * @brief Increment number of notifications.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_responces_count();
+void dhstat_got_notification(void);
+
 
 /**
- *	\brief				Increment number of dropped responses.
+ * @brief Increment number of dropped notifications.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_responces_dropped_count();
+void dhstat_got_notification_dropped(void);
+
 
 /**
- *	\brief				Increment number REST requests.
+ * @brief Increment number of responses.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_local_rest_requests_count();
+void dhstat_got_responce(void);
+
 
 /**
- *	\brief				Increment number of REST requests which were answered with error.
+ * @brief Increment number of dropped responses.
+ * @param[in] stat Statistics to update.
  */
-void dhstatistic_inc_local_rest_responses_errors();
+void dhstat_got_responce_dropped(void);
+
 
 /**
- *	\brief				Return statistic.
- *	\return				Pointer to DHSTATISTIC with data.
+ * @brief Increment number REST requests.
+ * @param[in] stat Statistics to update.
  */
-const DHSTATISTIC* dhstatistic_get_statistic();
+void dhstat_got_local_rest_request(void);
+
+
+/**
+ * @brief Increment number of REST requests which were answered with error.
+ * @param[in] stat Statistics to update.
+ */
+void dhstat_got_local_rest_response_error(void);
+
 
 #endif /* _DHSTATISTIC_H_ */

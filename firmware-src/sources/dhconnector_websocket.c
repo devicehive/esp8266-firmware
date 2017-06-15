@@ -10,11 +10,6 @@
  */
 
 #include "dhconnector_websocket.h"
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <user_interface.h>
-#include <espconn.h>
 #include "dhsettings.h"
 #include "dhdebug.h"
 #include "rand.h"
@@ -24,6 +19,13 @@
 #include "dhutils.h"
 #include "dhsender_data.h"
 #include "dhsender.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <user_interface.h>
+#include <ets_forward.h>
+#include <espconn.h>
 
 #define PAYLOAD_BUF_SIZE (MAX( \
 	ROUND_KB(DHSETTINGS_DEVICEID_MAX_LENGTH + DHSETTINGS_ACCESSKEY_MAX_LENGTH + 512), \
@@ -37,7 +39,7 @@ LOCAL char mBuf[PAYLOAD_BUF_SIZE + WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SI
 LOCAL char *mPayLoadBuf = &mBuf[WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL int mPayLoadBufLen = 0;
 
-LOCAL void ICACHE_FLASH_ATTR error(data, len) {
+LOCAL void ICACHE_FLASH_ATTR error(const char *data, unsigned int len) {
 	mErrFunc();
 	dhsender_current_fail();
 	char b[len + 1];
@@ -46,7 +48,7 @@ LOCAL void ICACHE_FLASH_ATTR error(data, len) {
 	dhdebug("%s", b);
 }
 
-LOCAL void ICACHE_FLASH_ATTR mask() {
+LOCAL void ICACHE_FLASH_ATTR mask(void) {
 	uint32_t *mask = (uint32_t *)&mBuf[WEBSOCKET_HEADER_MAX_SIZE];
 	*mask = rand();
 	int i, j;
@@ -57,7 +59,7 @@ LOCAL void ICACHE_FLASH_ATTR mask() {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR send_payload() {
+LOCAL void ICACHE_FLASH_ATTR send_payload(void) {
 	if(mPayLoadBufLen <= 0) {
 		return;
 	} else if(mPayLoadBufLen < 126) {
@@ -75,7 +77,7 @@ LOCAL void ICACHE_FLASH_ATTR send_payload() {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR check_queue() {
+LOCAL void ICACHE_FLASH_ATTR check_queue(void) {
 	dhsender_current_success();
 	SENDER_JSON_DATA *data = dhsender_next();
 	if(data) {

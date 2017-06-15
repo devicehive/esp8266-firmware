@@ -13,6 +13,8 @@
     * [WiFi AP mode](#wifi-ap-mode)
   * [Wireless configuring](#wireless-configuring)
   * [Pin definition](#pin-definition)
+  * [Auxiliary](#auxiliary)
+    * [command/list](#commandlist)
   * [GPIO](#gpio)
     * [gpio/write](#gpiowrite)
     * [gpio/read](#gpioread)
@@ -72,7 +74,7 @@
   * [License](#license)
 
 # Overview
-This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to [https://en.wikipedia.org/wiki/ESP8266](https://en.wikipedia.org/wiki/ESP8266)
+This document explains the set of REST API commands to control your remote ESP8266 — an incredible all around IoT chip. For more information about ESP8266 please refer to [wiki](https://en.wikipedia.org/wiki/ESP8266).
 
 Once ESP8266 device is connected you can issue commands using DeviceHive's RESTful API or local REST API hosted right on the chip. It can be a JavaScript, python or anything that supports HTTP and JSON, even command-line curl.
 
@@ -83,7 +85,8 @@ curl -H 'Authorization: Bearer eiMfp26Z+yRhiAafXWHCXT0LofwehgikmtygI6XoXIE=' \
 -d '{"command":"gpio/write","parameters":{"1":0}}' \
 http://nn8571.pg.devicehive.com/api/device/astaff/command
 ```
-This would set pin GPIO1 to 0. For example on Adafruit's Huzzah ESP8266 modules (https://www.adafruit.com/products/2471) with PIN1 connected to LED it will turn the LED on.
+This would set pin `GPIO1` to `0`. For example on [Adafruit's Huzzah ESP8266](https://www.adafruit.com/products/2471) modules
+with `PIN1` connected to LED it will turn the LED on.
 
 In the same way local RESTful API can be used. Just run:
 ```shell
@@ -94,14 +97,15 @@ This command prints input state of all GPIO pins with json format.
 
 The same idea with other interfaces. To check if your hardware device is suitable with firmware check which interface your devices has and then check if this interface is supported by DeviceHive ESP8266 firmware.
 
-The latest version can be found in git project repository. There are sources codes and binary images: https://github.com/devicehive/esp8266-firmware
+The latest version can be found in [git project repository](https://github.com/devicehive/esp8266-firmware).
+There are sources codes and binary images.
 
 The purpose of this firmware is to provide easy tool for building IoT solutions for developers which used to program on unsuitable for microcontroller programming languages. You can easily use AngularJS framework for example to implement your idea. Also, considering chip price, DeviceHive usability and plenty modules on market which are not require soldering, it looks like perfect tool for prototyping. DIY developers also may find this firmware very useful for their project.
 
 # Getting started
-First at all firmware have to be flashed into chip memory and chip have to be configured for using specified Wi-Fi network and DeviceHive server(can be omitted for local usage). Board should have at least 512KiB of ROM memory. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to https://github.com/devicehive/esp8266-firmware/tree/master/release and download archive with the latest version.
+First of all firmware has to be flashed into chip memory and chip has to be configured to use specified Wi-Fi network and DeviceHive server (can be omitted for local usage). Board should have at least 512KiB of ROM memory. Developers can build firmware and all tools for flashing and configuring by himself from sources. Or it can be downloaded from git repository: go to [releases](https://github.com/devicehive/esp8266-firmware/tree/master/release) page and download archive with the latest version.
 
-For flashing chip needs to be connected to computer via USB-UART converter, CH_PD pin have to be connected to Vcc, GPIO15 and GPIO0 have to be connected to ground and 3.3 power supply should be used. Sample for most popular pre soldered modules connection is below:
+Before flashing chip needs to be connected to computer via USB-UART converter, `CH_PD` pin have to be connected to `Vcc`, `GPIO15` and `GPIO0` have to be connected to ground and 3.3V power supply should be used. Sample for most popular pre soldered modules connection is below:
 
 ![](images/sample1.jpg?raw=true)
 
@@ -118,22 +122,22 @@ Also, it's possible to use NodeMCU boards. It already has UART converter, reset 
 ![](images/sample5.jpg?raw=true)
 
 After assembling, connect it to computer. Install driver for your USB->UART converter. The most popular chip and official sites with drivers below:
-* CP210x: [http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx](http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx)
-* PL230x: [http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41](http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41)
-* FTDI: [http://www.ftdichip.com/Drivers/VCP.htm](http://www.ftdichip.com/Drivers/VCP.htm)
-* CH341: [http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html](http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html)
+* [CP210x](http://www.silabs.com/products/mcu/pages/usbtouartbridgevcpdrivers.aspx)
+* [PL230x](http://www.prolific.com.tw/US/ShowProduct.aspx?pcid=41)
+* [FTDI](http://www.ftdichip.com/Drivers/VCP.htm)
+* [CH341](http://www.wch.cn/index.php?s=/page-search_content-keyword-CH341SER.html)
 
-Make sure that virtual serial port is available in your system (virtual COM is present on Windows OS, '/dev/ttyUSB*' on Linux, '/dev/tty.*' on OS X). Unpack archive with firmware and flash it running 'esp-flasher' in terminal. Flasher automatically detects serial port and use 'devicehive.bin' file for flashing. Successful flasher output is below:
+Make sure that virtual serial port is available in your system (virtual COM is present on Windows OS, `/dev/ttyUSB*` on Linux, `/dev/tty.*` on OS X). Unpack archive with firmware and flash it running `esp-flasher` in terminal. Flasher automatically detects serial port and use `devicehive.bin` file for flashing. Successful flasher output is below:
 
 ![](images/term.png?raw=true)
 
-Now remove wire from GPIO0(live it float or connect to high), reboot device and connect to firmware with 'esp-terminal' util. You can also use any other tool that can connect to terminal via UART and support escape sequences, PuTTY or GNU 'screen' for example. Port parameters are: 115200 8N1.
+Now remove wire from `GPIO0` (leave it float or connect to high), reboot device and connect to firmware with `esp-terminal` util. You can also use any other tool that can connect to terminal via UART and support escape sequences, PuTTY or GNU `screen` for example. Port parameters are: `115200 8N1`.
 
 _Notice: you can avoid configuring firmware with terminal and use wireless configuring procedure described in [wireless configuring section](#wireless-configuring) instead. Wireless configuring procedure also can be used for end-user devices with this firmware._
 
-Firmware terminal is a UNIX like terminal with few commands. It exists for chip configuring and debugging. To see debug output type 'dmesg'. To configure run 'configure' command. Follow instructions in terminal. You need to know DeviceHive server credentials for configuring for working with cloud services.  
+Firmware terminal is a UNIX like terminal with few commands. It is used for configuring and debugging the chip. To see debug output type `dmesg`. To configure run `configure` command. Follow instructions in terminal. You need to know DeviceHive server credentials to work with cloud services.  
 
-_For the very beginning or DIY purpose you can use DeviceHive free playground located here: [http://playground.devicehive.com/](http://playground.devicehive.com/) Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on [http://devicehive.com](http://devicehive.com)_  
+_For the very beginning or DIY purpose you can use DeviceHive free playground located [here](http://playground.devicehive.com/) Register there and you will have your own DeviceHive server instance. DeviceHive server can be deployed in local network or on some cloud hosting services. Follow for DeviceHive server deployment instructions on [http://devicehive.com](http://devicehive.com)._
 
 Configuring sample is below:
 
@@ -141,11 +145,11 @@ Configuring sample is below:
 
 _If DeviceHive API URL isn't specified, chip will work only as local RESTful server. AccessKey is used for local RESTful API and remote DeviceHive server. See [Local RESTful API](#restful-api) for details._
 
-After rebooting you can send commands to DeviceHive server or local RESTful API and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go in web admin, 'Devices' tab, 'commands' subtab, 'enter new command'. Type command and parameters and press 'push'. After ESP8266 perform your command you can press 'refresh' button to see result. For example 'gpio/read' command would look in admin control panel as below:
+After rebooting you can send commands to DeviceHive server or local RESTful API and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go to web admin, `Devices` tab, `Commands` sub-tab, `Enter new command`. Type command and parameters and press `Push`. After ESP8266 perform your command you can press `Refresh` button to see a result. For example `gpio/read` command would look in admin control panel as below:
 
 ![](images/web.png?raw=true)
 
-Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks using DeviceHive RESTful API: [http://devicehive.com/restful](http://devicehive.com/restful) which you can transmitted with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
+Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks using DeviceHive [RESTful API](http://devicehive.com/restful) which you can transmitted with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
 # Local services
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are omitted.
@@ -154,28 +158,28 @@ Firmware sets chip hostname and announce chip with mDNS using configured DeviceI
 mDNS(multicast Domain Name System) can resolve local domain names to IP address. Firmware announce itself in mDNS using DeiviceId. mDNS 2nd level domain is limited with 60 chars, so any subsequent chars of DeviceId are omitted. Top level domain is always `.local`. mDNS-SD (service discovery) is supported. Service name is `_esp8266-devicehive._tcp.local`. This service points to local web server with RESTful API. One TXT record with firmware version is present.
 
 ## RESTful API
-A RESTful API is an application program interface(API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port 80 which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as sub paths of API endpoint. For example command `api/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with 2xx HTTP code and 4xx on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
+A RESTful API is an application program interface (API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port `80` which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as sub paths of API endpoint. For example command `api/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with `2xx` HTTP code and `4xx` on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
 
-For example, we would like to set up pin GPIO1 to high state and chip has AccessKey configured. `curl` request is:
+For example, we would like to set up pin `GPIO1` to high state and chip has AccessKey configured. `curl` request is:
 ```shell
 curl -i -H 'Authorization: Bearer SomeAccessKeyHere' \
 http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
-Chip answers on this request '204 No content' which means that operation successfully completed.
+Chip answers on this request `204 No content` which means that operation successfully completed.
 
 ## Web server
-Firmware includes local HTTP server with tools for playing with API and some samples for some sensors. Web server available at chip's 80 port. Having DeviceId configured and mDNS compatible OS, it is possible to open web page at http://your-device-id-or-chip-ip.local/ in browser. To play with RESTful API there is a simple page http://your-device-id-or-chip-ip.local/tryapi.html where any command can be tried and command's output can be observed. 
+Firmware includes local HTTP server with tools for playing with API and some samples for some sensors. Web server available at chip's `80` port. Having DeviceId configured and mDNS compatible OS, it is possible to open web page at `http://your-device-id-or-chip-ip.local/` in browser. To play with RESTful API there is a simple page `http://your-device-id-or-chip-ip.local/tryapi.html` where any command can be tried and command's output can be observed.
 
 ## Uploadable page
-The original main page can be replaced with any other up to 65536 bytes. Only main page can be replaced, there is no way to add more pages. There is a tiny text editor at `http://device-id-or-ip.local/editor.html` which allows to edit page content in web browser and download/upload file. If page was changed, original page is always available at `http://device-id-or-ip.local/help.html`. Do not edit web page simultaneously from different tabs/browsers/computers. 
+The original main page can be replaced with any other up to 65536 bytes. Only main page can be replaced, there is no way to add more pages. There is a tiny text editor at `http://device-id-or-ip.local/editor.html` which allows to edit page content in web browser and download/upload file. If page was changed, original page is always available at `http://device-id-or-ip.local/help.html`. Do not edit web page simultaneously from different tabs/browsers/computers.
 
-This feature can be used for creating web enabled IoT devices. Any HTML, CSS, JS or anything else can be saved there. Local web server provides this page as is, without any modifications. Embedded JS in web browser can be used for communicating with RESTful API. As an example, it's possible to build some sensor with web interface. A couple of such samples can found on the local web server. `http://device-id-or-ip.local/help.html` page contains a list of them. 
+This feature can be used to create web enabled IoT devices. Any HTML, CSS, JS or anything else can be saved there. Local web server provides this page as is, without any modifications. Embedded JS in web browser can be used for communicating with RESTful API. As an example, it's possible to build some sensor with web interface. A couple of such samples can found on the local web server. `http://device-id-or-ip.local/help.html` page contains a list of them.
 
 ## WiFi AP mode
-Firmware can be configured to use chip as WiFi access point during configuration procedure. In chis mode chip creates specified wireless network with WPA/WPA2 security protocol and server connectivy is disabled. In this mode all local services like mDNS, RESTful API, uploadable web page are available. This mode can be use for creating local autonomous devices with a web interface.
+Firmware can be configured to use chip as WiFi access point during configuration procedure. In this mode chip creates specified wireless network with WPA/WPA2 security protocol and server connectivy is disabled. In this mode all local services like mDNS, RESTful API, uploadable web page are available. This mode can be use to create local autonomous devices with a web interface.
 
 # Wireless configuring
-Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end user projects to providing easy way for configuring device. If chip doesn't contain config, wireless configure starts automatically on boot. To enter configuration mode manually just reset device three times with chip RESET pin or button(if present on board). Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
+Since DeviceHive ESP8266 firmware flashed into chip, it can be configured without any special devices or software. So this mode can be used in end-user projects to provide easy way of device configuration. If chip doesn't contain config, wireless configure starts automatically on boot. To enter configuration mode manually just reset device three times with chip RESET pin or button (if it is present on board). Intervals between resets should be more than half seconds and less than 3 seconds, i.e. simply reset device three times leisurely. If board has LED connected to TX pin, it turns on. ESP8266 will operate as Wi-Fi access point providing open wireless network with SSID 'DeviceHive'. Connect to this network with your laptop/phone/tablet or other device with Wi-Fi support. Device with iOS and OS X automatically will show configuration page like below:
 
 ![](images/phone1.jpg?raw=true)
 
@@ -183,10 +187,10 @@ Android devices will show notification 'Sign into Wi-Fi network' in bar:
 
 ![](images/phone2.jpg?raw=true)
 
-Tap on it to open the same configuration page. In case of using other devices, just open browser and type URL: http://devicehive.config
+Tap on it to open the same configuration page. In case of using other devices, just open browser and type URL: `http://devicehive.config`.
 Also you can type any URL with http scheme in it, you will be redirected on URL above anyway while you are connected to ESP8266 in configuration mode.
 
-Type your configuration in form and click 'Apply' button. Device will be rebooted in 10 seconds in normal mode with new configuration.
+Type your configuration in form and click `Apply` button. Device will be rebooted in 10 seconds in normal mode with new configuration.
 
 _Notice: You can automate configuration process for your devices. Actually to configure firmware you need to send HTTP POST request like below to 192.168.2.1:80_
 ```
@@ -200,26 +204,49 @@ ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=accesskey
 
 # Pin definition
 
- Pin name in commands |  Function        |ESP8266 pin number |NodeMCU board pin
-----------------------|------------------|-------------------|------------------
-GPIO                  |                  |                   |
-      "0"             |    GPIO0         |        15         |       D3
-      "1"             |  GPIO1, UART_TX  |        26         |       D10
-      "2"             |    GPIO2         |        14         |       D4
-      "3"             |  GPIO3, UART_RX  |        25         |       D9
-      "4"             |    GPIO4         |        16         |       D2
-      "5"             |    GPIO5         |        24         |       D1
-      "12"            | GPIO12, SPI_MISO |        10         |       D6
-      "13"            | GPIO13, SPI_MOSI |        12         |       D7
-      "14"            | GPIO14, SPI_CLK  |        9          |       D5
-      "15"            |    GPIO15        |        13         |       D8
-ADC                   |                  |                   |
-      "0"             |    ADC0          |        6          |       A0
-Common                |                  |                   |
-      "0"             |          all pins in current group
-  
-_Notes:  
-GPIO6-GPIO11 usually connected to on-module EEPROM, that is why no API for this pins._
+| Pin name in commands |  Function        |ESP8266 pin number |NodeMCU board pin |
+|----------------------|------------------|-------------------|------------------|
+| GPIO                 |                  |                   |                  |
+|      "0"             |    GPIO0         |        15         |       D3         |
+|      "1"             |  GPIO1, UART_TX  |        26         |       D10        |
+|      "2"             |    GPIO2         |        14         |       D4         |
+|      "3"             |  GPIO3, UART_RX  |        25         |       D9         |
+|      "4"             |    GPIO4         |        16         |       D2         |
+|      "5"             |    GPIO5         |        24         |       D1         |
+|      "12"            | GPIO12, SPI_MISO |        10         |       D6         |
+|      "13"            | GPIO13, SPI_MOSI |        12         |       D7         |
+|      "14"            | GPIO14, SPI_CLK  |        9          |       D5         |
+|      "15"            |    GPIO15        |        13         |       D8         |
+| ADC                  |                  |                   |                  |
+|      "0"             |    ADC0          |        6          |       A0         |
+| Common               |                  |                   |                  |
+|      "0"             |          all pins in current group | |                  |
+
+_Note: `GPIO6-GPIO11` usually connected to on-module EEPROM, that is why no API for this pins._
+
+# Auxiliary
+
+## command/list
+This is auxiliary command that is used to get a list of supported commands. This command has no parameters
+and output looks like:
+
+```json
+[
+  "gpio/write",
+  "gpio/read",
+  "gpio/int",
+  "adc/read",
+  "adc/int",
+  "pwm/control",
+  "uart/write",
+  "uart/read",
+  "uart/int",
+  "uart/terminal",
+  ...
+]
+```
+
+The `command/list` command is used on the `tryapi.html` page to provide command suggestion.
 
 # GPIO
 Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and reverse current protection.
@@ -227,10 +254,9 @@ Each ESP8266 pin can be loaded up to 12 mA. Pins also have overvoltage and rever
 ## gpio/write
 Sets gpio pins according to parameters specified. Pins will be automatically initialized as output when command is received. All pins will be set up simultaneously. Unlisted pins will remain unaffected.
 
-*Parameters*:    
-JSON with a set of key-value pairs, where key is pin number and value "0" for LOW, "1" for HIGH or "x" for NOP, leaving pin unaffected. Sample below sets gpio10 to LOW and gpio11 to HGIH.
+*Parameters*:
+JSON with a set of key-value pairs, where key is pin number and value "0" for LOW, "1" for HIGH or "x" for NOP, leaving pin unaffected. Sample below sets `GPIO10` to LOW and `GPIO11` to HIGH:
 
-*Example*:
 ```json
 { 
 	"10":"0",
@@ -286,7 +312,9 @@ JSON with a set of key-value pairs. Where key is pin number and value is one of 
 Mnemonic "all" can be used to set value for all pins.
 
 *Note: Timeout feature shall be used whenever is practical to avoid flooding with notifications.*
+
 ![](images/edge.png?raw=true)
+
 *Example*:  
 ```json
 {
@@ -312,8 +340,9 @@ Notifications will be generated with the name "gpio/int". Each notification will
 	"tick":123456
 }
 ```
+
 # ADC
-ESP8266 has just one ADC channel. This channel is connected to a dedicated pin 6 - "TOUT". ADC can measure voltage in range from 0.0V to 1.0V with 10 bit resolution.
+ESP8266 has just one ADC channel. This channel is connected to a dedicated pin 6 - `TOUT`. ADC can measure voltage in range from 0.0V to 1.0V with 10 bit resolution.
 
 ## adc/read
 Reads ADC channels values. ESP8266 has just one channel - "0".
@@ -391,13 +420,13 @@ PWM is can be used to generate single or multiple pulses with specific length:
 { "0":"30",  "frequency":"0.1", "count":"4"} - generate 4 pulses 3 seconds length, 7 seconds interval between pulses.*
 
 # UART
-ESP8266 has one UART interface. RX pin is 25(GPIO3), TX pin is 26(GPIO1).
+ESP8266 has one UART interface. RX pin is 25 (`GPIO3`), TX pin is 26 (`GPIO1`).
 
 ## uart/read
 Read data from UART interface. Receiving buffer resets on each read or write command and may contain up to 264 bytes.
 
 *Parameters*:
-* "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing parameters: number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings ("115200 8N1" by default) and will not reinit port.
+* "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing parameters: number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, `8N1` will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings (`115200 8N1` by default) and will not reinit port.
 * "data" - data string encoded with base64 which would be sent before reading. Reading buffer will be cleared and will contain data which is received during "timeout" time only otherwise data will be since last read, write command or since last notification sent. Data size have to be equal or less than 264 bytes.
 * "timeout" - Can be used only with "data" field. Delay in ms for collecting answer after transmitting data. Maximum 1000ms, if not specified 250 ms is used.
 
@@ -420,7 +449,7 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 Send data via UART.
 
 *Parameters*:
-* "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing parameters: number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, 8N1 will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings("115200 8N1" by default) and will not reinit port.
+* "mode" - UART speed which can be in range 300..230400. After speed may contains space and UART framing parameters: number of bits(5-8), parity mode(none - "N", odd - "O" or even - "E"), stop bits(one - "1", two - "2"). Framing can be omitted, `8N1` will be used in this case. If this parameter specified UART will be reinit with specified mode. If this parameter is omitted, port will use current settings(`115200 8N1` by default) and will not reinit port.
 * "data" - data string encoded with base64. Original data size have to be equal or less than 264 bytes.
 *Example*:
 ```json
@@ -454,7 +483,7 @@ Return "OK" in status. Or "Error" and description in result on error. Notificati
 Where "data" key name is always used and value is string with base64 encoded data(264 or less bytes).
 
 ## uart/terminal
-Resume terminal on UART interface. If UART"s pins were used by another feature(i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with 115200 8N1.
+Resume terminal on UART interface. If UART's pins were used by another feature (i.e. for GPIO or custom UART protocol) this command resume UART terminal back and disables UART notifications. Port will be reinit with `115200 8N1` parameters.
 
 *Parameters*:
 No parameters.
@@ -485,7 +514,7 @@ Read specified number of bytes from bus. This command also can set up pins that 
 }
 ```
 *Notes:
-Very common situation  when slave device needs to be written with register address and data can be read after repeated START. Using this command with "data" field allow to organize repeated START for reading.*
+Very common situation when slave device needs to be written with register address and data can be read after repeated START. Using this command with "data" field allow to organize repeated START for reading.*
 
 Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
 ```json

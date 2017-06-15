@@ -12,6 +12,6 @@
 /**
  *	\brief		Initialize HTTP daemon
  */
-void dhzc_web_init();
+void dhzc_web_init(void);
 
 #endif /* _DHZC_WEB_H_ */

@@ -24,18 +24,18 @@ typedef enum {
 /**
  *	\brief			Initializes connector, parameters are taken from permanent storage.
  */
-void dhconnector_init();
+void dhconnector_init(void);
 
 /**
  *	\brief			Get connector current state.
  *	\return			Current state value from CONNECTION_STATE enum.
  */
-CONNECTION_STATE dhconnector_get_state();
+CONNECTION_STATE dhconnector_get_state(void);
 
 /**
  *	\brief			Callback for custom firmware. If callback returns non null request, it will be sent instead poll request.
  *	\return			HTTP request for DH server or null to keep normal mode.
  */
-HTTP_REQUEST *custom_firmware_request();
+HTTP_REQUEST *custom_firmware_request(void);
 
 #endif /* _DHCONNECTOR_H_ */

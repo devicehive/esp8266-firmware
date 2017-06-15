@@ -76,7 +76,9 @@
 #ifndef MFRC522_h
 #define MFRC522_h
 
-#include <c_types.h>
+#include "user_config.h"
+#if defined(DH_DEVICE_MFRC522)
+
 #include "irom.h"
 
 // Firmware data for self-test
@@ -402,4 +404,5 @@ bool MFRC522_MIFARE_UnbrickUidSector(bool logErrors);
 bool MFRC522_PICC_IsNewCardPresent();
 bool MFRC522_PICC_ReadCardSerial();
 
+#endif /* DH_DEVICE_MFRC522 */
 #endif

@@ -15,7 +15,6 @@
 #include <gpio.h>
 #include <os_type.h>
 #include "dhdebug.h"
-#include "dhuart.h"
 #include "dhterminal.h"
 #include "user_config.h"
 #include "dhutils.h"

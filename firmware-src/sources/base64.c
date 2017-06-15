@@ -1,123 +1,164 @@
-/*
- * base64.c
- *
- * Copyright 2015 DeviceHive
- *
- * Author: Nikolay Khabarov
- *
- * Description: Base64 implementation.
- *
+/**
+ * @file
+ * @brief Base64 encode/decode.
+ * @copyright 2017 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
-
-#include <c_types.h>
-#include "user_config.h"
 #include "base64.h"
+#include "user_config.h"
 
 #ifdef DATAENCODEBASE64
 
-LOCAL signed char ICACHE_FLASH_ATTR reverse_base64_table(char c) {
-	if(c >= 'a') {
-		if(c > 'z')
-			return -1;
-		return c - 'a' + 26;
-	} else if(c >= 'A') {
-		if(c > 'Z')
-			return -1;
-		return c - 'A';
-	} else if(c >= '0') {
-		if(c > '9')
-			return -1;
-		return c - '0' + 52;
-	} else if(c == '+') {
+/**
+ * @brief Base64 decoding table.
+ * @param[in] ch Input character.
+ * @return 6-bits integer or -1 in case of error.
+ */
+static int ICACHE_FLASH_ATTR reverse_base64_table(int ch)
+{
+	if (ch >= 'A' && ch <= 'Z')
+		return ch - 'A';
+	if (ch >= 'a' && ch <= 'z')
+		return ch - 'a' + 26;
+	if (ch >= '0' && ch <= '9')
+		return ch - '0' + 52;
+	if (ch == '+')
 		return 62;
-	} else if(c == '/') {
+	if (ch == '/')
 		return 63;
-	}
-	return -1;
+
+	return -1; // bad input
 }
 
-LOCAL char ICACHE_FLASH_ATTR base64_table(uint32_t c, unsigned int offset) {
+
+/**
+ * @brief Base64 encoding table.
+ * @param[in] reg Shift register.
+ * @param[in] off Offset.
+ */
+static inline int ICACHE_FLASH_ATTR base64_table(uint32_t reg, int offset)
+{
 	static const char table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	return table[(c >> offset) & 0x3F];
+	return table[(reg >> offset) & 0x3F]; // 6-bits
 }
 
-unsigned int ICACHE_FLASH_ATTR base64_encode_length(unsigned int datalen) {
-	return (datalen + 2) / 3 * 4;
+
+/*
+ * base64_encode_length() implementation.
+ */
+size_t ICACHE_FLASH_ATTR base64_encode_length(size_t data_len)
+{
+	return (data_len + 2)/3 * 4; // round_up(len/3)*4
 }
 
-int ICACHE_FLASH_ATTR base64_encode(const char *data, unsigned int datalen, char *out, unsigned int outlen) {
-	if( base64_encode_length(datalen) > outlen || datalen == 0)
+
+/*
+ * base64_encode() implementation.
+ */
+int ICACHE_FLASH_ATTR base64_encode(const void *data_, size_t data_len,
+                                    char *text, size_t text_len)
+{
+	if (!data_len)
+		return 0; // nothing to encode
+
+	// check we have enough space for output
+	if (base64_encode_length(data_len) > text_len)
 		return 0;
-	int datapos = 0;
-	int outpos = 0;
-	uint32_t pc;
-	while(datapos < datalen) {
-		pc = data[datapos++] << 16;
-		out[outpos++] = base64_table(pc, 18);
-		if(datapos < datalen) {
-			pc |= (uint32_t)data[datapos++] << 8;
-			out[outpos++] = base64_table(pc, 12);
-			if(datapos < datalen) {
-				pc |= (uint32_t)data[datapos++];
-				out[outpos++] = base64_table(pc, 6);
-				out[outpos++] = base64_table(pc, 0);
+
+	const uint8_t *data = (const uint8_t*)data_;
+	char* const text_base = text;
+
+	while (data_len != 0)
+	{
+		uint32_t reg = ((uint32_t)*data++) << 16; data_len--;
+		*text++ = base64_table(reg, 18);
+		if (data_len != 0) {
+			reg |= ((uint32_t)*data++) << 8; data_len--;
+			*text++ = base64_table(reg, 12);
+			if (data_len != 0) {
+				reg |= (uint32_t)*data++; data_len--;
+				*text++ = base64_table(reg, 6);
+				*text++ = base64_table(reg, 0);
 			} else {
-				out[outpos++] = base64_table(pc, 6);
-				out[outpos++] = '=';
+				*text++ = base64_table(reg, 6);
+				*text++ = '='; // padding
 				break;
 			}
 		} else {
-			out[outpos++] = base64_table(pc, 12);
-			out[outpos++] = '=';
-			out[outpos++] = '=';
+			*text++ = base64_table(reg, 12);
+			*text++ = '='; // padding
+			*text++ = '='; // padding
 			break;
 		}
 	}
-	return outpos;
+
+	return text - text_base;
 }
 
-unsigned int ICACHE_FLASH_ATTR base64_decode_length(const char *data, unsigned int datalen) {
-	if(datalen % 4 || datalen == 0)
-		return 0;
-	int len = datalen * 3 / 4;
-	if(data[datalen - 1] == '=')
-		len--;
-	if(data[datalen - 2] == '=')
-		len--;
-	return len;
+
+/*
+ * base64_decode_length() implementation.
+ */
+size_t ICACHE_FLASH_ATTR base64_decode_length(const char *text, size_t text_len)
+{
+	if (!text_len)
+		return 0; // nothing to decode
+	if (text_len%4)
+		return 0; // bad text
+
+	size_t data_len = (text_len/4) * 3;
+	if (text[text_len-1] == '=')
+		data_len--;
+	if (text[text_len-2] == '=')
+		data_len--;
+
+	return data_len;
 }
 
-int ICACHE_FLASH_ATTR base64_decode(const char *data, unsigned int datalen, char *out, unsigned int outlen) {
-	int el = base64_decode_length(data, datalen);
-	if(outlen < el || el == 0)
+
+/*
+ * base64_decode() implementation.
+ */
+int ICACHE_FLASH_ATTR base64_decode(const char *text, size_t text_len,
+                                    void *data_base, size_t data_len)
+{
+	if (!text_len || text_len%4)
+		return 0; // nothing to decode
+
+	// check we have enough space for output
+	if (base64_decode_length(text, text_len) > data_len)
 		return 0;
-	int datapos = 0;
-	int outpos = 0;
-	signed char t[4];
-	uint32_t r;
-	while(datapos < datalen) {
-		t[0] = reverse_base64_table(data[datapos++]);
-		t[1] = reverse_base64_table(data[datapos++]);
-		t[2] = reverse_base64_table(data[datapos++]);
-		t[3] = reverse_base64_table(data[datapos++]);
-		if(t[0] == -1 || t[1] == -1)
-			return 0;
-		r = t[0] << 18 | (t[1] << 12);
-		out[outpos++] = (r >> 16) & 0xFF;
-		if(t[2] != -1)
-			r |= (t[2] << 6);
-		else if(datapos < datalen)
-			return 0;
-		if(t[3] != -1)
-			r |= t[3] ;
-		else if(datapos < datalen)
-			return 0;
-		if(t[2] != -1)
-			out[outpos++] = (r >> 8) & 0xFF;
-		if(t[3] != -1)
-			out[outpos++] = r & 0xFF;
+
+	uint8_t *data = (uint8_t*)data_base;
+	while (text_len != 0) {
+		const int t0 = reverse_base64_table(*text++); text_len--;
+		const int t1 = reverse_base64_table(*text++); text_len--;
+		if (t0 < 0 || t1 < 0)
+			return 0; // bad data
+		uint32_t reg = ((uint32_t)t0 << 18)
+		             | ((uint32_t)t1 << 12);
+		*data++ = (reg >> 16) & 0xFF;
+
+		const int ch2 = *text++; text_len--;
+		if (ch2 == '=')
+			break;
+		const int t2 = reverse_base64_table(ch2);
+		if (t2 < 0)
+			return 0; // bad data
+		reg |= ((uint32_t)t2 << 6);
+		*data++ = (reg >> 8) & 0xFF;
+
+		const int ch3 = *text++; text_len--;
+		if (ch3 == '=')
+			break;
+		const int t3 = reverse_base64_table(ch3);
+		if (t3 < 0)
+			return 0; // bad data
+		reg |= ((uint32_t)t3);
+		*data++ = reg & 0xFF;
 	}
-	return outpos;
+
+	return data - (uint8_t*)data_base;
 }
 
-#endif //DATAENCODEBASE64
+#endif // DATAENCODEBASE64

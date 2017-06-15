@@ -25,7 +25,7 @@
 #ifndef _OSAPI_H_
 #define _OSAPI_H_
 
-#include <string.h>
+#include <c_types.h>
 #include "user_config.h"
 
 #define os_bzero ets_bzero

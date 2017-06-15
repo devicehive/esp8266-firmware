@@ -8,14 +8,7 @@
  * Description: DeviceHive WebSocket protocol implementation
  *
  */
-
 #include "dhconnector_websocket_api.h"
-#include <ets_sys.h>
-#include <osapi.h>
-#include <os_type.h>
-#include <user_interface.h>
-#include <espconn.h>
-#include <json/jsonparse.h>
 #include "dhsettings.h"
 #include "irom.h"
 #include "snprintf.h"
@@ -24,6 +17,15 @@
 #include "user_config.h"
 #include "dhcommands.h"
 #include "dhsender.h"
+
+#include <ets_sys.h>
+#include <osapi.h>
+#include <os_type.h>
+#include <user_interface.h>
+#include <espconn.h>
+#include <json/jsonparse.h>
+#include <ets_forward.h>
+
 
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int maxlen) {
 	RO_DATA char template[] =
@@ -39,7 +41,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	int status_not_success = 1;
 	char action[32];
 	char command[128];
-	const char *params;
+	const char *params = 0;
 	unsigned int paramslen = 0;
 	unsigned int id = 0;
 	action[0] = 0;
