@@ -112,7 +112,7 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	}
 
 	// check data
-	if(data[0] != 0x81) {
+	if((data[0] & 0x80) == 0) {
 		// always expect final text frame
 		dhdebug("WebSocket error - wrong header 0x%X", data[0]);
 		error(data, len);
