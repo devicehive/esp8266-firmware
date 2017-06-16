@@ -32,20 +32,31 @@
 	SENDER_JSON_MAX_LENGTH))
 #define WEBSOCKET_HEADER_MAX_SIZE 4
 #define WEBSOCKET_MASK_SIZE 4
+#define WEBSOCKET_CONNECTION_TIMEOUT_MS 60000
+#define WEBSOCKET_PING_TIMEOUT_MS 120000
 
 LOCAL dhconnector_websocket_send_proto mSendFunc;
 LOCAL dhconnector_websocket_error mErrFunc;
 LOCAL char mBuf[PAYLOAD_BUF_SIZE + WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL char *mPayLoadBuf = &mBuf[WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL int mPayLoadBufLen = 0;
+LOCAL os_timer_t mTimeoutTimer;
 
-LOCAL void ICACHE_FLASH_ATTR error(const char *data, unsigned int len) {
+LOCAL void ICACHE_FLASH_ATTR error() {
+	os_timer_disarm(&mTimeoutTimer);
 	mErrFunc();
 	dhsender_current_fail();
-	char b[len + 1];
-	os_memcpy(b, data, len);
-	b[len] = 0;
-	dhdebug("%s", b);
+}
+
+LOCAL void ICACHE_FLASH_ATTR timeout(void *arg) {
+	dhdebug("WebSocket timeout");
+	error();
+}
+
+LOCAL void ICACHE_FLASH_ATTR arm_timeout_timer(unsigned int ms) {
+	os_timer_disarm(&mTimeoutTimer);
+	os_timer_setfn(&mTimeoutTimer, (os_timer_func_t *)timeout, NULL);
+	os_timer_arm(&mTimeoutTimer, ms, 0);
 }
 
 LOCAL void ICACHE_FLASH_ATTR mask(void) {
@@ -98,13 +109,14 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_start(dhconnector_websocket_send_pr
 
 	mPayLoadBufLen = dhconnector_websocket_api_start(mPayLoadBuf, PAYLOAD_BUF_SIZE);
 	send_payload();
-	// TODO check with timeout that we have connected
+	arm_timeout_timer(WEBSOCKET_CONNECTION_TIMEOUT_MS);
 }
 
 void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned int len) {
 	// check and response on ping
 	if(len == 2) {
 		if(data[0] == 0x89 && data[1] == 0x00) {// PING
+			arm_timeout_timer(WEBSOCKET_PING_TIMEOUT_MS);
 			static char pong_buf[2] = {0x8A, 0x00}; // PONG
 			mSendFunc(pong_buf, sizeof(pong_buf));
 			return;
@@ -115,13 +127,13 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	if((data[0] & 0x80) == 0) {
 		// always expect final text frame
 		dhdebug("WebSocket error - wrong header 0x%X", data[0]);
-		error(data, len);
+		error();
 		return;
 	}
 	if(data[1] & 0x80) {
 		// always expect unmasked data
 		dhdebug("WebSocket error - masked data from server");
-		error(data, len);
+		error();
 		return;
 	}
 
@@ -129,7 +141,7 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	unsigned int wslen = (data[1] & 0x7F);
 	if(wslen == 127) {
 		dhdebug("WebSocket error - cannot handle more then 65535 bytes");
-		error(data, len);
+		error();
 		return;
 	} else if(wslen == 126) {
 		wslen = data[2];
@@ -144,7 +156,7 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	if(wslen != len) {
 		// it is final frame, we checked before, received and header lengths should be equal
 		dhdebug("WebSocket error - length mismatch");
-		error(data, len);
+		error();
 		return;
 	}
 
@@ -154,7 +166,7 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	if(mPayLoadBufLen > 0)
 		send_payload();
 	else if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR)
-		error(data, len);
+		error();
 	else // if we have data to send, we can do it
 		check_queue();
 }
