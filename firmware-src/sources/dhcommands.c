@@ -254,6 +254,6 @@ static void ICACHE_FLASH_ATTR do_handle_command_list(COMMAND_RESULT *cmd_res, co
 	*p = 0; // guard
 
 	cmd_res->callback(cmd_res->data,
-			DHSTATUS_OK, RDT_MALLOC_PTR,
+			DHSTATUS_OK, RDT_JSON_MALLOC_PTR,
 			buf, p - (char*)buf);
 }

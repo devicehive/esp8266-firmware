@@ -13,7 +13,7 @@
 
 
 /** Find maximum value */
-#define MAX(x, y) (((x) < (y)) ? (x) : (y))
+#define MAX(x, y) (((x) < (y)) ? (y) : (x))
 
 /** Round value to KiB */
 #define ROUND_KB(x) ((((x) + 1023) / 1024) * 1024)

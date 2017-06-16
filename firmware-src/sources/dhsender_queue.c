@@ -21,6 +21,7 @@
 #include <mem.h>
 #include <user_interface.h>
 #include <ets_forward.h>
+#include <mem.h>
 
 LOCAL const char STATUS_OK[] = "OK";
 LOCAL const char STATUS_ERROR[] = "Error";
@@ -142,10 +143,11 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *i
 			return 0;
 	}
 
-
 	int rl = dhsender_data_to_json(&out->json[pos], sizeof(out->json) - pos,
 			item.notification_type == RNT_NOTIFICATION_GPIO, item.data_type,
 			&item.data, item.data_len, item.pin);
+	if(item.data_type == RDT_JSON_MALLOC_PTR)
+		os_free((void*)item.data.string);
 	if(rl < 0) {
 		pos += snprintf(&out->json[pos], sizeof(out->json) - pos, "Failed to convert data to json");
 		item.type = RT_RESPONCE_ERROR;

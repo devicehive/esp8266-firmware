@@ -24,7 +24,7 @@ typedef enum {
 	RDT_GPIO,			///< Four 32bit value should be passed(caused, state, tick, suitable). Will be formatted as json.
 	RDT_SEARCH64,		///< Data with groups of 64bit addresses. Pin number, pointer to data and integer length of data should be passed.
 	RDT_FORMAT_JSON,	///< Formated JSON, with sprintf syntax. Text should be valid JSON.
-	RDT_MALLOC_PTR		///< Dynamically allocated data. Will be freed by DH core once data are sent. Pointer and data length should be passed.
+	RDT_JSON_MALLOC_PTR ///< Dynamically allocated data. Will be freed by DH core once data are sent. Pointer and data length should be passed.
 } REQUEST_DATA_TYPE;
 
 /** Request type. */
@@ -83,7 +83,7 @@ typedef union {
 
 
 /** Maximum size for JSON */
-#define SENDER_JSON_MAX_LENGTH ROUND_KB(3 * INTERFACES_BUF_SIZE + DHSETTINGS_DEVICEID_MAX_LENGTH)
+#define SENDER_JSON_MAX_LENGTH ROUND_KB(1024 + 3 * INTERFACES_BUF_SIZE + DHSETTINGS_DEVICEID_MAX_LENGTH)
 /** Struct for passing JSON. */
 typedef struct {
 	char json[SENDER_JSON_MAX_LENGTH];	///< JSON string
