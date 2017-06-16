@@ -54,3 +54,7 @@ v0.6
 - access point mode
 - embedded pages redesign
 - sample of using D3.js for plotting graphs from different sensors on embedded web server
+
+v0.7
+- new command 'command/list'
+- connectino to server now is implemeted with WebSocket
