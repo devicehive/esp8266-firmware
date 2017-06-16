@@ -26,6 +26,8 @@
 #include <json/jsonparse.h>
 #include <ets_forward.h>
 
+LOCAL char mTimestamp[192] = {0};
+
 
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int maxlen) {
 	RO_DATA char template[] =
@@ -41,6 +43,8 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	int status_not_success = 1;
 	char action[32];
 	char command[128];
+	RO_DATA char timestampTemplate[] = ",\"timestamp\":\"%s\"";
+	char timestamp[sizeof(mTimestamp) - sizeof(timestampTemplate) - 2];
 	const char *params = 0;
 	unsigned int paramslen = 0;
 	unsigned int id = 0;
@@ -68,6 +72,10 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
 					id = jsonparse_get_value_as_ulong(&jparser);
+			} else if(jsonparse_strcmp_value(&jparser, "timestamp") == 0) {
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+					jsonparse_copy_value(&jparser, timestamp, sizeof(timestamp));
 			} else if(jsonparse_strcmp_value(&jparser, "parameters") == 0) {
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
@@ -96,6 +104,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	}
 
 	if(os_strcmp(action, "command/insert") == 0) {
+		snprintf(mTimestamp, sizeof(mTimestamp), timestampTemplate, timestamp);
 		COMMAND_RESULT cb;
 		cb.callback = dhsender_response;
 		cb.data.id = id;
@@ -131,14 +140,15 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		RO_DATA char template[] =
 				"{"
 					"\"action\":\"command/subscribe\","
-					"\"deviceGuids\":[\"%s\"]"
+					"\"deviceGuids\":[\"%s\"]%s"
 				"}";
 		if(status_not_success) {
 			dhdebug("Failed to save device");
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
 		return snprintf(out, outmaxlen, template,
-				dhsettings_get_devicehive_deviceid());
+				dhsettings_get_devicehive_deviceid(),
+				mTimestamp[0] ? mTimestamp : "");
 	}
 	return 0;
 }
