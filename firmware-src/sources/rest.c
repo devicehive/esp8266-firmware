@@ -81,11 +81,11 @@ HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char 
 		answer->content.len = sizeof(desription) - 1;
 		return HRCS_ANSWERED_HTML;
 	}
-	if(dhsettings_get_devicehive_accesskey()[0]) {
+	if(dhsettings_get_devicehive_key()[0]) {
 		if(key == 0) {
 			return HRCS_UNAUTHORIZED;
 		}
-		if(os_strcmp(key, dhsettings_get_devicehive_accesskey())) {
+		if(os_strcmp(key, dhsettings_get_devicehive_key())) {
 			return HRCS_UNAUTHORIZED;
 		}
 	}

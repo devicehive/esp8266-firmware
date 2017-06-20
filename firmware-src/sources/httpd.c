@@ -128,7 +128,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 	static const char sp[] = "\r\n\r\n";
 	int i, j;
 	char path[MAX_PATH];
-	char key[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
+	char key[DHSETTINGS_KEY_MAX_LENGTH];
 
 	i = 0;
 	while(data[i] != ' ') // rewind method
@@ -165,8 +165,8 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 				j = i;
 				while(data[j] != '\r')
 					j++;
-				snprintf(key, (j - i < DHSETTINGS_ACCESSKEY_MAX_LENGTH) ?
-						(j - i + 1) : DHSETTINGS_ACCESSKEY_MAX_LENGTH,
+				snprintf(key, (j - i < DHSETTINGS_KEY_MAX_LENGTH) ?
+						(j - i + 1) : DHSETTINGS_KEY_MAX_LENGTH,
 						"%s", &data[i]);
 				i = j - 1;
 			}

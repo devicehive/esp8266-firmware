@@ -99,7 +99,7 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *i
 			pos = snprintf(out->json, sizeof(out->json),
 					"{"
 						"\"action\":\"command/update\","
-					 	"\"deviceGuid\":\"%s\","
+					 	"\"deviceId\":\"%s\","
 						"\"commandId\":%d,"
 						"\"command\":{"
 							"\"status\":\"%s\","
@@ -131,7 +131,7 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *i
 			pos = snprintf(out->json, sizeof(out->json),
 					"{"
 					    "\"action\":\"notification/insert\","
-					    "\"deviceGuid\":\"%s\","
+					    "\"deviceId\":\"%s\","
 					    "\"notification\": {"
 					        "\"notification\":\"%s\","
 					        "\"parameters\":"

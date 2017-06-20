@@ -33,9 +33,9 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int ma
 	RO_DATA char template[] =
 			"{"
 				"\"action\":\"authenticate\","
-				"\"accessKey\":\"%s\""
+				"\"token\":\"%s\""
 			"}";
-	return snprintf(buf, maxlen, template, dhsettings_get_devicehive_accesskey());
+	return snprintf(buf, maxlen, template, dhsettings_get_devicehive_key());
 }
 
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsigned int inlen, char *out, unsigned int outmaxlen) {
@@ -132,7 +132,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 			dhdebug("Failed to authenticate");
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
-		snprintf(dk, sizeof(dk), "%s", dhsettings_get_devicehive_accesskey());
+		snprintf(dk, sizeof(dk), "%s", dhsettings_get_devicehive_key());
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid(), dk,
 				dhsettings_get_devicehive_deviceid(), dk);
@@ -140,7 +140,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		RO_DATA char template[] =
 				"{"
 					"\"action\":\"command/subscribe\","
-					"\"deviceGuids\":[\"%s\"]%s"
+					"\"deviceIds\":[\"%s\"]%s"
 				"}";
 		if(status_not_success) {
 			dhdebug("Failed to save device");

@@ -64,5 +64,5 @@ function renderDom(obj) {
 }
 
 function getKey() {
-	return byId('accesskey').value;
+	return byId('key').value;
 }

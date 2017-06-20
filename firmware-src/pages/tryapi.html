@@ -13,10 +13,10 @@
 
 		function run() {
 			print('');
-			var key = byId('accesskey').value,
+			var key = byId('key').value,
 				command = byId('command').value,
 				parameters = byId('parameters').value;
-			localStorage['accesskey'] = key;
+			localStorage['key'] = key;
 			if (parameters.length > 0) {
 				try {
 					parameters = JSON.parse(parameters);
@@ -33,7 +33,7 @@
 				'This command for cURL util:',
 				['pre', {},
 					'curl -i -X POST  \\\n',
-					'\t-H "Authorization: Bearer YourAccessKeyHere=" \\\n',
+					'\t-H "Authorization: Bearer YourKeyHere=" \\\n',
 					params + '\t' + base + '/api/' + command
 				]]);
 			ajax('POST', '/api/' + command, parameters, key, function (xmlhttp) {
@@ -48,8 +48,8 @@
 		}
 
 		function init() {
-			var key = localStorage['accesskey'];
-			byId('accesskey').value = key;
+			var key = localStorage['key'];
+			byId('key').value = key;
 
 			var base = location.protocol + '//' + location.host;
 			ajax('POST', '/api/command/list', '', key, function (xmlhttp) {
@@ -69,8 +69,8 @@
 <div class="header">
 	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 	<div class="key-box">
-		<label for="accesskey">AccesKey: </label>
-		<input class="input-accesskey input-data" type="password" id="accesskey">
+		<label for="key">Key: </label>
+		<input class="input-key input-data" type="password" id="key">
 	</div>
 </div>
 <div class="content">

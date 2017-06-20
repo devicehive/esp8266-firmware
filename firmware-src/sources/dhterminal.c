@@ -23,10 +23,12 @@
 #include <ets_forward.h>
 
 #define DEBUG_BUFF_SPACE_FOR_ONE_LINE 128
+#define RECEIVE_TIMEOUT_MS 300000
+#define INPUT_LIMITER 78
 LOCAL DHTERMINAL_MODE mMode = SM_NORMAL_MODE;
 LOCAL char mDebugBuff[1024] = {0};
 LOCAL int mDebugBuffPos = 0;
-LOCAL char mRcvBuff[78];
+LOCAL char mRcvBuff[1025];
 LOCAL int mRcvBuffPos = 0;
 LOCAL char mEscSequence[4] = {0};
 LOCAL int mEscSequencePos = 0;
@@ -35,14 +37,13 @@ LOCAL char mHistoryBuff[1024] = {0};
 LOCAL int mHistoryBuffPos = 0;
 LOCAL int mHistoryPrevPos = 0;
 LOCAL int mHistoryScrollBufPos = 0;
-LOCAL char mHistoryRcvBuff[sizeof(mRcvBuff)] = {0};
+LOCAL char mHistoryRcvBuff[INPUT_LIMITER] = {0};
 LOCAL char mHistoryRcvBuffFill = 0;
 LOCAL Input_Call_Back mInputCallBack = dhterminal_commandline_do;
 LOCAL Input_Autocompleter mCompleaterCallBack = dhterminal_commandline_autocompleter;
 LOCAL Input_Filter_Call_Back mFilterCallback = 0;
 LOCAL os_timer_t mAwatingTimer;
-LOCAL int mInputLimiter = sizeof(mRcvBuff);
-#define RECEIVE_TIMEOUT_MS 300000
+LOCAL int mInputLimiter = INPUT_LIMITER;
 LOCAL os_timer_t mUsageTimer;
 LOCAL int isInUse = 0;
 
@@ -87,13 +88,13 @@ void ICACHE_FLASH_ATTR dhterminal_set_mode(DHTERMINAL_MODE mode, Input_Call_Back
 		if(maxlength && maxlength <= sizeof(mRcvBuff))
 			mInputLimiter = maxlength;
 		else
-			mInputLimiter = sizeof(mRcvBuff);
+			mInputLimiter = INPUT_LIMITER;
 
 	} else {
 		mInputCallBack = dhterminal_commandline_do;
 		mCompleaterCallBack = dhterminal_commandline_autocompleter;
 		mFilterCallback = 0;
-		mInputLimiter = sizeof(mRcvBuff);
+		mInputLimiter = INPUT_LIMITER;
 	}
 }
 
@@ -136,7 +137,7 @@ LOCAL void ICACHE_FLASH_ATTR do_command(void *arg) {
 			mHistoryPrevPos = mHistoryBuffPos;
 			mHistoryBuffPos += snprintf(&mHistoryBuff[mHistoryBuffPos], sizeof(mHistoryBuff) - mHistoryBuffPos - 1, "%s", mRcvBuff) + 1;
 			mHistoryBuff[mHistoryBuffPos + 1] = 0; // mark end with double null terminating
-			int n =  sizeof(mRcvBuff) - (sizeof(mHistoryBuff) - mHistoryBuffPos - 1);
+			int n =  INPUT_LIMITER - (sizeof(mHistoryBuff) - mHistoryBuffPos - 1);
 			if(n > 0) {
 				while(mHistoryBuff[n - 1])
 					n++;
@@ -291,28 +292,38 @@ void ICACHE_FLASH_ATTR dh_uart_char_rcv_cb(int c) {
 			}
 			mRcvBuffPos--;
 			dh_uart_send_str("\x1B[D\x1B[1P");
-		} else if(mRcvBuff[mInputLimiter - 2] == 0) { // if we have space
-			if(c > 0x1F) {
-				if(mFilterCallback)
-					if(mFilterCallback(c) == 0)
-						return;
-				if(mRcvBuff[mRcvBuffPos] !=0)
-					dh_uart_send_str("\x1B[@");
-				if(mMode == SM_HIDDEN_INPUT_MODE) {
-					dh_uart_send_str("*");
-				} else {
-					char b[] = {c,0};
-					dh_uart_send_str(b);
+		} else {
+			int a = 0;
+			if(mInputLimiter == 1) {
+				if(mRcvBuffPos == 0)
+					a = 1;
+			} else if(mInputLimiter > 1){
+				if(mRcvBuff[mInputLimiter - 2] == 0)
+					a = 1;
+			}
+			if(a) {  // if we have space
+				if(c > 0x1F) {
+					if(mFilterCallback)
+						if(mFilterCallback(c) == 0)
+							return;
+					if(mRcvBuff[mRcvBuffPos] !=0)
+						dh_uart_send_str("\x1B[@");
+					if(mMode == SM_HIDDEN_INPUT_MODE) {
+						dh_uart_send_str("*");
+					} else {
+						char b[] = {c,0};
+						dh_uart_send_str(b);
+					}
+					char next = c;
+					for(i = mRcvBuffPos; i < sizeof(mRcvBuff); i++) {
+						char tmp = next;
+						next = mRcvBuff[i];
+						mRcvBuff[i] = tmp;
+						if(tmp == 0)
+							break;
+					}
+					mRcvBuffPos++;
 				}
-				char next = c;
-				for(i = mRcvBuffPos; i < sizeof(mRcvBuff); i++) {
-					char tmp = next;
-					next = mRcvBuff[i];
-					mRcvBuff[i] = tmp;
-					if(tmp == 0)
-						break;
-				}
-				mRcvBuffPos++;
 			}
 		}
 	}

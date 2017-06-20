@@ -25,12 +25,12 @@
 #define ESP_SETTINGS_BACKUP_SEC (ESP_SETTINGS_MAIN_SEC + 1)
 
 typedef struct {
+	WIFI_MODE mode;
 	char ssid[DHSETTINGS_SSID_MAX_LENGTH];
 	char password[DHSETTINGS_PASSWORD_MAX_LENGTH];
 	char server[DHSETTINGS_SERVER_MAX_LENGTH];
 	char deviceId[DHSETTINGS_DEVICEID_MAX_LENGTH];
-	char accessKey[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
-	WIFI_MODE mode;
+	char key[DHSETTINGS_KEY_MAX_LENGTH];
 } DH_SETTINGS_DATA;
 
 typedef struct {
@@ -41,7 +41,7 @@ typedef struct {
 	};
 } DH_SETTINGS;
 
-static DH_SETTINGS_DATA mSettingsData = {{0}};
+static DH_SETTINGS_DATA mSettingsData = {0};
 
 LOCAL uint32_t ICACHE_FLASH_ATTR getStorageCrc(DH_SETTINGS *storage) {
 	return crc32(storage->storage, sizeof(storage->storage));
@@ -156,8 +156,8 @@ const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid(void) {
 	return mSettingsData.deviceId;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey(void) {
-	return mSettingsData.accessKey;
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_key(void) {
+	return mSettingsData.key;
 }
 
 LOCAL void ICACHE_FLASH_ATTR set_arg(char *arg, size_t argSize, const char *value) {
@@ -186,8 +186,8 @@ void ICACHE_FLASH_ATTR dhsettings_set_devicehive_deviceid(const char *id) {
 	set_arg(mSettingsData.deviceId, sizeof(mSettingsData.deviceId), id);
 }
 
-void ICACHE_FLASH_ATTR dhsettings_set_devicehive_accesskey(const char *key) {
-	set_arg(mSettingsData.accessKey, sizeof(mSettingsData.accessKey), key);
+void ICACHE_FLASH_ATTR dhsettings_set_devicehive_key(const char *key) {
+	set_arg(mSettingsData.key, sizeof(mSettingsData.key), key);
 }
 
 int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
@@ -196,8 +196,9 @@ int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
 	return 0;
 }
 
-int ICACHE_FLASH_ATTR dhsettings_accesskey_filter(char c) {
-	if(c == '=' || c == '+' || c == '/' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+int ICACHE_FLASH_ATTR dhsettings_key_filter(char c) {
+	if(c == '.' || c == '-' || c == '_' || c == '=' || c == '+' || c == '/' \
+			|| ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
 			return 1;
 	return 0;
 }

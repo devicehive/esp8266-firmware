@@ -39,7 +39,7 @@ RO_DATA char DHZC_PAGE_FORM[] =  "<html>" \
 								"<input type='text' name='url' value='%s'><br><br>"\
 								"DeviceId (allowed chars are A-Za-z0-9- ):<br>"\
 								"<input type='text' name='id' value='%s'><br><br>"\
-								"AccessKey (leave empty to keep current, allowed chars are A-Za-z0-9/+= ):<br>"\
+								"Key (leave empty to keep current, allowed chars are A-Za-z0-9._-/+=):<br>"\
 								"<input type='password' name='key'><br><br>"\
 								"<input type='submit' value='Apply'>"\
 							"</form></body>"\

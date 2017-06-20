@@ -23,9 +23,9 @@
 
 LOCAL char mComleaterBuff[48];
 
-LOCAL void ICACHE_FLASH_ATTR get_accesskey_cb(const char *key) {
+LOCAL void ICACHE_FLASH_ATTR get_key_cb(const char *key) {
 	if(*key)
-		dhsettings_set_devicehive_accesskey(key);
+		dhsettings_set_devicehive_key(key);
 	dh_uart_send_str("Configuring complete, store settings...");
 	if(dhsettings_commit()) {
 		dh_uart_send_line("OK");
@@ -39,9 +39,9 @@ LOCAL void ICACHE_FLASH_ATTR get_accesskey_cb(const char *key) {
 
 LOCAL void ICACHE_FLASH_ATTR get_deviceid_cb(const char *id) {
 	dhsettings_set_devicehive_deviceid(id);
-	dh_uart_send_line("Enter DeviceHive AccessKey. Leave empty to keep current.");
+	dh_uart_send_line("Enter DeviceHive Key. Leave empty to keep current.");
 	dh_uart_send_line("Allowed chars are A-Za-z0-9/+=");
-	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_accesskey_cb, 0, dhsettings_accesskey_filter, DHSETTINGS_ACCESSKEY_MAX_LENGTH);
+	dhterminal_set_mode(SM_HIDDEN_INPUT_MODE, get_key_cb, 0, dhsettings_key_filter, DHSETTINGS_KEY_MAX_LENGTH);
 }
 
 LOCAL char * ICACHE_FLASH_ATTR generate_deviceid(const char *pattern) {

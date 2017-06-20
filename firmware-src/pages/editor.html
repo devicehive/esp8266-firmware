@@ -72,7 +72,7 @@
 		function flash() {
 			if (isUploadInProcess)
 				return;
-			localStorage['accesskey'] = byId('accesskey').value;
+			localStorage['key'] = byId('key').value;
 			print("");
 			var data = toUtf8(editorSession.getValue());
 			if (data.length > flashLimit) {
@@ -126,7 +126,7 @@
 		}
 
 		function init() {
-			byId('accesskey').value = localStorage['accesskey'];
+			byId('key').value = localStorage['key'];
 			byId('open').addEventListener("change", openfile, false);
 
 			send('GET', '/', null, function (ok, data) {
@@ -158,8 +158,8 @@
 <div class="header">
 	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 	<div class="key-box">
-		<label for="accesskey">AccesKey: </label>
-		<input class="input-accesskey input-data" type="password" id="accesskey">
+		<label for="key">AccesKey: </label>
+		<input class="input-key input-data" type="password" id="key">
 	</div>
 </div>
 <div class="content">
