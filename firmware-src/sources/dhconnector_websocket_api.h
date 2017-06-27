@@ -18,6 +18,7 @@
  *	\return 				Number of copied bytes.
  */
 int dhconnector_websocket_api_start(char *buf, unsigned int maxlen);
+
 /**
  *	\brief					Exchange data with server.
  *	\param[in]	in			Data received from server.
@@ -27,5 +28,11 @@ int dhconnector_websocket_api_start(char *buf, unsigned int maxlen);
  *	\return 				Number of copied bytes or DHCONNECT_WEBSOCKET_API_ERROR on error.
  */
 int dhconnector_websocket_api_communicate(const char *in, unsigned int inlen, char *out, unsigned int outmaxlen);
+
+/**
+ *	\brief					Check if connection is established and command subscription is successfully set.
+ *	\return 				Non zero value if successfully connected and zero otherwise.
+ */
+int dhconnector_websocket_api_check();
 
 #endif /* _DHCONNECTOR_WEBSOCKET_API_H_ */

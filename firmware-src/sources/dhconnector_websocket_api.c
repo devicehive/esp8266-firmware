@@ -27,14 +27,16 @@
 #include <ets_forward.h>
 
 LOCAL char mTimestamp[192] = {0};
+LOCAL char connected = 0;
 
 
 int ICACHE_FLASH_ATTR dhconnector_websocket_api_start(char *buf, unsigned int maxlen) {
 	RO_DATA char template[] =
 			"{"
-				"\"action\":\"authenticate\","
-				"\"token\":\"%s\""
+				"\"action\":\"token/refresh\","
+				"\"refreshToken\":\"%s\""
 			"}";
+	connected = 0;
 	return snprintf(buf, maxlen, template, dhsettings_get_devicehive_key());
 }
 
@@ -43,6 +45,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	int status_not_success = 1;
 	char action[32];
 	char command[128];
+	char access_token[DHSETTINGS_KEY_MAX_LENGTH];
 	RO_DATA char timestampTemplate[] = ",\"timestamp\":\"%s\"";
 	char timestamp[sizeof(mTimestamp) - sizeof(timestampTemplate) - 2];
 	const char *params = 0;
@@ -50,6 +53,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	unsigned int id = 0;
 	action[0] = 0;
 	command[0] = 0;
+	access_token[0] = 0;
 	struct jsonparse_state jparser;
 	jsonparse_setup(&jparser, in, inlen);
 	while (jparser.pos < jparser.len) {
@@ -90,6 +94,10 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 						jparser.pos += paramslen;
 					}
 				}
+			} else if(jsonparse_strcmp_value(&jparser, "accessToken") == 0) {
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+					jsonparse_copy_value(&jparser, access_token, sizeof(access_token));
 			}
 		} else if(type == JSON_TYPE_ERROR) {
 			if(jparser.pos > 0 && jparser.len - jparser.pos >= 3) { // fix issue with parsing null value
@@ -110,6 +118,22 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		cb.data.id = id;
 		dhcommands_do(&cb, command, params, paramslen);
 		return 0;
+	} else if(os_strcmp(action, "token/refresh") == 0) {
+		RO_DATA char template[] =
+				"{"
+					"\"action\":\"authenticate\","
+					"\"token\":\"%s\","
+					"\"deviceId\":\"%s\""
+				"}";
+		if(access_token[0] && !status_not_success) {
+			dhdebug("accessToken updated");
+			return snprintf(out, outmaxlen, template, access_token, dhsettings_get_devicehive_deviceid());
+		} else {
+			dhdebug("Failed to exchange refreshToken, try key as accessToken");
+			// failed to exchange refresh token to access token, try key as accesskey
+			return snprintf(out, outmaxlen, template, dhsettings_get_devicehive_key(),
+					dhsettings_get_devicehive_deviceid());
+		}
 	} else if(os_strcmp(action, "authenticate") == 0) {
 		RO_DATA char template[] =
 				"{"
@@ -132,6 +156,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 			dhdebug("Failed to authenticate");
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
+		dhdebug("Successfully authenticate");
 		snprintf(dk, sizeof(dk), "%s", dhsettings_get_devicehive_key());
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid(), dk,
@@ -140,7 +165,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		RO_DATA char template[] =
 				"{"
 					"\"action\":\"command/subscribe\","
-					"\"deviceIds\":[\"%s\"]%s"
+					"\"deviceId\":\"%s\"%s"
 				"}";
 		if(status_not_success) {
 			dhdebug("Failed to save device");
@@ -149,6 +174,16 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid(),
 				mTimestamp[0] ? mTimestamp : "");
+	} else if(os_strcmp(action, "command/subscribe") == 0) {
+		if(status_not_success) {
+			dhdebug("Failed to subscribed");
+			return DHCONNECT_WEBSOCKET_API_ERROR;
+		}
+		connected = 1;
 	}
 	return 0;
+}
+
+int dhconnector_websocket_api_check() {
+	return connected;
 }

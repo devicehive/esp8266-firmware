@@ -116,7 +116,9 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	// check and response on ping
 	if(len == 2) {
 		if(data[0] == 0x89 && data[1] == 0x00) {// PING
-			arm_timeout_timer(WEBSOCKET_PING_TIMEOUT_MS);
+			if(dhconnector_websocket_api_check()) {
+				arm_timeout_timer(WEBSOCKET_PING_TIMEOUT_MS);
+			}
 			static char pong_buf[2] = {0x8A, 0x00}; // PONG
 			mSendFunc(pong_buf, sizeof(pong_buf));
 			return;
@@ -156,17 +158,21 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 	if(wslen != len) {
 		// it is final frame, we checked before, received and header lengths should be equal
 		dhdebug("WebSocket error - length mismatch");
+		// TODO here could be several messages.
+		dhdebug_dump(data, len);
 		error();
 		return;
 	}
 
 	// here we should have JSON in data and len variables
-	dhdebug("WS got %d bytes", len);
 	mPayLoadBufLen = dhconnector_websocket_api_communicate(data, len, mPayLoadBuf, PAYLOAD_BUF_SIZE);
-	if(mPayLoadBufLen > 0)
+	if(mPayLoadBufLen > 0) {
 		send_payload();
-	else if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR)
+	} else if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR) {
 		error();
-	else // if we have data to send, we can do it
+	} else { // successfully connected
+		arm_timeout_timer(WEBSOCKET_PING_TIMEOUT_MS);
+		// if we have data to send, we can do it
 		check_queue();
+	}
 }

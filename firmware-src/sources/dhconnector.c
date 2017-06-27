@@ -282,6 +282,7 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 			mConnectionState = CS_RESOLVEWEBSOCKET;
 			start_resolve_dh_server(mWSUrl);
 		} else {
+		// TODO fix me, this code can be called twice, add CS_RESOLVEHTTP to protect from that
 			mWSUrl[0] = 0;
 			start_resolve_dh_server(dhsettings_get_devicehive_server());
 		}
