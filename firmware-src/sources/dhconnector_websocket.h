@@ -10,7 +10,7 @@
 #define _DHCONNECTOR_WEBSOCKET_H_
 
 /** Function prototype for sending data. */
-typedef void (*dhconnector_websocket_send_proto)(const char *data, unsigned int len);
+typedef int (*dhconnector_websocket_send_proto)(const char *data, unsigned int len);
 /** Function prototype for error callback. */
 typedef void (*dhconnector_websocket_error)(void);
 

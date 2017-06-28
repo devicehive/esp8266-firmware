@@ -15,6 +15,7 @@
 /** Current connection state. */
 typedef enum {
 	CS_DISCONNECT,		///< Disconnected from DeviceHive server.
+	CS_RESOLVEHTTP,		///< Resolve HTTP API url.
 	CS_GETINFO,			///< Getting info from DeviceHive server with WebSocket url.
 	CS_RESOLVEWEBSOCKET,///< Resolve WebSocket url.
 	CS_WEBSOCKET,		///< Request to switch protocol to WebSocket.

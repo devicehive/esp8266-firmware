@@ -85,13 +85,20 @@ LOCAL void ICACHE_FLASH_ATTR ws_error(void) {
 	espconn_disconnect(&mDHConnector);
 }
 
-LOCAL void ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
+LOCAL int ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
 	if(mConnectionState != CS_OPERATE)
-		return;
-	if(espconn_send(&mDHConnector, (uint8 *)data, len) != ESPCONN_OK)
+		return 0;
+	sint8 r = espconn_send(&mDHConnector, (uint8 *)data, len);
+	if(r == ESPCONN_MAXNUM) {
+		return 0;
+	} else if(r != ESPCONN_OK) {
+		dhdebug("Failed to ws_send(): %d", r);
 		ws_error();
-	else
+		return 0;
+	} else {
 		dhstat_add_bytes_sent(len);
+	}
+	return 1;
 }
 
 LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned short len) {
@@ -196,6 +203,7 @@ LOCAL void network_disconnect_cb(void *arg) {
 	case CS_DISCONNECT:
 	case CS_WEBSOCKET:
 	case CS_OPERATE:
+		dhdebug("disconnect");
 		mConnectionState = CS_DISCONNECT;
 		arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
 		break;
@@ -234,7 +242,7 @@ LOCAL void ICACHE_FLASH_ATTR resolve_cb(const char *name, ip_addr_t *ip, void *a
 	dhdebug("Host %s ip: %d.%d.%d.%d, using port %d", name, bip[0], bip[1], bip[2], bip[3], mDHConnector.proto.tcp->remote_port);
 
 	dhconnector_init_connection(ip);
-	if(mConnectionState == CS_DISCONNECT)
+	if(mConnectionState == CS_RESOLVEHTTP)
 		set_state(CS_GETINFO);
 	else if(mConnectionState == CS_RESOLVEWEBSOCKET)
 		set_state(CS_WEBSOCKET);
@@ -282,17 +290,18 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 			mConnectionState = CS_RESOLVEWEBSOCKET;
 			start_resolve_dh_server(mWSUrl);
 		} else {
-		// TODO fix me, this code can be called twice, add CS_RESOLVEHTTP to protect from that
 			mWSUrl[0] = 0;
+			mConnectionState = CS_RESOLVEHTTP;
 			start_resolve_dh_server(dhsettings_get_devicehive_server());
 		}
 		break;
+	case CS_RESOLVEHTTP:
+		dhdebug("Failed to resolve HTTP");
+		set_state(CS_DISCONNECT);
+		break;
 	case CS_RESOLVEWEBSOCKET:
-		if(mWSUrl[0] == 0) {
-			dhdebug("Failed to get WebSocket URL");
-			set_state(CS_DISCONNECT);
-		}
-		start_resolve_dh_server(mWSUrl);
+		dhdebug("Failed to get WebSocket URL");
+		set_state(CS_DISCONNECT);
 		break;
 	case CS_GETINFO:
 	case CS_WEBSOCKET:

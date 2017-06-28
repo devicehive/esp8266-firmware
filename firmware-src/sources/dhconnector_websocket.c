@@ -70,33 +70,33 @@ LOCAL void ICACHE_FLASH_ATTR mask(void) {
 	}
 }
 
-LOCAL void ICACHE_FLASH_ATTR send_payload(void) {
+LOCAL int ICACHE_FLASH_ATTR send_payload() {
 	if(mPayLoadBufLen <= 0) {
-		return;
+		return 0;
 	} else if(mPayLoadBufLen < 126) {
 		mBuf[2] = 0x81; // final text frame
 		mBuf[3] = 0x80 | mPayLoadBufLen; // masked, size
 		mask();
-		mSendFunc(&mBuf[2], mPayLoadBufLen + 2 + WEBSOCKET_MASK_SIZE);
+		return mSendFunc(&mBuf[2], mPayLoadBufLen + 2 + WEBSOCKET_MASK_SIZE);
 	} else { // if(mPayLoadBufLen < 65536) - buf is always smaller then 65536, so there is no implementation for buf more then 65535 bytes.
 		mBuf[0] = 0x81; // final text frame
 		mBuf[1] = 0x80 | 126; // masked, size in the next two bytes
 		mBuf[2] = (mPayLoadBufLen >> 8) & 0xFF;
 		mBuf[3] = mPayLoadBufLen & 0xFF;
 		mask();
-		mSendFunc(mBuf, mPayLoadBufLen + 4 + WEBSOCKET_MASK_SIZE);
+		return mSendFunc(mBuf, mPayLoadBufLen + 4 + WEBSOCKET_MASK_SIZE);
 	}
 }
 
 LOCAL void ICACHE_FLASH_ATTR check_queue(void) {
-	dhsender_current_success();
 	SENDER_JSON_DATA *data = dhsender_next();
 	if(data) {
 		dhdebug("Sender start with %d bytes", data->jsonlen);
 		// sizeof(data->json) always is equal or lower then PAYLOAD_BUF_SIZE
 		os_memcpy(mPayLoadBuf, data->json, data->jsonlen);
 		mPayLoadBufLen = data->jsonlen;
-		send_payload();
+		if(send_payload())
+			dhsender_current_success();
 	}
 }
 

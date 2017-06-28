@@ -180,7 +180,10 @@ void ICACHE_FLASH_ATTR dhterminal_commands_status(const char *args) {
 	case CS_GETINFO:
 		dh_uart_send_str("getting info from server");
 		break;
+	case CS_RESOLVEHTTP:
 	case CS_RESOLVEWEBSOCKET:
+		dh_uart_send_str("resolving host");
+		break;
 	case CS_WEBSOCKET:
 		dh_uart_send_str("connecting to web socket");
 		break;
