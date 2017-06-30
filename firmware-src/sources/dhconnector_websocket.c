@@ -125,54 +125,57 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 		}
 	}
 
-	// check data
-	if((data[0] & 0x80) == 0) {
-		// always expect final text frame
-		dhdebug("WebSocket error - wrong header 0x%X", data[0]);
-		error();
-		return;
-	}
-	if(data[1] & 0x80) {
-		// always expect unmasked data
-		dhdebug("WebSocket error - masked data from server");
-		error();
-		return;
-	}
+	do {
+		// check data
+		if((data[0] & 0x80) == 0) {
+			// always expect final text frame
+			dhdebug("WebSocket error - wrong header 0x%X", data[0]);
+			error();
+			return;
+		}
+		if(data[1] & 0x80) {
+			// always expect unmasked data
+			dhdebug("WebSocket error - masked data from server");
+			error();
+			return;
+		}
 
-	// check length
-	unsigned int wslen = (data[1] & 0x7F);
-	if(wslen == 127) {
-		dhdebug("WebSocket error - cannot handle more then 65535 bytes");
-		error();
-		return;
-	} else if(wslen == 126) {
-		wslen = data[2];
-		wslen <<= 8;
-		wslen |= data[3];
-		data += 4;
-		len -= 4;
-	} else if(wslen < 126) {
-		data += 2;
-		len -= 2;
-	}
-	if(wslen != len) {
-		// it is final frame, we checked before, received and header lengths should be equal
-		dhdebug("WebSocket error - length mismatch");
-		// TODO here could be several messages.
-		dhdebug_dump(data, len);
-		error();
-		return;
-	}
+		// check length
+		unsigned int wslen = (data[1] & 0x7F);
+		if(wslen == 127) {
+			dhdebug("WebSocket error - cannot handle more then 65535 bytes");
+			error();
+			return;
+		} else if(wslen == 126) {
+			wslen = data[2];
+			wslen <<= 8;
+			wslen |= data[3];
+			data += 4;
+			len -= 4;
+		} else if(wslen < 126) {
+			data += 2;
+			len -= 2;
+		}
+		if(wslen > len) {
+			// it is final frame, we checked before, received and header lengths should be equal
+			dhdebug("WebSocket error - length mismatch");
+			error();
+			return;
+		}
 
-	// here we should have JSON in data and len variables
-	mPayLoadBufLen = dhconnector_websocket_api_communicate(data, len, mPayLoadBuf, PAYLOAD_BUF_SIZE);
-	if(mPayLoadBufLen > 0) {
-		send_payload();
-	} else if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR) {
-		error();
-	} else { // successfully connected
-		arm_timeout_timer(WEBSOCKET_PING_TIMEOUT_MS);
-		// if we have data to send, we can do it
-		check_queue();
-	}
+		// here we should have JSON in data and len variables
+		mPayLoadBufLen = dhconnector_websocket_api_communicate(data, wslen, mPayLoadBuf, PAYLOAD_BUF_SIZE);
+		if(mPayLoadBufLen > 0) {
+			send_payload();
+		} else if(mPayLoadBufLen == DHCONNECT_WEBSOCKET_API_ERROR) {
+			error();
+			return;
+		} else { // successfully connected
+			arm_timeout_timer(WEBSOCKET_PING_TIMEOUT_MS);
+			// if we have data to send, we can do it
+			check_queue();
+		}
+		len -= wslen;
+		data += wslen;
+	} while(len);
 }
