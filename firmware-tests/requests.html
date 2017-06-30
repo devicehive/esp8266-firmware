@@ -68,7 +68,7 @@
   addtest("gpio/read", {"all":"init", "12":"nopull"}, false, "Wrong argument");
   addtest("gpio/int", {"4":"both", "timeout":500}, true, "");
   addtest("gpio/int", {"timeout":500}, true, "");
-  addtest("gpio/int", {"timeout":5}, false, "Timeout is wrong");
+  addtest("gpio/int", {"timeout":5}, false, "Timeout out of range");
   addtest("gpio/int", {"timeout":"-500"}, false, "Non integer value");
   addtest("gpio/int", {"4":"rising"}, true, "");
   addtest("gpio/int", {"4":"falling"}, true, "");
