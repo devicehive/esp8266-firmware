@@ -30,3 +30,7 @@ void ICACHE_FLASH_ATTR dhmem_unblock(void) {
 int ICACHE_FLASH_ATTR dhmem_isblock(void) {
 	return mGlobalBlock;
 }
+
+void ICACHE_FLASH_ATTR dhmem_unblock_cb(void) {
+	// do nothing, move this method to any module if needed
+}

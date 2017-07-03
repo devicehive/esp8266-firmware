@@ -31,7 +31,6 @@
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
 LOCAL os_timer_t mRetryTimer;
-LOCAL unsigned char mNeedRecover = 0;
 LOCAL char mWSUrl[DHSETTINGS_SERVER_MAX_LENGTH];
 
 LOCAL void set_state(CONNECTION_STATE state);
@@ -47,6 +46,7 @@ LOCAL void arm_repeat_timer(unsigned int ms) {
 }
 
 LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
+	dhconnector_websocket_stop();
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
@@ -196,6 +196,7 @@ LOCAL void network_connect_cb(void *arg) {
 }
 
 LOCAL void network_disconnect_cb(void *arg) {
+	dhconnector_websocket_stop();
 	switch(mConnectionState) {
 	case CS_GETINFO:
 		set_state(CS_WEBSOCKET);
@@ -267,21 +268,8 @@ LOCAL void ICACHE_FLASH_ATTR start_resolve_dh_server(const char *server) {
 	}
 }
 
-void ICACHE_FLASH_ATTR dhmem_unblock_cb(void) {
-	if(mNeedRecover) {
-		set_state(mConnectionState);
-		mNeedRecover = 0;
-	}
-}
-
 LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	mConnectionState = state;
-	if(state != CS_DISCONNECT) {
-		if(dhmem_isblock()) {
-			mNeedRecover = 1;
-			return;
-		}
-	}
 	switch(state) {
 	case CS_DISCONNECT:
 		if(os_strncmp(dhsettings_get_devicehive_server(), "ws://", 5) == 0 ||

@@ -22,6 +22,11 @@ typedef void (*dhconnector_websocket_error)(void);
 void dhconnector_websocket_start(dhconnector_websocket_send_proto send_func, dhconnector_websocket_error err_func);
 
 /**
+ *	\brief					Stop any protocol activities.
+ */
+void dhconnector_websocket_stop();
+
+/**
  *	\brief					Parse received from server data.
  *	\param[in]	data		Pointer to data.
  *	\param[in]	len			Number of bytes in data.

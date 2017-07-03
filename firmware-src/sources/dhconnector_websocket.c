@@ -179,3 +179,7 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 		data += wslen;
 	} while(len);
 }
+
+void ICACHE_FLASH_ATTR dhconnector_websocket_stop() {
+	os_timer_disarm(&mTimeoutTimer);
+}

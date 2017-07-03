@@ -45,6 +45,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	int status_not_success = 1;
 	char action[32];
 	char command[128];
+	char error[256];
 	char access_token[DHSETTINGS_KEY_MAX_LENGTH];
 	RO_DATA char timestampTemplate[] = ",\"timestamp\":\"%s\"";
 	char timestamp[sizeof(mTimestamp) - sizeof(timestampTemplate) - 2];
@@ -54,6 +55,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 	action[0] = 0;
 	command[0] = 0;
 	access_token[0] = 0;
+	error[0] = 0;
 	struct jsonparse_state jparser;
 	jsonparse_setup(&jparser, in, inlen);
 	while (jparser.pos < jparser.len) {
@@ -64,6 +66,10 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR) {
 					status_not_success = jsonparse_strcmp_value(&jparser, "success");
 				}
+			} else if(jsonparse_strcmp_value(&jparser, "error") == 0) {
+				jsonparse_next(&jparser);
+				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
+					jsonparse_copy_value(&jparser, error, sizeof(error));
 			} else if(jsonparse_strcmp_value(&jparser, "action") == 0) {
 				jsonparse_next(&jparser);
 				if(jsonparse_next(&jparser) != JSON_TYPE_ERROR)
@@ -153,7 +159,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 				"}";
 		char dk[9];
 		if(status_not_success) {
-			dhdebug("Failed to authenticate");
+			dhdebug("Failed to authenticate: %s", error);
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
 		dhdebug("Successfully authenticate");
@@ -168,15 +174,16 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 					"\"deviceId\":\"%s\"%s"
 				"}";
 		if(status_not_success) {
-			dhdebug("Failed to save device");
+			dhdebug("Failed to save device: %s", error);
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
+		dhdebug("Device saved");
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid(),
 				mTimestamp[0] ? mTimestamp : "");
 	} else if(os_strcmp(action, "command/subscribe") == 0) {
 		if(status_not_success) {
-			dhdebug("Failed to subscribed");
+			dhdebug("Failed to subscribed: %s", error);
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
 		connected = 1;
