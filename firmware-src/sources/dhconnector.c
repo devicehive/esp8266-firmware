@@ -28,9 +28,11 @@
 #include <json/jsonparse.h>
 #include <ets_forward.h>
 
+#define HTTP_RESPONSE_TIMEOUT_MS 60000
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
 LOCAL os_timer_t mRetryTimer;
+LOCAL os_timer_t mResponseTimer;
 LOCAL char mWSUrl[DHSETTINGS_SERVER_MAX_LENGTH];
 
 LOCAL void set_state(CONNECTION_STATE state);
@@ -45,8 +47,15 @@ LOCAL void arm_repeat_timer(unsigned int ms) {
 	os_timer_arm(&mRetryTimer, ms, 0);
 }
 
+LOCAL void response_timeout(void *arg) {
+	dhdebug("HTTP response timeout");
+	mConnectionState = CS_DISCONNECT;
+	espconn_disconnect(&mDHConnector);
+}
+
 LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
 	dhconnector_websocket_stop();
+	os_timer_disarm(&mResponseTimer);
 	dhesperrors_espconn_result("Connector error occurred:", err);
 	mConnectionState = CS_DISCONNECT;
 	arm_repeat_timer(RETRY_CONNECTION_INTERVAL_MS);
@@ -107,6 +116,7 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 		dhconnector_websocket_parse(data, len);
 		return;
 	}
+	os_timer_disarm(&mResponseTimer);
 	const char *rc = find_http_responce_code(data, len);
 	if(rc) { // HTTP
 		if(rc[0] == '1' && rc[1] == '0' && rc[2] == '1' && mConnectionState == CS_WEBSOCKET) { // HTTP responce code 101 - Switching Protocols
@@ -192,11 +202,15 @@ LOCAL void network_connect_cb(void *arg) {
 		espconn_disconnect(&mDHConnector);
 	} else {
 		dhstat_add_bytes_sent(request->len);
+		os_timer_disarm(&mResponseTimer);
+		os_timer_setfn(&mResponseTimer, (os_timer_func_t *)response_timeout, 0);
+		os_timer_arm(&mResponseTimer, HTTP_RESPONSE_TIMEOUT_MS, 0);
 	}
 }
 
 LOCAL void network_disconnect_cb(void *arg) {
 	dhconnector_websocket_stop();
+	os_timer_disarm(&mResponseTimer);
 	switch(mConnectionState) {
 	case CS_GETINFO:
 		set_state(CS_WEBSOCKET);
