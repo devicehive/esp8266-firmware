@@ -48,8 +48,6 @@ $(TARGETELF): $(TARGETAR)
 $(FIRMWARE): $(TARGETELF)
 	@mkdir -p $(dir $(FIRMWARE))
 	@./genbin.sh $(TARGETELF) $(FIRMWARE)
-	@echo -n "Firmware file is $(FIRMWARE), size is "
-	@stat -c '%s bytes' $(FIRMWARE)
 	
 flash: all
 	@(cd $(dir $(FIRMWARE)) && ./../../esp-utils/build/esp-flasher --developer)
