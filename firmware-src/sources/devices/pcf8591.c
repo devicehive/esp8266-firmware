@@ -55,7 +55,7 @@ int ICACHE_FLASH_ATTR pcf8591_read(int sda, int scl, float values[4])
 
 	int i;
 	for (i = 0; i < sizeof(buf); i++) {
-		values[i] = mVoltage * ((float)(int8_t)buf[i]) / 255.0f; // TODO: check 256 scale?
+		values[i] = mVoltage * ((float)buf[i]) / 255.0f;
 	}
 
 	return DH_I2C_OK;
@@ -78,7 +78,7 @@ int ICACHE_FLASH_ATTR pcf8591_write(int sda, int scl, float value)
 		}
 	}
 
-	const int8_t v = (value / mVoltage * 255.0f); // TODO: check 256 scale?
+	const uint8_t v = (uint8_t)(value / mVoltage * 255.0f);
 
 	uint8_t buf[2];
 	buf[0] = 0x44;  // Config
