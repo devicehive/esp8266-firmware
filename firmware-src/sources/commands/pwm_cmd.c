@@ -21,7 +21,7 @@ void ICACHE_FLASH_ATTR dh_handle_pwm_control(COMMAND_RESULT *cmd_res, const char
 	gpio_command_params info;
 	ALLOWED_FIELDS fields = 0;
 	const char *err_msg = parse_params_pins_set(params, params_len,
-			&info, DH_ADC_SUITABLE_PINS, 0,
+			&info, DH_GPIO_SUITABLE_PINS, 0,
 			AF_VALUES | AF_PERIOD | AF_COUNT, &fields);
 
 	if (err_msg != 0) {
