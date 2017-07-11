@@ -26,7 +26,7 @@ RO_DATA char HTTP_INFO_REQUEST_PATTERN[] =
 		"Host: %s\r\n\r\n";
 
 RO_DATA char HTTP_WS_REQUEST_PATTERN[] =
-		"GET %s/device HTTP/1.1\r\n"
+		"GET %s HTTP/1.1\r\n"
 		"Host: %s\r\n"
 		"Upgrade: websocket\r\n"
 		"Connection: Upgrade\r\n"
