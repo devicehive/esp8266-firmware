@@ -82,7 +82,7 @@ SerialPort *SerialPort::open(const char *port) {
            return 0;
        }
 
-       SerialPort *comport = new SerialPort(comp);
+       SerialPort *comport = new SerialPort(comp, port);
        pthread_t  thr;
        if(pthread_create(&thr, 0, thread_start, (void *)comport)!=0) {
            delete comport;

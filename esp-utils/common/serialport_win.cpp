@@ -86,7 +86,7 @@ SerialPort *SerialPort::open(const char *port) {
         to.WriteTotalTimeoutConstant = 0;
         SetCommTimeouts(hCOM,&to);
 
-        SerialPort *comport = new SerialPort(hCOM);
+        SerialPort *comport = new SerialPort(hCOM, port);
         DWORD dwThreadId;
         if( (comport->mThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)&ThreadProc, (LPVOID)comport,  0, &dwThreadId)) == NULL)
         {

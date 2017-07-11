@@ -53,7 +53,11 @@ void SerialPortError(SerialPort */*port*/,const char *text) {
 uint8_t recivedBuf[4096];
 unsigned int recivedPos = 0;
 bool recivedEscape = false;
+SerialPort *mCurrentPort = NULL;
+
 void SerialPortRecieved(SerialPort *port, const char *text, unsigned int len) {
+	if(mCurrentPort && mCurrentPort != port)
+		return;
 	for (unsigned int i = 0; i < len; i++) {
 		uint8_t c = text[i];
 		//printf("0x%02X \r\n", (uint32_t)c);
@@ -449,27 +453,37 @@ int main(int argc, char* argv[]) {
 	} else {
 		TIMEOUT = AUTODETECT_TIMEOUT;
 		printf("Detecting device...\r\n");
-		for(uint32_t j = 0; j < AUTODETECT_MAX_SYNC_ATTEMPS; j++) {
-			for(uint32_t i = 0; i < AUTODETECT_MAX_PORT; i++) {
-				const char *name = SerialPort::findNextPort(false);
-				if(name[0] == 0)
-					break;
-				port = SerialPort::open(name);
-				if(port) {
-					if(flash_sync(port, false)) {
-						printf("Device found on %s and successfully synced\r\n", name);
-						SerialPort::findNextPort(true);
-						goto portfound;
+		SerialPort *ports[AUTODETECT_MAX_PORT];
+		for (uint32_t i = 0; i < AUTODETECT_MAX_PORT; i++) {
+			ports[i] = NULL;
+		}
+		port = NULL;
+		for(uint32_t j = 0; port == NULL && j < AUTODETECT_MAX_SYNC_ATTEMPS; j++) {
+			for(uint32_t i = 0; port == NULL && i < AUTODETECT_MAX_PORT; i++) {
+				if (!ports[i]) {
+					const char *name = SerialPort::findNextPort(false);
+					if(name[0] == 0)
+						break;
+					ports[i] = SerialPort::open(name);
+				}
+				if (ports[i]) {
+					mCurrentPort = ports[i];
+					if (flash_sync(ports[i], false)) {
+						printf("Device found on %s and successfully synced\r\n", ports[i]->getName());
+						port = ports[i];
 					}
-					if(j == 0)
-						force_flash_mode(port);
-					delete port;
-					port = NULL;
+					if(j == 0 && port == NULL)
+						force_flash_mode(ports[i]);
+					mCurrentPort = NULL;
 				}
 			}
-			SerialPort::findNextPort(true);
 		}
-		portfound:
+		SerialPort::findNextPort(true);
+		for (uint32_t i = 0; i < AUTODETECT_MAX_PORT; i++) {
+			if (ports[i] && ports[i] != port) {
+				delete ports[i];
+			}
+		}
 		TIMEOUT = FLASHING_TIMEOUT;
 		if(!port) {
 			printf( "Can not detect port. Check if device connected and driver is installed.\r\n" \
