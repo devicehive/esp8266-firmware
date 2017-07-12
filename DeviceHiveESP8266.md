@@ -143,7 +143,7 @@ Configuring sample is below:
 
 ![](images/conf.png?raw=true)
 
-_If DeviceHive API URL isn't specified, chip will work only as local RESTful server. AccessKey is used for local RESTful API and remote DeviceHive server. See [Local RESTful API](#restful-api) for details._
+_If DeviceHive API URL isn't specified, chip will work only as local RESTful server. Key is used for local RESTful API and remote DeviceHive server. For the current server implementation, key can be JWT AccessToken or RefreshToken. In second case, it will be automatically exachanged to AccessKey on each restart or expiration. See [Local RESTful API](#restful-api) for details about key usage with RESTful API._
 
 After rebooting you can send commands to DeviceHive server or local RESTful API and ESP8266 perform them. List of accepted command is in this document. You can use DeviceHive web admin control panel to send command for test purpose or learning. Go to web admin, `Devices` tab, `Commands` sub-tab, `Enter new command`. Type command and parameters and press `Push`. After ESP8266 perform your command you can press `Refresh` button to see a result. For example `gpio/read` command would look in admin control panel as below:
 
@@ -158,11 +158,11 @@ Firmware sets chip hostname and announce chip with mDNS using configured DeviceI
 mDNS(multicast Domain Name System) can resolve local domain names to IP address. Firmware announce itself in mDNS using DeiviceId. mDNS 2nd level domain is limited with 60 chars, so any subsequent chars of DeviceId are omitted. Top level domain is always `.local`. mDNS-SD (service discovery) is supported. Service name is `_esp8266-devicehive._tcp.local`. This service points to local web server with RESTful API. One TXT record with firmware version is present.
 
 ## RESTful API
-A RESTful API is an application program interface (API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port `80` which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as sub paths of API endpoint. For example command `api/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with `2xx` HTTP code and `4xx` on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has AccessKey, endpoint require authentication with HTTP header `Authorization: Bearer YourAccessKeyHere`.
+A RESTful API is an application program interface (API) which uses HTTP requests for calling remote procedures. In this implementation such procedures is commands for chip. There is a tiny web server on chip port `80` which provides local RESTful API. API endpoint is `http://device-id-or-ip.local/api/`. Firmware commands are available as sub paths of API endpoint. For example command `api/master/read` available at `http://device-id-or-ip.local/api/spi/master/read`. Any parameters should be passed as json in request body. On success, request will be responded with `2xx` HTTP code and `4xx` on error. Commands, its parameters and return values are the same as for DeviceHive cloud server except notifications. Any notifications are not supported, so commands for subscribing on it also don't available. `GET` and `POST` method are supported, and there is no difference for API, but `GET` should be sent with a content in a single TCP packet and `POST` supports only one simultaneous connection. HTTP access control allows any request origin. If device has Key, endpoint require authentication with HTTP header `Authorization: Bearer YourKeyHere`.
 
-For example, we would like to set up pin `GPIO1` to high state and chip has AccessKey configured. `curl` request is:
+For example, we would like to set up pin `GPIO1` to high state and chip has Key configured. `curl` request is:
 ```shell
-curl -i -H 'Authorization: Bearer SomeAccessKeyHere' \
+curl -i -H 'Authorization: Bearer SomeKeyHere' \
 http://eps-device-id.local/api/gpio/write -d '{"1":1}'
 ```
 Chip answers on this request `204 No content` which means that operation successfully completed.
@@ -199,7 +199,7 @@ Host: devicehive.config
 Content-Type: application/x-www-form-urlencoded
 Content-Length: 80
 
-ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=accesskey
+ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=key
 ```
 
 # Pin definition
