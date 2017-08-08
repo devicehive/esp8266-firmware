@@ -148,6 +148,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 					"\"deviceKey\":\"%s\","
 					"\"device\":{"
 						"\"name\":\"%s\","
+						"\"id\":\"%s\","
 						"\"key\":\"%s\","
 						"\"status\":\"Online\","
 						"\"deviceClass\":{"
@@ -166,6 +167,7 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 		snprintf(dk, sizeof(dk), "%s", dhsettings_get_devicehive_key());
 		return snprintf(out, outmaxlen, template,
 				dhsettings_get_devicehive_deviceid(), dk,
+				dhsettings_get_devicehive_deviceid(),
 				dhsettings_get_devicehive_deviceid(), dk);
 	} else if(os_strcmp(action, "device/save") == 0) {
 		RO_DATA char template[] =
