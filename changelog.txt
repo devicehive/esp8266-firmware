@@ -58,3 +58,5 @@ v0.6
 v0.7
 - new command 'command/list'
 - connectino to server now is implemeted with WebSocket
+- latest DeviceHive server v3.x and playground support
+- compile time ability to disable some devices
