@@ -8,6 +8,7 @@
 
 #ifndef _DHTERMINAL_H_
 #define _DHTERMINAL_H_
+
 #include <stdarg.h>
 
 /** Current terminal mode. */
@@ -31,7 +32,7 @@ typedef int (*Input_Filter_Call_Back)(char c);
 /**
  *	\brief		Initializes terminal.
  */
-void dhterminal_init();
+void dhterminal_init(void);
 
 /**
  *	\brief				Print data in debug.
@@ -45,19 +46,19 @@ void dhterminal_debug(const char *pFormat, va_list ap);
  *	\brief		Get terminal history.
  *	\return 	Pointer to char array. Each command ends with null terminated char, whole buffer ends with two null terminated chars.
  */
-const char *dhterminal_get_history();
+const char *dhterminal_get_history(void);
 
 /**
  *	\brief		Get debug lines buffer.
  *	\return 	Pointer to buffer that end with null terminated char.
  */
-const char *dhterminal_get_debug_ouput();
+const char *dhterminal_get_debug_ouput(void);
 
 /**
  *	\brief		Get current mode.
  *	\return 	Current mode.
  */
-DHTERMINAL_MODE dhterminal_get_mode();
+DHTERMINAL_MODE dhterminal_get_mode(void);
 
 /**
  *	\brief					Set current mode.
@@ -80,6 +81,6 @@ void dhterminal_set_input(const char *line);
  *	\brief				Check if terminal is in use by user
  *	\return 			Non zero if terminal is in use, zero otherwise
  */
-int dhterminal_is_in_use();
+int dhterminal_is_in_use(void);
 
 #endif /* _DHTERMINAL_H_ */

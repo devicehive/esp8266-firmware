@@ -33,7 +33,7 @@ body {
 	font-size: 14px;
 }
 
-.key-box .input-accesskey {
+.key-box .input-key {
 	width: 83%;
 }
 
@@ -45,7 +45,7 @@ body {
 	text-indent: 5px;
 }
 
-.key-box .input-accesskey:focus,
+.key-box .input-key:focus,
 .input-data:focus {
 	outline: none;
 }

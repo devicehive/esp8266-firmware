@@ -9,3 +9,5 @@ release/build
 release/*.zip
 release/*.tar.gz
 firmware-src/pages/debug.log
+.DS_Store
+

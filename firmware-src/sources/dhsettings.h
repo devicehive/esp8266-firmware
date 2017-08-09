@@ -17,8 +17,8 @@
 #define DHSETTINGS_SERVER_MAX_LENGTH 384
 /** DeviceID string max length. */
 #define DHSETTINGS_DEVICEID_MAX_LENGTH 128
-/** AccessKey string max length. */
-#define DHSETTINGS_ACCESSKEY_MAX_LENGTH 65
+/** Key string max length. */
+#define DHSETTINGS_KEY_MAX_LENGTH 1025
 /** WiFi modes */
 typedef enum {
 	WIFI_MODE_CLIENT,		///< WiFi connects as a client.
@@ -38,7 +38,7 @@ int dhsettings_init(int *saved);
  *	\brief			Saves values to permanent storage.
  *	\return 		Non zero value on success. Zero on error.
  */
-int dhsettings_commit();
+int dhsettings_commit(void);
 
 /**
  *	\brief				Destroy data in permanent storage.
@@ -51,37 +51,37 @@ int dhsettings_clear(int force);
  *	\brief			Get Wi-Fi mode.
  *	\return 		One of DH_MODE enum value.
  */
-WIFI_MODE dhsettings_get_wifi_mode();
+WIFI_MODE dhsettings_get_wifi_mode(void);
 
 /**
  *	\brief			Get Wi-Fi SSID.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_wifi_ssid();
+const char *dhsettings_get_wifi_ssid(void);
 
 /**
  *	\brief			Get Wi-Fi password.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_wifi_password();
+const char *dhsettings_get_wifi_password(void);
 
 /**
  *	\brief			Get DeviceHive server.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_server();
+const char *dhsettings_get_devicehive_server(void);
 
 /**
  *	\brief			Get DeviceHive DeviceId.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_deviceid();
+const char *dhsettings_get_devicehive_deviceid(void);
 
 /**
- *	\brief			Get DeviceHive AccessKey.
+ *	\brief			Get DeviceHive Key.
  *	\return 		Pointer to buffer with null terminated string.
  */
-const char *dhsettings_get_devicehive_acceykey();
+const char *dhsettings_get_devicehive_key(void);
 
 /**
  *	\brief				Set Wi-Fi mode.
@@ -114,10 +114,10 @@ void dhsettings_set_devicehive_server(const char *server);
 void dhsettings_set_devicehive_deviceid(const char *id);
 
 /**
- *	\brief				Set DeviceHive AccessKey.
+ *	\brief				Set DeviceHive Key.
  *	\param[in]	key		Pointer to buffer with null terminated string.
  */
-void dhsettings_set_devicehive_accesskey(const char *key);
+void dhsettings_set_devicehive_key(const char *key);
 
 /**
  *	\brief			Check if char is suitable for DeviceId string
@@ -127,11 +127,11 @@ void dhsettings_set_devicehive_accesskey(const char *key);
 int dhsettings_deviceid_filter(char c);
 
 /**
- *	\brief			Check if char is suitable for AccessKey string
+ *	\brief			Check if char is suitable for Key string
  *	\param[in]	c	Char for test.
  *	\return			Non zero value if char is suitable, zero otherwise.
  */
-int dhsettings_accesskey_filter(char c);
+int dhsettings_key_filter(char c);
 
 /**
  *	\brief			Check if char is suitable for API Url string

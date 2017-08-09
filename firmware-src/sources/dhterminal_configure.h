@@ -12,6 +12,6 @@
 /**
  *	\brief	Start configuration util in terminal.
  */
-void dhterminal_configure_start();
+void dhterminal_configure_start(void);
 
 #endif /* _DHSERIAL_CONFIGURE_H_ */

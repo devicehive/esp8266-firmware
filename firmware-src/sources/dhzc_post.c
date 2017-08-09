@@ -6,14 +6,15 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhzc_post.h"
+#include "dhsettings.h"
+#include "dhutils.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <os_type.h>
 #include <user_interface.h>
-#include "dhsettings.h"
-#include "dhutils.h"
-#include "dhzc_post.h"
+#include <ets_forward.h>
 
 typedef int (*Char_Test)(char c);
 
@@ -36,7 +37,7 @@ LOCAL int ICACHE_FLASH_ATTR read_value(const char *data, unsigned int len, char 
 				b[0] = data[pos + 1];
 			if(pos + 2 < len)
 				b[1] = data[pos + 2];
-			set = hexToByte(b, &c);
+			set = hexToByte(b, (uint8_t*)&c);
 			pos += set;
 		} else {
 			c = data[pos];
@@ -66,7 +67,7 @@ char * ICACHE_FLASH_ATTR dhzc_post_parse(const char *data, unsigned int len) {
 	const char id[] = "id=";
 	const char key[] = "key=";
 	unsigned int pos = 0;
-	char value[256];
+	char value[2048];
 	unsigned char found = 0;
 	while(pos < len) {
 		unsigned int rb = sizeof(value);
@@ -138,14 +139,14 @@ char * ICACHE_FLASH_ATTR dhzc_post_parse(const char *data, unsigned int len) {
 		} else if(os_strncmp(&data[pos], key, sizeof(key) - 1) == 0) {
 			pos += sizeof(key) - 1;
 			if(pos <= len) {
-				int vl = read_value(&data[pos], len - pos, value, &rb, dhsettings_accesskey_filter);
+				int vl = read_value(&data[pos], len - pos, value, &rb, dhsettings_key_filter);
 				if(vl == 0)
-					return "Wrong DeviceKey.";
+					return "Wrong Key.";
 				pos += rb;
 				if(rb) {
-					if(rb > DHSETTINGS_ACCESSKEY_MAX_LENGTH - 1)
-						return "AccessKey too long";
-					dhsettings_set_devicehive_accesskey(value);
+					if(rb > DHSETTINGS_KEY_MAX_LENGTH - 1)
+						return "Key too long";
+					dhsettings_set_devicehive_key(value);
 					found = 1;
 				}
 			}

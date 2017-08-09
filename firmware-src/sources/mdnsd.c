@@ -6,6 +6,12 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "mdnsd.h"
+#include "dns.h"
+#include "swab.h"
+#include "snprintf.h"
+#include "dhdebug.h"
+#include "user_config.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
@@ -13,11 +19,7 @@
 #include <user_interface.h>
 #include <espconn.h>
 #include <ip_addr.h>
-#include "mdnsd.h"
-#include "dns.h"
-#include "snprintf.h"
-#include "dhdebug.h"
-#include "user_config.h"
+#include <ets_forward.h>
 
 #define MDNS_TTL (60 * 60)
 #define MDNS_MAX_PACKET_LENGTH 1024
@@ -30,15 +32,16 @@ LOCAL unsigned long mAddr;
 LOCAL struct espconn mMDNSdConn = { 0 };
 LOCAL struct ip_addr mMDNSAddr = { 0 };
 LOCAL esp_udp mDNSdUdp;
-LOCAL mSendingInProgress = 0;
+LOCAL int mSendingInProgress = 0;
 LOCAL struct ip_addr mMulticastIP = { MDNS_IP };
 
 LOCAL void ICACHE_FLASH_ATTR announce(const uint8_t *data, uint32_t len) {
 	mSendingInProgress = 1;
 
-	*(unsigned long *)mMDNSdConn.proto.udp->remote_ip = MDNS_IP;
+	const struct ip_addr mdns_ip = { MDNS_IP };
+	os_memcpy(mMDNSdConn.proto.udp->remote_ip, &mdns_ip, sizeof(mdns_ip));
 	mMDNSdConn.proto.udp->remote_port = MDNS_PORT;
-	*(unsigned long *)mMDNSdConn.proto.udp->local_ip = mMulticastIP.addr;
+	os_memcpy(mMDNSdConn.proto.udp->local_ip, &mMulticastIP, sizeof(mMulticastIP));
 	mMDNSdConn.proto.udp->local_port = MDNS_PORT;
 	espconn_send(&mMDNSdConn, (uint8_t *)data, len);
 }
@@ -54,7 +57,7 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 	uint8_t responsebuff[MDNS_MAX_PACKET_LENGTH];
 	DNS_HEADER *response = (DNS_HEADER *)responsebuff;
 
-	uint16_t qd = betoh_16(request->questionsNumber);
+	uint16_t qd = betoh_u16(request->questionsNumber);
 	uint32_t i;
 	uint32_t offset = 0;
 	uint32_t data_len = len - sizeof(DNS_HEADER);
@@ -104,7 +107,7 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 			case DNS_TYPE_SRV:
 				if(dns_cmp_fqdn_str(&request->data[offset], mName, MDNS_SERVICE)) {
 					SRV_DATA srv;
-					srv.port = htobe_16( MDNS_SERVICE_PORT );
+					srv.port = htobe_u16( MDNS_SERVICE_PORT );
 					srv.priority = 0;
 					srv.weigth = 0;
 					alen += dns_add_answer(&response->data[alen], mName,
@@ -142,7 +145,7 @@ LOCAL void ICACHE_FLASH_ATTR mdnsd_recv_cb(void *arg, char *data, unsigned short
 		os_memset(response, 0, sizeof(DNS_HEADER));
 		response->flags.authoritiveAnswer = 1;
 		response->flags.responseFlag = 1;
-		response->answersNumber = htobe_16(answersNumber);
+		response->answersNumber = htobe_u16(answersNumber);
 		announce(responsebuff, alen + sizeof(DNS_HEADER));
 	}
 }
@@ -155,7 +158,7 @@ int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
 	if(mMDNSdConn.proto.udp)
 		mdnsd_stop();
 
-	mName = name;
+	mName = (const uint8_t*)name;
 	mAddr = addr;
 
 	mMDNSAddr.addr = addr;
@@ -187,7 +190,7 @@ int ICACHE_FLASH_ATTR mdnsd_start(const char *name, unsigned long addr) {
 	return 1;
 }
 
-void ICACHE_FLASH_ATTR mdnsd_stop() {
+void ICACHE_FLASH_ATTR mdnsd_stop(void) {
 	if(mMDNSdConn.proto.udp) {
 		espconn_disconnect(&mMDNSdConn);
 		espconn_delete(&mMDNSdConn);

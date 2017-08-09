@@ -22,6 +22,6 @@ int mdnsd_start(const char *name, unsigned long addr);
 /**
  *	\brief				Stops mDNS daemon.
  */
-void mdnsd_stop();
+void mdnsd_stop(void);
 
 #endif /* _MDNS_H_ */

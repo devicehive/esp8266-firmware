@@ -6,15 +6,17 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "uploadable_page.h"
+#include "dhdebug.h"
+#include "irom.h"
 
 #include <c_types.h>
 #include <spi_flash.h>
 #include <osapi.h>
 #include <os_type.h>
+#include <user_interface.h>
 #include <mem.h>
-#include "irom.h"
-#include "uploadable_page.h"
-#include "dhdebug.h"
+#include <ets_forward.h>
 
 /** Uploadable web page maximum length and ROM addresses. */
 #define UPLOADABLE_PAGE_START_SECTOR 0x68
@@ -76,7 +78,7 @@ LOCAL SpiFlashOpResult ICACHE_FLASH_ATTR write_zero_byte(unsigned int sector) {
 		return SPI_FLASH_RESULT_ERR;
 	}
 	uint8_t data[4];
-	irom_read(data, (char *)(IROM_FLASH_BASE_ADDRESS + sector * SPI_FLASH_SEC_SIZE), sizeof(data));
+	irom_read(data, sizeof(data), (const void *)(IROM_FLASH_BASE_ADDRESS + sector*SPI_FLASH_SEC_SIZE));
 	// since zero is going to be written here, there is no need in erase operation
 	data[0] = 0;
 	return spi_flash_write(sector * SPI_FLASH_SEC_SIZE, (uint32 *)data, sizeof(data));
@@ -117,15 +119,13 @@ LOCAL UP_STATUS ICACHE_FLASH_ATTR flash_data() {
 	}
 
 	if((SPI_FLASH_SEC_SIZE - mBufferPos) > 0) {
-		irom_read(&mBuffer[mBufferPos], (const char *)
-				(mFlashingSector * SPI_FLASH_SEC_SIZE + mBufferPos + IROM_FLASH_BASE_ADDRESS),
-				SPI_FLASH_SEC_SIZE - mBufferPos);
+		irom_read(&mBuffer[mBufferPos], SPI_FLASH_SEC_SIZE - mBufferPos,
+				(const void *)(mFlashingSector * SPI_FLASH_SEC_SIZE + mBufferPos + IROM_FLASH_BASE_ADDRESS));
 		mBufferPos = SPI_FLASH_SEC_SIZE;
 	}
 
-	if(irom_cmp(mBuffer, (const char *)
-			(mFlashingSector * SPI_FLASH_SEC_SIZE + IROM_FLASH_BASE_ADDRESS),
-			SPI_FLASH_SEC_SIZE) == 0) {
+	if (0 == irom_cmp(mBuffer, SPI_FLASH_SEC_SIZE,
+			(const void *)(mFlashingSector * SPI_FLASH_SEC_SIZE + IROM_FLASH_BASE_ADDRESS))) {
 		mFlashingSector++;
 		return UP_STATUS_OK;
 	}

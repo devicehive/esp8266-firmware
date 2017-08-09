@@ -446,7 +446,7 @@ var renderLoop = (function() {
 }());
 
 window.onload = function init() {
-	byId('accesskey').value = localStorage['accesskey'];
+	byId('key').value = localStorage['key'];
 	plot = initPlot();
 	plot.redraw();
 	byId('run-btn').onclick = selectSource;
@@ -535,8 +535,8 @@ var selectSource = function() {
 <div class="header">
 	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 	<div class="key-box">
-		<label for="accesskey">AccesKey: </label>
-		<input class="input-accesskey input-data" type="password" id="accesskey">
+		<label for="key">AccesKey: </label>
+		<input class="input-key input-data" type="password" id="key">
 	</div>
 </div>
 <div class="content">

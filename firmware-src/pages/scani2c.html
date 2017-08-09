@@ -16,7 +16,7 @@
 			current_addr = '0x' + addr_enumerator.toString(16).toUpperCase();
 			last_checked = current_addr;
 			byId('status').innerHTML = 'Checking ' + current_addr + '...';
-			localStorage['accesskey'] = byId('accesskey').value;
+			localStorage['key'] = byId('key').value;
 			parameters = {
 				"SDA": byId('sda').value,
 				"SCL": byId('scl').value,
@@ -36,7 +36,7 @@
 		}
 
 		function init() {
-			byId('accesskey').value = localStorage['accesskey'];
+			byId('key').value = localStorage['key'];
 		}
 
 		function run() {
@@ -57,8 +57,8 @@
 <div class="header">
 	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 	<div class="key-box">
-		<label for="accesskey">AccesKey: </label>
-		<input class="input-accesskey input-data" type="password" id="accesskey">
+		<label for="key">Key: </label>
+		<input class="input-key input-data" type="password" id="key">
 	</div>
 </div>
 <div class="content">

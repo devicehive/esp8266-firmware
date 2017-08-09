@@ -21,6 +21,7 @@ Terminal *term;
 #define AUTODETECT_SEND_STRING "\x03"
 #define AUTODETECT_STRING "^C\r\n$ "
 #define AUTODETECT_TIMEOUT 1000
+#define AUTODETECT_MAX_ATTEMPTS 3
 
 void SerialPortError(SerialPort */*port*/, const char *text)
 {
@@ -32,8 +33,11 @@ int recieved = 0;
 char detectBuf[sizeof(AUTODETECT_STRING)] = {0};
 unsigned int detectBufPos = 0;
 bool isWorking = false;
-void SerialPortRecieved(SerialPort */*port*/, const char *text,  unsigned int len)
-{
+SerialPort *mCurrentPort = NULL;
+
+void SerialPortRecieved(SerialPort *port, const char *text,  unsigned int len) {
+	if(mCurrentPort && mCurrentPort != port)
+		return;
 	if(isWorking) {
 		while(recieved < 4 && *text) {
 			text++;
@@ -55,33 +59,41 @@ void SerialPortRecieved(SerialPort */*port*/, const char *text,  unsigned int le
 	}
 }
 
-SerialPort *detectPort(){
-    SerialPort *res;
-    printf("Detecting device...\r\n");
-    for(int i = 0; i <= AUTODETECT_MAX_PORT; i++) {
-    	const char *name = SerialPort::findNextPort(false);
-    	if(name[0] == 0)
-    		break;
-    	res = SerialPort::open(name);
-        if( res ) {
-        	res->send(AUTODETECT_SEND_STRING);
-        	if(!res->waitAnswer(sizeof(detectBuf) - 1, AUTODETECT_TIMEOUT)) {
-        		delete res;
-        		continue;
-        	}
-        	if(strcmp(detectBuf, AUTODETECT_STRING) == 0)
-            {
-                printf("Terminal device found on %s\r\n", name);
-                SerialPort::findNextPort(true);
-                return res;
-            }
-            else
-                delete res;
-        }
-    }
-    SerialPort::findNextPort(true);
-    printf("Terminal device not found.\r\n");
-    return 0;
+SerialPort *detectPort() {
+	SerialPort *port = NULL;
+	printf("Detecting device...\r\n");
+	SerialPort *ports[AUTODETECT_MAX_PORT];
+	for (int i = 0; i < AUTODETECT_MAX_PORT; i++) {
+		ports[i] = NULL;
+	}
+	for(int j = 0; port == NULL && j < AUTODETECT_MAX_ATTEMPTS; j++) {
+		for(int i = 0; port == NULL && i <= AUTODETECT_MAX_PORT; i++) {
+			if(j == 0) {
+				const char *name = SerialPort::findNextPort(false);
+				if (name[0] == 0)
+					break;
+				ports[i] = SerialPort::open(name);
+			}
+			if(ports[i]) {
+				mCurrentPort = ports[i];
+				ports[i]->send(AUTODETECT_SEND_STRING);
+				if(ports[i]->waitAnswer(sizeof(detectBuf) - 1,
+						AUTODETECT_TIMEOUT)) {
+					if(strcmp(detectBuf, AUTODETECT_STRING) == 0) {
+						port = ports[i];
+					}
+				}
+				mCurrentPort = NULL;
+			}
+		}
+	}
+	SerialPort::findNextPort(true);
+	if(port) {
+		printf("Terminal device found on %s\r\n", port->getName());
+		return port;
+	}
+	printf("Terminal device not found.\r\n");
+	return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -119,7 +131,7 @@ int main(int argc, char* argv[]) {
 			break;
 		char c[5];
 		term->get(c);
-		if (c[0] == 0x11) {
+		if(c[0] == 0x11) {
 			printf("\r\n");
 			break;
 		}

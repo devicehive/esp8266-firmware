@@ -12,22 +12,34 @@
 #ifndef _DHSENDER_H_
 #define _DHSENDER_H_
 
-#include <ip_addr.h>
-
 #include "dhsender_data.h"
 
-/**
- *	\brief				Initializes sender for using remote DeviceHive server.
- *	\param[in]	ip		Remote server IP.
- *	\param[in]	port	Remote server port.
- */
-void dhsender_init(ip_addr_t *ip, int port);
+#include <ip_addr.h>
+
+/** Function prototype for new item in queue callback. */
+typedef void (*dhsender_new_item_cb)(void);
 
 /**
- *	\brief				Start sending data from queue.
- *	\details			It does nothing if data sending is already in progress or there is no data for sending
+ *	\brief				Notify that current data was failed to send.
  */
-void dhsender_start();
+void dhsender_current_fail(void);
+
+/**
+ *	\brief				Notify that current data was sent.
+ */
+void dhsender_current_success(void);
+
+/**
+ *	\brief				Get next struct SENDER_JSON_DATA which should be sent.
+ *	\return				Pointer to SENDER_JSON_DATA or NULL if there is no data to send.
+ */
+SENDER_JSON_DATA *dhsender_next(void);
+
+/**
+ *	\brief					Set callbacks.
+ *	\param[in]	new_item	Pointer to a function which should be called on adding new item to queue.
+ */
+void dhsender_set_cb(dhsender_new_item_cb new_item);
 
 /**
  *	\brief					Send command response.
@@ -45,10 +57,5 @@ void dhsender_response(CommandResultArgument cid, RESPONCE_STATUS status, REQUES
  *	\param[in]	...			Data according to the type.
  */
 void dhsender_notification(REQUEST_NOTIFICATION_TYPE type, REQUEST_DATA_TYPE data_type, ...);
-
-/**
- *	\brief				Stops repeat attempts on error.
- */
-void dhsender_stop_repeat();
 
 #endif /* _DHSENDER_H_ */

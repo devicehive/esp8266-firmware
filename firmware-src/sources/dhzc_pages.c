@@ -6,16 +6,18 @@
  * Author: Nikolay Khabarov
  *
  */
+#include "dhzc_pages.h"
+#include "snprintf.h"
+#include "dhsettings.h"
+#include "rand.h"
+#include "user_config.h"
+#include "irom.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <mem.h>
-#include "snprintf.h"
-#include "dhsettings.h"
-#include "dhzc_pages.h"
-#include "rand.h"
-#include "user_config.h"
-#include "irom.h"
+#include <user_interface.h>
+#include <ets_forward.h>
 
 #define DHZC_PAGE_TITLE_META  "<title>DeviceHive ESP8266 Configuration</title><meta name='viewport' content='width=device-width, initial-scale=1.0'>"
 #define DHZC_PAGE_MAX_SIZE 4096
@@ -37,7 +39,7 @@ RO_DATA char DHZC_PAGE_FORM[] =  "<html>" \
 								"<input type='text' name='url' value='%s'><br><br>"\
 								"DeviceId (allowed chars are A-Za-z0-9- ):<br>"\
 								"<input type='text' name='id' value='%s'><br><br>"\
-								"AccessKey (leave empty to keep current, allowed chars are A-Za-z0-9/+= ):<br>"\
+								"Key (leave empty to keep current, allowed chars are A-Za-z0-9._-/+=):<br>"\
 								"<input type='password' name='key'><br><br>"\
 								"<input type='submit' value='Apply'>"\
 							"</form></body>"\

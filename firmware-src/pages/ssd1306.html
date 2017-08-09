@@ -63,7 +63,7 @@
 				print("Choose image first please", true);
 				return;
 			}
-			localStorage['accesskey'] = byId('accesskey').value;
+			localStorage['key'] = byId('key').value;
 			SDA = byId('sda').value;
 			SCL = byId('scl').value;
 			address = byId('address').value;
@@ -133,7 +133,7 @@
 		}
 
 		function init() {
-			byId('accesskey').value = localStorage['accesskey'];
+			byId('key').value = localStorage['key'];
 			byId('image').addEventListener("change", draw, false);
 		}
 	</script>
@@ -142,8 +142,8 @@
 <div class="header">
 	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 	<div class="key-box">
-		<label for="accesskey">AccesKey: </label>
-		<input class="input-accesskey input-data" type="password" id="accesskey">
+		<label for="key">AccesKey: </label>
+		<input class="input-key input-data" type="password" id="key">
 	</div>
 </div>
 <div class="content">

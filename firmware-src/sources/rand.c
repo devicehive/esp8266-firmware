@@ -8,14 +8,15 @@
  * Description: Typical random implementation
  *
  */
-
-#include <user_interface.h>
 #include "rand.h"
 #include "snprintf.h"
 
+#include <user_interface.h>
+
+
 static unsigned long seed = 0;
 
-int ICACHE_FLASH_ATTR rand() {
+int ICACHE_FLASH_ATTR rand(void) {
 	if(seed == 0) {
 		seed = system_get_time();
 	}
@@ -35,7 +36,7 @@ unsigned int ICACHE_FLASH_ATTR rand_generate_key(char *buf) {
 		// removing unsuitable chars
 		if(c == '"')
 			c = '}'; // 0x7D
-		else if (c == '\\')
+		else if(c == '\\')
 			c = '~'; // 0x7E
 		buf[bufpos++] =  c;
 	}

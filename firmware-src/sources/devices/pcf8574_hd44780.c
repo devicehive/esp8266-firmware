@@ -1,109 +1,135 @@
-/*
- * pcf8574_hd44780.h
- *
- * Copyright 2016 DeviceHive
- *
- * Author: Nikolay Khabarov
- *
+/**
+ * @file
+ * @brief Simple communication with HD44780 like displays via PCF8574 GPIO extender with I2C bus.
+ * @copyright 2016 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
+#include "devices/pcf8574_hd44780.h"
+#include "devices/pcf8574.h"
+#include "DH/i2c.h"
 
 #include <osapi.h>
-#include <c_types.h>
-#include "pcf8574_hd44780.h"
-#include "pcf8574.h"
+#include <ets_forward.h>
 
-#define PIN_RS (1 << 0)
-#define PIN_RW (1 << 1)
-#define PIN_E (1 << 2)
-#define PIN_BACKLIGHT (1 << 3)
-#define PIN_D4 (1 << 4)
-#define PIN_D5 (1 << 5)
-#define PIN_D6 (1 << 6)
-#define PIN_D7 (1 << 7)
+#if defined(DH_DEVICE_PCF8574_HD44780)
 
-LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_hd44780_write_half(int sda,
-		int scl, char half, int is_command) {
-	DHI2C_STATUS status;
-	char pins = ((half & (1 << 3)) ? PIN_D7 : 0) | ((half & (1 << 2)) ? PIN_D6 : 0)
-				| ((half & (1 << 1)) ? PIN_D5 : 0) | ((half & (1 << 0)) ? PIN_D4 : 0);
+#define PIN_RS        BIT(0)
+#define PIN_RW        BIT(1)
+#define PIN_E         BIT(2)
+#define PIN_BACKLIGHT BIT(3)
+#define PIN_D4        BIT(4)
+#define PIN_D5        BIT(5)
+#define PIN_D6        BIT(6)
+#define PIN_D7        BIT(7)
+
+
+/**
+ * @brief Write a half of byte.
+ */
+static int ICACHE_FLASH_ATTR hd44780_write_half(int sda, int scl, int half, int is_command)
+{
+	/*unsigned int pins = ((half & BIT(3)) ? PIN_D7 : 0)
+	                  | ((half & BIT(2)) ? PIN_D6 : 0)
+	                  | ((half & BIT(1)) ? PIN_D5 : 0)
+	                  | ((half & BIT(0)) ? PIN_D4 : 0);*/
+	unsigned int pins = half << 4; // NOTE: check D4,D5,D6,D7 position
 	pins |= PIN_BACKLIGHT | (is_command ? 0 : PIN_RS);
+
 	// set enable HIGH
-	if((status = pcf8574_set(sda, scl, pins | PIN_E)) != DHI2C_OK)
+	int status;
+	if ((status = pcf8574_set(sda, scl, pins | PIN_E)) != DH_I2C_OK)
 		return status;
 	os_delay_us(1);
+
 	// set enable to LOW
-	if((status = pcf8574_set(sda, scl, pins)) != DHI2C_OK)
+	if ((status = pcf8574_set(sda, scl, pins)) != DH_I2C_OK)
 		return status;
-	return DHI2C_OK;
+
+	return DH_I2C_OK;
 }
 
-LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_hd44780_write_byte(int sda,
-		int scl, char byte, int is_command) {
-	DHI2C_STATUS status;
-	if((status = pcf8574_hd44780_write_half(sda, scl, (byte  >> 4) & 0x0F, is_command)) != DHI2C_OK)
+
+/**
+ * @brief Write a byte.
+ */
+static int ICACHE_FLASH_ATTR hd44780_write_byte(int sda, int scl, int byte, int is_command)
+{
+	int status;
+	if ((status = hd44780_write_half(sda, scl, (byte >> 4) & 0x0F, is_command)) != DH_I2C_OK)
 		return status;
-	if((status = pcf8574_hd44780_write_half(sda, scl, byte & 0x0F, is_command)) != DHI2C_OK)
+	if ((status = hd44780_write_half(sda, scl, byte & 0x0F, is_command)) != DH_I2C_OK)
 		return status;
-	return DHI2C_OK;
+
+	return DH_I2C_OK;
 }
 
-LOCAL DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_hd44780_set_line(int sda,
-		int scl, unsigned int line) {
-	DHI2C_STATUS status;
+
+/**
+ * @brief Set output line.
+ */
+static int ICACHE_FLASH_ATTR hd44780_set_line(int sda, int scl, unsigned int line)
+{
+	int status;
+
 	switch (line) {
 	case 0:
-		if( (status = pcf8574_hd44780_write_byte(sda, scl, 0x80 | 0x14, 1))
-				!= DHI2C_OK)
+		if ((status = hd44780_write_byte(sda, scl, 0x80 | 0x14, 1)) != DH_I2C_OK)
 			return status;
 		break;
+
 	case 1:
-		if( (status = pcf8574_hd44780_write_byte(sda, scl, 0x80 | 0x40, 1))
-				!= DHI2C_OK)
+		if ((status = hd44780_write_byte(sda, scl, 0x80 | 0x40, 1)) != DH_I2C_OK)
 			return status;
 		break;
+
 	case 2:
-		if( (status = pcf8574_hd44780_write_byte(sda, scl, 0x80 | 0x14, 1))
-				!= DHI2C_OK)
+		if ((status = hd44780_write_byte(sda, scl, 0x80 | 0x14, 1)) != DH_I2C_OK)
 			return status;
 		break;
+
 	case 3:
-		if( (status = pcf8574_hd44780_write_byte(sda, scl, 0x80 | 0x54, 1))
-				!= DHI2C_OK)
+		if ((status = hd44780_write_byte(sda, scl, 0x80 | 0x54, 1)) != DH_I2C_OK)
 			return status;
 		break;
+
 	default:
-		break;
+		return DH_I2C_WRONG_PARAMETERS;
 	}
-	return DHI2C_OK;
+
+	return DH_I2C_OK;
 }
 
-DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_hd44780_write(int sda, int scl, const char *text, unsigned int len) {
-	DHI2C_STATUS status;
+
+/*
+ * pcf8574_hd44780_write() implementation.
+ */
+int ICACHE_FLASH_ATTR pcf8574_hd44780_write(int sda, int scl, const char *text, int len)
+{
+	// clear enable
+	int status;
+	if ((status = pcf8574_set(sda, scl, ~((uint8_t)(PIN_E | PIN_RW)))) != DH_I2C_OK)
+		return status;
+
+	// initialization
 	int i;
-	const static char init_data[] = {
+	for (i = 0; i < 3; i++) {
+		if ((status = hd44780_write_half(sda, scl, 0b0011, 1)) != DH_I2C_OK)
+			return status;
+		os_delay_us(5000);
+	}
+	if ((status = hd44780_write_half(sda, scl, 0b0010, 1)) != DH_I2C_OK)
+		return status;
+	os_delay_us(100);
+
+	// configure
+	const static uint8_t init_data[] = {
 		0b00101100, // function set
 		0b00001100, // display on
 		0b00000001, // cursor clear
 		0b00000110  // entry mode set
 	};
-
-	// clear enable
-	if((status = pcf8574_set(sda, scl, ~((char)(PIN_E | PIN_RW)))) != DHI2C_OK)
-		return status;
-
-	// initialization
-	for(i = 0; i < 3; i++) {
-		if((status = pcf8574_hd44780_write_half(sda, scl, 0b0011, 1)) != DHI2C_OK)
-			return status;
-		os_delay_us(5000);
-	}
-	if((status = pcf8574_hd44780_write_half(sda, scl, 0b0010, 1)) != DHI2C_OK)
-		return status;
-	os_delay_us(100);
-
-	// configure
-	for(i = 0; i < sizeof(init_data); i++) {
-		if((status = pcf8574_hd44780_write_byte(sda, scl, init_data[i], 1)) != DHI2C_OK)
+	for (i = 0; i < sizeof(init_data); i++) {
+		if ((status = hd44780_write_byte(sda, scl, init_data[i], 1)) != DH_I2C_OK)
 			return status;
 		os_delay_us(2000);
 	}
@@ -111,27 +137,29 @@ DHI2C_STATUS ICACHE_FLASH_ATTR pcf8574_hd44780_write(int sda, int scl, const cha
 	int line = 0;
 	int ch = 0;
 	// write text to display RAM
-	for(i = 0; i < len; i++) {
-		int nla = text[i] == '\n';
-		int nlc = (i + 1 < len) ? (text[i] == '\\' && text[i + 1] == 'n') : 0;
-		if(ch == 20 || nla || nlc) {
+	for (i = 0; i < len; i++) {
+		int nla = (text[i] == '\n');
+		int nlc = (i+1 < len) ? (text[i] == '\\' && text[i+1] == 'n') : 0;
+		if (ch == 20 || nla || nlc) {
 			line++;
-			if(ch == 20 && (nla || nlc))
+			if (ch == 20 && (nla || nlc))
 				line++;
-			if(line > 3)
+			if (line > 3)
 				break;
-			if((status = pcf8574_hd44780_set_line(sda, scl, line)) != DHI2C_OK)
+			if ((status = hd44780_set_line(sda, scl, line)) != DH_I2C_OK)
 				return status;
 			ch = 0;
-			if(nlc)
+			if (nlc)
 				i++;
-			if(nla || nlc)
+			if (nla || nlc)
 				continue;
 		}
-		if((status = pcf8574_hd44780_write_byte(sda, scl, text[i], 0)) != DHI2C_OK)
+		if ((status = hd44780_write_byte(sda, scl, text[i], 0)) != DH_I2C_OK)
 			return status;
 		ch++;
 	}
 
-	return DHI2C_OK;
+	return DH_I2C_OK;
 }
+
+#endif /* DH_DEVICE_PCF8574_HD44780 */

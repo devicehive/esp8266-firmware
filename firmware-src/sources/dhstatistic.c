@@ -1,71 +1,153 @@
-/*
- * dhstatistic.c
- *
- * Copyright 2015 DeviceHive
- *
- * Author: Nikolay Khabarov
- *
- * Description: Module for collecting statistic
- *
+/**
+ * @file
+ * @brief Module to collect various statistic data.
+ * @copyright 2017 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
-
-#include <c_types.h>
 #include "dhstatistic.h"
+#include <c_types.h>
 
-LOCAL DHSTATISTIC mStatistic = {0};
 
-void ICACHE_FLASH_ATTR dhstatistic_add_bytes_sent(unsigned int bytes) {
-	mStatistic.bytesSent += bytes;
+// global statistics instance
+static struct DHStat g_stat = {0};
+
+
+/*
+ * @brief Get global statistics.
+ */
+const struct DHStat* ICACHE_FLASH_ATTR dhstat_get(void)
+{
+	return &g_stat;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_add_bytes_received(unsigned int bytes) {
-	mStatistic.bytesReceived += bytes;
+
+/*
+ * @brief Add some number of bytes sent.
+ * @param[in] stat Statistics to update.
+ * @param[in] no_bytes Number of bytes sent.
+ */
+void ICACHE_FLASH_ATTR dhstat_add_bytes_sent(unsigned int no_bytes)
+{
+	g_stat.bytesSent += no_bytes;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_inc_network_errors_count() {
-	mStatistic.networkErrors++;
+
+/*
+ * @brief Add some number of bytes received.
+ * @param[in] stat Statistics to update.
+ * @param[in] no_bytes Number of bytes received.
+ */
+void ICACHE_FLASH_ATTR dhstat_add_bytes_received(unsigned int no_bytes)
+{
+	g_stat.bytesReceived += no_bytes;
 }
 
-void dhstatistic_inc_httpd_requests_count() {
-	mStatistic.httpdRequestsCount++;
+
+/*
+ * @brief Increment number of network errors.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_network_error(void)
+{
+	g_stat.networkErrors += 1;
 }
 
-void dhstatistic_inc_httpd_errors_count() {
-	mStatistic.httpdErrorsCount++;
+
+/*
+ * @brief Increment number of REST requests.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_httpd_request(void)
+{
+	g_stat.httpdRequestsCount++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_inc_wifi_lost_count() {
-	mStatistic.wifiLosts++;
+
+/*
+ * @brief Increment number of REST errors.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_httpd_error(void)
+{
+	g_stat.httpdErrorsCount++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_server_errors_count() {
-	mStatistic.serverErrors++;
+
+/*
+ * @brief Increment number of Wi-Fi disconnections.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_wifi_lost(void)
+{
+	g_stat.wifiLosts++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_inc_notifications_count() {
-	mStatistic.notificationsTotal++;
+
+/*
+ * @brief Increment number of server errors.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_server_error(void)
+{
+	g_stat.serverErrors++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_inc_notifications_dropped_count() {
-	mStatistic.notificationsDroppedCount++;
+
+/*
+ * @brief Increment number of notifications.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_notification(void)
+{
+	g_stat.notificationsTotal++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_inc_responces_count() {
-	mStatistic.responcesTotal++;
+
+/*
+ * @brief Increment number of dropped notifications.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_notification_dropped(void)
+{
+	g_stat.notificationsDroppedCount++;
 }
 
-void ICACHE_FLASH_ATTR dhstatistic_inc_responces_dropped_count() {
-	mStatistic.responcesDroppedCount++;
+
+/*
+ * @brief Increment number of responses.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_responce(void)
+{
+	g_stat.responcesTotal++;
 }
 
-void dhstatistic_inc_local_rest_requests_count() {
-	mStatistic.localRestRequestsCount++;
+
+/*
+ * @brief Increment number of dropped responses.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_responce_dropped(void)
+{
+	g_stat.responcesDroppedCount++;
 }
 
-void dhstatistic_inc_local_rest_responses_errors() {
-	mStatistic.localRestResponcesErrors++;
+
+/*
+ * @brief Increment number REST requests.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_local_rest_request(void)
+{
+	g_stat.localRestRequestsCount++;
 }
 
-const DHSTATISTIC* ICACHE_FLASH_ATTR dhstatistic_get_statistic() {
-	return &mStatistic;
+
+/*
+ * @brief Increment number of REST requests which were answered with error.
+ * @param[in] stat Statistics to update.
+ */
+void ICACHE_FLASH_ATTR dhstat_got_local_rest_response_error(void)
+{
+	g_stat.localRestResponcesErrors++;
 }

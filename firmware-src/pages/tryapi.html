@@ -13,10 +13,10 @@
 
 		function run() {
 			print('');
-			var key = byId('accesskey').value,
+			var key = byId('key').value,
 				command = byId('command').value,
 				parameters = byId('parameters').value;
-			localStorage['accesskey'] = key;
+			localStorage['key'] = key;
 			if (parameters.length > 0) {
 				try {
 					parameters = JSON.parse(parameters);
@@ -33,7 +33,7 @@
 				'This command for cURL util:',
 				['pre', {},
 					'curl -i -X POST  \\\n',
-					'\t-H "Authorization: Bearer YourAccessKeyHere=" \\\n',
+					'\t-H "Authorization: Bearer YourKeyHere=" \\\n',
 					params + '\t' + base + '/api/' + command
 				]]);
 			ajax('POST', '/api/' + command, parameters, key, function (xmlhttp) {
@@ -48,7 +48,20 @@
 		}
 
 		function init() {
-			byId('accesskey').value = localStorage['accesskey'];
+			var key = localStorage['key'];
+			byId('key').value = key;
+
+			var base = location.protocol + '//' + location.host;
+			ajax('POST', '/api/command/list', '', key, function (xmlhttp) {
+				if (xmlhttp.status == 200) {
+					var cmd_list = JSON.parse(xmlhttp.responseText);
+					var options = '';
+					for (var i = 0; i < cmd_list.length; i++) {
+						options += '<option value="' + cmd_list[i] + '"/>';
+					}
+					byId('commands').innerHTML = options;
+				}
+			});
 		}
 	</script>
 </head>
@@ -56,8 +69,8 @@
 <div class="header">
 	<a href="./help.html"><div class="devecihive-logo-text"></div></a>
 	<div class="key-box">
-		<label for="accesskey">AccesKey: </label>
-		<input class="input-accesskey input-data" type="password" id="accesskey">
+		<label for="key">Key: </label>
+		<input class="input-key input-data" type="password" id="key">
 	</div>
 </div>
 <div class="content">
@@ -66,7 +79,8 @@
 		simple converter <a href='./base64.html' target='_blank'>base64.html</a>.
 	</div>
 	<div class="form-block">
-		<label class="pin-label">Command: <input class="input-data" type="text" id="command" value="gpio/read"></label>
+		<label class="pin-label">Command: <input class="input-data" type="text" id="command" value="gpio/read" list="commands"></label>
+		<datalist id="commands"></datalist>
 		<label class="pin-label">Parameters:
 		<textarea class="margin-reset" id="parameters" rows="10"></textarea>
 		</label>

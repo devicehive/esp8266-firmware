@@ -12,7 +12,7 @@
 #include <string.h>
 #include "serialport.h"
 
-SerialPort::SerialPort(COM comport) {
+SerialPort::SerialPort(COM comport, const char *name) {
     mCom = comport;
     mTreadFlag = true;
     mReadFlag = false;
@@ -20,6 +20,7 @@ SerialPort::SerialPort(COM comport) {
     mBytesRecivedSinceLastSend = 0;
     mThread = 0;
     mLastReceived = 0;
+    snprintf(mName, sizeof(mName), "%s", name);
 }
 
 COM SerialPort::get_com() {
@@ -64,4 +65,8 @@ void SerialPort::send(const void *data, unsigned int len) {
 	unsigned int bw = write_native(data, len);
 	if(bw != len)
         SerialPortError(this, ERROR_WRITE_STRING);
+}
+
+const char *SerialPort::getName() {
+    return mName;
 }

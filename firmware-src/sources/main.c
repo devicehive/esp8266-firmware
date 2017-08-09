@@ -8,25 +8,27 @@
  * Description: DeviceHive firmware for ESP8266
  *
  */
-
-#include <osapi.h>
-#include <os_type.h>
-#include <c_types.h>
-#include <user_interface.h>
-#include "gpio.h"
-#include "dhcommands.h"
 #include "dhdebug.h"
-#include "dhuart.h"
+#include "DH/uart.h"
 #include "dhsender_queue.h"
 #include "dhterminal.h"
 #include "dhsettings.h"
+#include "dhconnector.h"
 #include "dhap.h"
-#include "dhgpio.h"
+#include "DH/gpio.h"
 #include "webserver.h"
 #include "irom.h"
 #include "uploadable_page.h"
 #include "dhzc_dnsd.h"
 #include "dhzc_web.h"
+#include "mdnsd.h"
+
+#include <osapi.h>
+#include <os_type.h>
+#include <c_types.h>
+#include <user_interface.h>
+#include <gpio.h>
+#include <ets_forward.h>
 
 typedef struct {
 	unsigned int magic;
@@ -116,7 +118,7 @@ void ICACHE_FLASH_ATTR system_init_done(void) {
 
 void user_init(void) {
 	int ever_saved;
-	gpio_output_set(0, 0, 0, DHGPIO_SUITABLE_PINS);
+	gpio_output_set(0, 0, 0, DH_GPIO_SUITABLE_PINS);
 	dhsettings_init(&ever_saved);
 	if(ever_saved == 0) { // if first run on this chip
 		uploadable_page_delete();
@@ -124,7 +126,7 @@ void user_init(void) {
 	}
 	dhdebug("*****************************");
 	if(mSpecialMode) { // if special mode was called by user or if there is no settings
-		dhuart_leds(DHUART_LEDS_ON);
+		dh_uart_leds(DH_UART_LEDS_ON);
 		dhdebug("Wi-Fi Zero Configuration Mode");
 		dhap_init(WIFI_CONFIGURATION_SSID, NULL);
 		dhzc_dnsd_init();
@@ -133,8 +135,8 @@ void user_init(void) {
 	} else {
 		if(dhsettings_get_wifi_mode() == WIFI_MODE_CLIENT) {
 			dhsender_queue_init();
-			dhconnector_init(dhcommands_do);
-			dhgpio_init();
+			dhconnector_init();
+			dh_gpio_init();
 		} else if(dhsettings_get_wifi_mode() == WIFI_MODE_AP) {
 			dhap_init(dhsettings_get_wifi_ssid(), dhsettings_get_wifi_password());
 		}

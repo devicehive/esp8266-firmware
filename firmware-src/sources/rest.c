@@ -6,18 +6,20 @@
  * Author: Nikolay Khabarov
  *
  */
-
-#include <stdarg.h>
-#include <c_types.h>
-#include <osapi.h>
-#include <mem.h>
 #include "rest.h"
-#include "dhrequest.h"
+#include "dhsettings.h"
 #include "dhcommands.h"
 #include "dhsender_data.h"
 #include "user_config.h"
 #include "irom.h"
 #include "dhstatistic.h"
+
+#include <stdarg.h>
+#include <c_types.h>
+#include <osapi.h>
+#include <mem.h>
+#include <user_interface.h>
+#include <ets_forward.h>
 
 RO_DATA char desription[] = "<html><body>This is firmware RESTfull API endpoint. "\
 	"Please follow the firmware manual to use it.<br><a href='http://devicehive.com/' "\
@@ -34,6 +36,10 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 	if(data_type == RDT_CONST_STRING) { // optimization
 		answer->content.data = va_arg(ap, const char *);;
 		answer->content.len = os_strlen(answer->content.data);
+	} else if (data_type == RDT_JSON_MALLOC_PTR) { // optimization
+		answer->content.data = va_arg(ap, const char *);
+		answer->content.len = va_arg(ap, size_t);
+		answer->free_content = 1;
 	} else {
 		SENDERDATA data;
 		unsigned int data_len;
@@ -62,24 +68,24 @@ LOCAL void ICACHE_FLASH_ATTR rest_command_callback(CommandResultArgument cid,
 		}
 	}
 	if(answer->ok == 0)
-		dhstatistic_inc_local_rest_responses_errors();
+		dhstat_got_local_rest_response_error();
 	va_end(ap);
 }
 
 HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR rest_handle(const char *path, const char *key,
 		HTTP_CONTENT *content_in, HTTP_ANSWER *answer) {
 	static const char cint[] = "/int";
-	dhstatistic_inc_local_rest_requests_count();
+	dhstat_got_local_rest_request();
 	if(path[0] == 0) {
 		answer->content.data = desription;
 		answer->content.len = sizeof(desription) - 1;
 		return HRCS_ANSWERED_HTML;
 	}
-	if(dhrequest_current_accesskey()[0]) {
+	if(dhsettings_get_devicehive_key()[0]) {
 		if(key == 0) {
 			return HRCS_UNAUTHORIZED;
 		}
-		if(os_strcmp(key, dhrequest_current_accesskey())) {
+		if(os_strcmp(key, dhsettings_get_devicehive_key())) {
 			return HRCS_UNAUTHORIZED;
 		}
 	}

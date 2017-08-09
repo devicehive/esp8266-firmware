@@ -36,7 +36,11 @@ write_addr() {
 }
 
 file_size() {
-  stat -c %s "$@"
+  res=$(stat -c %s "$@" 2> /dev/null)
+  if [ $? -ne 0 ]; then 
+    res=$(stat -f %z "$@")
+  fi
+  echo $res
 }
 
 write_zeros() {
@@ -100,3 +104,4 @@ write_zeros $(( 65536 - $(file_size $FWFILE)))
 cat $BUILDDIR/irom0.bin >> $FWFILE
 
 echo Done
+echo "Firmware file is $FWFILE, size is $(file_size $FWFILE) bytes"

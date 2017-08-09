@@ -8,8 +8,6 @@
  * Description: Data coder/encoder
  *
  */
-
-#include <c_types.h>
 #include "dhdata.h"
 #include "user_config.h"
 #include "dhutils.h"

@@ -9,6 +9,15 @@
 #ifndef _DHUTILS_H_
 #define _DHUTILS_H_
 
+#include "swab.h"
+
+
+/** Find maximum value */
+#define MAX(x, y) (((x) < (y)) ? (y) : (x))
+
+/** Round value to KiB */
+#define ROUND_KB(x) ((((x) + 1023) / 1024) * 1024)
+
 /**
  *	\brief				Convert string to float.
  *	\details			Read string till first non digit character or null terminated char.
@@ -36,21 +45,27 @@ int strToUInt(const char *ptr, unsigned int *result);
  */
 int strToInt(const char *ptr, int *result);
 
-/**
- *	\brief				Convert byte value to two hex chars.
- *	\param[in]	byte	Value for convert.
- *	\param[out]	hexout	Pointer to two chars buffer for output.
- *	\return				Number of written chars. Always 2.
- */
-int byteToHex(unsigned char byte, char *hexout);
 
 /**
- *	\brief				Convert string to byte.
- *	\param[in]	hex		String to convert.
- *	\param[out]	byteout	Pointer to one char for output.
- *	\return				Number of characters that was used from string: 1, 2 or 0 on error.
+ * @brief Convert byte value to hexadecimal string.
+ *
+ * Output is in the range `[0..9A..F]`.
+ *
+ * @param[in] val Value for convert.
+ * @param[out] hex_out Pointer to output buffer. Should be at least 2 characters in length.
+ * @return Number of characters written. Always 2.
  */
-int hexToByte(const char *hex, unsigned char *byteout);
+int byteToHex(uint8_t val, char *hex_out);
+
+
+/**
+ * @brief Convert hexadecimal string to byte.
+ * @param[in] hex String to convert. Should be at least 2 characters in length.
+ * @param[out] val_out Pointer to byte where output result is stored.
+ * @return Number of characters that was used from string: 1, 2 or 0 on error.
+ */
+int hexToByte(const char *hex, uint8_t *val_out);
+
 
 /**
  *	\brief					Util function to find out response code in HTTP response.
@@ -60,56 +75,78 @@ int hexToByte(const char *hex, unsigned char *byteout);
  */
 const char *find_http_responce_code(const char *data, unsigned short len);
 
-/**
- *	\brief					Read unsigned 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
- */
-unsigned int unsignedInt16be(const char *buf, int pos);
 
 /**
- *	\brief					Read signed 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read unsigned 16-bits integer from pointer. Big-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-int signedInt16be(const char *buf, int pos);
+static inline unsigned int unsignedInt16be(const char *buf, int pos) {
+	return betoh_u16(*(const uint16_t*)(buf + pos));
+}
+
 
 /**
- *	\brief					Read signed 16 bit integer from pointer in sign-magnitude representation. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read signed 16-bits integer from pointer. Big-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-int signedInt16be_sm(const char *buf, int pos);
+static inline int signedInt16be(const char *buf, int pos) {
+	return (int16_t)betoh_u16(*(const uint16_t*)(buf + pos));
+}
+
 
 /**
- *	\brief					Read unsigned 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read signed 16-bits integer from pointer in sign-magnitude representation. Big-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-unsigned int unsignedInt16le(const char *buf, int pos);
+static inline int signedInt16be_sm(const char *buf, int pos) {
+	int r = unsignedInt16be(buf, pos);
+	if(r <= 0x7FFF)
+		return r;
+	return -(r & 0x7FFF);
+}
+
 
 /**
- *	\brief					Read signed 16 bit integer from pointer. Big endian.
- *	\param[in]	buf			Pointer to data.
- *	\param[in]	pos			Offset in data.
- *	\return					Result value.
+ * @brief Read unsigned 16-bits integer from pointer. Little-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
  */
-int signedInt16le(const char *buf, int pos);
+static inline unsigned int unsignedInt16le(const char *buf, int pos) {
+	return letoh_u16(*(const uint16_t*)(buf + pos));
+}
+
 
 /**
- *	\brief					Delay in milliseconds.
+ * @brief Read signed 16-bits integer from pointer. Little-endian.
+ * @param[in] buf Pointer to data.
+ * @param[in] pos Offset in data.
+ * @return Result value.
+ */
+static inline int signedInt16le(const char *buf, int pos) {
+	return (int16_t)letoh_u16(*(const uint16_t*)(buf + pos));
+}
+
+
+/**
+ * @brief Delay in milliseconds.
  */
 void delay_ms(unsigned int ms);
 
 /**
- *	\brief					Reverse bits in byte.
- *	\param[in]	v			Byte.
- *	\return					Byte in reverse bit order.
+ * @brief Reverse bits in byte.
+ * @param[in] v Byte.
+ * @return Byte in reverse bit order.
  */
-unsigned char bitwise_reverse_byte(unsigned char v);
+static inline uint8_t bitwise_reverse_byte(uint8_t v)
+{
+	return ((v * 0x0802LU & 0x22110LU) | (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
+}
 
 #endif /* _DHUTILS_H_ */

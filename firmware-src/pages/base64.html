@@ -13,7 +13,7 @@
 			var res = "";
 			for (var i = 0; i < data.length; i++) {
 				h = data.charCodeAt(i).toString(16);
-				if (h.length == 1)
+				if(h.length == 1)
 					res += "0" + h;
 				else
 					res += h;
@@ -23,7 +23,7 @@
 
 		function fromhex() {
 			hex = document.form.hex.value.replace(/0x/g, "").replace(/ /g, "").replace(/,/g, "");
-			if (hex.length % 2 > 0) {
+			if(hex.length % 2 > 0) {
 				document.form.string.value = "";
 				document.form.base64.value = "";
 				printLength(null);

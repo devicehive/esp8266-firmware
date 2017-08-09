@@ -1,35 +1,31 @@
 /**
- *	\file		mlx90614.h
- *	\brief		Simple communication with MLX90614 contactless IR temperature sensor
- *	\author		Nikolay Khabarov
- *	\date		2016
- *	\copyright	DeviceHive MIT
+ * @file
+ * @brief Simple communication with MLX90614 contactless IR temperature sensor.
+ * @copyright 2016 [DeviceHive](http://devicehive.com)
+ * @author Nikolay Khabarov
  */
+#ifndef _DEVICES_MLX90614_H_
+#define _DEVICES_MLX90614_H_
 
-#ifndef SOURCES_DEVICES_MLX90614_H_
-#define SOURCES_DEVICES_MLX90614_H_
-
-#include "dhi2c.h"
-
-/** Default sensor i2c address*/
-#define MLX90614_DEFAULT_ADDRESS 0xB4
-/** Do not initialize pin */
-#define MLX90614_NO_PIN -1
+#include "user_config.h"
+#if defined(DH_DEVICE_MLX90614)
 
 /**
- *	\brief					Measure temperature one time.
- *	\param[in]	sda			Pin for I2C's SDA.
- *	\param[in]	scl			Pin for I2C's SCL.
- *	\param[out]	ambient		Pointer for storing ambient temperature result measure in Celsius.
- *	\param[out]	object		Pointer for storing object temperature result measure in Celsius.
- *	\return 				Status value, one of DHI2C_STATUS enum.
+ * @brief Measure temperature one time.
+ * @param[in] sda Pin for I2C's SDA. Can be DH_I2C_NO_PIN.
+ * @param[in] scl Pin for I2C's SCL. Can be DH_I2C_NO_PIN.
+ * @param[out] ambient Pointer for storing ambient temperature result measure in Celsius.
+ * @param[out] object Pointer for storing object temperature result measure in Celsius.
+ * @return Status value, one of DH_I2C_Status enum.
  */
-DHI2C_STATUS mlx90614_read(int sda, int scl, float *ambient, float *object);
+int mlx90614_read(int sda, int scl, float *ambient, float *object);
+
 
 /**
- *	\brief					Set sensor address which should be used while reading.
- *	\param[in]	address		Pin for I2C's SDA.
+ * @brief Set sensor address which should be used while reading.
+ * @param[in] address I2C end device address.
  */
 void mlx90614_set_address(int address);
 
-#endif /* SOURCES_DEVICES_MLX90614_H_ */
+#endif /* DH_DEVICE_MLX90614 */
+#endif /* _DEVICES_MLX90614_H_ */

@@ -8,10 +8,10 @@
  * Description: utils for firmware
  *
  */
-
-#include <c_types.h>
-#include <osapi.h>
 #include "dhutils.h"
+
+#include <osapi.h>
+#include <ets_forward.h>
 
 int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 	float res = 0.0f;
@@ -20,15 +20,15 @@ int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 	char found = 0;
 	int pos = 0;
 	while (1) {
-		if (ptr[pos] == '+') {
+		if(ptr[pos] == '+') {
 			sign = 1.0f;
-		} else if (ptr[pos] == '-') {
+		} else if(ptr[pos] == '-') {
 			sign = -1.0f;
-		} else if (ptr[pos] == '.' || ptr[pos] == ',') {
+		} else if(ptr[pos] == '.' || ptr[pos] == ',') {
 			fract = 0.1f;
-		} else if (ptr[pos] >= '0' && ptr[pos] <= '9') {
+		} else if(ptr[pos] >= '0' && ptr[pos] <= '9') {
 			const unsigned char v = ptr[pos] - 0x30;
-			if (fract == 1.0L) {
+			if(fract == 1.0L) {
 				res *= 10.0f;
 				res += v;
 			} else {
@@ -37,7 +37,7 @@ int ICACHE_FLASH_ATTR strToFloat(const char *ptr, float *result) {
 			}
 			found = 1;
 		} else {
-			if (found) {
+			if(found) {
 				*result = res * sign;
 				return pos;
 			}
@@ -86,84 +86,79 @@ int ICACHE_FLASH_ATTR strToInt(const char *ptr, int *result) {
 	return pos;
 }
 
-int ICACHE_FLASH_ATTR byteToHex(unsigned char byte, char *hexout) {
-	const unsigned char b0 = byte / 0x10;
-	const unsigned char b1 = byte & 0xF;
-	hexout[0] = (b0 < 10) ? b0 + '0' : (b0 - 10 + 'A');
-	hexout[1] = (b1 < 10) ? b1 + '0' : (b1 - 10 + 'A');
+/*
+ * byteToHex() implementation.
+ */
+int ICACHE_FLASH_ATTR byteToHex(uint8_t val, char *hex_out)
+{
+	const int b0 = (val >> 4) & 0x0F; // high nibble
+	const int b1 =  val       & 0x0F; // low nibble
+
+	// WARNING: there is no (hex_out != 0) check!
+	hex_out[0] = (b0 < 10) ? (b0 + '0') : (b0 - 10 + 'A');
+	hex_out[1] = (b1 < 10) ? (b1 + '0') : (b1 - 10 + 'A');
+
 	return 2;
 }
 
-LOCAL int ICACHE_FLASH_ATTR hexchar(const char c) {
-	if (c > 0x60) {
-		if(c > 0x66)
-			return -1;
-		return c - 0x57;
-	} else if (c > 0x40) {
-		if (c > 0x46)
-			return -1;
-		return c - 0x37;
-	} else if (c > 0x2F) {
-		if (c > 0x39)
-			return -1;
-		return c - 0x30;
-	} else
-		return -1;
+
+/**
+ * @brief Convert hexadecimal character into nibble.
+ *
+ * [Nibble](https://en.wikipedia.org/wiki/Nibble) is a 4-bits value.
+ *
+ * - ['A'..'Z'] are converted to [10..15]
+ * - ['a'..'z'] are converted to [10..15]
+ * - ['0'..'9'] are converted to [0..9]
+ *
+ * @param[in] ch Character to convert.
+ * @return Decimal value in range [0..15] or `-1` in case of error.
+ */
+static inline int hex2nibble(int ch)
+{
+	if ('a' <= ch && ch <= 'f')
+		return ch - 'a' + 10;
+	if ('A' <= ch && ch <= 'F')
+		return ch - 'A' + 10;
+	if ('0' <= ch && ch <= '9')
+		return (ch - '0');
+
+	return -1; // unknown character
 }
 
-int ICACHE_FLASH_ATTR hexToByte(const char *hex, unsigned char *byteout) {
-	const int b0 = hexchar(hex[0]);
-	if(b0 != -1) {
-		const int b1 = hexchar(hex[1]);
-		if(b1 == -1) {
-			*byteout = b0;
-			return 1;
-		} else {
-			*byteout = b0 * 0x10 + b1;
-			return 2;
-		}
+
+/*
+ * hexToByte() implementation.
+ */
+int ICACHE_FLASH_ATTR hexToByte(const char *hex, uint8_t *val_out)
+{
+	// high nibble
+	const int b0 = hex2nibble(hex[0]);
+	if (b0 < 0)
+		return 0;
+
+	// low nibble
+	const int b1 = hex2nibble(hex[1]);
+	if (b1 < 0) {
+		*val_out = b0; // WARNING: no (val_out != 0) check
+		return 1;
 	}
-	return 0;
+
+	// WARNING: no (val_out != 0) check
+	*val_out = (b0<<4) | b1;
+	return 2;
 }
+
 
 const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned short len) {
 	unsigned short pos = sizeof(uint32);
-	if (len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
+	if(len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
 		while (pos < len)
-			if (data[pos++] == ' ')
+			if(data[pos++] == ' ')
 				break;
 		return &data[pos];
 	}
 	return NULL;
-}
-
-unsigned int ICACHE_FLASH_ATTR unsignedInt16be(const char *buf, int pos) {
-	return ((int)buf[pos] * 0x100 + (int)buf[pos + 1]);
-}
-
-int ICACHE_FLASH_ATTR signedInt16be(const char *buf, int pos) {
-	int r = unsignedInt16be(buf, pos);
-	if (r <= 0x7FFF)
-		return r;
-	return r - 0x10000;
-}
-
-int ICACHE_FLASH_ATTR signedInt16be_sm(const char *buf, int pos) {
-	int r = unsignedInt16be(buf, pos);
-	if (r <= 0x7FFF)
-		return r;
-	return -(r & 0x7FFF);
-}
-
-unsigned int ICACHE_FLASH_ATTR unsignedInt16le(const char *buf, int pos) {
-	return ((int)buf[pos] + (int)buf[pos + 1] * 0x100);
-}
-
-int ICACHE_FLASH_ATTR signedInt16le(const char *buf, int pos) {
-	int r = unsignedInt16le(buf, pos);
-	if (r <= 0x7FFF)
-		return r;
-	return r - 0x10000;
 }
 
 void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {
@@ -173,8 +168,4 @@ void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {
 	}
 	if(ms)
 		os_delay_us(ms * 1000);
-}
-
-unsigned char ICACHE_FLASH_ATTR bitwise_reverse_byte(unsigned char v) {
-	return ((v * 0x0802LU & 0x22110LU) | (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
 }

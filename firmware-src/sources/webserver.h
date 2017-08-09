@@ -12,6 +12,6 @@
 /**
  *	\brief		Initialize web server
  */
-void webserver_init();
+void webserver_init(void);
 
 #endif /* WEBSERVER_H_ */

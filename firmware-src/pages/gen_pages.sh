@@ -26,7 +26,7 @@ for file in $FILE_LIST; do
     filename=$(basename "$file")
     echo "Parsing $filename ..."
     name=${filename/./_}
-    data=$(od -An -v -t x1 $file| sed "s/ /\\\x/g" | tr -d '\n')
+    data=$(od -An -v -t x1 $file|tr -d '\n' | sed -E "s/( +)([[:xdigit:]]{2})/\\\x\2/g")
     print "RO_DATA char $name[] = \"$data\";"
     index="$index$comma {\"$filename\", $name, sizeof($name) - 1}"
     comma=", "

@@ -8,18 +8,20 @@
  * Description: Queue for dhsender
  *
  */
+#include "dhsender_queue.h"
+#include "user_config.h"
+#include "dhdebug.h"
+#include "snprintf.h"
+#include "dhmem.h"
+#include "dhsender_data.h"
 
 #include <c_types.h>
 #include <ets_sys.h>
 #include <osapi.h>
 #include <mem.h>
-#include "dhsender_queue.h"
-#include "user_config.h"
-#include "dhdebug.h"
-#include "dhgpio.h"
-#include "snprintf.h"
-#include "dhmem.h"
-#include "dhsender_data.h"
+#include <user_interface.h>
+#include <ets_forward.h>
+#include <mem.h>
 
 LOCAL const char STATUS_OK[] = "OK";
 LOCAL const char STATUS_ERROR[] = "Error";
@@ -49,7 +51,7 @@ int ICACHE_FLASH_ATTR dhsender_queue_add(REQUEST_TYPE type, REQUEST_NOTIFICATION
 	ETS_INTR_LOCK();
 	if(mQueueAddPos == mQueueTakePos) {
 		ETS_INTR_UNLOCK();
-		dhdebug("ERROR: no space for request");
+		dhdebug("ERROR: No space in queue");
 		return 0;
 	}
 	mQueue[mQueueAddPos].id = id;
@@ -71,7 +73,7 @@ int ICACHE_FLASH_ATTR dhsender_queue_add(REQUEST_TYPE type, REQUEST_NOTIFICATION
 	return 1;
 }
 
-int ICACHE_FLASH_ATTR dhsender_queue_take(HTTP_REQUEST *out, unsigned int *is_notification) {
+int ICACHE_FLASH_ATTR dhsender_queue_take(SENDER_JSON_DATA *out, unsigned int *is_notification) {
 	if(mQueueTakePos < 0)
 		return 0;
 	ETS_INTR_LOCK();
@@ -89,52 +91,79 @@ int ICACHE_FLASH_ATTR dhsender_queue_take(HTTP_REQUEST *out, unsigned int *is_no
 	if(mQueueSize < MEM_RECOVER_THRESHOLD && dhmem_isblock())
 		dhmem_unblock();
 
-	char buf[HTTP_REQUEST_MIN_ALLOWED_PAYLOAD];
-	if(dhsender_data_to_json(buf, sizeof(buf),
-			item.notification_type == RNT_NOTIFICATION_GPIO, item.data_type,
-			&item.data, item.data_len, item.pin) < 0) {
-		snprintf(buf, sizeof(buf), "Failed to convert data to json");
-		item.type = RT_RESPONCE_ERROR;
-	}
-
 	*is_notification = 0;
+	unsigned int pos = 0;
 	switch(item.type) {
 		case RT_RESPONCE_OK:
 		case RT_RESPONCE_ERROR:
-			dhrequest_create_update(out, item.id, (item.type == RT_RESPONCE_OK) ? STATUS_OK : STATUS_ERROR, buf);
+			pos = snprintf(out->json, sizeof(out->json),
+					"{"
+						"\"action\":\"command/update\","
+					 	"\"deviceId\":\"%s\","
+						"\"commandId\":%d,"
+						"\"command\":{"
+							"\"status\":\"%s\","
+							"\"result\":"
+					, dhsettings_get_devicehive_deviceid(), item.id,
+					(item.type == RT_RESPONCE_OK) ? STATUS_OK : STATUS_ERROR);
 			break;
 		case RT_NOTIFICATION:
+		{
+			char *notification_name = NULL;
 			*is_notification = 1;
 			switch(item.notification_type) {
 			case RNT_NOTIFICATION_GPIO:
-				dhrequest_create_notification(out, "gpio/int", buf);
+				notification_name = "gpio/int";
 				break;
 			case RNT_NOTIFICATION_ADC:
-				dhrequest_create_notification(out, "adc/int", buf);
+				notification_name = "adc/int";
 				break;
 			case RNT_NOTIFICATION_UART:
-				dhrequest_create_notification(out, "uart/int", buf);
+				notification_name = "uart/int";
 				break;
 			case RNT_NOTIFICATION_ONEWIRE:
-				dhrequest_create_notification(out, "onewire/master/int", buf);
+				notification_name = "onewire/master/int";
 				break;
 			default:
 				dhdebug("ERROR: Unknown notification type of request %d", item.notification_type);
 				return 0;
 			}
+			pos = snprintf(out->json, sizeof(out->json),
+					"{"
+					    "\"action\":\"notification/insert\","
+					    "\"deviceId\":\"%s\","
+					    "\"notification\": {"
+					        "\"notification\":\"%s\","
+					        "\"parameters\":"
+					, dhsettings_get_devicehive_deviceid(), notification_name);
 			break;
+		}
 		default:
 			dhdebug("ERROR: Unknown type of request %d", item.type);
 			return 0;
 	}
+
+	int rl = dhsender_data_to_json(&out->json[pos], sizeof(out->json) - pos,
+			item.notification_type == RNT_NOTIFICATION_GPIO, item.data_type,
+			&item.data, item.data_len, item.pin);
+	if(item.data_type == RDT_JSON_MALLOC_PTR)
+		os_free((void*)item.data.string);
+	if(rl < 0) {
+		pos += snprintf(&out->json[pos], sizeof(out->json) - pos, "Failed to convert data to json");
+		item.type = RT_RESPONCE_ERROR;
+	}
+	pos += rl;
+
+	pos += snprintf(&out->json[pos], sizeof(out->json) - pos, "}}");
+	out->jsonlen = pos;
 	return 1;
 }
 
-unsigned int ICACHE_FLASH_ATTR dhsender_queue_length() {
+unsigned int ICACHE_FLASH_ATTR dhsender_queue_length(void) {
 	return mQueueSize;
 }
 
-void ICACHE_FLASH_ATTR dhsender_queue_init() {
+void ICACHE_FLASH_ATTR dhsender_queue_init(void) {
 	mQueueMaxSize = (system_get_free_heap_size() - MEMORY_RESERVER) / sizeof(DHSENDER_QUEUE);
 	if(mQueueMaxSize > MAX_QUEUE_LENGTH)
 		mQueueMaxSize = MAX_QUEUE_LENGTH;

@@ -8,30 +8,29 @@
  * Description: Memory observer module
  *
  */
-
-#define DHREQUEST_RAM_RESERVE 7168
-#define DHRECOVER_RAM_SIZE 12288
+#include "dhmem.h"
 
 #include <ets_sys.h>
 #include <osapi.h>
-#include <os_type.h>
-#include "dhmem.h"
-#include "dhdebug.h"
-#include "dhsender_queue.h"
+#include <ets_forward.h>
 
-LOCAL unsigned int mGlobalBlock = 0;
+static int mGlobalBlock = 0;
 
-void ICACHE_FLASH_ATTR dhmem_block() {
+void ICACHE_FLASH_ATTR dhmem_block(void) {
 	mGlobalBlock = 1;
 	ETS_GPIO_INTR_DISABLE();
 }
 
-void ICACHE_FLASH_ATTR dhmem_unblock() {
+void ICACHE_FLASH_ATTR dhmem_unblock(void) {
 	mGlobalBlock = 0;
 	dhmem_unblock_cb();
 	ETS_GPIO_INTR_ENABLE();
 }
 
-int ICACHE_FLASH_ATTR dhmem_isblock() {
+int ICACHE_FLASH_ATTR dhmem_isblock(void) {
 	return mGlobalBlock;
+}
+
+void ICACHE_FLASH_ATTR dhmem_unblock_cb(void) {
+	// do nothing, move this method to any module if needed
 }

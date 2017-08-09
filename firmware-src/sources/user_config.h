@@ -16,12 +16,12 @@
 /** UART speed to terminal. */
 #define UART_BAUND_RATE 115200
 /** Current firmware version. */
-#define FIRMWARE_VERSION "0.6"
+#define FIRMWARE_VERSION "0.7"
 /** Git revision */
 #ifndef FIRMWARE_GIT_REVISION
 	#define FIRMWARE_GIT_REVISION "unknown"
 #endif
-/** Buffer size for data that uses for commands which require data transmition via interfaces like UART, I2C etc. */
+/** Buffer size for data that uses for commands which require data transmission via interfaces like UART, I2C etc. */
 #define INTERFACES_BUF_SIZE 264
 /** Encode type for data field in commands. Can be DATAENCODEBASE64 or DATAENCODEHEX.*/
 #define DATAENCODEBASE64
@@ -35,5 +35,66 @@
 #define MDNS_SERVICE_NAME "_esp8266-devicehive._tcp"
 /** HTTP webserver and RESTful service port. */
 #define HTTPD_PORT 80
+
+// customize supported devices (compile time)
+#define DH_DEVICE_DS18B20
+#define DH_DEVICE_DHT11
+#define DH_DEVICE_DHT22
+#define DH_DEVICE_BMP180
+#define DH_DEVICE_BMP280
+#define DH_DEVICE_BH1750
+#define DH_DEVICE_MPU6050
+#define DH_DEVICE_HMC5883L
+#define DH_DEVICE_PCF8574
+#define DH_DEVICE_PCF8574_HD44780
+#define DH_DEVICE_MHZ19
+#define DH_DEVICE_LM75
+#define DH_DEVICE_SI7021
+#define DH_DEVICE_ADS1115
+#define DH_DEVICE_PCF8591
+#define DH_DEVICE_MCP4725
+#define DH_DEVICE_INA219
+#define DH_DEVICE_MFRC522
+#define DH_DEVICE_PCA9685
+#define DH_DEVICE_MLX90614
+#define DH_DEVICE_MAX6675
+#define DH_DEVICE_MAX31855
+#define DH_DEVICE_TM1637
+
+// customize device commands (compile time)
+#define DH_COMMANDS_DS18B20
+#define DH_COMMANDS_DHT11
+#define DH_COMMANDS_DHT22
+#define DH_COMMANDS_BMP180
+#define DH_COMMANDS_BMP280
+#define DH_COMMANDS_BH1750
+#define DH_COMMANDS_MPU6050
+#define DH_COMMANDS_HMC5883L
+#define DH_COMMANDS_PCF8574
+#define DH_COMMANDS_PCF8574_HD44780
+#define DH_COMMANDS_MHZ19
+#define DH_COMMANDS_LM75
+#define DH_COMMANDS_SI7021
+#define DH_COMMANDS_ADS1115
+#define DH_COMMANDS_PCF8591
+#define DH_COMMANDS_MCP4725
+#define DH_COMMANDS_INA219
+#define DH_COMMANDS_MFRC522
+#define DH_COMMANDS_PCA9685
+#define DH_COMMANDS_MLX90614
+#define DH_COMMANDS_MAX6675
+#define DH_COMMANDS_MAX31855
+#define DH_COMMANDS_TM1637
+
+// customize command set (compile time)
+#define DH_COMMANDS_GPIO     // enable GPIO commands
+#define DH_COMMANDS_ADC      // enable ADC commands
+#define DH_COMMANDS_PWM      // enable PWM commands
+#define DH_COMMANDS_UART     // enable UART commands
+#define DH_COMMANDS_I2C      // enable I2C commands
+#define DH_COMMANDS_SPI      // enable SPI commands
+#define DH_COMMANDS_ONEWIRE  // enable onewire commands
+
+// TODO: customize device list
 
 #endif /* _USER_CONFIG_H_ */

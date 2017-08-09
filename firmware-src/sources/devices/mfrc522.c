@@ -4,11 +4,15 @@
 * Released into the public domain.
 */
 
-#include "mfrc522.h"
-#include <osapi.h>
-#include "dhspi.h"
+#include "devices/mfrc522.h"
+#include "DH/spi.h"
 #include "dhdebug.h"
 #include "snprintf.h"
+
+#include <osapi.h>
+#include <ets_forward.h>
+
+#if defined(DH_DEVICE_MFRC522)
 
 static int _chipSelectPin = 15;		// pin connected to MFRC522's SPI slave select input (Pin 24, NSS, active low)
 // Member variables
@@ -19,7 +23,7 @@ MFRC522_StatusCode MFRC522_MIFARE_TwoStepHelper(uint8_t command, uint8_t blockAd
 // Functions for setting up ESP8266
 /////////////////////////////////////////////////////////////////////////////////////
 MFRC522_StatusCode ICACHE_FLASH_ATTR MFRC522_Set_CS(int pin) {
-	if(dhspi_set_cs_pin(pin)) {
+	if(0 == dh_spi_set_cs_pin(pin)) {
 		_chipSelectPin = pin;
 		return MFRC522_STATUS_OK;
 	}
@@ -42,11 +46,11 @@ void ICACHE_FLASH_ATTR MFRC522_PCD_WriteRegister(	uint8_t reg,		///< The registe
 									uint8_t value		///< The value to write.
 								) {
 	uint8_t buf;
-	dhspi_set_cs_pin(_chipSelectPin);
-	dhspi_set_mode(0);
+	dh_spi_set_cs_pin(_chipSelectPin);
+	dh_spi_set_mode(DH_SPI_CPOL0CPHA0);
 	buf = reg & 0x7E; // MSB == 0 is for writing. LSB is not used in address. Datasheet section 8.1.2.3.
-	dhspi_write(&buf, 1, 0);
-	dhspi_write(&value, 1, 1);
+	dh_spi_write(&buf, 1, 0);
+	dh_spi_write(&value, 1, 1);
 } // End MFRC522_PCD_WriteRegister()
 
 /**
@@ -58,12 +62,12 @@ void ICACHE_FLASH_ATTR MFRC522_PCD_WriteRegister_n(	uint8_t reg,		///< The regis
 									uint8_t *values	///< The values to write. Byte array.
 								) {
 	uint8_t buf;
-	dhspi_set_cs_pin(_chipSelectPin);
-	dhspi_set_mode(0);
+	dh_spi_set_cs_pin(_chipSelectPin);
+	dh_spi_set_mode(DH_SPI_CPOL0CPHA0);
 	buf = reg & 0x7E; // MSB == 0 is for writing. LSB is not used in address. Datasheet section 8.1.2.3.
-	dhspi_write(&buf, 1, 0);
-	dhspi_write(values, count - 1, 0);
-	dhspi_write(&values[count - 1], 1, 1);
+	dh_spi_write(&buf, 1, 0);
+	dh_spi_write(values, count - 1, 0);
+	dh_spi_write(&values[count - 1], 1, 1);
 } // End MFRC522_PCD_WriteRegister()
 
 /**
@@ -73,11 +77,11 @@ void ICACHE_FLASH_ATTR MFRC522_PCD_WriteRegister_n(	uint8_t reg,		///< The regis
 uint8_t ICACHE_FLASH_ATTR MFRC522_PCD_ReadRegister(	uint8_t reg	///< The register to read from. One of the PCD_Register enums.
 								) {
 	uint8_t buf;
-	dhspi_set_cs_pin(_chipSelectPin);
-	dhspi_set_mode(0);
+	dh_spi_set_cs_pin(_chipSelectPin);
+	dh_spi_set_mode(DH_SPI_CPOL0CPHA0);
 	buf = 0x80 | (reg & 0x7E);			// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
-	dhspi_write(&buf, 1, 0);
-	dhspi_read(&buf, 1);
+	dh_spi_write(&buf, 1, 0);
+	dh_spi_read(&buf, 1);
 	return buf;
 } // End MFRC522_PCD_ReadRegister()
 
@@ -96,11 +100,11 @@ void ICACHE_FLASH_ATTR MFRC522_PCD_ReadRegister_n(	uint8_t reg,		///< The regist
 	//Serial.print(F("Reading ")); 	Serial.print(count); Serial.println(F(" uint8_ts from register."));
 	uint8_t address = 0x80 | (reg & 0x7E);		// MSB == 1 is for reading. LSB is not used in address. Datasheet section 8.1.2.3.
 	uint8_t index = 0;							// Index in values array.
-	dhspi_set_mode(0);	// Set the settings to work with SPI bus
-	dhspi_set_cs_pin(_chipSelectPin);		// Select slave
+	dh_spi_set_mode(DH_SPI_CPOL0CPHA0);	// Set the settings to work with SPI bus
+	dh_spi_set_cs_pin(_chipSelectPin);		// Select slave
 	count--;								// One read is performed outside of the loop
 
-	dhspi_write(&address, 1, 0);					// Tell MFRC522 which address we want to read
+	dh_spi_write(&address, 1, 0);					// Tell MFRC522 which address we want to read
 	while (index < count) {
 		if (index == 0 && rxAlign) {		// Only update bit positions rxAlign..7 in values[0]
 			// Create bit mask for bit positions rxAlign..7
@@ -111,18 +115,18 @@ void ICACHE_FLASH_ATTR MFRC522_PCD_ReadRegister_n(	uint8_t reg,		///< The regist
 			}
 			// Read value and tell that we want to read the same address again.
 			uint8_t value;
-			dhspi_read(&value, 1);
-			dhspi_write(&address, 1, 0);
+			dh_spi_read(&value, 1);
+			dh_spi_write(&address, 1, 0);
 			// Apply mask to both current value of values[0] and the new data in value.
 			values[0] = (values[index] & ~mask) | (value & mask);
 		}
 		else { // Normal case
-			dhspi_read(&values[index], 1);
-			dhspi_write(&address, 1, 0);
+			dh_spi_read(&values[index], 1);
+			dh_spi_write(&address, 1, 0);
 		}
 		index++;
 	}
-	dhspi_read(&values[index], 1);			// Read the final uint8_t.
+	dh_spi_read(&values[index], 1);			// Read the final uint8_t.
 } // End MFRC522_PCD_ReadRegister()
 
 /**
@@ -194,8 +198,8 @@ MFRC522_StatusCode ICACHE_FLASH_ATTR MFRC522_PCD_CalculateCRC(	uint8_t *data,		/
  */
 void ICACHE_FLASH_ATTR MFRC522_PCD_Init() {
 	// Set the chipSelectPin as digital output, do not select the slave yet
-	dhspi_set_cs_pin(_chipSelectPin);
-	dhspi_set_mode(0);
+	dh_spi_set_cs_pin(_chipSelectPin);
+	dh_spi_set_mode(DH_SPI_CPOL0CPHA0);
 
 	// When communicating with a PICC we need a timeout if something goes wrong.
 	// f_timer = 13.56 MHz / (2*TPreScaler+1) where TPreScaler = [TPrescaler_Hi:TPrescaler_Lo].
@@ -342,12 +346,9 @@ bool ICACHE_FLASH_ATTR MFRC522_PCD_PerformSelfTest() {
 	}
 	
 	// Verify that the results match up to our expectations
-	for (i = 0; i < 64; i++) {
-		if (result[i] != irom_char(&(reference[i]))) {
-			return false;
-		}
-	}
-	
+    if (0 != irom_cmp(result, 64, reference))
+		return false;
+
 	// Test passed; all is good.
 	return true;
 } // End PCD_PerformSelfTest()
@@ -1431,7 +1432,7 @@ void ICACHE_FLASH_ATTR MFRC522_PICC_DumpMifareClassicSectorToSerial(MFRC522_Uid 
 	// The four CX bits are stored together in a nible cx and an inverted nible cx_.
 	uint8_t c1, c2, c3;		// Nibbles
 	uint8_t c1_, c2_, c3_;		// Inverted nibbles
-	bool invertedError;		// True if one of the inverted nibbles did not match
+	bool invertedError = false;		// True if one of the inverted nibbles did not match
 	uint8_t g[4];				// Access bits for each of the four groups.
 	uint8_t group;				// 0-3 - active group for access bits
 	bool firstInGroup;		// True for the first block dumped in the group
@@ -1702,7 +1703,7 @@ bool ICACHE_FLASH_ATTR MFRC522_MIFARE_SetUid(uint8_t *newUid, uint8_t uidSize, b
 	}
 	
 	// Authenticate for reading
-	MIFARE_Key key = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+	MIFARE_Key key = {.keyByte = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}};
 	MFRC522_StatusCode status = MFRC522_PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, (uint8_t)1, &key, &uid);
 	if (status != MFRC522_STATUS_OK) {
 		
@@ -1835,3 +1836,5 @@ bool ICACHE_FLASH_ATTR MFRC522_PICC_ReadCardSerial() {
 	MFRC522_StatusCode result = MFRC522_PICC_Select(&uid, 0);
 	return (result == MFRC522_STATUS_OK);
 } // End 
+
+#endif /* DH_DEVICE_MFRC522 */

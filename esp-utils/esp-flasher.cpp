@@ -53,20 +53,24 @@ void SerialPortError(SerialPort */*port*/,const char *text) {
 uint8_t recivedBuf[4096];
 unsigned int recivedPos = 0;
 bool recivedEscape = false;
+SerialPort *mCurrentPort = NULL;
+
 void SerialPortRecieved(SerialPort *port, const char *text, unsigned int len) {
+	if(mCurrentPort && mCurrentPort != port)
+		return;
 	for (unsigned int i = 0; i < len; i++) {
 		uint8_t c = text[i];
 		//printf("0x%02X \r\n", (uint32_t)c);
-		if (recivedPos >= sizeof(recivedBuf))
+		if(recivedPos >= sizeof(recivedBuf))
 			break;
-		if (recivedEscape) {
-			if (c == 0xdc) {
+		if(recivedEscape) {
+			if(c == 0xdc) {
 				recivedBuf[recivedPos++] = 0xc0;
-			} else if (c == 0xdd) {
+			} else if(c == 0xdd) {
 				recivedBuf[recivedPos++] = 0xdb;
 			}
 			recivedEscape = false;
-		} else if (c == 0xdb) {
+		} else if(c == 0xdb) {
 			recivedEscape = true;
 		} else {
 			recivedBuf[recivedPos++] = c;
@@ -114,15 +118,15 @@ bool flash_send(SerialPort *port, ESP_REQUEST_HEADER *hdr, void *body, bool prin
 	oBuf[oBufPos++] = 0xc0;
 	for (unsigned int i = 0; i < sizeof(ESP_REQUEST_HEADER) + hdr->size; i++) {
 		uint8_t c;
-		if (i >= sizeof(ESP_REQUEST_HEADER)) {
+		if(i >= sizeof(ESP_REQUEST_HEADER)) {
 			c = ((uint8_t *) body)[i - sizeof(ESP_REQUEST_HEADER)];
 		} else {
 			c = hdrp[i];
 		}
-		if (c == 0xdb) {
+		if(c == 0xdb) {
 			oBuf[oBufPos++] = 0xdb;
 			oBuf[oBufPos++] = 0xdd;
-		} else if (c == 0xc0) {
+		} else if(c == 0xc0) {
 			oBuf[oBufPos++] = 0xdb;
 			oBuf[oBufPos++] = 0xdc;
 		} else {
@@ -137,30 +141,30 @@ bool flash_send(SerialPort *port, ESP_REQUEST_HEADER *hdr, void *body, bool prin
 //	printf("\r\n");
 
 	port->send(oBuf, oBufPos);
-	if (!port->waitAnswer(5, TIMEOUT)) {
+	if(!port->waitAnswer(5, TIMEOUT)) {
 		if(printErrors)
 			printf("\r\nNo answer from device\r\n");
 		return false;
 	}
-	if (recivedBuf[0] != 0xc0 && recivedBuf[1] != 0x01
+	if(recivedBuf[0] != 0xc0 && recivedBuf[1] != 0x01
 			&& recivedBuf[1] != hdr->command) {
 		if(printErrors)
 			printf("\r\nWrong answer\r\n");
 		return false;
 	}
 	uint32_t asize = (uint32_t) recivedBuf[3] | (uint32_t) (recivedBuf[4] << 8);
-	if (!port->waitAnswer(asize + 10, TIMEOUT)) {
+	if(!port->waitAnswer(asize + 10, TIMEOUT)) {
 		if(printErrors)
 			printf("\r\nAnswer not completed\r\n");
 		return false;
 	}
 	port->waitTransmitionEnd(100);
-	if (asize != 2 || recivedBuf[asize + 9] != 0xc0) {
+	if(asize != 2 || recivedBuf[asize + 9] != 0xc0) {
 		if(printErrors)
 			printf("\r\nWrong body length\r\n");
 		return false;
 	}
-	if (recivedBuf[asize + 7] != 0x0) {
+	if(recivedBuf[asize + 7] != 0x0) {
 		if(printErrors)
 			printf("\r\nOperation 0x%02X failed, code: 0x%02X\r\n", recivedBuf[2],
 				recivedBuf[asize + 8]);
@@ -176,7 +180,7 @@ bool flash_start(SerialPort *port, uint32_t blocks_count, uint32_t size, uint32_
 	// workaround for SPIEraseArea
 	const uint32_t sectors_count = ceil((double) size / (double) ESP_SECTOR_SIZE);
 	uint32_t fix = 16  - address / ESP_SECTOR_SIZE % 16;
-	if (sectors_count < fix)
+	if(sectors_count < fix)
 		fix = sectors_count;
 
 	pbody[0] = htole32(((sectors_count < 2 * fix) ? (sectors_count + 1) / 2 : (sectors_count - fix)) * ESP_SECTOR_SIZE);
@@ -189,7 +193,7 @@ bool flash_start(SerialPort *port, uint32_t blocks_count, uint32_t size, uint32_
 	rh.size = htole16(sizeof(pbody));
 	rh.cs = esp_checksum(pbody, sizeof(pbody));
 
-	if (!flash_send(port, &rh, &pbody, true))
+	if(!flash_send(port, &rh, &pbody, true))
 		return false;
 
 	return true;
@@ -197,14 +201,14 @@ bool flash_start(SerialPort *port, uint32_t blocks_count, uint32_t size, uint32_
 
 /* Data should be aligned  per 4096 bytes */
 bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address) {
-	if (size % 4096 || address % 4096) {
+	if(size % 4096 || address % 4096) {
 		printf("\r\nINTERNAL ERROR: data isn't align by 4096 bytes - %d\r\n", size);
 		return false;
 	}
 	uint32_t blocks_count = ceil((double) size / (double) ESP_BLOCK_SIZE);
 	ESP_REQUEST_HEADER rh;
 
-	if (!flash_start(port, blocks_count, size, address)) {
+	if(!flash_start(port, blocks_count, size, address)) {
 		printf("\r\nFailed to enter flash mode\r\n");
 		return false;
 	}
@@ -219,7 +223,7 @@ bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address)
 		data32[2] = 0;
 		data32[3] = 0;
 		uint32_t bl = size - seq * ESP_BLOCK_SIZE;
-		if (bl < ESP_BLOCK_SIZE) {
+		if(bl < ESP_BLOCK_SIZE) {
 			memcpy(data, &buf[seq * ESP_BLOCK_SIZE], bl);
 			memset(&data[bl], 0xff, ESP_BLOCK_SIZE - bl);
 		} else {
@@ -229,7 +233,7 @@ bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address)
 		rh.command = 0x03; // flash data
 		rh.size = htole16(sizeof(buffer));
 		rh.cs = esp_checksum(data, ESP_BLOCK_SIZE);
-		if (!flash_send(port, &rh, buffer, true)) {
+		if(!flash_send(port, &rh, buffer, true)) {
 			printf("\r\nFailed to flash\r\n");
 			return false;
 		}
@@ -241,7 +245,7 @@ bool flash_mem(SerialPort *port, uint8_t * buf, uint32_t size, uint32_t address)
 bool flash_file(SerialPort *port, char *file, uint32_t address, char *incremental) {
 	const uint32_t FLASH_ALIGN = 4096;
 	FILE* fd = fopen(file, "rb");
-	if (!fd) {
+	if(!fd) {
 		printf("\r\nFailed to open file %s\r\n", file);
 		return false;
 	}
@@ -257,7 +261,7 @@ bool flash_file(SerialPort *port, char *file, uint32_t address, char *incrementa
 
 	unsigned int rb = fread(data, 1, size, fd);
 	fclose (fd);
-	if (rb != size) {
+	if(rb != size) {
 		delete [] data;
 		printf("\r\nFailed to read image file\r\n");
 		return false;
@@ -348,7 +352,7 @@ bool flash_done(SerialPort *port) {
 	rh.command = 0x04; // flash done
 	rh.size = htole16(sizeof(reboot));
 	rh.cs = esp_checksum(&reboot, sizeof(reboot));
-	if (!flash_send(port, &rh, &reboot, true)) {
+	if(!flash_send(port, &rh, &reboot, true)) {
 		printf("\r\nFailed to finish flash\r\n");
 		return false;
 	}
@@ -366,7 +370,7 @@ bool flash_sync(SerialPort *port, bool printErrors) {
 	rh.command = 0x08; // sync
 	rh.size = htole16(sizeof(body));
 	rh.cs = esp_checksum((void*)body, sizeof(body));
-	if (!flash_send(port, &rh, (void*)body, printErrors)) {
+	if(!flash_send(port, &rh, (void*)body, printErrors)) {
 		if(printErrors)
 			printf("\r\nFailed to sync device\r\n");
 		return false;
@@ -449,27 +453,37 @@ int main(int argc, char* argv[]) {
 	} else {
 		TIMEOUT = AUTODETECT_TIMEOUT;
 		printf("Detecting device...\r\n");
-		for(uint32_t j = 0; j < AUTODETECT_MAX_SYNC_ATTEMPS; j++) {
-			for(uint32_t i = 0; i < AUTODETECT_MAX_PORT; i++) {
-				const char *name = SerialPort::findNextPort(false);
-				if(name[0] == 0)
-					break;
-				port = SerialPort::open(name);
-				if(port) {
-					if(flash_sync(port, false)) {
-						printf("Device found on %s and successfully synced\r\n", name);
-						SerialPort::findNextPort(true);
-						goto portfound;
+		SerialPort *ports[AUTODETECT_MAX_PORT];
+		for (uint32_t i = 0; i < AUTODETECT_MAX_PORT; i++) {
+			ports[i] = NULL;
+		}
+		port = NULL;
+		for(uint32_t j = 0; port == NULL && j < AUTODETECT_MAX_SYNC_ATTEMPS; j++) {
+			for(uint32_t i = 0; port == NULL && i < AUTODETECT_MAX_PORT; i++) {
+				if (!ports[i]) {
+					const char *name = SerialPort::findNextPort(false);
+					if(name[0] == 0)
+						break;
+					ports[i] = SerialPort::open(name);
+				}
+				if (ports[i]) {
+					mCurrentPort = ports[i];
+					if (flash_sync(ports[i], false)) {
+						printf("Device found on %s and successfully synced\r\n", ports[i]->getName());
+						port = ports[i];
 					}
-					if(j == 0)
-						force_flash_mode(port);
-					delete port;
-					port = NULL;
+					if(j == 0 && port == NULL)
+						force_flash_mode(ports[i]);
+					mCurrentPort = NULL;
 				}
 			}
-			SerialPort::findNextPort(true);
 		}
-		portfound:
+		SerialPort::findNextPort(true);
+		for (uint32_t i = 0; i < AUTODETECT_MAX_PORT; i++) {
+			if (ports[i] && ports[i] != port) {
+				delete ports[i];
+			}
+		}
 		TIMEOUT = FLASHING_TIMEOUT;
 		if(!port) {
 			printf( "Can not detect port. Check if device connected and driver is installed.\r\n" \

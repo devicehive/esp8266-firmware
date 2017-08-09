@@ -154,7 +154,7 @@ SECTIONS
   .irom0.text : ALIGN(4)
   {
     _irom0_text_start = ABSOLUTE(.);
-
+    *libm.a:(.literal .text .literal.* .text.*)
     *libmbedtls.a:(.literal .text .literal.* .text.*)
 
     *(.irom0.literal .irom.literal .irom.text.literal .irom0.text .irom.text)

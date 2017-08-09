@@ -8,27 +8,29 @@
  * Description: Module for storing settings in flash
  *
  */
+#include "dhsettings.h"
+#include "snprintf.h"
+#include "crc32.h"
+#include "dhdebug.h"
 
 #include <c_types.h>
 #include <osapi.h>
 #include <spi_flash.h>
 #include <mem.h>
-#include "dhsettings.h"
-#include "snprintf.h"
-#include "crc32.h"
-#include "dhdebug.h"
+#include <user_interface.h>
+#include <ets_forward.h>
 
 // using main and backup storage to keep old setting in case of power loss during writing
 #define ESP_SETTINGS_MAIN_SEC   0x7A
 #define ESP_SETTINGS_BACKUP_SEC (ESP_SETTINGS_MAIN_SEC + 1)
 
 typedef struct {
+	WIFI_MODE mode;
 	char ssid[DHSETTINGS_SSID_MAX_LENGTH];
 	char password[DHSETTINGS_PASSWORD_MAX_LENGTH];
 	char server[DHSETTINGS_SERVER_MAX_LENGTH];
 	char deviceId[DHSETTINGS_DEVICEID_MAX_LENGTH];
-	char accessKey[DHSETTINGS_ACCESSKEY_MAX_LENGTH];
-	WIFI_MODE mode;
+	char key[DHSETTINGS_KEY_MAX_LENGTH];
 } DH_SETTINGS_DATA;
 
 typedef struct {
@@ -55,7 +57,7 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 	SpiFlashOpResult res;
 	res = spi_flash_read(ESP_SETTINGS_MAIN_SEC * SPI_FLASH_SEC_SIZE, (uint32 *)settings, sizeof(DH_SETTINGS));
 	int read = 1;
-	if (res != SPI_FLASH_RESULT_OK) {
+	if(res != SPI_FLASH_RESULT_OK) {
 		dhdebug("Could not read settings from main storage %d, recover from backup", res);
 		read = 0;
 	} else if(getStorageCrc(settings) != settings->crc) {
@@ -64,7 +66,7 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 	}
 	if(read == 0) {
 		res = spi_flash_read(ESP_SETTINGS_BACKUP_SEC * SPI_FLASH_SEC_SIZE, (uint32 *)settings, sizeof(DH_SETTINGS));
-		if (res != SPI_FLASH_RESULT_OK) {
+		if(res != SPI_FLASH_RESULT_OK) {
 			dhdebug("Could not read settings from backup storage %d", res);
 		} else if(getStorageCrc(settings) != settings->crc) {
 			dhdebug("Backup storage data corrupted or never saved, using empty settings");
@@ -84,12 +86,12 @@ int ICACHE_FLASH_ATTR dhsettings_init(int *exist) {
 
 LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 	int res = 1;
-	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(DH_SETTINGS));
+	DH_SETTINGS *settings = (DH_SETTINGS *)os_malloc(sizeof(*settings));
 	if(settings == NULL) {
 		dhdebug("Failed to write settings, no RAM.");
 		return 0;
 	}
-	os_memset(settings, 0x0, sizeof(DH_SETTINGS));
+	os_memset(settings, 0x0, sizeof(*settings));
 	if(data)
 		os_memcpy(&settings->data, data, sizeof(DH_SETTINGS_DATA));
 	settings->crc = getStorageCrc(settings);
@@ -118,12 +120,12 @@ LOCAL int ICACHE_FLASH_ATTR dhsettings_write(const DH_SETTINGS_DATA * data) {
 }
 
 
-int ICACHE_FLASH_ATTR dhsettings_commit() {
+int ICACHE_FLASH_ATTR dhsettings_commit(void) {
 	return dhsettings_write(&mSettingsData);
 }
 
 int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
-	os_memset(mSettingsData, 0, sizeof(mSettingsData));
+	os_memset(&mSettingsData, 0, sizeof(mSettingsData));
 	if(force) {
 		if(spi_flash_erase_sector(ESP_SETTINGS_MAIN_SEC) == SPI_FLASH_RESULT_OK &&
 				spi_flash_erase_sector(ESP_SETTINGS_BACKUP_SEC) == SPI_FLASH_RESULT_OK) {
@@ -134,28 +136,28 @@ int ICACHE_FLASH_ATTR dhsettings_clear(int force) {
 	return dhsettings_write(NULL);
 }
 
-WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode() {
+WIFI_MODE ICACHE_FLASH_ATTR dhsettings_get_wifi_mode(void) {
 	return mSettingsData.mode;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_ssid(void) {
 	return mSettingsData.ssid;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_password() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_wifi_password(void) {
 	return mSettingsData.password;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_server() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_server(void) {
 	return mSettingsData.server;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid() {
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_deviceid(void) {
 	return mSettingsData.deviceId;
 }
 
-const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_accesskey() {
-	return mSettingsData.accessKey;
+const char * ICACHE_FLASH_ATTR dhsettings_get_devicehive_key(void) {
+	return mSettingsData.key;
 }
 
 LOCAL void ICACHE_FLASH_ATTR set_arg(char *arg, size_t argSize, const char *value) {
@@ -184,8 +186,8 @@ void ICACHE_FLASH_ATTR dhsettings_set_devicehive_deviceid(const char *id) {
 	set_arg(mSettingsData.deviceId, sizeof(mSettingsData.deviceId), id);
 }
 
-void ICACHE_FLASH_ATTR dhsettings_set_devicehive_accesskey(const char *key) {
-	set_arg(mSettingsData.accessKey, sizeof(mSettingsData.accessKey), key);
+void ICACHE_FLASH_ATTR dhsettings_set_devicehive_key(const char *key) {
+	set_arg(mSettingsData.key, sizeof(mSettingsData.key), key);
 }
 
 int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
@@ -194,8 +196,9 @@ int ICACHE_FLASH_ATTR dhsettings_deviceid_filter(char c) {
 	return 0;
 }
 
-int ICACHE_FLASH_ATTR dhsettings_accesskey_filter(char c) {
-	if(c == '=' || c == '+' || c == '/' || ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
+int ICACHE_FLASH_ATTR dhsettings_key_filter(char c) {
+	if(c == '.' || c == '-' || c == '_' || c == '=' || c == '+' || c == '/' \
+			|| ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z') || ('0' <= c && c <= '9'))
 			return 1;
 	return 0;
 }

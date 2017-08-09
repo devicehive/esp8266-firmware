@@ -42,13 +42,14 @@ public:
     void setRts(bool val);
     void setDtr(bool val);
     void sleep(unsigned int ms);
+    const char *getName();
 private:
 #ifdef COMWINDOWS
     static DWORD ThreadProc (LPVOID lpdwThreadParam);
 #else
     static void * thread_start(void *arg);
 #endif
-    SerialPort(COM comport);
+    SerialPort(COM comport, const char *name);
     unsigned int write_native(const void *data, unsigned int len);
     bool read_native(const void *data, unsigned int len, unsigned int *rb);
     static unsigned int getTick();
@@ -60,6 +61,7 @@ private:
     unsigned int mBytesRecivedSinceLastSend;
     bool mReadError;
     unsigned int mLastReceived;
+    char mName[256];
 };
 
 extern void SerialPortRecieved(SerialPort *port, const char *text, unsigned int len);
