@@ -41,9 +41,13 @@ LOCAL char mBuf[PAYLOAD_BUF_SIZE + WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SI
 LOCAL char *mPayLoadBuf = &mBuf[WEBSOCKET_HEADER_MAX_SIZE + WEBSOCKET_MASK_SIZE];
 LOCAL int mPayLoadBufLen = 0;
 LOCAL os_timer_t mTimeoutTimer;
+LOCAL os_timer_t mRepeatTimer;
+
+LOCAL void ICACHE_FLASH_ATTR check_queue(void);
 
 LOCAL void ICACHE_FLASH_ATTR error() {
 	os_timer_disarm(&mTimeoutTimer);
+	os_timer_disarm(&mRepeatTimer);
 	mErrFunc();
 	dhsender_current_fail();
 }
@@ -57,6 +61,12 @@ LOCAL void ICACHE_FLASH_ATTR arm_timeout_timer(unsigned int ms) {
 	os_timer_disarm(&mTimeoutTimer);
 	os_timer_setfn(&mTimeoutTimer, (os_timer_func_t *)timeout, NULL);
 	os_timer_arm(&mTimeoutTimer, ms, 0);
+}
+
+LOCAL void ICACHE_FLASH_ATTR arm_repeat_timer() {
+	os_timer_disarm(&mRepeatTimer);
+	os_timer_setfn(&mRepeatTimer, (os_timer_func_t *)check_queue, NULL);
+	os_timer_arm(&mRepeatTimer, WEBSOCKET_CONNECTION_TIMEOUT_MS, 0);
 }
 
 LOCAL void ICACHE_FLASH_ATTR mask(void) {
@@ -97,6 +107,7 @@ LOCAL void ICACHE_FLASH_ATTR check_queue(void) {
 		mPayLoadBufLen = data->jsonlen;
 		if(send_payload())
 			dhsender_current_success();
+		arm_repeat_timer();
 	}
 }
 
@@ -163,6 +174,8 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 			return;
 		}
 
+		os_timer_disarm(&mRepeatTimer);
+
 		// here we should have JSON in data and len variables
 		mPayLoadBufLen = dhconnector_websocket_api_communicate(data, wslen, mPayLoadBuf, PAYLOAD_BUF_SIZE);
 		if(mPayLoadBufLen > 0) {
@@ -182,4 +195,5 @@ void ICACHE_FLASH_ATTR dhconnector_websocket_parse(const char *data, unsigned in
 
 void ICACHE_FLASH_ATTR dhconnector_websocket_stop() {
 	os_timer_disarm(&mTimeoutTimer);
+	os_timer_disarm(&mRepeatTimer);
 }
