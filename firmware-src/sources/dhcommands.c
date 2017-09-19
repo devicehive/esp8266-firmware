@@ -228,7 +228,7 @@ static void ICACHE_FLASH_ATTR do_handle_command_list(COMMAND_RESULT *cmd_res, co
                                                      const char *params, unsigned int params_len)
 {
 	// estimate memory space
-	int i, n = 2; // note []
+	int i, n = 15; // note {"commands":[]}
 	for (i = 0; i < NUM_OF_COMMANDS; ++i) {
 		n += os_strlen(g_command_table[i].name) + 2+1; // note ,""
 	}
@@ -242,7 +242,7 @@ static void ICACHE_FLASH_ATTR do_handle_command_list(COMMAND_RESULT *cmd_res, co
 
 	// format response
 	char *p = (char*)buf;
-	*p++ = '[';
+	p += snprintf(p, n, "%s", "{\"commands\":[");
 	for (i = 0; i < NUM_OF_COMMANDS; ++i) {
 		if (i) *p++ = ',';
 		*p++ = '"';
@@ -251,6 +251,7 @@ static void ICACHE_FLASH_ATTR do_handle_command_list(COMMAND_RESULT *cmd_res, co
 		*p++ = '"';
 	}
 	*p++ = ']';
+	*p++ = '}';
 	*p = 0; // guard
 
 	cmd_res->callback(cmd_res->data,
