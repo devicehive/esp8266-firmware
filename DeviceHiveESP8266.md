@@ -231,7 +231,9 @@ This is auxiliary command that is used to get a list of supported commands. This
 and output looks like:
 
 ```json
-[
+{
+ "commands":
+ [
   "gpio/write",
   "gpio/read",
   "gpio/int",
@@ -243,7 +245,8 @@ and output looks like:
   "uart/int",
   "uart/terminal",
   ...
-]
+ ]
+}
 ```
 
 The `command/list` command is used on the `tryapi.html` page to provide command suggestion.
