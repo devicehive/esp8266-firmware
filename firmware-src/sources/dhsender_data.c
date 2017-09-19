@@ -104,7 +104,7 @@ int ICACHE_FLASH_ATTR dhsender_data_to_json(char *buf, unsigned int buf_len,
 		case RDT_FORMAT_JSON:
 			return snprintf(buf, buf_len, "%s", data->array); // TODO: strncpy to simple string copy!
 		case RDT_CONST_STRING:
-			return snprintf(buf, buf_len, "\"%s\"", data->string);
+			return snprintf(buf, buf_len, "{\"value\":\"%s\"}", data->string);
 		case RDT_DATA_WITH_LEN:
 		{
 			const unsigned int pos = snprintf(buf, buf_len, "{\"data\":\"");
