@@ -22,7 +22,7 @@
 
 int ICACHE_FLASH_ATTR dhdata_encode(const char *data, unsigned int datalen, char *out, unsigned int outlen) {
 #ifdef DATAENCODEBASE64
-	return base64_encode(data, datalen, out, outlen);
+	return esp_base64_encode(data, datalen, out, outlen);
 #else
 	if(datalen*2 > outlen || datalen == 0)
 		return 0;
@@ -38,7 +38,7 @@ int ICACHE_FLASH_ATTR dhdata_encode(const char *data, unsigned int datalen, char
 
 int ICACHE_FLASH_ATTR dhdata_decode(const char *data, unsigned int datalen, char *out, unsigned int outlen) {
 #ifdef DATAENCODEBASE64
-	return base64_decode(data, datalen, out, outlen);
+	return esp_base64_decode(data, datalen, out, outlen);
 #else
 	if(datalen % 2 || outlen < datalen / 2 || datalen == 0)
 		return 0;
