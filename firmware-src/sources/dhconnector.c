@@ -31,6 +31,7 @@
 #define HTTP_RESPONSE_TIMEOUT_MS 60000
 LOCAL CONNECTION_STATE mConnectionState;
 LOCAL struct espconn mDHConnector;
+LOCAL int mDHSecure = 0;
 LOCAL os_timer_t mRetryTimer;
 LOCAL os_timer_t mResponseTimer;
 LOCAL char mWSUrl[DHSETTINGS_SERVER_MAX_LENGTH];
@@ -50,7 +51,10 @@ LOCAL void arm_repeat_timer(unsigned int ms) {
 LOCAL void response_timeout(void *arg) {
 	dhdebug("HTTP response timeout");
 	mConnectionState = CS_DISCONNECT;
-	espconn_disconnect(&mDHConnector);
+	if (mDHSecure)
+		espconn_secure_disconnect(&mDHConnector);
+	else
+		espconn_disconnect(&mDHConnector);
 }
 
 LOCAL void ICACHE_FLASH_ATTR network_error_cb(void *arg, sint8 err) {
@@ -91,13 +95,18 @@ LOCAL void ICACHE_FLASH_ATTR parse_json(struct jsonparse_state *jparser) {
 LOCAL void ICACHE_FLASH_ATTR ws_error(void) {
 	dhstat_got_server_error();
 	// close connection and restart everything on error
-	espconn_disconnect(&mDHConnector);
+	if (mDHSecure)
+		espconn_secure_disconnect(&mDHConnector);
+	else
+		espconn_disconnect(&mDHConnector);
 }
 
 LOCAL int ICACHE_FLASH_ATTR ws_send(const char *data, unsigned int len) {
 	if(mConnectionState != CS_OPERATE)
 		return 0;
-	sint8 r = espconn_send(&mDHConnector, (uint8 *)data, len);
+	sint8 r = mDHSecure
+	        ? espconn_secure_send(&mDHConnector, (uint8 *)data, len)
+	        : espconn_send(&mDHConnector, (uint8 *)data, len);
 	if(r == ESPCONN_MAXNUM) {
 		return 0;
 	} else if(r != ESPCONN_OK) {
@@ -159,7 +168,10 @@ LOCAL void ICACHE_FLASH_ATTR network_recv_cb(void *arg, char *data, unsigned sho
 		dhdebug("Connector HTTP magic number is wrong");
 		dhstat_got_server_error();
 	}
-	espconn_disconnect(&mDHConnector);
+	if (mDHSecure)
+		espconn_secure_disconnect(&mDHConnector);
+	else
+		espconn_disconnect(&mDHConnector);
 }
 
 LOCAL void network_connect_cb(void *arg) {
@@ -195,11 +207,16 @@ LOCAL void network_connect_cb(void *arg) {
 	default:
 		dhdebug("ASSERT: networkConnectCb wrong state %d", mConnectionState);
 	}
-	int res;
-	if( (res = espconn_send(&mDHConnector, (uint8_t*)request->data, request->len)) != ESPCONN_OK) {
+	int res = mDHSecure
+	        ? espconn_secure_send(&mDHConnector, (uint8_t*)request->data, request->len)
+	        : espconn_send(&mDHConnector, (uint8_t*)request->data, request->len);
+	if( res != ESPCONN_OK) {
 		mConnectionState = CS_DISCONNECT;
 		dhesperrors_espconn_result("network_connect_cb failed:", res);
-		espconn_disconnect(&mDHConnector);
+		if (mDHSecure)
+			espconn_secure_disconnect(&mDHConnector);
+		else
+			espconn_disconnect(&mDHConnector);
 	} else {
 		dhstat_add_bytes_sent(request->len);
 		os_timer_disarm(&mResponseTimer);
@@ -286,6 +303,9 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	mConnectionState = state;
 	switch(state) {
 	case CS_DISCONNECT:
+		mDHSecure = (0 == os_strncmp(dhsettings_get_devicehive_server(), "https://", 8))
+		         || (0 == os_strncmp(dhsettings_get_devicehive_server(), "wss://", 6));
+
 		if(os_strncmp(dhsettings_get_devicehive_server(), "ws://", 5) == 0 ||
 				os_strncmp(dhsettings_get_devicehive_server(), "wss://", 6) == 0 ) {
 			snprintf(mWSUrl, sizeof(mWSUrl), "%s", dhsettings_get_devicehive_server());
@@ -308,7 +328,9 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	case CS_GETINFO:
 	case CS_WEBSOCKET:
 	{
-		const sint8 cr = espconn_connect(&mDHConnector);
+		const sint8 cr = mDHSecure
+		               ? espconn_secure_connect(&mDHConnector)
+		               : espconn_connect(&mDHConnector);
 		if(cr == ESPCONN_ISCONN)
 			return;
 		if(cr != ESPCONN_OK) {

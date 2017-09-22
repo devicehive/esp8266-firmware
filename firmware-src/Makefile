@@ -13,7 +13,7 @@ TARGETAR		= $(OBJDIR)/devicehive.a
 TARGETELF		= $(OBJDIR)/devicehive.elf
 INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include $(CURDIR)/sources)
 LIBDIR			= $(addprefix -L,$(SDKPATH)/lib)
-LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto)
+LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto ssl)
 SOURCES			= $(wildcard sources/*.c) $(wildcard drivers/*.c) $(wildcard sources/devices/*.c) $(wildcard sources/DH/*.c) $(wildcard sources/commands/*.c)
 OBJECTS			= $(addprefix $(OBJDIR)/, $(SOURCES:%.c=%.o))
 GITVER			= $(shell git rev-parse HEAD 2> /dev/null || echo \"not a git repo\")
