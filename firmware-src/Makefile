@@ -13,7 +13,7 @@ TARGETAR		= $(OBJDIR)/devicehive.a
 TARGETELF		= $(OBJDIR)/devicehive.elf
 INCLUDEDIRS		= $(addprefix -I,$(SDKPATH)/include $(CURDIR)/sources)
 LIBDIR			= $(addprefix -L,$(SDKPATH)/lib)
-LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto ssl)
+LIBS			= $(addprefix -l,c gcc phy pp net80211 lwip wpa main json crypto)
 SOURCES			= $(wildcard sources/*.c) $(wildcard drivers/*.c) $(wildcard sources/devices/*.c) $(wildcard sources/DH/*.c) $(wildcard sources/commands/*.c)
 OBJECTS			= $(addprefix $(OBJDIR)/, $(SOURCES:%.c=%.o))
 GITVER			= $(shell git rev-parse HEAD 2> /dev/null || echo \"not a git repo\")
@@ -23,6 +23,18 @@ CC				= $(CROSS_COMPILE)gcc
 AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
 PAGESH			= pages/pages.h
+
+# make SSL=on enables HTTPS/WSS support
+ifneq (,$(filter ${SSL},on yes 1))
+LIBS			+= $(addprefix -l,ssl)
+CFLAGS			+= -DDH_USE_SSL
+
+# if SSL is enabled the firmware size is too big to fit available space
+# so we need to disable all supported devices enabled implicitly.
+# some of them still can be enabled by defining corresponding macro (see user_config.h)
+CFLAGS			+= -DDH_NO_IMPLICIT_DEVICES
+endif
+
 
 .PHONY: all flash full_flash terminal clean disassemble reboot
 

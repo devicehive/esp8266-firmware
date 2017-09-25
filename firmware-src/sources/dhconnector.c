@@ -303,8 +303,11 @@ LOCAL void ICACHE_FLASH_ATTR set_state(CONNECTION_STATE state) {
 	mConnectionState = state;
 	switch(state) {
 	case CS_DISCONNECT:
+#ifdef DH_USE_SSL
+		// detect secure schemes (HTTPS or WSS)
 		mDHSecure = (0 == os_strncmp(dhsettings_get_devicehive_server(), "https://", 8))
 		         || (0 == os_strncmp(dhsettings_get_devicehive_server(), "wss://", 6));
+#endif // DH_USE_SSL
 
 		if(os_strncmp(dhsettings_get_devicehive_server(), "ws://", 5) == 0 ||
 				os_strncmp(dhsettings_get_devicehive_server(), "wss://", 6) == 0 ) {
