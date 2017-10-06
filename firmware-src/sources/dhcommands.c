@@ -207,6 +207,17 @@ RO_DATA struct {
 void ICACHE_FLASH_ATTR dhcommands_do(COMMAND_RESULT *cb, const char *command, const char *params, unsigned int paramslen) {
 	int i;
 
+	// check if params are empty json
+	if (paramslen > 0) {
+		if (params[0] == '{') {
+			i = 1;
+			while (params[i] == ' ' && i < paramslen)
+				i++;
+			if (params[i] == '}')
+				paramslen = 0;
+		}
+	}
+
 	dhdebug("Got command: %s %d", command, cb->data.id);
 	for (i = 0; i < NUM_OF_COMMANDS; ++i) {
 		if (0 == os_strcmp(command, g_command_table[i].name) && g_command_table[i].func) {
