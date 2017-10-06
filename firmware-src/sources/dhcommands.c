@@ -9,6 +9,7 @@
  *
  */
 #include "dhcommands.h"
+#include "snprintf.h"
 #include "dhdebug.h"
 
 #include "commands/gpio_cmd.h"
