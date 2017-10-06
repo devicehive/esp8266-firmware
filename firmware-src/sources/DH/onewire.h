@@ -36,9 +36,10 @@ unsigned int dh_onewire_get_pin(void);
  * @brief Reset onewire bus.
  * @param[in] pin_mask Pin mask to reset.
  * @param[in] exit_on_presence Flag to exit immediately if device found.
+ * @param[in] reset_time_us reset signal length.
  * @return Non-zero if device is presented. Zero otherwise.
  */
-int dh_onewire_reset(DHGpioPinMask pin_mask, int exit_on_presence);
+int dh_onewire_reset(DHGpioPinMask pin_mask, int reset_time_us, int exit_on_presence);
 
 
 /**
