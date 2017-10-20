@@ -532,7 +532,7 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 Write data to I2C bus.
 
 *Parameters*:
-* "address" - I2C slave device address, decimal integer value.
+* "address" - I2C slave device address, hex value. Can start with "0x".
 * "data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.
 * "SDA" - GPIO port number for SDA data line. If not specified, previous pin will be used. Default is "0".
 * "SCL" - GPIO port number for SCL data line. If not specified, previous pin will be used. Default is "2".
@@ -542,7 +542,7 @@ Write data to I2C bus.
 {
 	"SDA":"4",
 	"SCL":"5",
-	"address":"122",
+	"address":"78",
 	"data":"YWI="
 }
 ```
