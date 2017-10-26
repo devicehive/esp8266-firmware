@@ -76,11 +76,11 @@ SerialPort *SerialPort::open(const char *port) {
        cfsetispeed(&tio,B115200);
 
        tcflush(comp, TCIOFLUSH);
-
-       if( tcsetattr ( comp, TCSANOW, &tio ) != 0) {
+       if( tcsetattr(comp, TCSANOW, &tio) != 0) {
            close(comp);
            return 0;
        }
+       tcflush(comp, TCIOFLUSH);
 
        SerialPort *comport = new SerialPort(comp, port);
        pthread_t  thr;
