@@ -472,8 +472,7 @@ int main(int argc, char* argv[]) {
 				}
 				if (ports[i]) {
 					mCurrentPort = ports[i];
-					if(j == 0 && port == NULL)
-						force_flash_mode(ports[i]);
+					force_flash_mode(ports[i]);
 					if (flash_sync(ports[i], false)) {
 						printf("Device found on %s and successfully synced\r\n", ports[i]->getName());
 						port = ports[i];
