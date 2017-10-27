@@ -20,7 +20,7 @@
 #define ESP_BLOCK_SIZE 0x400
 #define ESP_SECTOR_SIZE 0x1000
 #define AUTODETECT_TIMEOUT 500
-#define FLASHING_TIMEOUT 1000
+#define FLASHING_TIMEOUT 5000
 #define AUTODETECT_MAX_PORT 20
 #define AUTODETECT_MAX_SYNC_ATTEMPS 3
 #define MAX_SYNC_ATTEMPS 3
@@ -448,6 +448,7 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	if(port) {
+		TIMEOUT = AUTODETECT_TIMEOUT;
 		bool synced = false;
 		for (int i=0; i < AUTODETECT_MAX_SYNC_ATTEMPS; i++) {
 			force_flash_mode(port);
@@ -462,6 +463,7 @@ int main(int argc, char* argv[]) {
 					CHECK_BOOT_MODE_NOTIFY"\r\n");
 			return exit();
 		}
+		TIMEOUT = FLASHING_TIMEOUT;
 	} else {
 		TIMEOUT = AUTODETECT_TIMEOUT;
 		printf("Detecting device...\r\n");
