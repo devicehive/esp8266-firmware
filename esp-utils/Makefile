@@ -11,10 +11,11 @@ ESPTERMINAL		= $(OBJDIR)/esp-terminal
 ESPFLASHER		= $(OBJDIR)/esp-flasher
 ifeq ($(OS),Windows_NT)
 	LDFLAGS		+= -static -s
-endif
-ifeq ($(shell uname -s),Linux)
-	LDFLAGS		+= -s
-	LIBS		= -pthread
+else
+	ifneq ($(shell uname -s),Darwin)
+		LDFLAGS		+= -s
+		LIBS		= -pthread
+	endif
 endif
 
 all: $(SOURCES) $(ESPTERMINAL) $(ESPFLASHER)
