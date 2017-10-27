@@ -19,8 +19,8 @@
 
 #define ESP_BLOCK_SIZE 0x400
 #define ESP_SECTOR_SIZE 0x1000
-#define AUTODETECT_TIMEOUT 1000
-#define FLASHING_TIMEOUT 5000
+#define AUTODETECT_TIMEOUT 500
+#define FLASHING_TIMEOUT 1000
 #define AUTODETECT_MAX_PORT 20
 #define AUTODETECT_MAX_SYNC_ATTEMPS 3
 #define MAX_SYNC_ATTEMPS 3
@@ -410,6 +410,7 @@ void force_flash_mode(SerialPort *port) {
     port->setRts(false);
     port->sleep(50);
     port->setDtr(false);
+    port->sleep(100); //wait till chip boots
 }
 
 void reboot(SerialPort *port) {
@@ -447,8 +448,15 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	if(port) {
-		force_flash_mode(port);
-		if(!flash_sync(port, true)) {
+		bool synced = false;
+		for (int i=0; i < AUTODETECT_MAX_SYNC_ATTEMPS; i++) {
+			force_flash_mode(port);
+			if(flash_sync(port, false)) {
+				synced = true;
+				break;
+			}
+		}
+		if (!synced) {
 			delete port;
 			printf( "Device is not connected to UART or not in boot mode.\r\n" \
 					CHECK_BOOT_MODE_NOTIFY"\r\n");
