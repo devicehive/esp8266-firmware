@@ -24,6 +24,18 @@ AR				= $(CROSS_COMPILE)ar
 SIZE			= $(CROSS_COMPILE)size
 PAGESH			= pages/pages.h
 
+# make SSL=on enables HTTPS/WSS support
+ifneq (,$(filter ${SSL},on yes 1))
+LIBS			+= $(addprefix -l,ssl)
+CFLAGS			+= -DDH_USE_SSL
+
+# if SSL is enabled the firmware size is too big to fit available space
+# so we need to disable all supported devices enabled implicitly.
+# some of them still can be enabled by defining corresponding macro (see user_config.h)
+CFLAGS			+= -DDH_NO_IMPLICIT_DEVICES
+endif
+
+
 .PHONY: all flash full_flash terminal clean disassemble reboot
 
 all: $(FIRMWARE)

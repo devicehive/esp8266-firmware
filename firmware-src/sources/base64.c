@@ -44,25 +44,25 @@ static inline int ICACHE_FLASH_ATTR base64_table(uint32_t reg, int offset)
 
 
 /*
- * base64_encode_length() implementation.
+ * esp_base64_encode_length() implementation.
  */
-size_t ICACHE_FLASH_ATTR base64_encode_length(size_t data_len)
+size_t ICACHE_FLASH_ATTR esp_base64_encode_length(size_t data_len)
 {
 	return (data_len + 2)/3 * 4; // round_up(len/3)*4
 }
 
 
 /*
- * base64_encode() implementation.
+ * esp_base64_encode() implementation.
  */
-int ICACHE_FLASH_ATTR base64_encode(const void *data_, size_t data_len,
-                                    char *text, size_t text_len)
+int ICACHE_FLASH_ATTR esp_base64_encode(const void *data_, size_t data_len,
+                                        char *text, size_t text_len)
 {
 	if (!data_len)
 		return 0; // nothing to encode
 
 	// check we have enough space for output
-	if (base64_encode_length(data_len) > text_len)
+	if (esp_base64_encode_length(data_len) > text_len)
 		return 0;
 
 	const uint8_t *data = (const uint8_t*)data_;
@@ -97,9 +97,9 @@ int ICACHE_FLASH_ATTR base64_encode(const void *data_, size_t data_len,
 
 
 /*
- * base64_decode_length() implementation.
+ * esp_base64_decode_length() implementation.
  */
-size_t ICACHE_FLASH_ATTR base64_decode_length(const char *text, size_t text_len)
+size_t ICACHE_FLASH_ATTR esp_base64_decode_length(const char *text, size_t text_len)
 {
 	if (!text_len)
 		return 0; // nothing to decode
@@ -117,16 +117,16 @@ size_t ICACHE_FLASH_ATTR base64_decode_length(const char *text, size_t text_len)
 
 
 /*
- * base64_decode() implementation.
+ * esp_base64_decode() implementation.
  */
-int ICACHE_FLASH_ATTR base64_decode(const char *text, size_t text_len,
-                                    void *data_base, size_t data_len)
+int ICACHE_FLASH_ATTR esp_base64_decode(const char *text, size_t text_len,
+                                        void *data_base, size_t data_len)
 {
 	if (!text_len || text_len%4)
 		return 0; // nothing to decode
 
 	// check we have enough space for output
-	if (base64_decode_length(text, text_len) > data_len)
+	if (esp_base64_decode_length(text, text_len) > data_len)
 		return 0;
 
 	uint8_t *data = (uint8_t*)data_base;

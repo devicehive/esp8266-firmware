@@ -152,7 +152,10 @@ int ICACHE_FLASH_ATTR hexToByte(const char *hex, uint8_t *val_out)
 
 const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned short len) {
 	unsigned short pos = sizeof(uint32);
-	if(len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
+	if(len > sizeof(uint32) && data[0]=='H'
+	                        && data[1]=='T'
+	                        && data[2]=='T'
+	                        && data[3]=='P') {// *(uint32 *) data == 0x50545448) { // HTTP
 		while (pos < len)
 			if(data[pos++] == ' ')
 				break;

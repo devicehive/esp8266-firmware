@@ -22,10 +22,10 @@
  * @param[in] text_len Output buffer length in bytes.
  * @return Number of bytes written to output buffer.
  */
-int base64_encode(const void *data,
-                  size_t data_len,
-                  char *text,
-                  size_t text_len);
+int esp_base64_encode(const void *data,
+                      size_t data_len,
+                      char *text,
+                      size_t text_len);
 
 
 /**
@@ -33,7 +33,7 @@ int base64_encode(const void *data,
  * @param[in] data_len Binary data length in bytes.
  * @return `Base64` encoded text length in bytes.
  */
-size_t base64_encode_length(size_t data_len);
+size_t esp_base64_encode_length(size_t data_len);
 
 
 /**
@@ -47,10 +47,10 @@ size_t base64_encode_length(size_t data_len);
  * @param[in] data_len Output buffer length in bytes.
  * @return Number of bytes written to output buffer.
  */
-int base64_decode(const char *text,
-                  size_t text_len,
-                  void *data,
-                  size_t data_len);
+int esp_base64_decode(const char *text,
+                      size_t text_len,
+                      void *data,
+                      size_t data_len);
 
 
 /**
@@ -62,6 +62,6 @@ int base64_decode(const char *text,
  * @param[in] text_len Encoded text length in bytes.
  * @return Decoded binary data length in bytes.
  */
-size_t base64_decode_length(const char *text, size_t text_len);
+size_t esp_base64_decode_length(const char *text, size_t text_len);
 
 #endif /* _DATAENCODEBASE64_H_ */
