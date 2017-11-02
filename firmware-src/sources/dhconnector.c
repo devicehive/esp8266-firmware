@@ -382,6 +382,10 @@ void ICACHE_FLASH_ATTR dhconnector_init(void) {
 	struct station_config stationConfig;
 	wifi_station_get_config(&stationConfig);
 	wifi_set_phy_mode(PHY_MODE_11N);
+#ifdef DH_USE_SSL
+	//espconn_secure_set_size(0x01, 4.5*1024); // 0x01 - client according to the doc.
+	dhdebug("TLS is enabled, buffer size %d", espconn_secure_get_size(0x01));
+#endif
 	os_memset(stationConfig.ssid, 0, sizeof(stationConfig.ssid));
 	os_memset(stationConfig.password, 0, sizeof(stationConfig.password));
 	snprintf((char*)stationConfig.ssid, sizeof(stationConfig.ssid), "%s", dhsettings_get_wifi_ssid());

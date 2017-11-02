@@ -210,12 +210,31 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR receive_post(
 	return res;
 }
 
+LOCAL int check_gzip(const char *data, unsigned short len) {
+	static const char accept_encoding[] = "Accept-Encoding:";
+	static const char gzip[] = "gzip";
+	unsigned short i;
+	for(i = 0; i < len; i++) {
+		if(strncasecmp(&data[i], accept_encoding, sizeof(accept_encoding) - 1) == 0) {
+			i += sizeof(accept_encoding);
+			while(strncasecmp(&data[i], gzip, sizeof(gzip) - 1)) {
+				i++;
+				if(data[i] == '\n' || i >= len)
+					return 0;
+			}
+			return 1;
+		} else while(data[i] != '\n' && i < len) i++;
+	}
+	return 0;
+}
+
 LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned short len) {
 	struct espconn *conn = arg;
 	static const char get[] = "GET ";
 	static const char post[] = "POST ";
 	static const char options[] = "OPTIONS ";
 	static const char host[] = "Host:";
+	RO_DATA char unsupported[] = "HTTP/1.0 415 Unsupported Media Type\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 22\r\n\r\nUnsupported Media Type";
 	RO_DATA char internal[] = "HTTP/1.0 500 Internal Server Error\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 14\r\n\r\nInternal Error";
 	RO_DATA char notfound[] = "HTTP/1.0 404 Not Found\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 9\r\n\r\nNot Found";
 	RO_DATA char notimplemented[] = "HTTP/1.0 501 Not Implemented\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain\r\nContent-Length: 15\r\n\r\nNot Implemented";
@@ -223,9 +242,9 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	RO_DATA char badrequest[] = "HTTP/1.0 400 Bad Request\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length:11\r\n\r\nBad Request";
 	RO_DATA char toomany[] = "HTTP/1.0 429 Too Many Requests\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Length: 17\r\n\r\nToo Many Requests";
 	RO_DATA char redirectresponse[] = "HTTP/1.0 302 Moved\r\nContent-Length: 0\r\nLocation: http://%s\r\n\r\n";
-	RO_DATA char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	RO_DATA char ok[] = "HTTP/1.0 200 OK\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s; charset=UTF-8\r\n%sContent-Length: %u\r\n\r\n";
 	RO_DATA char no_content[] = "HTTP/1.0 204 No content\r\nAccess-Control-Allow-Origin: *\r\nContent-Length: 0\r\n\r\n";
-	RO_DATA char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s; charset=UTF-8\r\nContent-Length: %u\r\n\r\n";
+	RO_DATA char forbidden[] = "HTTP/1.0 403 Forbidden\r\nAccess-Control-Allow-Origin: *\r\nContent-Type: %s; charset=UTF-8\r\n%sContent-Length: %u\r\n\r\n";
 	RO_DATA char options_response[] = "HTTP/1.0 204 No Content\r\nAccess-Control-Allow-Origin: *\r\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Allow-Methods: GET, POST\r\nAccess-Control-Allow-Headers: Authorization, Content-Type\r\nContent-Length: 0\r\n\r\n";
 	RO_DATA char html[] = "text/html";
 	RO_DATA char json[] = "text/json";
@@ -233,11 +252,13 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	RO_DATA char css[] = "text/css";
 	RO_DATA char plain[] = "text/plain";
 	RO_DATA char xicon[] = "image/x-icon";
+	RO_DATA char gzip[] = "Content-Encoding: gzip\r\n";
 
 	HTTP_ANSWER answer;
 	answer.content.len = 0;
 	answer.free_content = 0;
 	answer.ok = 1;
+	answer.gzip = 0;
 	dhstat_add_bytes_received(len);
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 
@@ -297,10 +318,15 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 	case HRCS_ANSWERED_JSON:
 	case HRCS_ANSWERED_HTML:
 	{
+		if(answer.gzip && check_gzip(data, len) == 0) {
+			dhdebug("gzip is not supported");
+			send_res(conn, unsupported, sizeof(unsupported) - 1);
+			return;
+		}
 		int i;
 		CONTENT_ITEM *item = 0;
 		int response_len;
-		char response[(sizeof(ok) > sizeof(forbidden) ? sizeof(ok) : sizeof(forbidden)) + 32];
+		char response[(sizeof(ok) > sizeof(forbidden) ? sizeof(ok) : sizeof(forbidden)) + sizeof(gzip) + 32];
 		for(i = 0; i < MAX_CONNECTIONS; i++) {
 			if(is_remote_equal(conn->proto.tcp, &mContentQueue[i])) {
 				dhdebug("Httpd duplicate responses");
@@ -315,7 +341,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			if(answer.ok) {
 				send_res(conn, no_content, sizeof(no_content) - 1);
 			} else {
-				response_len = snprintf(response, sizeof(response), forbidden, plain, 0);
+				response_len = snprintf(response, sizeof(response), forbidden, plain, "", 0);
 				send_res(conn, response, response_len);
 			}
 			return;
@@ -340,7 +366,8 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 		}
 
 		response_len = snprintf(response, sizeof(response),
-				answer.ok ? ok : forbidden, content_type, answer.content.len);
+				answer.ok ? ok : forbidden, content_type,
+				answer.gzip ? gzip : "", answer.content.len);
 		os_memcpy(item->remote_ip, conn->proto.tcp->remote_ip, sizeof(item->remote_ip));
 		item->remote_port = conn->proto.tcp->remote_port;
 		item->content.data = answer.content.data;

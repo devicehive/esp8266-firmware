@@ -149,4 +149,20 @@ static inline uint8_t bitwise_reverse_byte(uint8_t v)
 	return ((v * 0x0802LU & 0x22110LU) | (v * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16;
 }
 
+/**
+ * @brief Convert char to lower case.
+ * @param[in] c Char.
+ * @return Char in lower case.
+ */
+char to_lower(char c);
+
+/**
+ * @brief Case insensitive string comparison with specified length.
+ * @param[in] s1 First string.
+ * @param[in] s2 Second string.
+ * @param[in] n Maximum string length to compare.
+ * @return Relationship between the strings, zero if equal.
+ */
+int strncasecmp(const char *s1, const char *s2, int n);
+
 #endif /* _DHUTILS_H_ */

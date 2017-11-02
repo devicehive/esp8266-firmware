@@ -54,6 +54,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR get_cb(const char *path,
 			if(os_strcmp(web_pages[i].path, &path[1]) == 0) {
 				answer->content.data = web_pages[i].data;
 				answer->content.len = web_pages[i].data_len;
+				answer->gzip = 1;
 				if(os_strstr(&path[1], ".js"))
 					return HRCS_ANSWERED_JS;
 				if(os_strstr(&path[1], ".css"))

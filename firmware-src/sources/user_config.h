@@ -97,4 +97,7 @@
 #define DH_COMMANDS_SPI      // enable SPI commands
 #define DH_COMMANDS_ONEWIRE  // enable onewire commands
 
+// allow to use secure connections to server
+#define DH_USE_SSL
+
 #endif /* _USER_CONFIG_H_ */

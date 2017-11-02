@@ -172,3 +172,23 @@ void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {
 	if(ms)
 		os_delay_us(ms * 1000);
 }
+
+char ICACHE_FLASH_ATTR to_lower(char c) {
+	if(c >= 'A' && c <= 'Z')
+		return 'a' + c - 'A';
+	return c;
+}
+
+int ICACHE_FLASH_ATTR strncasecmp(const char *s1, const char *s2, int n) {
+	char c1, c2;
+	while((c1 = to_lower(*s1)) == (c2 = to_lower(*s2))) {
+		s1++;
+		s2++;
+		n--;
+		if(*s1 == 0)
+			return 0;
+		if(n == 0)
+			break;
+	}
+	return c1 - c2;
+}
