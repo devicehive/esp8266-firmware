@@ -5,6 +5,7 @@
 # Table of contents
   * [Overview](#overview)
   * [Getting started](#getting-started)
+  * [SSL support](#ssl-support)
   * [Local services](#local-services)
     * [mDNS](#mdns)
     * [RESTful API](#restful-api)
@@ -150,6 +151,9 @@ After rebooting you can send commands to DeviceHive server or local RESTful API 
 ![](images/web.png?raw=true)
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks using DeviceHive [RESTful API](http://devicehive.com/restful) which you can transmitted with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
+
+# SSL support
+Firmware supports encrypted WebSocket server connectity using Transport Layer Security (TLS). Server should support TLSv1.1 and TLS_RSA_WITH_AES_128_CBC_SHA or TLS_RSA_WITH_AES_256_CBC_SHA cipher.
 
 # Local services
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are omitted.
