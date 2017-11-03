@@ -358,7 +358,6 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 *Example*:  
 ```json
 {
-	"all":"read",
 	"0":"read"
 }
 ```
@@ -379,8 +378,7 @@ Json with set of key-value, where key is ADC channel and value is period in mill
 *Example*:  
 ```json
 {
-	"0":"1000",
-	"0":"disable"
+	"0":"1000"
 }
 ```
 
