@@ -7,7 +7,7 @@
     }
     input {
       width: 40%;
-      display: inline-block; 
+      display: inline-block;
     }
     input[type=checkbox] {
       position: absolute;
@@ -47,7 +47,7 @@
   }
   // search for i2c device
   //for(i = 0; i < 128; i++)
-  //  addtest("i2c/master/read", {"address":i}, false, "ACK response not detected");  
+  //  addtest("i2c/master/read", {"address":i}, false, "ACK response not detected");
   addtest("abracadabra", null, false, "Unknown command");
   addtest("gpio/write", null, false, "No parameters specified");
   addtest("gpio/write", {"4":0}, true, "");
@@ -166,11 +166,11 @@
   addtest("onewire/master/alarm", {"pin":"2"}, true, {"found":[],"pin":"2"});
   addtest("onewire/dht/read", {"pin":"22"}, false, "Wrong onewire pin");
   addtest("onewire/dht/read", null, false, "No response");
-  
-  
- 
+
+
+
   function createxmlhttp(method, path) {
-    var xmlhttp = new XMLHttpRequest();  
+    var xmlhttp = new XMLHttpRequest();
     xmlhttp.open(method, localStorage["dhurl"] + path, true);
     xmlhttp.setRequestHeader("Authorization", "Bearer " + localStorage["dhpassword"]);
     xmlhttp.setRequestHeader("Content-type", "application/json;charset=UTF-8");
@@ -186,7 +186,7 @@
       if(generate == true){
         println('addtest("' + commands[currentId]['command'] + '", ' + JSON.stringify(commands[currentId]['parameters']) + ', ' + (status == "OK") + ', ' + result + ');');
       } else {
-        if(results[currentId] == null || JSON.stringify(results[currentId]) == result) {
+        if(results[currentId] == null || results[currentId] == JSON.parse(result)['value']) {
           println("<font color=green>OK</font>");
         } else {
           println("<font color=red>ERROR: Wrong result " + responseText + "</font>");
@@ -211,9 +211,9 @@
       if(isrun == 2) {
         println("<font color=red>Canceled.</font>");
         isrun = 0;
-      } else { 
+      } else {
         sendnext();
-      }  
+      }
     } else {
       isrun = 0;
       if(isErrorOccurried)
@@ -254,7 +254,7 @@
               getres_cloud(JSON.parse(xmlhttp.responseText)["id"]);
             }
           }
-        } 
+        }
     xmlhttp.send(JSON.stringify(commands[currentId]));
     if(generate == false)
       print("Command sent: " + JSON.stringify(commands[currentId]) + " ");
@@ -276,7 +276,7 @@
               getres("OK", result, responseText);
             }
           }
-        } 
+        }
     parameters = commands[currentId]["parameters"];
     if(parameters == null) {
       xmlhttp.send();
@@ -295,7 +295,7 @@
      }
   }
 
-  function perform(form){ 
+  function perform(form){
     if(isrun != 0) {
       isrun = 2;
     } else {
@@ -310,16 +310,16 @@
       sendnext();
     }
   }
-  
+
   function initform(form){
     form.url.value = localStorage["dhurl"];
     form.deviceid.value = localStorage["dhdeviceid"];
     form.password.value = localStorage["dhpassword"];
   }
-  
+
   </script>
   </head>
-  <body onLoad="initform(this.form);">  
+  <body onLoad="initform(this.form);">
     <form name="form">
       <label>DeviceHive API Url: </label><input type="text" name="url"><br>
       <label>DeviceId: </label><input type="text" name="deviceid"><br>
@@ -328,7 +328,7 @@
       Local RESTfull API:<input type="radio" name="api"  value="local" checked="checked">
       Cloud DeviceHive API:<input type="radio" name="api"  value="cloud"> <br>
       <input type="button" value="Run/Stop" onClick="perform(this.form);"><br>
-    </form>  
+    </form>
     <div id="con"> </div>
   </body>
-</html> 
+</html>
