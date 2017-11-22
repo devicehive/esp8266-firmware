@@ -155,6 +155,15 @@ Now you can start writing your own program to create your own IoT devices with y
 # SSL support
 Firmware supports encrypted WebSocket server connectity using Transport Layer Security (TLS). Server should support TLSv1.1 and TLS_RSA_WITH_AES_128_CBC_SHA or TLS_RSA_WITH_AES_256_CBC_SHA cipher.
 
+Please note, chip has 2 KB buffer for secure data, so ssl handshake should not be more otherwise connection reset would occur. To check size of the handshake, run this command:
+```
+openssl s_client -connect devicehive.com:443 -tls1
+```
+and check in the output line with handshake size:
+```
+SSL handshake has read 4796 bytes and written 336 bytes
+```
+
 # Local services
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are omitted.
 
