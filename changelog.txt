@@ -60,3 +60,10 @@ v0.7
 - connectino to server now is implemeted with WebSocket
 - latest DeviceHive server v3.x and playground support
 - compile time ability to disable some devices
+
+v0.8
+- TLS connection with server.
+- fix dht11/dht22 support
+- improve stability of esp-flasher/esp-terminal for mac os
+- latest server connectivity protocol fixes
+
