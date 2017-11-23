@@ -5,6 +5,7 @@
 # Table of contents
   * [Overview](#overview)
   * [Getting started](#getting-started)
+  * [SSL support](#ssl-support)
   * [Local services](#local-services)
     * [mDNS](#mdns)
     * [RESTful API](#restful-api)
@@ -151,6 +152,18 @@ After rebooting you can send commands to DeviceHive server or local RESTful API 
 
 Now you can start writing your own program to create your own IoT devices with your favorite language and frameworks using DeviceHive [RESTful API](http://devicehive.com/restful) which you can transmitted with HTTP(S) or Websockets. List of accepted command for ESP8266 is listed in this document.
 
+# SSL support
+Firmware supports encrypted WebSocket server connectity using Transport Layer Security (TLS). Server should support TLSv1.1 and TLS_RSA_WITH_AES_128_CBC_SHA or TLS_RSA_WITH_AES_256_CBC_SHA cipher.
+
+Please note, chip has 2 KB buffer for secure data, so ssl handshake should not be more otherwise connection reset would occur. To check size of the handshake, run this command:
+```
+openssl s_client -connect devicehive.com:443 -tls1
+```
+and check in the output line with handshake size:
+```
+SSL handshake has read 4796 bytes and written 336 bytes
+```
+
 # Local services
 Firmware sets chip hostname and announce chip with mDNS using configured DeviceId. Hostname is limited with 32 chars, further DeiviceId's chars are omitted.
 
@@ -231,7 +244,9 @@ This is auxiliary command that is used to get a list of supported commands. This
 and output looks like:
 
 ```json
-[
+{
+ "commands":
+ [
   "gpio/write",
   "gpio/read",
   "gpio/int",
@@ -243,7 +258,8 @@ and output looks like:
   "uart/int",
   "uart/terminal",
   ...
-]
+ ]
+}
 ```
 
 The `command/list` command is used on the `tryapi.html` page to provide command suggestion.
@@ -355,7 +371,6 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 *Example*:  
 ```json
 {
-	"all":"read",
 	"0":"read"
 }
 ```
@@ -376,8 +391,7 @@ Json with set of key-value, where key is ADC channel and value is period in mill
 *Example*:  
 ```json
 {
-	"0":"1000",
-	"0":"disable"
+	"0":"1000"
 }
 ```
 
@@ -529,7 +543,7 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 Write data to I2C bus.
 
 *Parameters*:
-* "address" - I2C slave device address, decimal integer value.
+* "address" - I2C slave device address, hex value. Can start with "0x".
 * "data" - base64 encoded data that should be sent. Maximum size of data is 264 bytes.
 * "SDA" - GPIO port number for SDA data line. If not specified, previous pin will be used. Default is "0".
 * "SCL" - GPIO port number for SCL data line. If not specified, previous pin will be used. Default is "2".
@@ -539,7 +553,7 @@ Write data to I2C bus.
 {
 	"SDA":"4",
 	"SCL":"5",
-	"address":"122",
+	"address":"78",
 	"data":"YWI="
 }
 ```

@@ -189,6 +189,10 @@ int ICACHE_FLASH_ATTR dhconnector_websocket_api_communicate(const char *in, unsi
 			return DHCONNECT_WEBSOCKET_API_ERROR;
 		}
 		connected = 1;
+	} else if(os_strcmp(action, "command/update") == 0) {
+		if(status_not_success) {
+			dhdebug("Failed to update command: %s", error);
+		}
 	}
 	return 0;
 }

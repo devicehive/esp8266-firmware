@@ -19,10 +19,11 @@
 
 #define ESP_BLOCK_SIZE 0x400
 #define ESP_SECTOR_SIZE 0x1000
-#define AUTODETECT_TIMEOUT 1000
+#define AUTODETECT_TIMEOUT 500
 #define FLASHING_TIMEOUT 5000
 #define AUTODETECT_MAX_PORT 20
 #define AUTODETECT_MAX_SYNC_ATTEMPS 3
+#define MAX_SYNC_ATTEMPS 3
 #define CHECK_BOOT_MODE_NOTIFY	"Make sure that GPIO0 and GPIO15 are connected to low-level(ground),\r\n" \
 								"GPIO2 and CH_PD are connected to high-level(power source)\r\n" \
 								"And reboot device(reconnect power or connect RST pin to ground for a second).\r\n"
@@ -370,12 +371,14 @@ bool flash_sync(SerialPort *port, bool printErrors) {
 	rh.command = 0x08; // sync
 	rh.size = htole16(sizeof(body));
 	rh.cs = esp_checksum((void*)body, sizeof(body));
-	if(!flash_send(port, &rh, (void*)body, printErrors)) {
-		if(printErrors)
-			printf("\r\nFailed to sync device\r\n");
-		return false;
+	for(int i=0; i < MAX_SYNC_ATTEMPS; i++) {
+		if(flash_send(port, &rh, (void*)body, false)) {
+			return true;
+		}
 	}
-	return true;
+	if(printErrors)
+		printf("\r\nFailed to sync device\r\n");
+	return false;
 }
 
 bool startWith(const char *str, const char *start) {
@@ -407,6 +410,7 @@ void force_flash_mode(SerialPort *port) {
     port->setRts(false);
     port->sleep(50);
     port->setDtr(false);
+    port->sleep(100); //wait till chip boots
 }
 
 void reboot(SerialPort *port) {
@@ -444,12 +448,22 @@ int main(int argc, char* argv[]) {
 		}
 	}
 	if(port) {
-		if(!flash_sync(port, true)) {
+		TIMEOUT = AUTODETECT_TIMEOUT;
+		bool synced = false;
+		for (int i=0; i < AUTODETECT_MAX_SYNC_ATTEMPS; i++) {
+			force_flash_mode(port);
+			if(flash_sync(port, false)) {
+				synced = true;
+				break;
+			}
+		}
+		if (!synced) {
 			delete port;
 			printf( "Device is not connected to UART or not in boot mode.\r\n" \
 					CHECK_BOOT_MODE_NOTIFY"\r\n");
 			return exit();
 		}
+		TIMEOUT = FLASHING_TIMEOUT;
 	} else {
 		TIMEOUT = AUTODETECT_TIMEOUT;
 		printf("Detecting device...\r\n");
@@ -468,12 +482,11 @@ int main(int argc, char* argv[]) {
 				}
 				if (ports[i]) {
 					mCurrentPort = ports[i];
+					force_flash_mode(ports[i]);
 					if (flash_sync(ports[i], false)) {
 						printf("Device found on %s and successfully synced\r\n", ports[i]->getName());
 						port = ports[i];
 					}
-					if(j == 0 && port == NULL)
-						force_flash_mode(ports[i]);
 					mCurrentPort = NULL;
 				}
 			}

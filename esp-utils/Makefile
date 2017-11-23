@@ -1,6 +1,6 @@
 CXX				?= g++
 CFLAGS			+= -c -Wall
-LDFLAGS			+= -s -Os
+LDFLAGS			+= -Os
 LIBS			=
 OBJDIR			= build
 SOURCES			= $(wildcard common/*.cpp)
@@ -10,9 +10,12 @@ ALLOBJECTS		= $(COMMONOBJECTS) $(addprefix $(OBJDIR)/, $(MAINS:%.cpp=%.o))
 ESPTERMINAL		= $(OBJDIR)/esp-terminal
 ESPFLASHER		= $(OBJDIR)/esp-flasher
 ifeq ($(OS),Windows_NT)
-	LDFLAGS		+=-static
+	LDFLAGS		+= -static -s
 else
-	LIBS		= -pthread
+	ifneq ($(shell uname -s),Darwin)
+		LDFLAGS		+= -s
+		LIBS		= -pthread
+	endif
 endif
 
 all: $(SOURCES) $(ESPTERMINAL) $(ESPFLASHER)

@@ -16,7 +16,7 @@
 /** UART speed to terminal. */
 #define UART_BAUND_RATE 115200
 /** Current firmware version. */
-#define FIRMWARE_VERSION "0.7"
+#define FIRMWARE_VERSION "0.8"
 /** Git revision */
 #ifndef FIRMWARE_GIT_REVISION
 	#define FIRMWARE_GIT_REVISION "unknown"
@@ -37,6 +37,7 @@
 #define HTTPD_PORT 80
 
 // customize supported devices (compile time)
+#ifndef DH_NO_IMPLICIT_DEVICES
 #define DH_DEVICE_DS18B20
 #define DH_DEVICE_DHT11
 #define DH_DEVICE_DHT22
@@ -60,6 +61,7 @@
 #define DH_DEVICE_MAX6675
 #define DH_DEVICE_MAX31855
 #define DH_DEVICE_TM1637
+#endif // DH_NO_IMPLICIT_DEVICES
 
 // customize device commands (compile time)
 #define DH_COMMANDS_DS18B20
@@ -95,6 +97,7 @@
 #define DH_COMMANDS_SPI      // enable SPI commands
 #define DH_COMMANDS_ONEWIRE  // enable onewire commands
 
-// TODO: customize device list
+// allow to use secure connections to server
+#define DH_USE_SSL
 
 #endif /* _USER_CONFIG_H_ */

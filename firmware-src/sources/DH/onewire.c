@@ -75,7 +75,7 @@ unsigned int ICACHE_FLASH_ATTR dh_onewire_get_pin(void)
  * @brief Reset onewire bus.
  * @return Non-zero if device is presented. Zero otherwise.
  */
-int ICACHE_FLASH_ATTR dh_onewire_reset(DHGpioPinMask pin_mask, int exit_on_presence)
+int ICACHE_FLASH_ATTR dh_onewire_reset(DHGpioPinMask pin_mask, int reset_time_us, int exit_on_presence)
 {
 	system_soft_wdt_feed();
 	const int pinstate = (gpio_input_get() & pin_mask) !=0;
@@ -91,7 +91,7 @@ int ICACHE_FLASH_ATTR dh_onewire_reset(DHGpioPinMask pin_mask, int exit_on_prese
 
 	// send RESET
 	gpio_output_set(0, pin_mask, pin_mask, 0);
-	os_delay_us(ONEWIRE_RESET_LENGHT_US);
+	os_delay_us(reset_time_us);
 	gpio_output_set(pin_mask, 0, pin_mask, 0);
 
 	// check RESPONSE
@@ -169,7 +169,7 @@ int ICACHE_FLASH_ATTR dh_onewire_write(const void *buf_, size_t len)
 	lock_int();
 
 	const DHGpioPinMask pin_mask = DH_GPIO_PIN(mOneWirePin);
-	int present = dh_onewire_reset(pin_mask, 0);
+	int present = dh_onewire_reset(pin_mask, ONEWIRE_RESET_LENGHT_US, 0);
 	if (!present) {
 		unlock_int();
 		return -1; // failed
@@ -241,7 +241,7 @@ int ICACHE_FLASH_ATTR dh_onewire_search(void *buf_, size_t *len, int command, un
 	lock_int();
 
 	do {
-		if (!dh_onewire_reset(pin_mask, 0)) {
+		if (!dh_onewire_reset(pin_mask, ONEWIRE_RESET_LENGHT_US, 0)) {
 			unlock_int();
 			if (lastAmbiguity == 8*sizeof(address)) {
 				*len = 0; // devices are not connected

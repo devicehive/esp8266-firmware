@@ -125,10 +125,12 @@ static unsigned int ICACHE_FLASH_ATTR dht_measure_high(DHGpioPinMask pin_mask)
 int ICACHE_FLASH_ATTR dht_read(void *buf_, size_t len)
 {
 	const DHGpioPinMask pin_mask = DH_GPIO_PIN(dh_onewire_get_pin());
-	if (0 == dh_onewire_reset(pin_mask, 1))
-		return 0; // no device present
-
 	ETS_INTR_LOCK();
+	if (0 == dh_onewire_reset(pin_mask, DHT_RESET_LENGTH_US, 1)) {
+		ETS_INTR_UNLOCK();
+		return 0; // no device present
+	}
+
 	if (dht_measure_high(pin_mask) >= DHT_TIMEOUT_US) { // wait till response finish
 		ETS_INTR_UNLOCK();
 		return 0; // failed

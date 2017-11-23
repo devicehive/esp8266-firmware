@@ -152,7 +152,10 @@ int ICACHE_FLASH_ATTR hexToByte(const char *hex, uint8_t *val_out)
 
 const char *ICACHE_FLASH_ATTR find_http_responce_code(const char *data, unsigned short len) {
 	unsigned short pos = sizeof(uint32);
-	if(len > sizeof(uint32) && *(uint32 *) data == 0x50545448) { // HTTP
+	if(len > sizeof(uint32) && data[0]=='H'
+	                        && data[1]=='T'
+	                        && data[2]=='T'
+	                        && data[3]=='P') {// *(uint32 *) data == 0x50545448) { // HTTP
 		while (pos < len)
 			if(data[pos++] == ' ')
 				break;
@@ -168,4 +171,24 @@ void ICACHE_FLASH_ATTR delay_ms(unsigned int ms) {
 	}
 	if(ms)
 		os_delay_us(ms * 1000);
+}
+
+char ICACHE_FLASH_ATTR to_lower(char c) {
+	if(c >= 'A' && c <= 'Z')
+		return 'a' + c - 'A';
+	return c;
+}
+
+int ICACHE_FLASH_ATTR strncasecmp(const char *s1, const char *s2, int n) {
+	char c1, c2;
+	while((c1 = to_lower(*s1)) == (c2 = to_lower(*s2))) {
+		s1++;
+		s2++;
+		n--;
+		if(*s1 == 0)
+			return 0;
+		if(n == 0)
+			break;
+	}
+	return c1 - c2;
 }
