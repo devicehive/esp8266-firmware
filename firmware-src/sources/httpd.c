@@ -146,7 +146,7 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 	key[0] = 0;
 	HTTP_RESPONSE_STATUS res = HRCS_INTERNAL_ERROR;
 	for(i = j; i < len; i++) {
-		if(os_strncmp(&data[i], content_length, sizeof(content_length) - 1) == 0) {
+		if(strncasecmp(&data[i], content_length, sizeof(content_length) - 1) == 0) {
 			i += sizeof(content_length) - 1;
 			while(data[i] == ' ')
 				i++;
@@ -154,11 +154,11 @@ LOCAL HTTP_RESPONSE_STATUS ICACHE_FLASH_ATTR parse_request(
 				res = HRCS_BAD_REQUEST;
 				break;
 			}
-		} else if(os_strncmp(&data[i], authorization, sizeof(authorization) - 1) == 0) {
+		} else if(strncasecmp(&data[i], authorization, sizeof(authorization) - 1) == 0) {
 			i += sizeof(authorization) - 1;
 			while(data[i] == ' ')
 				i++;
-			if(os_strncmp(&data[i], bearer, sizeof(bearer) - 1) == 0) {
+			if(strncasecmp(&data[i], bearer, sizeof(bearer) - 1) == 0) {
 				i += sizeof(bearer) - 1;
 				while(data[i] == ' ')
 					i++;
@@ -270,7 +270,7 @@ LOCAL void ICACHE_FLASH_ATTR dhap_httpd_recv_cb(void *arg, char *data, unsigned 
 			const int to = (int)len - redirect_host_len - sizeof(host) + 1;
 			int i;
 			for(i = 0; i < to; i++) {
-				if(os_strncmp(&data[i], host, sizeof(host) - 1) == 0) {
+				if(strncasecmp(&data[i], host, sizeof(host) - 1) == 0) {
 					i += sizeof(host) - 1;
 					while(data[i] == ' ')
 						i++;
