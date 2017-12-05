@@ -38,7 +38,7 @@
   var isErrorOccurried = false;
   var generate = false;
   var isrun = 0;
-  var islocal = 0;
+  var islocal = false;
   function addtest(command, parameters, status, result) {
     commands[currentId] = {"command":command, "parameters":parameters};
     statuses[currentId] = status;
@@ -186,7 +186,14 @@
       if(generate == true){
         println('addtest("' + commands[currentId]['command'] + '", ' + JSON.stringify(commands[currentId]['parameters']) + ', ' + (status == "OK") + ', ' + result + ');');
       } else {
-        if(results[currentId] == null || JSON.stringify(results[currentId]) == result) {
+        if(results[currentId] == null) {
+          correct = "";
+        } else if(islocal && results[currentId]['value'] != undefined) {
+          correct = JSON.stringify(results[currentId]['value'])
+        } else {
+          correct = JSON.stringify(results[currentId]);
+        }
+        if(results[currentId] == null || result == correct) {
           println("<font color=green>OK</font>");
         } else {
           println("<font color=red>ERROR: Wrong result " + responseText + "</font>");
