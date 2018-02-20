@@ -52,6 +52,7 @@
     * [devices/si7021/read](#devicessi7021read)
     * [devices/bmp180/read](#devicesbmp180read)
     * [devices/bmp280/read](#devicesbmp280read)
+    * [devices/bme280/read](#devicesbme280read)
     * [devices/bh1750/read](#devicesbh1750read)
     * [devices/mpu6050/read](#devicesmpu6050read)
     * [devices/hmc5883l/read](#deviceshmc5883lread)
@@ -274,7 +275,7 @@ Sets gpio pins according to parameters specified. Pins will be automatically ini
 JSON with a set of key-value pairs, where key is pin number and value "0" for LOW, "1" for HIGH or "x" for NOP, leaving pin unaffected. Sample below sets `GPIO10` to LOW and `GPIO11` to HIGH:
 
 ```json
-{ 
+{
 	"10":"0",
 	"11":"1",
 	"12":"x"
@@ -294,7 +295,7 @@ JSON with a set of key-value pairs, where key is pin number and value is one of 
 
 *Example*:  
 ```json
-{ 
+{
 	"10":"init",
 	"11":"pullup",
 	"12":"nopull"
@@ -568,11 +569,11 @@ Read data from SPI bus.
 *Parameters*:
 * "count" - number of bytes that should be read. If not specified, 2 bytes will be read. Can not be 0.
 * "data" - base64 encoded data that should be sent before reading. Maximum size of data is 264 bytes.
-* "mode" - Select SPI clock mode. Can be: 
- * 0 - Low clock polarity, front edge 
- * 1 - Low clock polarity, rear edge 
- * 2 - High clock polarity, front edge 
- * 3 - High clock polarity, rear edge 
+* "mode" - Select SPI clock mode. Can be:
+ * 0 - Low clock polarity, front edge
+ * 1 - Low clock polarity, rear edge
+ * 2 - High clock polarity, front edge
+ * 3 - High clock polarity, rear edge
  * If not specified, previous mode will be used. Default is 0.
 * "CS" - GPIO port number for CS(chip select) line. If not specified, previous pin will be used. Can be "x" for disabling CS usage. Default is "x". Can not be the same pin as used for other SPI data communication.
 
@@ -924,6 +925,32 @@ Return "OK" in status and json like below in result on success. Or "Error" and d
 }
 ```
 Temperature unit in Celsius degrees. Pressure unit is pascal.
+
+## devices/bme280/read
+Read temperature, pressure and humidity from BME280 sensor.
+
+*Parameters*:
+* "address" - I2C BME280 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous will be used. Default is 0xEC.
+* "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
+* "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
+
+*Example*:
+```json
+{
+	"SDA":"4",
+	"SCL":"5",
+	"address":"0xEE"
+}
+```
+Return "OK" in status and json like below in result on success. Or "Error" and description in result on error.
+```json
+{
+	"temperature":24.5000,
+	"pressure":100312.2000,
+	"humidity":25.1000
+}
+```
+Temperature unit in Celsius degrees. Pressure unit is pascal. Humidity is %RH.
 
 ## devices/bh1750/read
 Read illuminance from BH1750 sensor. Mode is 'High Resolution2'.
@@ -1289,7 +1316,7 @@ Enable or disable PWM. Chip has 16 PWM channels with 12 bit resolution.
 *Parameters*:  
 Json with set of key-value, where key is pin name and value is duty cycle. Duty cycle is a float value between 0..100, i.e. percent. Mnemonic pin "all" also can be used to control all GPIO pins simultaneously. To disable PWM for one of the outputs, just set value to "disable" or "0".  
 There are also additional parameters:
-* "frequency" - set PWM base frequency, if this parameter was omitted, previous frequency will be used. "frequency" also can be set while PWM working or before command with pins duty cycles. Default frequency is 200 Hz. Minimum frequency is 24 Hz, maximum is 1526 Hz. There is a presceler in the chip, so frequency is not precise. 
+* "frequency" - set PWM base frequency, if this parameter was omitted, previous frequency will be used. "frequency" also can be set while PWM working or before command with pins duty cycles. Default frequency is 200 Hz. Minimum frequency is 24 Hz, maximum is 1526 Hz. There is a presceler in the chip, so frequency is not precise.
 * "address" - I2C PCA9685 device address. Behavior is the same as i2c interface, except it can be omitted. If not specified, previous pin will be used. Default is 0x80.
 * "SDA" - GPIO port number for SDA data line. Behavior and default are common with i2c interface.
 * "SCL" - GPIO port number for SCL data line. Behavior and default are common with i2c interface.
@@ -1421,5 +1448,5 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 该软件按本来的样子提供，没有任何明确或暗含的担保，包括但不仅限于关于试销性、适合某一特定用途和非侵权的保证。作者和版权持有人在任何情况下均不就由软件或软件使用引起的以合同形式、民事侵权或其它方式提出的任何索赔、损害或其它责任负责。
 
-  
+
 All trademarks, service marks, trade names, trade dress, product names and logos appearing on the firmware repository are the property of their respective owners.

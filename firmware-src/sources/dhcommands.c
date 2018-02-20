@@ -23,7 +23,6 @@
 #include "commands/dht_cmd.h"
 #include "commands/ds18b20_cmd.h"
 #include "commands/bmp180_cmd.h"
-#include "commands/bmp280_cmd.h"
 #include "commands/bh1750_cmd.h"
 #include "commands/mpu6050_cmd.h"
 #include "commands/hmc5883l_cmd.h"
@@ -47,6 +46,7 @@
 #include <mem.h>
 #include <user_interface.h>
 #include <ets_forward.h>
+#include "commands/bmx280_cmd.h"
 
 static void do_handle_command_list(COMMAND_RESULT *cmd_res, const char *command,
                                    const char *params, unsigned int params_len);
@@ -115,8 +115,9 @@ RO_DATA struct {
 	{ "devices/bmp180/read", dh_handle_devices_bmp180_read},
 #endif
 
-#if defined(DH_COMMANDS_BMP280) && defined(DH_DEVICE_BMP280)
+#if defined(DH_COMMANDS_BMX280) && defined(DH_DEVICE_BMX280)
 	{ "devices/bmp280/read", dh_handle_devices_bmp280_read},
+	{ "devices/bme280/read", dh_handle_devices_bme280_read},
 #endif
 
 #if defined(DH_COMMANDS_BH1750) && defined(DH_DEVICE_BH1750)
