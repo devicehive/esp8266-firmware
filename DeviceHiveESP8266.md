@@ -233,7 +233,7 @@ ssid=ssid&pass=pass&url=http%3A%2F%2Fexample.com%2Fapi&id=deviceid&key=key
 | ADC                  |                  |                   |                  |
 |      "0"             |    ADC0          |        6          |       A0         |
 | Common               |                  |                   |                  |
-|      "0"             |          all pins in current group | |                  |
+|      "all"           |          all pins in current group | |                  |
 
 _Note: `GPIO6-GPIO11` usually connected to on-module EEPROM, that is why no API for this pins._
 
