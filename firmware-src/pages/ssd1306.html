@@ -63,7 +63,7 @@
 				print("Choose image first please", true);
 				return;
 			}
-			localStorage['key'] = byId('key').value;
+			localStorage['dhkey'] = byId('key').value;
 			SDA = byId('sda').value;
 			SCL = byId('scl').value;
 			address = byId('address').value;
@@ -133,7 +133,7 @@
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 			byId('image').addEventListener("change", draw, false);
 		}
 	</script>

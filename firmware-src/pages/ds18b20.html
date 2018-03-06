@@ -18,7 +18,7 @@
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 		}
 	</script>
 </head>
@@ -37,7 +37,7 @@
 		<label class="pin-label" for="pin">Pin:
 			<input class="input-data" type='text' id='pin' value='2'>
 		</label>
-		<button type="button" class="btn_event btn_event_green" onclick="isrun=true; print(''); run();">Run</button>
+		<button type="button" class="btn_event btn_event_green" onclick="isrun=true; localStorage['dhkey'] = byId('key').value; print(''); run();">Run</button>
 		<button type="button" class="btn_event btn_event_red" onclick="isrun=false; print('Stopped');">Stop</button>
 		<div class="output-status" id="output"></div>
 	</div>

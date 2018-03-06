@@ -5,6 +5,7 @@
 	<script src="libs.js"></script>
 	<script>
 		function setPwm(dc, count, frequency) {
+			localStorage['dhkey'] = byId('key').value;
 			print('');
 			var params = {};
 			params[byId('pin').value] = dc;
@@ -21,7 +22,7 @@
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 		}
 	</script>
 </head>

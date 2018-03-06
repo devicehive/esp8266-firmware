@@ -5,6 +5,7 @@
 	<script src="libs.js"></script>
 	<script>
 		function get(pin) {
+			localStorage['dhkey'] = byId('key').value;
 			send_command('gpio/read', null, getKey(), function (err, res) {
 				if(err)
 					print('ERROR: ' + res, true);
@@ -14,6 +15,7 @@
 		}
 
 		function set(pin, val) {
+			localStorage['dhkey'] = byId('key').value;
 			var json = {}
 			json[String(pin)] = val;
 			print('');
@@ -26,7 +28,7 @@
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 		}
 	</script>
 </head>

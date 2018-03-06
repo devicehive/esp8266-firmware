@@ -16,7 +16,7 @@
 			var key = byId('key').value,
 				command = byId('command').value,
 				parameters = byId('parameters').value;
-			localStorage['key'] = key;
+			localStorage['dhkey'] = key;
 			if (parameters.length > 0) {
 				try {
 					parameters = JSON.parse(parameters);
@@ -48,8 +48,7 @@
 		}
 
 		function init() {
-			var key = localStorage['key'];
-			byId('key').value = key;
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 
 			var base = location.protocol + '//' + location.host;
 			ajax('POST', '/api/command/list', '', key, function (xmlhttp) {

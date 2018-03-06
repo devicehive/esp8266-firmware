@@ -5,6 +5,7 @@
 	<script src="libs.js"></script>
 	<script>
 		function send() {
+			localStorage['dhkey'] = byId('key').value;
 			print('');
 			var parameters = {
 				"SDA": byId('sda').value,
@@ -17,13 +18,12 @@
 					print('ERROR: ' + res, true);
 				} else {
 					print('OK');
-					setTimeout(run, 1000);
 				}
 			});
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 		}
 	</script>
 </head>

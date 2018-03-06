@@ -36,7 +36,7 @@
 		function send(method, url, data, cb) {
 			ajax(method, url, data, getKey(), function(xmlhttp) {
 				if (xmlhttp.status == 401)
-					alert("Wrong access key");
+					alert("Wrong key");
 				cb(xmlhttp.status >= 200 && xmlhttp.status < 300, xmlhttp.responseText);
 			});
 		}
@@ -72,7 +72,7 @@
 		function flash() {
 			if (isUploadInProcess)
 				return;
-			localStorage['key'] = byId('key').value;
+			localStorage['dhkey'] = byId('key').value;
 			print("");
 			var data = toUtf8(editorSession.getValue());
 			if (data.length > flashLimit) {
@@ -126,7 +126,7 @@
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 			byId('open').addEventListener("change", openfile, false);
 
 			send('GET', '/', null, function (ok, data) {

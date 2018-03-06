@@ -446,7 +446,7 @@ var renderLoop = (function() {
 }());
 
 window.onload = function init() {
-	byId('key').value = localStorage['key'];
+	byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 	plot = initPlot();
 	plot.redraw();
 	byId('run-btn').onclick = selectSource;
@@ -486,6 +486,7 @@ var gpioCommands = [
 ];
 
 var selectSource = function() {
+	localStorage['dhkey'] = byId('key').value;
 	if (dataSource) {
 		dataSource.stop();
 		dataSource = null;

@@ -16,7 +16,6 @@
 			current_addr = '0x' + addr_enumerator.toString(16).toUpperCase();
 			last_checked = current_addr;
 			byId('status').innerHTML = 'Checking ' + current_addr + '...';
-			localStorage['key'] = byId('key').value;
 			parameters = {
 				"SDA": byId('sda').value,
 				"SCL": byId('scl').value,
@@ -27,6 +26,9 @@
 			send_command('i2c/master/read', parameters, getKey(), function (err, res) {
 				if(!err) {
 					byId('output').innerHTML += 'Found ' + current_addr + '<br>';
+				} else if (res == 'Unauthorized') {
+					byId('status').innerHTML = res;
+					return;
 				}
 				addr_enumerator += 2;
 				if(addr_enumerator > 255)
@@ -36,10 +38,11 @@
 		}
 
 		function init() {
-			byId('key').value = localStorage['key'];
+			byId('key').value = localStorage['dhkey'] == null ? "" : localStorage['dhkey'];
 		}
 
 		function run() {
+			localStorage['dhkey'] = byId('key').value;
 			if(addr_enumerator < 0) {
 				byId('output').innerHTML = "";
 				byId('status').innerHTML = "";
