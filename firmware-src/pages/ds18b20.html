@@ -7,7 +7,7 @@
 		function run() {
 			if(!isrun)
 				return;
-			send_command('devices/ds18b20/read', null, getKey(), function (err, res) {
+			send_command('devices/ds18b20/read', {"pin": byId('pin').value}, getKey(), function (err, res) {
 				if(err) {
 					print('ERROR: ' + res, true);
 				} else {
