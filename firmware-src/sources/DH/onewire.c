@@ -54,8 +54,11 @@ static void ICACHE_FLASH_ATTR unlock_int(void)
  */
 int ICACHE_FLASH_ATTR dh_onewire_set_pin(unsigned int pin)
 {
+	// check if pin is unsuitable
+	if (pin >= DH_GPIO_PIN_COUNT)
+		return -1;
 	if (!(DH_GPIO_PIN(pin) & DH_GPIO_SUITABLE_PINS))
-		return -1; // unsuitable pin
+		return -1;
 
 	mOneWirePin = pin;
 	return 0; // OK

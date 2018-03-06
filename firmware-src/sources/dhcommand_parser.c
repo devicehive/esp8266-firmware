@@ -201,8 +201,6 @@ char * ICACHE_FLASH_ATTR parse_params_pins_set(const char *params, unsigned int 
 				char * res = readUIntField(&jparser, AF_PIN, &out->pin, fields, readedfields, 0);
 				if(res)
 					return res;
-				if(out->pin >= DH_GPIO_PIN_COUNT)
-					return "Wrong pin";
 				continue;
 			} else if(strcmp_value(&jparser, "ref") == 0) {
 				char * res = readFloatField(&jparser, AF_REF, &out->ref, fields, readedfields);

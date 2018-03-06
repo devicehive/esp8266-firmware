@@ -156,8 +156,8 @@
   addtest("onewire/master/read", {"count":1}, false, {"value":"Command for reading is not specified"});
   addtest("onewire/master/read", {"count":1,"data":"AA==","pin":2}, false, {"value":"No response"});
   addtest("onewire/master/write", {"data":"AA=="}, false, {"value":"No response"});
-  addtest("onewire/master/write", {"data":"AA==","pin":244}, false, {"value":"Wrong pin"});
-  addtest("onewire/master/write", {"data":"AA==","pin":34}, false, {"value":"Wrong pin"});
+  addtest("onewire/master/write", {"data":"AA==","pin":244}, false, {"value":"Wrong onewire pin"});
+  addtest("onewire/master/write", {"data":"AA==","pin":34}, false, {"value":"Wrong onewire pin"});
   addtest("onewire/master/write", {"data":"AA==","pin":10}, false, {"value":"Wrong onewire pin"});
   addtest("onewire/master/write", {"data":"#$==","pin":2}, false, {"value":"Data is broken"});
   addtest("onewire/master/write", {"data":"AA==","pin":2}, false, {"value":"No response"});
@@ -166,7 +166,7 @@
   addtest("onewire/master/int", {"2":"disable"}, true, {"value":""});
   addtest("onewire/master/search", null, true, {"found":[],"pin":"2"});
   addtest("onewire/master/alarm", {"pin":"2"}, true, {"found":[],"pin":"2"});
-  addtest("onewire/dht/read", {"pin":"22"}, false, {"value":"Wrong pin"});
+  addtest("onewire/dht/read", {"pin":"22"}, false, {"value":"Wrong onewire pin"});
   addtest("onewire/dht/read", {"pin":10}, false, {"value":"Wrong onewire pin"});
   addtest("onewire/dht/read", null, false, {"value":"No response"});
 
