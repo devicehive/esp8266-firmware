@@ -84,6 +84,7 @@ void clearReciveBuffer() {
 	recivedEscape = false;
 }
 
+#ifndef htole16
 uint16_t htole16(uint16_t n) {
 	uint32_t res;
 	uint8_t *p = (uint8_t *) &res;
@@ -92,7 +93,9 @@ uint16_t htole16(uint16_t n) {
 	p[1] = n % 0x100;
 	return res;
 }
+#endif
 
+#ifndef htole32
 uint32_t htole32(uint32_t n) {
 	uint32_t res;
 	uint8_t *p = (uint8_t *) &res;
@@ -102,6 +105,7 @@ uint32_t htole32(uint32_t n) {
 	}
 	return res;
 }
+#endif
 
 uint32_t esp_checksum(void *data, unsigned int len) {
 	uint8_t res = 0xef;
