@@ -1,5 +1,5 @@
 /*
- * ESPRSSIF MIT License
+ * ESPRESSIF MIT License
  *
  * Copyright (c) 2016 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
  *
@@ -123,6 +123,7 @@ enum espconn_option{
 	ESPCONN_NODELAY = 0x02,
 	ESPCONN_COPY = 0x04,
 	ESPCONN_KEEPALIVE = 0x08,
+	ESPCONN_MANUALRECV     = 0x10,
 	ESPCONN_END
 };
 
@@ -733,7 +734,14 @@ void espconn_mdns_enable(void);
  * 			      dnsserver -- IP address of the DNS server to set
  *  Returns     : none
 *******************************************************************************/
-void espconn_dns_setserver(char numdns, ip_addr_t *dnsserver);
-
+void espconn_dns_setserver(uint8 numdns, ip_addr_t *dnsserver);
+/******************************************************************************
+ * FunctionName : espconn_dns_getserver
+ * Description  : get dns server.
+ * Parameters   : numdns -- the index of the DNS server, must
+ *                be < DNS_MAX_SERVERS = 2
+ *  Returns     : dnsserver -- IP address of the DNS server to set
+*******************************************************************************/
+ip_addr_t espconn_dns_getserver(uint8 numdns);
 #endif
 

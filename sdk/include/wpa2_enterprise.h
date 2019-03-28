@@ -1,5 +1,5 @@
 /*
- * ESPRSSIF MIT License
+ * ESPRESSIF MIT License
  *
  * Copyright (c) 2016 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
  *
@@ -43,6 +43,9 @@ void  wifi_station_clear_enterprise_cert_key(void);
 
 int  wifi_station_set_enterprise_ca_cert(u8 *ca_cert, int ca_cert_len);
 void  wifi_station_clear_enterprise_ca_cert(void);
+
+int wifi_station_set_enterprise_identity(u8 *identity, int len);
+void wifi_station_clear_enterprise_identity(void);
 
 int  wifi_station_set_enterprise_username(u8 *username, int len);
 void  wifi_station_clear_enterprise_username(void);

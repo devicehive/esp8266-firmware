@@ -1,5 +1,5 @@
 /*
- * ESPRSSIF MIT License
+ * ESPRESSIF MIT License
  *
  * Copyright (c) 2016 <ESPRESSIF SYSTEMS (SHANGHAI) PTE LTD>
  *
@@ -54,5 +54,8 @@ typedef SpiFlashOpResult (* user_spi_flash_read)(
         uint32 size);
 
 void spi_flash_set_read_func(user_spi_flash_read read);
+
+bool spi_flash_erase_protect_enable(void);
+bool spi_flash_erase_protect_disable(void);
 
 #endif

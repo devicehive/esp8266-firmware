@@ -72,6 +72,26 @@ uint32 ICACHE_FLASH_ATTR user_rf_cal_sector_set(void) {
 	return rf_cal_sec;
 }
 
+//void user_pre_init(void) {
+//#define RF_CAL_ADDR 0x3FB000
+//#define PHY_DATA_ADDR 0x3FC000
+//#define PARAMETERS_ADDR 0x3FD000
+//#define RF_CAL_SIZE 0x1000
+//#define PHY_DATA_SIZE 0x1000
+//#define PARAMETERS_SIZE 0x3000
+//	static const partition_item_t partition_table[] = {
+//			{SYSTEM_PARTITION_RF_CAL, RF_CAL_ADDR, RF_CAL_SIZE},
+//			{SYSTEM_PARTITION_PHY_DATA, PHY_DATA_ADDR, PHY_DATA_SIZE},
+//			{SYSTEM_PARTITION_SYSTEM_PARAMETER, PARAMETERS_ADDR, PARAMETERS_SIZE}
+//	};
+//
+//	while (!system_partition_table_regist(partition_table,
+//			sizeof(partition_table) / sizeof(partition_table[0]),
+//			0 /*SPI_FLASH_SIZE_MAP*/)) {
+//		os_printf("system_partition_table_regist failed\r\n");
+//	}
+//}
+
 LOCAL void ICACHE_FLASH_ATTR reset_counter(void *arg) {
 	RESET_COUNTER counter;
 	counter.magic = RESET_COUNTER_MAGIC;
